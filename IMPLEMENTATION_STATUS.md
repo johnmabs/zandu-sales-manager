@@ -2559,10 +2559,61 @@ exacts sont testés, et aucune primitive numérique n’utilise `float`.
 
 ### Epic 0.5 — API foundation
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- API Platform 4.3 et son intégration Doctrine ORM sont installés ;
+- OpenAPI est générable et expose le titre/version de l’API Zandu ;
+- la découverte des ressources est limitée à `src/ApiResource` afin de ne pas
+  exposer directement les entités de persistence ;
+- `ApplicationCommandProcessor` matérialise le flux entrée HTTP → commande →
+  `Result<T>` → DTO de sortie ;
+- `ApplicationQueryProvider` matérialise le flux variables HTTP → query → read
+  model ;
+- les `DomainError` deviennent des réponses JSON HTTP 422 avec `code`,
+  `message` et `correlationId` ;
+- `X-Correlation-ID` est propagé lorsqu’il contient un UUID v7 valide, sinon
+  un nouvel identifiant est généré, puis renvoyé dans la réponse ;
+- `Idempotency-Key` est converti en `IdempotencyKey` typé et une valeur invalide
+  produit le code stable `INVALID_IDEMPOTENCY_KEY`.
+
+### Tests et validations
+
+Les tests couvrent la génération OpenAPI, les conventions Processor/Provider,
+la normalisation des erreurs, la propagation de corrélation et le traitement
+des clés d’idempotence.
+
+```text
+PHPUnit local et Docker : OK (103 tests, 282 assertions)
+Composer : valide
+Conteneur Symfony : valide
+OpenAPI : export JSON réussi
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commits
+
+```text
+build(api): add API Platform and OpenAPI
+feat(api): add application command processor pattern
+feat(api): add application query provider pattern
+feat(api): add correlation id propagation
+feat(api): add stable application error responses
+feat(api): add idempotency key request handling
+docs(status): close API foundation
+```
+
+## Prochaine étape
+
+### Epic 0.6 — Authentication foundation
+
 **Statut : À FAIRE**
 
-Installer API Platform et rendre exécutable le flux HTTP vers l’Application
-sans exposer directement les entités de persistence.
+Installer Symfony Security, rendre opérationnels les access tokens JWT et les
+refresh sessions avec rotation/révocation, puis construire `ActorContext`
+uniquement depuis l’identité authentifiée.
 
 ---
 
@@ -2582,7 +2633,7 @@ sans exposer directement les entités de persistence.
 [x] violation architecturale fait échouer la CI
 [x] persistence foundation validée
 [x] SharedKernel foundation validée
-[ ] API foundation validée
+[x] API foundation validée
 [ ] authentication foundation validée
 [ ] architectural spikes réalisés
 [ ] exploitation et observabilité minimales validées
