@@ -340,8 +340,8 @@ build(php): require PHP 8.5
 0.1.3  TERMINÉ  Premiers bounded contexts
 0.1.4  TERMINÉ  Namespaces Zandu
 0.1.5  TERMINÉ  Image Docker backend
-0.1.6  À FAIRE  PostgreSQL local
-0.1.7  À FAIRE  Bootstrap développeur
+0.1.6  TERMINÉ  PostgreSQL local
+0.1.7  TERMINÉ  Bootstrap développeur
 ```
 
 ---
@@ -398,14 +398,14 @@ chore(dev): add local development commands
 ```text
 [x] repository Git initialisé à la racine
 [x] Symfony fonctionne
-[ ] PostgreSQL fonctionne
+[x] PostgreSQL fonctionne
 [x] structure Modules / SharedKernel / Platform présente
 [x] premiers bounded contexts matérialisés
 [x] autoload PSR-4 Zandu valide
 [x] test minimal passe
 [x] image Docker backend construite
 [x] runtime PHP aligné sur PHP 8.5
-[ ] bootstrap développeur disponible
+[x] bootstrap développeur disponible
 [x] aucune logique métier cross-context introduite
 ```
 
