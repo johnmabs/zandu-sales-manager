@@ -19,8 +19,12 @@ services:
     Zandu\:
         resource: "../src/"
         exclude:
+            - "../src/Platform/Decimal/BrickDecimal.php"
             - "../src/Platform/Identity/SymfonyUuid.php"
             - "../src/SharedKernel/Identity/*Id.php"
+
+    Zandu\SharedKernel\Decimal\DecimalFactory:
+        alias: Zandu\Platform\Decimal\BrickDecimalFactory
 
     Zandu\SharedKernel\Identity\UuidFactory:
         alias: Zandu\Platform\Identity\SymfonyUuidFactory
