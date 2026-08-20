@@ -1,0 +1,44 @@
+name: Backend CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker compose build
+
+      - name: Install dependencies
+        run: >
+          docker compose run --rm backend
+          composer install
+          --no-interaction
+          --prefer-dist
+          --no-progress
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Show service status
+        run: docker compose ps
+
+      - name: Validate code and configuration
+        run: make lint
+
+      - name: Run tests
+        run: make test
+
+      - name: Validate architecture
+        run: make architecture
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
