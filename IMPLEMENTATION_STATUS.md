@@ -332,36 +332,118 @@ build(php): require PHP 8.5
 
 ---
 
-# État actuel de l’Epic 0.1
-
-```text
-0.1.1  TERMINÉ  Initialisation Symfony
-0.1.2  TERMINÉ  Structure racine DDD
-0.1.3  TERMINÉ  Premiers bounded contexts
-0.1.4  TERMINÉ  Namespaces Zandu
-0.1.5  TERMINÉ  Image Docker backend
-0.1.6  TERMINÉ  PostgreSQL local
-0.1.7  TERMINÉ  Bootstrap développeur
-```
-
----
-
-# Prochaine étape
-
 ## 0.1.6 — Ajouter PostgreSQL local
 
-**Statut : À FAIRE**
+**Statut : TERMINÉ**
 
-Objectifs :
+### Réalisé
 
-- ajouter un service PostgreSQL local ;
-- utiliser des variables d’environnement ;
-- configurer un healthcheck PostgreSQL ;
-- permettre au backend de joindre le service ;
-- ne pas introduire SQLite côté serveur ;
-- ne pas encore mélanger cette étape avec l’installation/configuration Doctrine de l’Epic 0.3.
+Un service PostgreSQL local a été ajouté à l’orchestration Docker Compose.
 
-### Commit atomique prévu
+Image utilisée :
+
+```text
+postgres:18-bookworm
+```
+
+Le service utilise des variables d’environnement pour :
+
+```text
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+POSTGRES_PORT
+```
+
+Le hostname PostgreSQL accessible depuis le réseau Docker est :
+
+```text
+postgres
+```
+
+Le backend et PostgreSQL partagent le même réseau Docker Compose.
+
+Un healthcheck PostgreSQL basé sur `pg_isready` est configuré.
+
+Le backend dépend de l’état healthy de PostgreSQL avant son démarrage.
+
+Un volume Docker persistant est utilisé pour les données PostgreSQL.
+
+Le port PostgreSQL est exposé localement :
+
+```text
+5432:5432
+```
+
+Aucune installation Doctrine n’a été introduite à cette étape.
+
+Aucune migration ou table métier n’a été créée.
+
+SQLite n’est pas utilisé comme base serveur.
+
+### Validations exécutées
+
+Démarrage de l’environnement :
+
+```bash
+docker compose up -d
+```
+
+État observé :
+
+```text
+backend    Running
+postgres   Healthy
+```
+
+Vérification des services :
+
+```bash
+docker compose ps
+```
+
+Connexion PostgreSQL directe :
+
+```bash
+docker compose exec postgres \
+  psql -U zandu -d zandu -c "SELECT version();"
+```
+
+Résolution DNS depuis le backend :
+
+```bash
+docker compose exec backend php -r \
+'echo gethostbyname("postgres"), PHP_EOL;'
+```
+
+Connexion PostgreSQL réelle via PDO depuis le backend :
+
+```bash
+docker compose exec backend php -r '
+$pdo = new PDO(
+    sprintf(
+        "pgsql:host=%s;port=%s;dbname=%s",
+        getenv("POSTGRES_HOST"),
+        getenv("POSTGRES_PORT"),
+        getenv("POSTGRES_DB")
+    ),
+    getenv("POSTGRES_USER"),
+    getenv("POSTGRES_PASSWORD")
+);
+
+echo $pdo->query("SELECT current_database()")->fetchColumn(), PHP_EOL;
+'
+```
+
+La connexion a retourné la base :
+
+```text
+zandu
+```
+
+Les validations Symfony et PHPUnit continuent de fonctionner avec PostgreSQL présent.
+
+### Commit atomique
 
 ```text
 chore(database): add local PostgreSQL service
@@ -371,24 +453,73 @@ chore(database): add local PostgreSQL service
 
 ## 0.1.7 — Ajouter le bootstrap développeur
 
-**Statut : À FAIRE**
+**Statut : TERMINÉ**
 
-Capacités minimales envisagées :
+### Réalisé
+
+Un `Makefile` a été ajouté à la racine du repository.
+
+Il fournit une interface commune pour les opérations locales de développement.
+
+Commandes actuellement disponibles :
 
 ```text
-install
-start
-stop
-test
-lint
-database-create
-database-migrate
+make install
+make start
+make stop
+make restart
+make test
+make lint
+make shell
+make logs
+make ps
 ```
 
-### Commit atomique prévu
+Les commandes liées aux migrations et à la création de base applicative ne sont volontairement pas ajoutées à ce stade, Doctrine n’étant pas encore installé.
+
+Elles seront introduites lors de l’Epic consacré à la persistence.
+
+### Validations exécutées
+
+```bash
+make ps
+make test
+make lint
+make stop
+make start
+make ps
+make shell
+make install
+```
+
+Le bootstrap permet :
+
+- de construire l’image backend ;
+- d’installer les dépendances Composer ;
+- de démarrer et arrêter l’environnement ;
+- de lancer PHPUnit ;
+- de valider Composer et le container Symfony ;
+- d’ouvrir un shell backend ;
+- de consulter les logs et l’état des services.
+
+### Commit atomique
 
 ```text
 chore(dev): add local development commands
+```
+
+---
+
+# État final de l’Epic 0.1
+
+```text
+0.1.1  TERMINÉ  Initialisation Symfony
+0.1.2  TERMINÉ  Structure racine DDD
+0.1.3  TERMINÉ  Premiers bounded contexts
+0.1.4  TERMINÉ  Namespaces Zandu
+0.1.5  TERMINÉ  Image Docker backend
+0.1.6  TERMINÉ  PostgreSQL local
+0.1.7  TERMINÉ  Bootstrap développeur
 ```
 
 ---
@@ -408,6 +539,747 @@ chore(dev): add local development commands
 [x] bootstrap développeur disponible
 [x] aucune logique métier cross-context introduite
 ```
+
+**Epic 0.1 : TERMINÉ**
+
+---
+
+# Epic 0.2 — Fitness tests d’architecture
+
+**Statut : EN COURS**
+
+Objectif : rendre les frontières DDD exécutables et faire échouer automatiquement l’intégration continue lorsqu’une dépendance architecturale interdite est introduite.
+
+Les règles doivent notamment protéger :
+
+```text
+Domain
+→ SharedKernel uniquement
+
+Application
+→ own Domain
+→ SharedKernel
+→ public Application Contracts
+
+Infrastructure
+→ own Domain
+→ own Application
+→ SharedKernel
+→ Platform
+
+Presentation
+→ own Application
+```
+
+Les dépendances inter-bounded-context doivent passer par des contrats applicatifs publics.
+
+Exemple autorisé :
+
+```text
+Sales
+→ Inventory\Application\Contract
+```
+
+Exemple interdit :
+
+```text
+Sales
+→ Inventory\Domain
+```
+
+---
+
+## 0.2.1 — Installer Deptrac
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Deptrac a été ajouté comme dépendance de développement :
+
+```text
+deptrac/deptrac
+```
+
+L’outil est disponible via :
+
+```bash
+vendor/bin/deptrac
+```
+
+Aucune règle architecturale n’a été introduite dans le commit d’installation.
+
+### Validations exécutées
+
+```bash
+vendor/bin/deptrac --version
+composer validate --no-check-publish
+php bin/phpunit
+```
+
+### Commit atomique
+
+```text
+build(architecture): add Deptrac
+```
+
+---
+
+## 0.2.2 — Définir les couches techniques
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Une première configuration Deptrac a été créée pour matérialiser :
+
+```text
+Domain
+Application
+Infrastructure
+Presentation
+SharedKernel
+Platform
+```
+
+Les collectors utilisent les namespaces `Zandu\...`.
+
+Une correction des expressions régulières a été nécessaire pendant l’implémentation.
+
+Les motifs fonctionnels utilisent notamment :
+
+```text
+.*Zandu\\Modules\\...
+```
+
+et non des expressions commençant strictement par :
+
+```text
+^Zandu
+```
+
+Les antislashs utilisés dans les chaînes PHP des expressions régulières ont également été corrigés afin que les namespaces soient réellement reconnus par Deptrac.
+
+### Validation par violation volontaire
+
+Une dépendance temporaire a été introduite :
+
+```text
+Sales\Domain
+→ Sales\Infrastructure
+```
+
+Deptrac a correctement détecté la violation.
+
+Après suppression du probe temporaire, l’analyse est revenue sans violation.
+
+Cette validation confirme que les collectors et rulesets sont effectivement actifs.
+
+---
+
+## 0.2.3 — Séparer les règles de couches et les règles de modules
+
+**Statut : TERMINÉ**
+
+### Problème détecté
+
+Une première tentative utilisait simultanément des layers techniques :
+
+```text
+Application
+Domain
+Infrastructure
+Presentation
+```
+
+et des layers de bounded contexts :
+
+```text
+Sales
+Inventory
+CashManagement
+```
+
+dans la même configuration.
+
+Une classe comme :
+
+```text
+Zandu\Modules\Sales\Application\...
+```
+
+appartenait alors simultanément à :
+
+```text
+Application
+Sales
+```
+
+Deptrac produisait notamment :
+
+```text
+Warnings 1
+```
+
+et une seule dépendance physique pouvait générer plusieurs violations.
+
+### Correction appliquée
+
+Les deux dimensions architecturales ont été séparées :
+
+```text
+backend/
+├── deptrac.layers.php
+└── deptrac.modules.php
+```
+
+`deptrac.layers.php` contrôle uniquement les couches techniques.
+
+`deptrac.modules.php` contrôle uniquement les frontières entre bounded contexts.
+
+Cette séparation évite le chevauchement inutile des layers.
+
+### Vue `deptrac.layers.php`
+
+Elle protège les dépendances entre :
+
+```text
+Domain
+Application
+Infrastructure
+Presentation
+SharedKernel
+Platform
+```
+
+### Vue `deptrac.modules.php`
+
+Elle protège les frontières entre :
+
+```text
+Sales
+SalesContract
+
+Inventory
+InventoryContract
+
+CashManagement
+CashManagementContract
+```
+
+Les contracts publics sont exclus du layer interne de leur module avec un collector booléen.
+
+Conceptuellement :
+
+```text
+Inventory
+=
+tout Zandu\Modules\Inventory\...
+SAUF
+Zandu\Modules\Inventory\Application\Contract\...
+```
+
+Ainsi :
+
+```text
+Inventory\Application\Contract
+```
+
+appartient uniquement au layer :
+
+```text
+InventoryContract
+```
+
+et non simultanément à :
+
+```text
+Inventory
+InventoryContract
+```
+
+### Commit atomique
+
+```text
+build(architecture): separate layer and module rules
+```
+
+---
+
+## 0.2.4 — Protéger les frontières inter-bounded-context
+
+**Statut : TERMINÉ**
+
+### Règle validée
+
+Une dépendance directe d’un module vers le domaine interne d’un autre bounded context est interdite.
+
+Cas volontairement testé :
+
+```text
+Sales\Application
+→ Inventory\Domain
+```
+
+Probe utilisé temporairement :
+
+```text
+Zandu\Modules\Sales\Application\InvalidCrossContextProbe
+→
+Zandu\Modules\Inventory\Domain\ArchitectureProbe
+```
+
+### Résultat
+
+La vue technique :
+
+```text
+deptrac.layers.php
+```
+
+considère correctement :
+
+```text
+Application → Domain
+```
+
+comme une dépendance techniquement autorisée.
+
+La vue modules :
+
+```text
+deptrac.modules.php
+```
+
+rejette cependant :
+
+```text
+Sales → Inventory
+```
+
+car le domaine interne d’Inventory n’est pas une API publique.
+
+Le résultat attendu a été obtenu :
+
+```text
+Violations  1
+Warnings    0
+Errors      0
+```
+
+### Cas autorisé validé
+
+Le probe a ensuite été remplacé par :
+
+```text
+Sales\Application
+→ Inventory\Application\Contract
+```
+
+Résultat obtenu :
+
+```text
+Violations  0
+Warnings    0
+Errors      0
+```
+
+La règle suivante est donc effectivement exécutable :
+
+```text
+Sales\Application
+    ├── Inventory\Domain                 ✗
+    └── Inventory\Application\Contract  ✓
+```
+
+Les probes temporaires ont été supprimés après validation.
+
+### Commit atomique
+
+```text
+build(architecture): enforce bounded context boundaries
+```
+
+si cette modification a été commitée séparément.
+
+Lorsque cette règle a été introduite dans la même refactorisation que la séparation des configurations, elle reste couverte par :
+
+```text
+build(architecture): separate layer and module rules
+```
+
+---
+
+## 0.2.5 — Ajouter une commande de validation d’architecture
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le `Makefile` expose désormais :
+
+```bash
+make architecture
+```
+
+Cette commande exécute successivement :
+
+```bash
+vendor/bin/deptrac analyse \
+  --config-file=deptrac.layers.php \
+  --no-cache
+```
+
+puis :
+
+```bash
+vendor/bin/deptrac analyse \
+  --config-file=deptrac.modules.php \
+  --no-cache
+```
+
+Les validations d’architecture restent séparées de :
+
+```bash
+make lint
+```
+
+afin de distinguer clairement :
+
+```text
+lint
+→ validation technique/configuration
+
+architecture
+→ fitness tests structuraux
+```
+
+### Validations exécutées
+
+```bash
+make architecture
+make test
+make lint
+```
+
+### Commit atomique
+
+```text
+chore(dev): add architecture validation command
+```
+
+---
+
+## 0.2.6 — Ajouter la CI backend
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le premier workflow GitHub Actions backend a été ajouté :
+
+```text
+.github/
+└── workflows/
+    └── backend-ci.yml
+```
+
+Le workflow s’exécute sur :
+
+```text
+push
+pull_request
+```
+
+Il utilise Docker Compose afin que la CI et l’environnement local reposent sur le même runtime.
+
+Chaîne de validation :
+
+```text
+GitHub Actions
+    ↓
+Docker Compose
+    ↓
+Backend PHP 8.5
+    ↓
+Makefile
+    ├── make lint
+    ├── make test
+    └── make architecture
+```
+
+Le workflow :
+
+- checkout le repository ;
+- construit l’image backend ;
+- installe les dépendances Composer ;
+- démarre les services ;
+- vérifie leur état ;
+- lance les validations techniques ;
+- lance PHPUnit ;
+- lance les deux analyses Deptrac ;
+- arrête les services même en cas d’échec.
+
+### Commit atomique
+
+```text
+ci(backend): add initial validation workflow
+```
+
+---
+
+## Mise à niveau de `actions/checkout`
+
+**Statut : TERMINÉ**
+
+GitHub Actions a signalé que Node.js 20 était déprécié pour :
+
+```text
+actions/checkout@v4
+```
+
+L’action a été mise à jour vers :
+
+```text
+actions/checkout@v5
+```
+
+afin d’utiliser le runtime Node.js 24 attendu par les runners GitHub Actions actuels.
+
+### Commit atomique
+
+```text
+ci(backend): upgrade checkout action to v5
+```
+
+---
+
+## 0.2.7 — Valider l’échec réel de la CI sur violation architecturale
+
+**Statut : TERMINÉ**
+
+### Objectif
+
+Vérifier que les fitness tests ne fonctionnent pas uniquement en local mais qu’ils protègent réellement le repository via GitHub Actions.
+
+### Méthode
+
+Une branche temporaire a été créée :
+
+```text
+test/architecture-violation
+```
+
+Une violation volontaire a été introduite :
+
+```text
+Sales\Application
+→ Inventory\Domain
+```
+
+Les probes temporaires ont été commités uniquement sur cette branche de validation.
+
+### Résultat attendu et observé
+
+La pipeline GitHub Actions est passée au rouge lors de :
+
+```text
+Validate architecture
+```
+
+La violation a ensuite été supprimée.
+
+`make architecture` est redevenu vert localement.
+
+Après push de la correction, la pipeline GitHub Actions est redevenue verte.
+
+### Validation de bout en bout
+
+La chaîne suivante est donc confirmée :
+
+```text
+violation architecturale
+        ↓
+Deptrac
+        ↓
+make architecture
+        ↓
+GitHub Actions
+        ↓
+pipeline rouge
+```
+
+et :
+
+```text
+violation supprimée
+        ↓
+Deptrac
+        ↓
+make architecture
+        ↓
+GitHub Actions
+        ↓
+pipeline verte
+```
+
+Les probes de validation n’ont pas été intégrés à `main`.
+
+---
+
+# État actuel de l’Epic 0.2
+
+```text
+0.2.1  TERMINÉ  Installation de Deptrac
+0.2.2  TERMINÉ  Couches techniques
+0.2.3  TERMINÉ  Séparation layers / modules
+0.2.4  TERMINÉ  Frontières inter-bounded-context
+0.2.5  TERMINÉ  Commande make architecture
+0.2.6  TERMINÉ  CI backend GitHub Actions
+0.2.7  TERMINÉ  Validation CI rouge → verte
+```
+
+---
+
+# Garanties architecturales actuellement exécutables
+
+## Couches techniques
+
+Les règles suivantes sont actuellement matérialisées par Deptrac :
+
+```text
+Domain
+→ SharedKernel
+
+Application
+→ Domain
+→ SharedKernel
+
+Infrastructure
+→ Domain
+→ Application
+→ SharedKernel
+→ Platform
+
+Presentation
+→ Application
+→ SharedKernel
+
+Platform
+→ SharedKernel
+```
+
+Les dépendances non explicitement autorisées sont rejetées.
+
+---
+
+## Frontières de bounded contexts
+
+Les modules actuellement matérialisés sont :
+
+```text
+Sales
+Inventory
+CashManagement
+```
+
+Les contrats applicatifs publics sont séparés :
+
+```text
+SalesContract
+InventoryContract
+CashManagementContract
+```
+
+Exemple protégé :
+
+```text
+Sales\Application
+→ Inventory\Application\Contract
+✓
+```
+
+Exemple protégé :
+
+```text
+Sales\Application
+→ Inventory\Domain
+✗
+```
+
+Les règles cross-context internes ne peuvent donc pas contourner les Application Contracts publics.
+
+---
+
+# Prochaine étape
+
+## 0.2.8 — Interdire les frameworks dans Domain
+
+**Statut : À FAIRE**
+
+Objectif : garantir qu’aucune classe du domaine ne dépend directement d’un framework ou d’un composant d’infrastructure.
+
+Les dépendances suivantes doivent notamment être interdites depuis `Domain` :
+
+```text
+Symfony
+Doctrine
+API Platform
+```
+
+Exemples interdits :
+
+```text
+Domain
+→ Symfony\Component\...
+
+Domain
+→ Doctrine\...
+
+Domain
+→ ApiPlatform\...
+```
+
+Cette règle devra être validée avec le même principe que les précédentes :
+
+```text
+1. ajouter la règle ;
+2. introduire une violation volontaire ;
+3. constater l’échec Deptrac ;
+4. supprimer la violation ;
+5. constater le retour au vert ;
+6. vérifier la CI.
+```
+
+Aucune dépendance Doctrine ou API Platform n’étant encore installée, la stratégie exacte du fixture devra éviter d’introduire prématurément ces frameworks uniquement pour le test.
+
+---
+
+# Definition of Done — Epic 0.2
+
+État actuel :
+
+```text
+[x] Deptrac installé
+[x] couches DDD matérialisées
+[x] règles inter-couches exécutables
+[x] bounded contexts matérialisés dans une vue dédiée
+[x] Application Contracts publics matérialisés
+[x] dépendance cross-context directe vers Domain interdite
+[x] dépendance cross-context vers Application\Contract autorisée
+[x] violation volontaire détectée localement
+[x] configuration sans warning de chevauchement
+[x] commande make architecture disponible
+[x] fitness tests exécutés dans GitHub Actions
+[x] violation architecturale fait échouer la CI
+[x] suppression de la violation remet la CI au vert
+[ ] Domain explicitement protégé contre Symfony
+[ ] Domain explicitement protégé contre Doctrine
+[ ] Domain explicitement protégé contre API Platform
+[ ] règles d’architecture documentées dans le repository
+```
+
+**Epic 0.2 : EN COURS**
 
 ---
 
