@@ -117,6 +117,7 @@ return static function (DeptracConfig $config): void {
                 ->accesses(
                     $sharedKernel,
                     $symfony,
+                    $apiPlatform,
                     $brickMath,
                 ),
         );
