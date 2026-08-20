@@ -44,6 +44,24 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $symfony = Layer::withName('Symfony')->collectors(
+        ClassLikeConfig::create(
+            '.*Symfony\\.*'
+        ),
+    );
+
+    $doctrine = Layer::withName('Doctrine')->collectors(
+        ClassLikeConfig::create(
+            '.*Doctrine\\.*'
+        ),
+    );
+
+    $apiPlatform = Layer::withName('ApiPlatform')->collectors(
+        ClassLikeConfig::create(
+            '.*ApiPlatform\\.*'
+        ),
+    );
+
     $config
         ->paths('./src')
         ->layers(
@@ -53,6 +71,9 @@ return static function (DeptracConfig $config): void {
             $presentation,
             $sharedKernel,
             $platform,
+            $symfony,
+            $doctrine,
+            $apiPlatform,
         )
         ->rulesets(
             Ruleset::forLayer($domain)
@@ -70,12 +91,17 @@ return static function (DeptracConfig $config): void {
                     $application,
                     $sharedKernel,
                     $platform,
+                    $symfony,
+                    $doctrine,
+                    $apiPlatform,
                 ),
 
             Ruleset::forLayer($presentation)
                 ->accesses(
                     $application,
                     $sharedKernel,
+                    $symfony,
+                    $apiPlatform,
                 ),
 
             Ruleset::forLayer($sharedKernel),
