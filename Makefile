@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint architecture shell logs ps database-create database-migrate database-status database-rollback
+.PHONY: install start stop restart test lint architecture shell logs ps database-create database-migrate database-rollback database-status database-sql
 
 install:
 	docker compose build
@@ -43,8 +43,11 @@ database-create:
 database-migrate:
 	docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
 
+database-rollback:
+	docker compose exec backend php bin/console doctrine:migrations:migrate prev --no-interaction
+
 database-status:
 	docker compose exec backend php bin/console doctrine:migrations:status
 
-database-rollback:
-	docker compose exec backend php bin/console doctrine:migrations:migrate prev --no-interaction
+database-sql:
+	docker compose exec backend php bin/console dbal:run-sql "$(SQL)"
