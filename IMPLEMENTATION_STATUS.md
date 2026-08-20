@@ -2051,11 +2051,91 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.6 — Ajouter Money et Currency
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le namespace `Zandu\SharedKernel\Money` contient :
+
+```text
+Currency
+Money
+CurrencyMismatch
+```
+
+`Currency` encapsule un code alphabétique ASCII de trois caractères et le
+normalise en majuscules. Cette validation garantit la forme du code sans
+introduire prématurément un catalogue externe de devises.
+
+`Money` associe obligatoirement :
+
+```text
+Decimal amount
+Currency currency
+```
+
+Le montant est créé depuis une chaîne au travers de `DecimalFactory`. Les
+additions, soustractions et comparaisons entre devises différentes lèvent
+`CurrencyMismatch`. L’égalité tient compte à la fois du montant numérique et
+de la devise.
+
+Les multiplications, divisions et changements d’échelle exigent une scale et
+un `RoundingMode` explicites. Aucune scale monétaire globale n’est déduite de
+la devise, car cette décision reste conditionnée par le Spike C.
+
+Les montants négatifs restent autorisés au niveau de cette primitive : leur
+validité dépend du contexte métier, par exemple un remboursement ou un
+mouvement de caisse.
+
+### Tests ajoutés
+
+Les tests couvrent :
+
+- normalisation et validation des codes devise ;
+- création exacte depuis une chaîne ;
+- addition et soustraction exactes ;
+- interdiction des opérations entre devises différentes ;
+- multiplication et division avec arrondi explicite ;
+- égalité et comparaison sensibles à la devise ;
+- absence de `float` dans l’API de `Money`.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (55 tests, 163 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(money): add Money and Currency value objects
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.7 — Ajouter Quantity
+
 **Statut : À FAIRE**
 
-Cette étape introduira un montant exact associé à une devise explicite, avec
-interdiction des opérations entre devises incompatibles et politique d’arrondi
-explicite.
+`Quantity` utilisera `Decimal` sans figer la précision technique commune, qui
+reste une question ouverte à valider par le Spike C.
 
 ---
 
