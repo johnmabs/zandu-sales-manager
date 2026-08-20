@@ -2609,11 +2609,62 @@ docs(status): close API foundation
 
 ### Epic 0.6 — Authentication foundation
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- Symfony SecurityBundle et LexikJWTAuthenticationBundle 3.2 sont installés ;
+- `/api/auth/login` authentifie un principal Zandu par email/mot de passe ;
+- les mots de passe sont comparés par le hasher Symfony et seul un hash de
+  bootstrap est fourni par configuration ;
+- les access tokens JWT sont courts, signés par une paire de clés générée hors
+  Git et portent `actorId`, `organizationId` et `userId` ;
+- les clés JWT sont générables par `make auth-keys`, également exécuté en CI ;
+- les refresh sessions sont persistées dans PostgreSQL sous le schema
+  `identity_access` ;
+- seul le SHA-256 du refresh token opaque est persisté ;
+- chaque refresh remplace le token courant sous verrou transactionnel ;
+- tous les hashes déjà utilisés sont conservés pour détecter un replay ;
+- la réutilisation d’un ancien token révoque toute la session ;
+- `/api/auth/logout` révoque explicitement la refresh session ;
+- `ActorContextResolver` dérive acteur, tenant, user, session, corrélation et
+  instant d’authentification exclusivement du principal et du JWT côté serveur.
+
+### Persistence et validations
+
+La migration `Version20260820223000` a été appliquée sur PostgreSQL réel. La
+table `identity_access.refresh_session` et son index utilisateur ont été
+vérifiés, puis Doctrine a confirmé que les migrations sont à jour.
+
+```text
+PHPUnit local et Docker : OK (109 tests, 311 assertions)
+Login valide/invalide : testé
+JWT utilisé sur une route protégée : testé
+Rotation et rejet du replay : testés
+Logout/révocation : testés
+ActorContext serveur : testé
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commits
+
+```text
+feat(auth): add JWT access token authentication
+feat(auth): add rotating refresh token sessions
+feat(auth): resolve ActorContext from authenticated identity
+docs(status): close authentication foundation
+```
+
+## Prochaine étape
+
+### Epic 0.7 — Spikes architecturaux
+
 **Statut : À FAIRE**
 
-Installer Symfony Security, rendre opérationnels les access tokens JWT et les
-refresh sessions avec rotation/révocation, puis construire `ActorContext`
-uniquement depuis l’identité authentifiée.
+Exécuter et documenter les spikes CompleteSale, Outbox, Decimal et concurrence
+de stock avec PostgreSQL réel.
 
 ---
 
@@ -2634,7 +2685,7 @@ uniquement depuis l’identité authentifiée.
 [x] persistence foundation validée
 [x] SharedKernel foundation validée
 [x] API foundation validée
-[ ] authentication foundation validée
+[x] authentication foundation validée
 [ ] architectural spikes réalisés
 [ ] exploitation et observabilité minimales validées
 [ ] documentation finale du Lot 0 à jour
