@@ -34,5 +34,8 @@ services:
     Zandu\SharedKernel\Identity\IdGenerator:
         alias: Zandu\Platform\Identity\SymfonyUuidV7Generator
 
+    Zandu\SharedKernel\Time\Clock:
+        alias: Zandu\Platform\Time\SystemClock
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
