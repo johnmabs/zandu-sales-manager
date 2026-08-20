@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint architecture shell logs ps
+.PHONY: install start stop restart test lint architecture shell logs ps database-create database-migrate database-status database-rollback
 
 install:
 	docker compose build
@@ -36,3 +36,15 @@ architecture:
 	docker compose exec backend vendor/bin/deptrac analyse \
 		--config-file=deptrac.modules.php \
 		--no-cache
+
+database-create:
+	docker compose exec backend php bin/console doctrine:database:create --if-not-exists
+
+database-migrate:
+	docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction
+
+database-status:
+	docker compose exec backend php bin/console doctrine:migrations:status
+
+database-rollback:
+	docker compose exec backend php bin/console doctrine:migrations:migrate prev --no-interaction
