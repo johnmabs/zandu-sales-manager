@@ -38,6 +38,6 @@ final class ApplicationErrorExceptionSubscriber implements EventSubscriberInterf
             'correlationId' => $correlationId instanceof CorrelationId
                 ? $correlationId->toString()
                 : null,
-        ], Response::HTTP_UNPROCESSABLE_ENTITY));
+        ], $exception->statusCode()));
     }
 }

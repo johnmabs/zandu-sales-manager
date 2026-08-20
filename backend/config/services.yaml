@@ -50,5 +50,12 @@ services:
             $organizationId: "%env(AUTH_BOOTSTRAP_ORGANIZATION_ID)%"
             $userId: "%env(AUTH_BOOTSTRAP_USER_ID)%"
 
+    Zandu\Platform\Auth\Refresh\RefreshSessionStore:
+        alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\DbalRefreshSessionStore
+
+    Zandu\Platform\Auth\Refresh\RefreshSessionManager:
+        arguments:
+            $ttlSeconds: "%env(int:AUTH_REFRESH_TTL)%"
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

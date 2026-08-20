@@ -1,0 +1,3 @@
+services:
+    Zandu\Platform\Auth\Refresh\RefreshSessionStore:
+        alias: Zandu\Platform\Auth\Refresh\InMemoryRefreshSessionStore
