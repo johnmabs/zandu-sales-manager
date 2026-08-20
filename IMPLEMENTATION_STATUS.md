@@ -2291,10 +2291,91 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ##### 0.4.8.2 — Ajouter ActorContext
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+La structure `ActorContext` suit la baseline DDD :
+
+```text
+ActorContext
+├── ActorId actorId
+├── OrganizationId organizationId
+├── ActorType actorType
+├── UserId? userId
+├── SessionId? sessionId
+├── CorrelationId correlationId
+└── DateTimeImmutable authenticatedAt
+```
+
+`ActorType` distingue :
+
+```text
+User
+ServiceAccount
+System
+```
+
+Les types `ActorId`, `UserId` et `SessionId` complètent les identifiants typés
+du `SharedKernel`. `CorrelationId` a été introduit comme prérequis direct du
+contexte d’exécution conformément à la spécification.
+
+`ActorContext` est immuable. Il fournit à l’Application Layer l’acteur et la
+portée tenant de confiance ; les futurs adaptateurs d’authentification devront
+le construire depuis l’identité authentifiée et jamais depuis les champs
+libres d’un payload métier.
+
+Les acteurs `ServiceAccount` et `System` peuvent exister sans `UserId` ni
+`SessionId`. Les permissions, rôles et memberships restent hors de cette
+primitive et appartiendront au bounded context Identity & Access.
+
+### Tests ajoutés
+
+Les tests vérifient :
+
+- la conservation de l’acteur, du tenant et de la corrélation ;
+- les références optionnelles `UserId` et `SessionId` ;
+- la prise en charge des acteurs user, service account et system ;
+- l’immutabilité du contexte.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (69 tests, 223 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(context): add ActorContext and actor identity types
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+#### Prochaine sous-étape
+
+##### 0.4.8.3 — Compléter les identifiants de causalité
+
 **Statut : À FAIRE**
 
-`ActorContext` devra fournir l’acteur et la portée tenant de l’exécution sans
-accepter ces valeurs depuis les payloads métier.
+`CorrelationId` existe désormais. La prochaine sous-étape ajoutera
+`CausationId` et vérifiera que ces deux concepts restent distincts, comme
+l’exigent la baseline et l’ADR-0013.
 
 ---
 
