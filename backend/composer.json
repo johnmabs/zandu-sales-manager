@@ -7,6 +7,8 @@
         "php": "^8.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "api-platform/doctrine-orm": "^4.2",
+        "api-platform/symfony": "^4.2",
         "brick/math": "^0.14",
         "doctrine/doctrine-bundle": "^3.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",

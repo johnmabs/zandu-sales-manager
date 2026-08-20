@@ -1,0 +1,10 @@
+api_platform:
+    title: Zandu Sales Manager API
+    version: 0.1.0
+    mapping:
+        paths:
+            - '%kernel.project_dir%/src/ApiResource'
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
