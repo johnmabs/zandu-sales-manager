@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+use Deptrac\Deptrac\Contract\Config\Collector\BoolConfig;
+use Deptrac\Deptrac\Contract\Config\Collector\ClassLikeConfig;
+use Deptrac\Deptrac\Contract\Config\DeptracConfig;
+use Deptrac\Deptrac\Contract\Config\Layer;
+use Deptrac\Deptrac\Contract\Config\Ruleset;
+
+return static function (DeptracConfig $config): void {
+    $salesContract = Layer::withName('SalesContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*'
+        ),
+    );
+
+    $inventoryContract = Layer::withName('InventoryContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Inventory\\Application\\Contract\\.*'
+        ),
+    );
+
+    $cashManagementContract = Layer::withName('CashManagementContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*'
+        ),
+    );
+
+    $sales = Layer::withName('Sales')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Sales\\.*'
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*'
+                ),
+            ],
+        ),
+    );
+
+    $inventory = Layer::withName('Inventory')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Inventory\\.*'
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Inventory\\Application\\Contract\\.*'
+                ),
+            ],
+        ),
+    );
+
+    $cashManagement = Layer::withName('CashManagement')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\CashManagement\\.*'
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*'
+                ),
+            ],
+        ),
+    );
+
+    $config
+        ->paths('./src')
+        ->layers(
+            $sales,
+            $salesContract,
+            $inventory,
+            $inventoryContract,
+            $cashManagement,
+            $cashManagementContract,
+        )
+        ->rulesets(
+            Ruleset::forLayer($sales)
+                ->accesses(
+                    $inventoryContract,
+                    $cashManagementContract,
+                ),
+
+            Ruleset::forLayer($inventory),
+
+            Ruleset::forLayer($cashManagement),
+
+            Ruleset::forLayer($salesContract),
+
+            Ruleset::forLayer($inventoryContract),
+
+            Ruleset::forLayer($cashManagementContract),
+        );
+};

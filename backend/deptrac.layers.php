@@ -46,7 +46,6 @@ return static function (DeptracConfig $config): void {
 
     $config
         ->paths('./src')
-        ->excludeFiles('#.*Tests?.*#')
         ->layers(
             $domain,
             $application,
