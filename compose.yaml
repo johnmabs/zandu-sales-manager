@@ -1,0 +1,41 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-zandu}
+      POSTGRES_USER: ${POSTGRES_USER:-zandu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zandu}
+    command: ["tail", "-f", "/dev/null"]
+
+  postgres:
+    image: postgres:18-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zandu}
+      POSTGRES_USER: ${POSTGRES_USER:-zandu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zandu}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-zandu} -d ${POSTGRES_DB:-zandu}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  postgres_data:
