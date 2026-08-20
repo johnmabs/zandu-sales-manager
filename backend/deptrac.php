@@ -10,37 +10,37 @@ use Deptrac\Deptrac\Contract\Config\Ruleset;
 return static function (DeptracConfig $config): void {
     $domain = Layer::withName('Domain')->collectors(
         ClassLikeConfig::create(
-            '^Zandu\\\\Modules\\\\[^\\\\]+\\\\Domain\\\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Domain\\.*'
         ),
     );
 
     $application = Layer::withName('Application')->collectors(
         ClassLikeConfig::create(
-            '^Zandu\\\\Modules\\\\[^\\\\]+\\\\Application\\\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Application\\.*'
         ),
     );
 
     $infrastructure = Layer::withName('Infrastructure')->collectors(
         ClassLikeConfig::create(
-            '^Zandu\\\\Modules\\\\[^\\\\]+\\\\Infrastructure\\\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Infrastructure\\.*'
         ),
     );
 
     $presentation = Layer::withName('Presentation')->collectors(
         ClassLikeConfig::create(
-            '^Zandu\\\\Modules\\\\[^\\\\]+\\\\Presentation\\\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Presentation\\.*'
         ),
     );
 
     $sharedKernel = Layer::withName('SharedKernel')->collectors(
         ClassLikeConfig::create(
-            '^Zandu\\\\SharedKernel\\\\.*'
+            '.*Zandu\\SharedKernel\\.*'
         ),
     );
 
     $platform = Layer::withName('Platform')->collectors(
         ClassLikeConfig::create(
-            '^Zandu\\\\Platform\\\\.*'
+            '.*Zandu\\Platform\\.*'
         ),
     );
 
