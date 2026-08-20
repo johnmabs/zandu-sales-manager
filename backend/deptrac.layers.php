@@ -62,6 +62,12 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $brickMath = Layer::withName('BrickMath')->collectors(
+        ClassLikeConfig::create(
+            '.*Brick\\Math\\.*'
+        ),
+    );
+
     $config
         ->paths('./src')
         ->layers(
@@ -74,6 +80,7 @@ return static function (DeptracConfig $config): void {
             $symfony,
             $doctrine,
             $apiPlatform,
+            $brickMath,
         )
         ->rulesets(
             Ruleset::forLayer($domain)
@@ -110,6 +117,7 @@ return static function (DeptracConfig $config): void {
                 ->accesses(
                     $sharedKernel,
                     $symfony,
+                    $brickMath,
                 ),
         );
 };

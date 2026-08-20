@@ -80,6 +80,7 @@ ainsi que les dépendances vers certains frameworks :
 Symfony
 Doctrine
 ApiPlatform
+BrickMath
 ```
 
 ---
@@ -188,7 +189,8 @@ Dépendances actuellement autorisées :
 ```text
 Platform
 ├── SharedKernel
-└── Symfony
+├── Symfony
+└── BrickMath
 ```
 
 `Platform` héberge les mécanismes techniques transversaux explicitement prévus par l’architecture.
@@ -196,6 +198,10 @@ Platform
 La dépendance vers Symfony permet notamment d’y implémenter les abstractions
 techniques du `SharedKernel`, comme la génération UUID v7 prévue par
 l’ADR-0007. Elle n’autorise pas `SharedKernel` à dépendre de Symfony.
+
+La dépendance vers BrickMath permet l’implémentation de l’arithmétique décimale
+exacte prévue par l’ADR-0008. Les contrats `Decimal`, `DecimalFactory` et
+`RoundingMode` restent indépendants de `Brick\Math`.
 
 ---
 
