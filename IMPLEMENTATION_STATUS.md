@@ -1624,7 +1624,7 @@ Les futurs bounded contexts devront suivre la stratégie de persistence définie
 Epic 0.1   TERMINÉ   Initialisation du repository backend
 Epic 0.2   TERMINÉ   Fitness tests d’architecture
 Epic 0.3   TERMINÉ   Persistence foundation
-Epic 0.4   À FAIRE   SharedKernel foundation
+Epic 0.4   EN COURS  SharedKernel foundation
 Epic 0.5   À FAIRE   API foundation
 Epic 0.6   À FAIRE   Authentication foundation
 Epic 0.7   À FAIRE   Architectural spikes
@@ -1638,7 +1638,7 @@ Gate Lot 0 À FAIRE   Validation finale de l’architecture exécutable
 
 ## Epic 0.4 — SharedKernel foundation
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
 Objectif général : introduire uniquement les primitives réellement transversales nécessaires au Lot 0 et aux premiers bounded contexts, sans transformer `SharedKernel` en module métier global.
 
@@ -1651,7 +1651,79 @@ Contraintes :
 - les règles Deptrac existantes restent vertes ;
 - les décisions encore ouvertes dans les ADR ou la baseline ne doivent pas être figées prématurément.
 
-Les sous-étapes et commits atomiques seront définis au démarrage de l’Epic.
+## 0.4.1 — Ajouter l’abstraction UUID
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le namespace `Zandu\SharedKernel\Identity` expose désormais les contrats :
+
+```text
+Uuid
+UuidFactory
+IdGenerator
+```
+
+`Uuid` définit une représentation textuelle et une égalité par valeur.
+`UuidFactory` reconstruit un UUID depuis sa représentation textuelle.
+`IdGenerator` fournit un nouvel UUID sans exposer la technologie utilisée pour
+le générer.
+
+Ces contrats ne dépendent ni de Symfony, ni de Doctrine, ni d’une autre
+bibliothèque externe. La validation des UUID et la génération UUID v7 seront
+portées par l’implémentation `Platform` prévue à l’étape suivante.
+
+### Tests ajoutés
+
+Les tests vérifient que les contrats permettent :
+
+- la reconstruction d’un UUID par une factory ;
+- la génération d’un identifiant par un générateur ;
+- la comparaison des UUID par valeur.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+php bin/phpunit
+composer validate --no-check-publish
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (4 tests, 5 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(identity): add UUID abstraction
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.2 — Implémenter UUID v7 avec Symfony UID
+
+**Statut : À FAIRE**
+
+Implémentations prévues dans `Platform` :
+
+```text
+SymfonyUuid
+SymfonyUuidFactory
+SymfonyUuidV7Generator
+```
 
 ---
 
