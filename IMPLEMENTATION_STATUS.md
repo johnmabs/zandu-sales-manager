@@ -2429,10 +2429,76 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ##### 0.4.8.4 — Ajouter IdempotencyKey
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le `SharedKernel` expose désormais une primitive immuable `IdempotencyKey`.
+Elle reste indépendante de `CorrelationId` et `CausationId` : sa valeur est
+opaque et n’impose ni UUID ni format propre à un transport.
+
+Ses invariants minimaux sont :
+
+- une valeur non vide et non composée uniquement d’espaces ;
+- une longueur maximale de 255 octets ;
+- une conservation exacte de la valeur fournie ;
+- une égalité sensible à la casse.
+
+Le futur traitement HTTP de l’Epic 0.5 pourra construire cette primitive à
+partir de l’en-tête `Idempotency-Key` sans déplacer les règles métier dans
+l’adaptateur Symfony.
+
+### Tests ajoutés
+
+Les tests vérifient :
+
+- la conservation d’une valeur opaque ;
+- l’égalité exacte et sensible à la casse ;
+- le rejet des valeurs vides, blanches ou supérieures à 255 octets ;
+- l’acceptation de la longueur maximale ;
+- l’immutabilité de la primitive.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+make lint
+make test
+make architecture
+```
+
+Résultats locaux et Docker :
+
+```text
+PHPUnit : OK (79 tests, 239 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(idempotency): add IdempotencyKey
+```
+
+Le commit est réalisé avec l’identité Git configurée de l’utilisateur.
+
+#### Prochaine sous-étape
+
+##### 0.4.8.5 — Ajouter DomainError et Result
+
 **Statut : À FAIRE**
 
-Ajouter une primitive `IdempotencyKey` indépendante des identifiants de
-corrélation et de causalité, puis définir et tester ses invariants minimaux.
+Définir les primitives d’erreur et de résultat attendues par les futures
+commandes applicatives, sans dépendance Symfony et sans exposer d’exception
+technique comme contrat métier.
 
 ---
 
