@@ -1966,10 +1966,96 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.5 — Implémenter Decimal avec brick/math
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+`brick/math` 0.14 est installé comme dépendance de production.
+
+L’implémentation réside dans `Platform\Decimal` :
+
+```text
+BrickDecimal
+BrickDecimalFactory
+```
+
+`BrickDecimal` adapte `Brick\Math\BigDecimal` au contrat `Decimal`. Les huit
+modes `RoundingMode` du `SharedKernel` sont traduits exhaustivement vers leurs
+équivalents Brick sans exposer ceux-ci aux consommateurs.
+
+La factory convertit les chaînes valides en décimaux exacts et traduit les
+erreurs de format Brick en `InvalidArgumentException` standard.
+
+Le conteneur Symfony relie :
+
+```text
+DecimalFactory → BrickDecimalFactory
+```
+
+### Protection architecturale
+
+Le fitness test possède désormais un layer `BrickMath` explicite.
+
+```text
+Platform → BrickMath       ✓
+SharedKernel → BrickMath   ✗
+Domain → BrickMath         ✗
+```
+
+La documentation des fitness tests a été mise à jour conformément à
+l’ADR-0008.
+
+### Tests ajoutés
+
+Les tests couvrent :
+
+- le rejet d’une chaîne décimale invalide ;
+- l’arithmétique exacte, notamment `0.1 + 0.2 = 0.3` ;
+- addition, soustraction et multiplication ;
+- division avec scale et arrondi explicites ;
+- rejet d’un résultat inexact avec `Unnecessary` ;
+- traduction des huit modes d’arrondi ;
+- égalité et comparaison numériques indépendantes de la scale ;
+- détection de zéro et de valeur négative.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (41 tests, 114 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(decimal): implement decimal operations with brick math
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.6 — Ajouter Money et Currency
+
 **Statut : À FAIRE**
 
-L’implémentation devra résider dans `Platform`, traduire les huit modes
-d’arrondi et conserver `Brick\Math` hors des contrats du `SharedKernel`.
+Cette étape introduira un montant exact associé à une devise explicite, avec
+interdiction des opérations entre devises incompatibles et politique d’arrondi
+explicite.
 
 ---
 
