@@ -2209,7 +2209,7 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.8 — Ajouter les primitives d’exécution nécessaires
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
 Les primitives seront introduites par petits lots atomiques selon leur besoin :
 
@@ -2225,6 +2225,76 @@ Result
 
 La première sous-étape sera l’abstraction `Clock`, sans regrouper artificiellement
 toutes les primitives dans un même commit.
+
+#### 0.4.8.1 — Ajouter Clock
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le `SharedKernel` expose le contrat :
+
+```text
+Clock::now(): DateTimeImmutable
+```
+
+`Platform\Time\SystemClock` fournit l’implémentation système et retourne
+explicitement l’heure UTC. Le conteneur Symfony relie :
+
+```text
+Clock → SystemClock
+```
+
+Une implémentation `FrozenClock` est disponible dans les tests afin de rendre
+les comportements temporels déterministes sans modifier l’horloge système.
+
+Le contrat dépend uniquement de `DateTimeImmutable`, jamais de Symfony.
+
+### Tests ajoutés
+
+Les tests vérifient :
+
+- que l’horloge système retourne un instant compris entre les bornes mesurées ;
+- que le fuseau retourné est UTC ;
+- qu’une horloge figée retourne toujours la même instance immuable.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (65 tests, 211 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(time): add Clock abstraction
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+#### Prochaine sous-étape
+
+##### 0.4.8.2 — Ajouter ActorContext
+
+**Statut : À FAIRE**
+
+`ActorContext` devra fournir l’acteur et la portée tenant de l’exécution sans
+accepter ces valeurs depuis les payloads métier.
 
 ---
 
