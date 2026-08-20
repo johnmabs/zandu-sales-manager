@@ -2,7 +2,7 @@
 
 Ce document suit l’avancement réel de l’implémentation de **Zandu Sales Manager** à partir du **Lot 0 — Architecture exécutable**.
 
-Il ne remplace ni la spécification DDD, ni les ADR, ni le backlog du Lot 0.
+Il ne remplace ni la spécification DDD, ni les ADR, ni le backlog du Lot 0.  
 Son rôle est de conserver une trace simple de ce qui a effectivement été réalisé dans le repository.
 
 ---
@@ -18,8 +18,6 @@ Son rôle est de conserver une trace simple de ce qui a effectivement été réa
 # Epic 0.1 — Initialisation du repository backend
 
 **Statut : TERMINÉ**
-
----
 
 ## 0.1.1 — Initialiser Symfony
 
@@ -380,7 +378,7 @@ Le port PostgreSQL est exposé localement :
 5432:5432
 ```
 
-Aucune installation Doctrine n’a été introduite.
+Aucune installation Doctrine n’a été introduite à cette étape.
 
 Aucune migration ni table métier n’a été créée.
 
@@ -429,7 +427,7 @@ $pdo = new PDO(
     getenv("POSTGRES_PASSWORD")
 );
 
-echo $pdo->query("SELECT current_database()")->fetchColumn(), PHP_EOL;
+echo $pdo->query("SELECT current_database()")\->fetchColumn(), PHP_EOL;
 '
 ```
 
@@ -469,9 +467,9 @@ make logs
 make ps
 ```
 
-Les commandes Doctrine de création/migration de base ne sont pas encore exposées, Doctrine n’étant pas encore installé.
+Les commandes Doctrine de création/migration de base n’étaient pas encore exposées à cette étape, Doctrine n’étant pas encore installé.
 
-Elles seront ajoutées lors de l’Epic de persistence.
+Elles ont été ajoutées lors de l’Epic de persistence.
 
 ### Validations exécutées
 
@@ -620,7 +618,7 @@ Après suppression des probes, l’analyse est revenue au vert.
 build(architecture): configure dependency layers
 ```
 
-ou, si la correction des collectors a nécessité un commit séparé :
+La correction des collectors peut être conservée dans un commit correctif atomique dédié si elle a déjà été séparée dans l’historique :
 
 ```text
 fix(architecture): correct Deptrac collectors
@@ -797,8 +795,6 @@ Les probes temporaires ont été supprimés après validation.
 ```text
 build(architecture): enforce bounded context boundaries
 ```
-
-si cette règle a été commitée séparément.
 
 ---
 
@@ -1051,13 +1047,11 @@ Le probe temporaire a ensuite été supprimé et l’analyse est revenue au vert
 
 ### Doctrine et API Platform
 
-Les règles sont configurées dès maintenant.
+Les règles ont été configurées dès cette étape.
 
-Doctrine ORM et API Platform n’étant pas encore installés à cette étape, aucune dépendance n’a été ajoutée artificiellement uniquement pour tester ces deux collectors.
+Doctrine a ensuite été installé dans l’Epic 0.3 et l’interdiction `Domain → Doctrine` a été revalidée avec une dépendance réelle.
 
-Les interdictions seront revalidées avec des classes réelles lorsque ces frameworks seront introduits dans les Epics concernés.
-
-Cette validation différée ne remet pas en cause la règle actuellement définie dans `deptrac.layers.php`.
+API Platform n’est pas encore installé ; sa validation réelle sera rejouée lors de son introduction.
 
 ### Commit atomique
 
@@ -1160,9 +1154,11 @@ Domain → Doctrine      ✗
 Domain → ApiPlatform   ✗
 ```
 
-La protection contre Symfony a été validée par une violation réelle.
+La protection contre Symfony a été validée par une violation réelle dans l’Epic 0.2.
 
-Les protections Doctrine et API Platform seront rejouées avec des dépendances réelles lors de leur installation.
+La protection contre Doctrine a été revalidée avec Doctrine réellement installé dans l’Epic 0.3.
+
+La protection contre API Platform sera rejouée avec une dépendance réelle lors de son installation.
 
 ---
 
@@ -1230,150 +1226,430 @@ Une dépendance interne cross-context ne peut donc pas contourner l’API applic
 
 ### Validation différée explicitement enregistrée
 
-Les règles Doctrine et API Platform sont déjà configurées.
+La règle API Platform est déjà configurée.
 
-Leur validation à partir de dépendances réelles sera rejouée au moment de l’installation respective de Doctrine et API Platform.
+Sa validation à partir d’une dépendance réelle sera rejouée au moment de l’installation d’API Platform.
 
 Aucun package n’est installé prématurément uniquement pour satisfaire un fitness test.
+
+---
+
+# Epic 0.3 — Persistence foundation
+
+**Statut : TERMINÉ**
+
+Objectif : introduire la persistence PostgreSQL applicative avec Doctrine sans violer les frontières DDD déjà rendues exécutables.
+
+---
+
+## 0.3.1 — Installer la stack Doctrine
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+La stack de persistence Doctrine a été introduite dans le backend Symfony.
+
+Composants disponibles :
+
+```text
+Doctrine ORM
+Doctrine DBAL
+DoctrineBundle
+Doctrine Migrations
+Doctrine Migrations Bundle
+```
+
+Doctrine reste une dépendance d’infrastructure.
+
+Aucune dépendance Doctrine n’a été introduite dans le `Domain`.
+
+### Validation architecturale
+
+Après installation réelle de Doctrine, le fitness test différé de l’Epic 0.2 a été rejoué avec une dépendance temporaire :
+
+```text
+Domain
+→ Doctrine\ORM\EntityManagerInterface
+```
+
+Deptrac a correctement rejeté cette dépendance.
+
+Le probe temporaire a ensuite été supprimé et :
+
+```bash
+make architecture
+```
+
+est revenu au vert.
+
+### Commit atomique
+
+```text
+build(persistence): add Doctrine persistence stack
+```
+
+---
+
+## 0.3.2 — Configurer Doctrine sur PostgreSQL
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Doctrine DBAL utilise PostgreSQL comme base transactionnelle serveur.
+
+La connexion applicative est configurée via :
+
+```text
+DATABASE_URL
+```
+
+Le backend Docker utilise le hostname interne :
+
+```text
+postgres
+```
+
+Le service PostgreSQL reste configuré à partir de :
+
+```text
+POSTGRES_DB
+POSTGRES_USER
+POSTGRES_PASSWORD
+POSTGRES_PORT
+```
+
+La connexion DBAL a été validée avec :
+
+```bash
+docker compose exec backend php bin/console dbal:run-sql \
+  "SELECT current_database(), current_user"
+```
+
+La base utilisée est :
+
+```text
+zandu
+```
+
+Aucun SQLite serveur n’est introduit.
+
+### Commit atomique
+
+```text
+feat(persistence): configure PostgreSQL connection
+```
+
+---
+
+## Correction de l’environnement Symfony local
+
+**Statut : TERMINÉ**
+
+### Problème observé
+
+Le backend Docker local fonctionnait initialement avec la configuration Symfony :
+
+```text
+APP_ENV=prod
+```
+
+Cela provoquait notamment des difficultés liées au cache pendant le développement.
+
+### Correction
+
+L’environnement Docker local utilise désormais explicitement :
+
+```text
+APP_ENV=dev
+APP_DEBUG=1
+```
+
+Le runtime PHP peut continuer à utiliser :
+
+```text
+php.ini-production
+```
+
+Cette configuration PHP est indépendante de l’environnement Symfony.
+
+Convention retenue :
+
+```text
+Développement local
+APP_ENV=dev
+APP_DEBUG=1
+
+Tests
+APP_ENV=test
+
+Production
+APP_ENV=prod
+APP_DEBUG=0
+```
+
+### Validations exécutées
+
+```bash
+docker compose up -d --force-recreate backend
+docker compose exec backend php bin/console about
+```
+
+Le backend local fonctionne désormais avec Symfony en environnement `dev`.
+
+### Commit atomique
+
+```text
+fix(dev): run local backend in Symfony dev environment
+```
+
+---
+
+## 0.3.3 — Matérialiser les schemas PostgreSQL des bounded contexts
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Une migration Doctrine initiale matérialise les schemas PostgreSQL correspondant aux bounded contexts actuellement présents :
+
+```text
+sales
+inventory
+cash_management
+```
+
+Aucune table métier ou fausse entité Doctrine n’a été créée uniquement pour initialiser la persistence.
+
+La migration respecte donc la séparation :
+
+```text
+bounded context
+→ schema PostgreSQL logique
+```
+
+### Migration
+
+Le `up()` crée :
+
+```text
+sales
+inventory
+cash_management
+```
+
+Le `down()` supprime ces schemas.
+
+### Validations exécutées
+
+Migration appliquée :
+
+```bash
+docker compose exec backend php bin/console doctrine:migrations:migrate \
+  --no-interaction
+```
+
+Schemas vérifiés via DBAL/PostgreSQL.
+
+Le rollback a également été exécuté et les schemas ont disparu comme attendu.
+
+La migration a ensuite été réappliquée afin de remettre la base dans son état cible.
+
+### Commit atomique
+
+```text
+feat(persistence): add bounded context schemas migration
+```
+
+---
+
+## 0.3.4 — Ajouter les commandes de persistence au bootstrap développeur
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Le `Makefile` expose désormais des commandes pour la persistence.
+
+Commandes disponibles :
+
+```text
+make database-create
+make database-migrate
+make database-status
+make database-sql
+```
+
+Exemple :
+
+```bash
+make database-sql SQL="SELECT current_database(), current_user"
+```
+
+Ces commandes complètent le bootstrap développeur introduit dans l’Epic 0.1.
+
+### Commit atomique
+
+```text
+chore(dev): add persistence commands
+```
+
+---
+
+## 0.3.5 — Valider les frontières Doctrine
+
+**Statut : TERMINÉ**
+
+La règle suivante est désormais validée avec Doctrine réellement installé :
+
+```text
+Domain → Doctrine ✗
+```
+
+Les mappings, repositories et autres implémentations Doctrine devront rester dans les couches d’infrastructure appropriées.
+
+Aucun mapping Doctrine n’est introduit dans le modèle de domaine.
+
+---
+
+# Décisions de persistence actuellement actives
+
+## PostgreSQL
+
+PostgreSQL est la base transactionnelle serveur.
+
+```text
+Backend
+   ↓
+Doctrine DBAL / ORM
+   ↓
+PostgreSQL
+```
+
+SQLite n’est pas utilisé comme base serveur.
+
+---
+
+## Doctrine
+
+Doctrine suit une stratégie :
+
+```text
+ORM first, not ORM only
+```
+
+Doctrine ORM est disponible pour les cas adaptés au modèle.
+
+Doctrine DBAL ou du SQL explicite pourront être utilisés sur les chemins critiques lorsque les contraintes de concurrence ou de performance le justifieront.
+
+Cette décision sera notamment affinée par les architectural spikes du Lot 0.
+
+---
+
+## Séparation DDD
+
+Doctrine appartient à l’infrastructure.
+
+```text
+Domain
+    ↓
+Doctrine
+    ✗
+```
+
+Les aggregates ne doivent pas dépendre directement :
+
+```text
+Doctrine\ORM
+Doctrine\DBAL
+Doctrine attributes
+Doctrine repositories
+EntityManager
+```
+
+Les repositories métier seront définis à partir des besoins du domaine et non à partir d’un CRUD générique.
+
+---
+
+## Schemas PostgreSQL
+
+Les premiers bounded contexts utilisent les schemas :
+
+```text
+Sales
+→ sales
+
+Inventory
+→ inventory
+
+CashManagement
+→ cash_management
+```
+
+Les futurs bounded contexts devront suivre la stratégie de persistence définie par l’architecture et les ADR.
+
+---
+
+# Definition of Done — Epic 0.3
+
+```text
+[x] Doctrine ORM installé
+[x] Doctrine DBAL installé
+[x] Doctrine Migrations installé
+[x] connexion Doctrine → PostgreSQL fonctionnelle
+[x] environnement Docker local en Symfony dev
+[x] PostgreSQL reste la base transactionnelle serveur
+[x] SQLite serveur absent
+[x] Domain → Doctrine rejeté par Deptrac
+[x] aucun mapping Doctrine dans Domain
+[x] schemas PostgreSQL par bounded context matérialisés
+[x] migration forward validée
+[x] rollback validé
+[x] migration réappliquée
+[x] commandes persistence disponibles
+[x] make lint vert
+[x] make test vert
+[x] make architecture vert
+[x] CI verte
+```
+
+**Epic 0.3 : TERMINÉ**
 
 ---
 
 # État actuel du Lot 0
 
 ```text
-Epic 0.1  TERMINÉ   Initialisation du repository backend
-Epic 0.2  TERMINÉ   Fitness tests d’architecture
-Epic 0.3  EN COURS  Persistence foundation
-Epic 0.4  À FAIRE   SharedKernel foundation
-Epic 0.5  À FAIRE   API foundation
-Epic 0.6  À FAIRE   Authentication foundation
-Epic 0.7  À FAIRE   Architectural spikes
-Epic 0.8  À FAIRE   Operations & observability
-Gate Lot 0 À FAIRE  Validation finale de l’architecture exécutable
+Epic 0.1   TERMINÉ   Initialisation du repository backend
+Epic 0.2   TERMINÉ   Fitness tests d’architecture
+Epic 0.3   TERMINÉ   Persistence foundation
+Epic 0.4   À FAIRE   SharedKernel foundation
+Epic 0.5   À FAIRE   API foundation
+Epic 0.6   À FAIRE   Authentication foundation
+Epic 0.7   À FAIRE   Architectural spikes
+Epic 0.8   À FAIRE   Operations & observability
+Gate Lot 0 À FAIRE   Validation finale de l’architecture exécutable
 ```
 
 ---
 
 # Prochaine étape
 
-## Epic 0.3 — Persistence foundation
+## Epic 0.4 — SharedKernel foundation
 
-**Statut : EN COURS**
+**Statut : À FAIRE**
 
-Objectif général : introduire la persistence PostgreSQL applicative sans violer les frontières DDD déjà rendues exécutables.
-
-Travaux attendus :
-
-```text
-Doctrine ORM
-Doctrine Migrations
-PostgreSQL
-mapping explicite
-repositories d’infrastructure
-transactions
-optimistic locking / versioning
-migrations réversibles
-tests de persistence
-```
+Objectif général : introduire uniquement les primitives réellement transversales nécessaires au Lot 0 et aux premiers bounded contexts, sans transformer `SharedKernel` en module métier global.
 
 Contraintes :
 
-- PostgreSQL reste la base transactionnelle serveur ;
-- SQLite n’est pas introduit côté serveur ;
-- Doctrine appartient à l’infrastructure ;
-- `Domain` ne dépend jamais de Doctrine ;
-- les mappings Doctrine doivent respecter la séparation des bounded contexts ;
-- aucune dépendance cross-context directe ne doit être introduite par les repositories ;
+- aucune dépendance de `SharedKernel` vers un bounded context ;
+- aucune dépendance vers Doctrine, Symfony ou API Platform ;
+- primitives immuables et explicites ;
+- identifiants et value objects partagés uniquement lorsqu’ils ont réellement le même sens dans plusieurs contextes ;
 - les règles Deptrac existantes restent vertes ;
-- `Domain → Doctrine` devra être revalidé avec une dépendance réelle après installation de Doctrine.
-
-## 0.3.1 — Installer Doctrine ORM, DBAL et Migrations
-
-**Statut : TERMINÉ**
-
-### Réalisé
-
-Les composants `doctrine/doctrine-bundle`,
-`doctrine/doctrine-migrations-bundle` et `doctrine/orm` sont installés et
-chargés par Symfony. Doctrine DBAL utilise la variable d’environnement
-`DATABASE_URL`.
-
-Le cache Symfony `prod`, compilé avant l’installation de Doctrine, a été
-reconstruit. Les commandes `dbal:*`, `doctrine:*` et
-`doctrine:migrations:*` sont désormais enregistrées.
-
-La fixture générée utilise maintenant le namespace applicatif attendu :
-
-```text
-Zandu\DataFixtures\AppFixtures
-```
-
-### Validations exécutées
-
-```bash
-composer validate --no-check-publish
-php bin/console lint:container
-php bin/phpunit
-vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
-vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
-```
-
-Résultats :
-
-```text
-Composer valide
-Conteneur Symfony valide
-PHPUnit : OK (1 test, 1 assertion)
-Deptrac layers : 0 violation, 0 warning, 0 erreur
-Deptrac modules : 0 violation, 0 warning, 0 erreur
-```
-
-## 0.3.2 — Valider la connexion PostgreSQL et les migrations
-
-**Statut : TERMINÉ POUR LA CONFIGURATION — SCHÉMA INITIAL À FAIRE**
-
-### Réalisé
-
-La connexion a été testée depuis le conteneur backend au travers de Doctrine
-DBAL :
-
-```bash
-php bin/console dbal:run-sql \
-    'SELECT current_database() AS database_name, 1 AS connection_ok'
-```
-
-Résultat :
-
-```text
-database_name = zandu
-connection_ok = 1
-```
-
-Le sous-système Doctrine Migrations est opérationnel. La commande
-`doctrine:migrations:status` identifie la base `zandu` et le répertoire
-`migrations/`. Aucune migration n’est encore disponible ou exécutée.
-
-La même suite PHPUnit a été exécutée dans Docker avec PHP 8.5.9 :
-
-```text
-OK (1 test, 1 assertion)
-```
-
-### Validation minimale attendue
-
-```text
-[x] Doctrine installé et configuré
-[x] connexion Doctrine → PostgreSQL fonctionnelle
-[x] Doctrine absent du Domain
-[x] migrations configurées
-[ ] migration initiale exécutable
-[ ] rollback validé
-[ ] stratégie de transaction testée
-[x] make architecture reste vert
-[x] make test reste vert
-[x] make lint reste vert
-[ ] CI reste verte
-```
+- les décisions encore ouvertes dans les ADR ou la baseline ne doivent pas être figées prématurément.
 
 Les sous-étapes et commits atomiques seront définis au démarrage de l’Epic.
 
@@ -1393,7 +1669,7 @@ Les sous-étapes et commits atomiques seront définis au démarrage de l’Epic.
 [x] frontières cross-context protégées
 [x] CI backend opérationnelle
 [x] violation architecturale fait échouer la CI
-[ ] persistence foundation validée
+[x] persistence foundation validée
 [ ] SharedKernel foundation validée
 [ ] API foundation validée
 [ ] authentication foundation validée
@@ -1428,6 +1704,10 @@ chore(database): add local PostgreSQL service
 chore(dev): add architecture validation command
 ci(backend): add initial validation workflow
 docs(architecture): document dependency fitness tests
+build(persistence): add Doctrine persistence stack
+feat(persistence): configure PostgreSQL connection
+feat(persistence): add bounded context schemas migration
+chore(dev): add persistence commands
 ```
 
 À éviter :
