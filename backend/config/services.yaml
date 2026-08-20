@@ -22,6 +22,7 @@ services:
             - "../src/Platform/Decimal/BrickDecimal.php"
             - "../src/Platform/Identity/SymfonyUuid.php"
             - "../src/SharedKernel/Identity/*Id.php"
+            - "../src/SharedKernel/Money/*.php"
 
     Zandu\SharedKernel\Decimal\DecimalFactory:
         alias: Zandu\Platform\Decimal\BrickDecimalFactory
