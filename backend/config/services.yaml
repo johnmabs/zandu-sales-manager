@@ -21,7 +21,9 @@ services:
         exclude:
             - "../src/Platform/Decimal/BrickDecimal.php"
             - "../src/Platform/Identity/SymfonyUuid.php"
+            - "../src/SharedKernel/Context/*.php"
             - "../src/SharedKernel/Identity/*Id.php"
+            - "../src/SharedKernel/Messaging/*Id.php"
             - "../src/SharedKernel/Money/*.php"
             - "../src/SharedKernel/Quantity/*.php"
 
