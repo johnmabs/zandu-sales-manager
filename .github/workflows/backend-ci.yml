@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     name: Backend validation
@@ -13,12 +17,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build backend image
-        run: docker compose build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          load: true
+          tags: zandu-sales-manager-backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: backend/var/composer-cache
+          key: composer-${{ runner.os }}-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-
 
       - name: Install dependencies
         run: >
-          docker compose run --rm backend
+          docker compose run --rm
+          -e COMPOSER_CACHE_DIR=/app/var/composer-cache
+          backend
           composer install
           --no-interaction
           --prefer-dist
