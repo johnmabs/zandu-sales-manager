@@ -14,6 +14,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-zandu}
       POSTGRES_USER: ${POSTGRES_USER:-zandu}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zandu}
+      DATABASE_URL: >-
+        postgresql://${POSTGRES_USER:-zandu}:${POSTGRES_PASSWORD:-zandu}@postgres:5432/${POSTGRES_DB:-zandu}?serverVersion=18&charset=utf8
     command: ["tail", "-f", "/dev/null"]
 
   postgres:

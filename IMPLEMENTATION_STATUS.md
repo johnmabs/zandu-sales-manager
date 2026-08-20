@@ -1243,7 +1243,7 @@ Aucun package n’est installé prématurément uniquement pour satisfaire un fi
 ```text
 Epic 0.1  TERMINÉ   Initialisation du repository backend
 Epic 0.2  TERMINÉ   Fitness tests d’architecture
-Epic 0.3  À FAIRE   Persistence foundation
+Epic 0.3  EN COURS  Persistence foundation
 Epic 0.4  À FAIRE   SharedKernel foundation
 Epic 0.5  À FAIRE   API foundation
 Epic 0.6  À FAIRE   Authentication foundation
@@ -1258,7 +1258,7 @@ Gate Lot 0 À FAIRE  Validation finale de l’architecture exécutable
 
 ## Epic 0.3 — Persistence foundation
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
 Objectif général : introduire la persistence PostgreSQL applicative sans violer les frontières DDD déjà rendues exécutables.
 
@@ -1287,19 +1287,91 @@ Contraintes :
 - les règles Deptrac existantes restent vertes ;
 - `Domain → Doctrine` devra être revalidé avec une dépendance réelle après installation de Doctrine.
 
+## 0.3.1 — Installer Doctrine ORM, DBAL et Migrations
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+Les composants `doctrine/doctrine-bundle`,
+`doctrine/doctrine-migrations-bundle` et `doctrine/orm` sont installés et
+chargés par Symfony. Doctrine DBAL utilise la variable d’environnement
+`DATABASE_URL`.
+
+Le cache Symfony `prod`, compilé avant l’installation de Doctrine, a été
+reconstruit. Les commandes `dbal:*`, `doctrine:*` et
+`doctrine:migrations:*` sont désormais enregistrées.
+
+La fixture générée utilise maintenant le namespace applicatif attendu :
+
+```text
+Zandu\DataFixtures\AppFixtures
+```
+
+### Validations exécutées
+
+```bash
+composer validate --no-check-publish
+php bin/console lint:container
+php bin/phpunit
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+Composer valide
+Conteneur Symfony valide
+PHPUnit : OK (1 test, 1 assertion)
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+## 0.3.2 — Valider la connexion PostgreSQL et les migrations
+
+**Statut : TERMINÉ POUR LA CONFIGURATION — SCHÉMA INITIAL À FAIRE**
+
+### Réalisé
+
+La connexion a été testée depuis le conteneur backend au travers de Doctrine
+DBAL :
+
+```bash
+php bin/console dbal:run-sql \
+    'SELECT current_database() AS database_name, 1 AS connection_ok'
+```
+
+Résultat :
+
+```text
+database_name = zandu
+connection_ok = 1
+```
+
+Le sous-système Doctrine Migrations est opérationnel. La commande
+`doctrine:migrations:status` identifie la base `zandu` et le répertoire
+`migrations/`. Aucune migration n’est encore disponible ou exécutée.
+
+La même suite PHPUnit a été exécutée dans Docker avec PHP 8.5.9 :
+
+```text
+OK (1 test, 1 assertion)
+```
+
 ### Validation minimale attendue
 
 ```text
-[ ] Doctrine installé et configuré
-[ ] connexion Doctrine → PostgreSQL fonctionnelle
-[ ] Doctrine absent du Domain
-[ ] migrations configurées
+[x] Doctrine installé et configuré
+[x] connexion Doctrine → PostgreSQL fonctionnelle
+[x] Doctrine absent du Domain
+[x] migrations configurées
 [ ] migration initiale exécutable
 [ ] rollback validé
 [ ] stratégie de transaction testée
-[ ] make architecture reste vert
-[ ] make test reste vert
-[ ] make lint reste vert
+[x] make architecture reste vert
+[x] make test reste vert
+[x] make lint reste vert
 [ ] CI reste verte
 ```
 
