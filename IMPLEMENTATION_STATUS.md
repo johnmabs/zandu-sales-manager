@@ -2371,11 +2371,68 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ##### 0.4.8.3 — Compléter les identifiants de causalité
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+`CausationId` complète `CorrelationId` dans le namespace `Messaging` du
+`SharedKernel`. Ces deux identifiants reposent sur l’abstraction UUID v7 et
+restent des types distincts, conformément à la baseline et à l’ADR-0013.
+
+Ils expriment deux responsabilités différentes :
+
+- `CorrelationId` relie l’ensemble des opérations d’un même flux ;
+- `CausationId` référence l’opération qui a directement causé un message.
+
+### Tests ajoutés
+
+Les tests vérifient :
+
+- la reconstruction des deux identifiants depuis un UUID v7 ;
+- leur immutabilité ;
+- l’égalité entre identifiants de même type et de même valeur ;
+- leur distinction même lorsque leur valeur UUID est identique.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+make lint
+make test
+make architecture
+```
+
+Résultats locaux et Docker :
+
+```text
+PHPUnit : OK (72 tests, 231 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(messaging): add CausationId
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+#### Prochaine sous-étape
+
+##### 0.4.8.4 — Ajouter IdempotencyKey
+
 **Statut : À FAIRE**
 
-`CorrelationId` existe désormais. La prochaine sous-étape ajoutera
-`CausationId` et vérifiera que ces deux concepts restent distincts, comme
-l’exigent la baseline et l’ADR-0013.
+Ajouter une primitive `IdempotencyKey` indépendante des identifiants de
+corrélation et de causalité, puis définir et tester ses invariants minimaux.
 
 ---
 
