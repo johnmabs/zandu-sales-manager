@@ -20,6 +20,7 @@ services:
         resource: "../src/"
         exclude:
             - "../src/Platform/Identity/SymfonyUuid.php"
+            - "../src/SharedKernel/Identity/*Id.php"
 
     Zandu\SharedKernel\Identity\UuidFactory:
         alias: Zandu\Platform\Identity\SymfonyUuidFactory

@@ -1805,9 +1805,12 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.3 — Ajouter les identifiants métier typés initiaux
 
-**Statut : À FAIRE**
+**Statut : TERMINÉ**
 
-Identifiants prévus par le backlog du Lot 0 :
+### Réalisé
+
+Les identifiants transversaux nécessaires aux premiers bounded contexts sont
+disponibles dans `SharedKernel\Identity` :
 
 ```text
 OrganizationId
@@ -1817,6 +1820,80 @@ SaleId
 StockId
 CashSessionId
 ```
+
+Ils héritent de la primitive immuable `TypedId`, qui encapsule un `Uuid` et
+fournit :
+
+```text
+fromString(value, UuidFactory)
+generate(IdGenerator)
+toString()
+equals(other)
+```
+
+L’égalité exige à la fois la même valeur UUID et le même type métier. Un
+`SaleId` et un `ProductId` restent donc différents même lorsqu’ils encapsulent
+le même UUID.
+
+Les IDs ne dépendent ni de Symfony, ni de Doctrine. Les classes value object
+sont exclues de la découverte automatique des services Symfony ; seules leurs
+factories et générateurs sont des services.
+
+### Tests ajoutés
+
+Les tests couvrent pour chacun des six types :
+
+- la reconstruction depuis une chaîne via `UuidFactory` ;
+- la génération via `IdGenerator` ;
+- la conservation du type concret ;
+- la représentation textuelle ;
+- l’égalité par type et par valeur.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (22 tests, 41 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(identity): add initial typed domain identifiers
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.4 — Ajouter l’abstraction Decimal
+
+**Statut : À FAIRE**
+
+Primitives prévues :
+
+```text
+Decimal
+DecimalFactory
+RoundingMode
+```
+
+Cette étape ne devra exposer ni `brick/math`, ni `float`, et ne figera pas les
+précisions métier encore laissées ouvertes au Spike C.
 
 ---
 
