@@ -18,6 +18,14 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     Zandu\:
         resource: "../src/"
+        exclude:
+            - "../src/Platform/Identity/SymfonyUuid.php"
+
+    Zandu\SharedKernel\Identity\UuidFactory:
+        alias: Zandu\Platform\Identity\SymfonyUuidFactory
+
+    Zandu\SharedKernel\Identity\IdGenerator:
+        alias: Zandu\Platform\Identity\SymfonyUuidV7Generator
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
