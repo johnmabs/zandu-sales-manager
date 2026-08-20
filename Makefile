@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint shell logs ps
+.PHONY: install start stop restart test lint architecture shell logs ps
 
 install:
 	docker compose build
@@ -28,3 +28,11 @@ logs:
 
 ps:
 	docker compose ps
+
+architecture:
+	docker compose exec backend vendor/bin/deptrac analyse \
+		--config-file=deptrac.layers.php \
+		--no-cache
+	docker compose exec backend vendor/bin/deptrac analyse \
+		--config-file=deptrac.modules.php \
+		--no-cache
