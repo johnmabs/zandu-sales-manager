@@ -22,6 +22,7 @@ services:
             - "../src/Platform/Decimal/BrickDecimal.php"
             - "../src/Platform/Identity/SymfonyUuid.php"
             - "../src/SharedKernel/Context/*.php"
+            - "../src/SharedKernel/Error/*.php"
             - "../src/SharedKernel/Identity/*Id.php"
             - "../src/SharedKernel/Idempotency/*.php"
             - "../src/SharedKernel/Messaging/*Id.php"
