@@ -1639,7 +1639,7 @@ Gate Lot 0 À FAIRE   Validation finale de l’architecture exécutable
 
 ## Epic 0.4 — SharedKernel foundation
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 Objectif général : introduire uniquement les primitives réellement transversales nécessaires au Lot 0 et aux premiers bounded contexts, sans transformer `SharedKernel` en module métier global.
 
@@ -2209,7 +2209,7 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.8 — Ajouter les primitives d’exécution nécessaires
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 Les primitives seront introduites par petits lots atomiques selon leur besoin :
 
@@ -2494,11 +2494,75 @@ Le commit est réalisé avec l’identité Git configurée de l’utilisateur.
 
 ##### 0.4.8.5 — Ajouter DomainError et Result
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+`DomainError` porte un code stable en majuscules snake case et un message
+humain non vide. Le code est destiné aux décisions des clients ; le message
+reste descriptif et ne constitue pas un contrat de branchement.
+
+`Result<T>` représente explicitement le succès avec une valeur ou l’échec avec
+un `DomainError`. L’accès à la mauvaise branche échoue immédiatement par une
+`LogicException`, afin de révéler une erreur de programmation sans transformer
+les erreurs métier attendues en exceptions.
+
+Ces deux primitives sont immuables, génériques par annotations PHPDoc et sans
+dépendance Symfony ou Doctrine.
+
+### Tests ajoutés
+
+Les tests vérifient :
+
+- le format et la stabilité du code d’erreur ;
+- le rejet des codes invalides et des messages vides ;
+- les branches succès et échec de `Result` ;
+- l’impossibilité d’accéder à une valeur d’échec ou à l’erreur d’un succès ;
+- l’immutabilité des primitives.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+make lint
+make test
+make architecture
+```
+
+Résultats locaux et Docker :
+
+```text
+PHPUnit : OK (91 tests, 257 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commits
+
+```text
+feat(error): add DomainError and Result primitives
+docs(status): close SharedKernel foundation
+```
+
+L’Epic 0.4 satisfait sa Definition of Done : les contrats du `SharedKernel`
+n’exposent aucune dépendance Symfony ou Brick, les UUID v7 et les décimaux
+exacts sont testés, et aucune primitive numérique n’utilise `float`.
+
+## Prochaine étape
+
+### Epic 0.5 — API foundation
+
 **Statut : À FAIRE**
 
-Définir les primitives d’erreur et de résultat attendues par les futures
-commandes applicatives, sans dépendance Symfony et sans exposer d’exception
-technique comme contrat métier.
+Installer API Platform et rendre exécutable le flux HTTP vers l’Application
+sans exposer directement les entités de persistence.
 
 ---
 
@@ -2517,7 +2581,7 @@ technique comme contrat métier.
 [x] CI backend opérationnelle
 [x] violation architecturale fait échouer la CI
 [x] persistence foundation validée
-[ ] SharedKernel foundation validée
+[x] SharedKernel foundation validée
 [ ] API foundation validée
 [ ] authentication foundation validée
 [ ] architectural spikes réalisés
