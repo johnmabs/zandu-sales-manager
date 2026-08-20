@@ -1273,8 +1273,8 @@ Aucune dépendance Doctrine ou API Platform n’étant encore installée, la str
 [x] fitness tests exécutés dans GitHub Actions
 [x] violation architecturale fait échouer la CI
 [x] suppression de la violation remet la CI au vert
-[ ] Domain explicitement protégé contre Symfony
-[ ] Domain explicitement protégé contre Doctrine
+[x] Domain explicitement protégé contre Symfony
+[x] Domain explicitement protégé contre Doctrine
 [ ] Domain explicitement protégé contre API Platform
 [ ] règles d’architecture documentées dans le repository
 ```
