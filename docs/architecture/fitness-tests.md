@@ -183,14 +183,19 @@ Il ne doit pas devenir un emplacement générique utilisé pour contourner les f
 
 ## 3.6 Platform
 
-Dépendance actuellement autorisée :
+Dépendances actuellement autorisées :
 
 ```text
 Platform
-└── SharedKernel
+├── SharedKernel
+└── Symfony
 ```
 
 `Platform` héberge les mécanismes techniques transversaux explicitement prévus par l’architecture.
+
+La dépendance vers Symfony permet notamment d’y implémenter les abstractions
+techniques du `SharedKernel`, comme la génération UUID v7 prévue par
+l’ADR-0007. Elle n’autorise pas `SharedKernel` à dépendre de Symfony.
 
 ---
 

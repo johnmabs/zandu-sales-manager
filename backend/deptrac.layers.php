@@ -107,6 +107,9 @@ return static function (DeptracConfig $config): void {
             Ruleset::forLayer($sharedKernel),
 
             Ruleset::forLayer($platform)
-                ->accesses($sharedKernel),
+                ->accesses(
+                    $sharedKernel,
+                    $symfony,
+                ),
         );
 };
