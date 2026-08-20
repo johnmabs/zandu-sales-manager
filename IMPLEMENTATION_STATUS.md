@@ -1140,6 +1140,7 @@ Presentation
 
 Platform
 → SharedKernel
+→ Symfony
 ```
 
 Les dépendances non explicitement autorisées sont rejetées.
@@ -1711,18 +1712,110 @@ feat(identity): add UUID abstraction
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
+## 0.4.2 — Implémenter UUID v7 avec Symfony UID
 
-### 0.4.2 — Implémenter UUID v7 avec Symfony UID
+**Statut : TERMINÉ**
 
-**Statut : À FAIRE**
+### Réalisé
 
-Implémentations prévues dans `Platform` :
+Le composant `symfony/uid` 7.4 est installé comme dépendance directe.
+
+Les implémentations suivantes résident dans `Platform` :
 
 ```text
 SymfonyUuid
 SymfonyUuidFactory
 SymfonyUuidV7Generator
+```
+
+`SymfonyUuid` adapte `Symfony\Component\Uid\UuidV7` au contrat `Uuid` du
+`SharedKernel`. La factory reconstruit uniquement des UUID v7 valides et
+traduit les erreurs Symfony en `InvalidArgumentException` standard. Le
+générateur produit de nouveaux UUID v7 sans exposer Symfony aux consommateurs.
+
+Les contrats sont reliés à leurs implémentations dans le conteneur Symfony :
+
+```text
+UuidFactory → SymfonyUuidFactory
+IdGenerator → SymfonyUuidV7Generator
+```
+
+### Ajustement du fitness test
+
+L’ADR-0007 impose l’implémentation Symfony UID dans `Platform`. La règle
+Deptrac autorise donc explicitement :
+
+```text
+Platform → SharedKernel
+Platform → Symfony
+```
+
+Cette autorisation reste limitée à `Platform`. `SharedKernel` demeure sans
+dépendance vers Symfony, Doctrine ou API Platform.
+
+### Tests ajoutés
+
+Les tests couvrent :
+
+- la reconstruction et le round-trip d’un UUID v7 ;
+- l’égalité par valeur ;
+- le rejet d’une chaîne invalide ;
+- le rejet d’une autre version UUID ;
+- la génération d’identifiants v7 distincts.
+
+Le câblage des aliases privés est validé par la compilation du conteneur
+Symfony. Leur consommation de bout en bout sera testée avec le premier service
+applicatif qui dépendra de ces contrats.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+docker compose build
+make lint
+make test
+make architecture
+```
+
+Résultats locaux et Docker :
+
+```text
+PHPUnit : OK (9 tests, 14 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+Image Docker de production : construite avec Symfony UID
+```
+
+### Commit proposé
+
+```text
+feat(identity): implement UUID v7 with Symfony UID
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.3 — Ajouter les identifiants métier typés initiaux
+
+**Statut : À FAIRE**
+
+Identifiants prévus par le backlog du Lot 0 :
+
+```text
+OrganizationId
+StoreId
+ProductId
+SaleId
+StockId
+CashSessionId
 ```
 
 ---
