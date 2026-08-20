@@ -1882,9 +1882,11 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.4 — Ajouter l’abstraction Decimal
 
-**Statut : À FAIRE**
+**Statut : TERMINÉ**
 
-Primitives prévues :
+### Réalisé
+
+Le namespace `Zandu\SharedKernel\Decimal` expose les primitives :
 
 ```text
 Decimal
@@ -1892,8 +1894,82 @@ DecimalFactory
 RoundingMode
 ```
 
-Cette étape ne devra exposer ni `brick/math`, ni `float`, et ne figera pas les
-précisions métier encore laissées ouvertes au Spike C.
+Le contrat `Decimal` définit les opérations exactes d’addition, soustraction
+et multiplication, ainsi que la comparaison, l’égalité et la représentation
+textuelle.
+
+Les opérations susceptibles de perdre de la précision imposent explicitement :
+
+```text
+divide(divisor, scale, roundingMode)
+withScale(scale, roundingMode)
+```
+
+Les modes d’arrondi disponibles sont :
+
+```text
+Unnecessary
+Up
+Down
+Ceiling
+Floor
+HalfUp
+HalfDown
+HalfEven
+```
+
+`DecimalFactory` accepte uniquement une représentation décimale sous forme de
+chaîne. Aucun `float`, type `Brick\Math` ou choix de précision globale n’est
+exposé par ces contrats.
+
+### Tests ajoutés
+
+Les tests vérifient :
+
+- la surface explicite du contrat `Decimal` ;
+- la création uniquement depuis une chaîne ;
+- l’obligation d’un mode d’arrondi pour les opérations avec perte possible ;
+- l’absence de `float` dans toutes les signatures ;
+- l’absence de type `Brick\Math` dans le `SharedKernel` ;
+- la liste exhaustive des modes d’arrondi abstraits.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (28 tests, 92 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(decimal): add exact decimal abstraction
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.5 — Implémenter Decimal avec brick/math
+
+**Statut : À FAIRE**
+
+L’implémentation devra résider dans `Platform`, traduire les huit modes
+d’arrondi et conserver `Brick\Math` hors des contrats du `SharedKernel`.
 
 ---
 
