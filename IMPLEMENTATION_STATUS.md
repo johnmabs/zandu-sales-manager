@@ -2132,10 +2132,99 @@ Le commit est volontairement laissé à l’utilisateur.
 
 ### 0.4.7 — Ajouter Quantity
 
+**Statut : TERMINÉ**
+
+### Réalisé
+
+La primitive immuable `Zandu\SharedKernel\Quantity\Quantity` encapsule un
+`Decimal` exact et peut être créée uniquement depuis une chaîne via
+`DecimalFactory`.
+
+Elle expose :
+
+```text
+add
+subtract
+multiply
+divide
+withScale
+compareTo
+equals
+isZero
+isNegative
+toString
+```
+
+Multiplication, division et changement d’échelle exigent une scale et un
+`RoundingMode` explicites.
+
+Aucune précision commune ni unité de mesure n’est figée. Les valeurs négatives
+restent autorisées dans cette primitive générique afin de représenter des
+deltas signés. Les invariants plus stricts, comme `StockQuantity >= 0` et
+`MovementQuantity > 0`, appartiendront aux types métier spécialisés des
+bounded contexts.
+
+### Tests ajoutés
+
+Les tests couvrent :
+
+- création exacte depuis une chaîne ;
+- addition et soustraction exactes ;
+- multiplication et division avec arrondi explicite ;
+- absence de scale implicite ;
+- comparaison, égalité et prédicats numériques ;
+- prise en charge des deltas négatifs ;
+- absence de `float` dans l’API.
+
+### Validations exécutées
+
+```bash
+composer dump-autoload -o --strict-psr
+composer validate --no-check-publish
+php bin/phpunit
+php bin/console lint:container
+vendor/bin/deptrac analyse --config-file=deptrac.layers.php --no-cache
+vendor/bin/deptrac analyse --config-file=deptrac.modules.php --no-cache
+```
+
+Résultats :
+
+```text
+PHPUnit : OK (63 tests, 204 assertions)
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers : 0 violation, 0 warning, 0 erreur
+Deptrac modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit proposé
+
+```text
+feat(quantity): add exact Quantity value object
+```
+
+Le commit est volontairement laissé à l’utilisateur.
+
+## Prochaine étape
+
+### 0.4.8 — Ajouter les primitives d’exécution nécessaires
+
 **Statut : À FAIRE**
 
-`Quantity` utilisera `Decimal` sans figer la précision technique commune, qui
-reste une question ouverte à valider par le Spike C.
+Les primitives seront introduites par petits lots atomiques selon leur besoin :
+
+```text
+Clock
+ActorContext
+CorrelationId
+CausationId
+IdempotencyKey
+DomainError
+Result
+```
+
+La première sous-étape sera l’abstraction `Clock`, sans regrouper artificiellement
+toutes les primitives dans un même commit.
 
 ---
 
