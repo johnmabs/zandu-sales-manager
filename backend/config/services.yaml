@@ -42,5 +42,13 @@ services:
     Zandu\SharedKernel\Time\Clock:
         alias: Zandu\Platform\Time\SystemClock
 
+    Zandu\Platform\Auth\Security\BootstrapUserProvider:
+        arguments:
+            $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"
+            $passwordHash: "%env(AUTH_BOOTSTRAP_PASSWORD_HASH)%"
+            $actorId: "%env(AUTH_BOOTSTRAP_ACTOR_ID)%"
+            $organizationId: "%env(AUTH_BOOTSTRAP_ORGANIZATION_ID)%"
+            $userId: "%env(AUTH_BOOTSTRAP_USER_ID)%"
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

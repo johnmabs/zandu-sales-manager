@@ -47,6 +47,9 @@ jobs:
           --prefer-dist
           --no-progress
 
+      - name: Generate JWT key pair
+        run: make auth-keys
+
       - name: Start services
         run: docker compose up -d
 

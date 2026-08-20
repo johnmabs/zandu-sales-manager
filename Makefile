@@ -1,8 +1,12 @@
-.PHONY: install start stop restart test lint architecture shell logs ps database-create database-migrate database-rollback database-status database-sql
+.PHONY: install start stop restart test lint architecture auth-keys shell logs ps database-create database-migrate database-rollback database-status database-sql
 
 install:
 	docker compose build
 	docker compose run --rm backend composer install
+	docker compose run --rm backend php bin/console lexik:jwt:generate-keypair --skip-if-exists
+
+auth-keys:
+	docker compose run --rm backend php bin/console lexik:jwt:generate-keypair --skip-if-exists
 
 start:
 	docker compose up -d
