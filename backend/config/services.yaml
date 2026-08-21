@@ -42,6 +42,9 @@ services:
     Zandu\SharedKernel\Time\Clock:
         alias: Zandu\Platform\Time\SystemClock
 
+    Zandu\Modules\Organization\Domain\OrganizationRepository:
+        alias: Zandu\Modules\Organization\Infrastructure\Persistence\Doctrine\DoctrineOrganizationRepository
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"

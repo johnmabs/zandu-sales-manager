@@ -14,6 +14,12 @@ doctrine:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
         mappings:
+            Organization:
+                type: attribute
+                is_bundle: false
+                dir: "%kernel.project_dir%/src/Modules/Organization/Infrastructure/Persistence/Doctrine"
+                prefix: Zandu\Modules\Organization\Infrastructure\Persistence\Doctrine
+                alias: Organization
 
 when@test:
     doctrine:
