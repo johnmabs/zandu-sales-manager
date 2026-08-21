@@ -78,6 +78,12 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $operations = Layer::withName('Operations')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Operations\\.*'
+        ),
+    );
+
     $config
         ->paths('./src')
         ->layers(
@@ -88,6 +94,7 @@ return static function (DeptracConfig $config): void {
             $cashManagement,
             $cashManagementContract,
             $identityAccess,
+            $operations,
         )
         ->rulesets(
             Ruleset::forLayer($sales)
@@ -107,5 +114,7 @@ return static function (DeptracConfig $config): void {
             Ruleset::forLayer($cashManagementContract),
 
             Ruleset::forLayer($identityAccess),
+
+            Ruleset::forLayer($operations),
         );
 };

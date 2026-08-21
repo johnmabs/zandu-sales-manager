@@ -30,7 +30,7 @@ abstract class PostgresTestCase extends TestCase
         try {
             $this->connection->fetchOne('SELECT 1');
         } catch (\Throwable $exception) {
-            if (str_contains($url, '@postgres:')) {
+            if (is_file('/.dockerenv')) {
                 throw $exception;
             }
 
