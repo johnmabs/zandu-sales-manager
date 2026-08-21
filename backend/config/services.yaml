@@ -61,6 +61,13 @@ services:
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
 
+    Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
+        arguments:
+            $pepper: '%kernel.secret%'
+
+    Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService:
+        alias: Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"
