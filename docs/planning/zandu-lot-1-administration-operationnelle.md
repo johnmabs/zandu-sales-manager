@@ -180,6 +180,8 @@ Epic 1.4 — Membership lifecycle
        ↓
 Epic 1.5 — Roles, permissions & scopes
        ↓
+Epic 1.5 bis — User accounts & onboarding
+       ↓
 Epic 1.6 — Authorization & operational guards
        ↓
 Epic 1.7 — Security audit & event integration
@@ -1154,6 +1156,47 @@ feat(access): protect last organization owner
 
 ---
 
+# 9 bis. Epic 1.5 bis — User accounts & onboarding
+
+## Objectif
+
+Combler le prérequis d'identité absent du cadrage initial : permettre à une
+personne sans compte de devenir le premier owner d'une organisation ou de
+rejoindre une organisation depuis une invitation.
+
+## Parcours livrés
+
+```text
+POST /api/auth/register
+POST /api/auth/invitations/{token}/register
+POST /api/auth/login
+```
+
+- compte `User` global identifié par un email canonique unique ;
+- mot de passe haché avec Argon2id et jamais persisté en clair ;
+- inscription atomique du premier utilisateur, de son organisation, de son
+  membership actif et de son rôle `ORGANIZATION_OWNER` ;
+- inscription atomique d'un invité sans compte, avec validation de l'email et
+  consommation à usage unique du token ;
+- authentification des comptes persistés avec résolution du membership actif ;
+- organisation par défaut conservée pour établir le contexte tenant initial ;
+- RLS appliquée à la table des utilisateurs pour le rôle applicatif runtime.
+
+Le choix ou changement d'organisation pour un utilisateur multi-organisation,
+la récupération de mot de passe et la vérification d'adresse email restent des
+sujets d'authentification ultérieurs. Ils ne sont pas déclarés livrés par cet
+Epic correctif.
+
+## Definition of Done — Epic 1.5 bis
+
+- un visiteur peut créer son compte et sa première organisation ;
+- une personne invitée sans compte peut s'inscrire avec son token ;
+- les deux profils peuvent ensuite obtenir un JWT via `/api/auth/login` ;
+- la création du compte et de ses accès initiaux est transactionnelle ;
+- les parcours sont couverts par des tests API et PostgreSQL réels.
+
+---
+
 # 10. Epic 1.6 — Authorization & operational guards
 
 ## Objectif
@@ -1939,6 +1982,9 @@ Le Lot 1 est `DONE` uniquement lorsque :
 [ ] AccessScope ORGANIZATION disponible
 [ ] AccessScope SELECTED_STORES disponible
 [ ] invariant du dernier owner protégé
+[ ] compte utilisateur persistant disponible
+[ ] inscription du premier owner disponible
+[ ] inscription depuis une invitation disponible
 [ ] AuthorizationService utilisé par les handlers
 [ ] OrganizationOperationalGuard actif
 [ ] StoreOperationalGuard actif

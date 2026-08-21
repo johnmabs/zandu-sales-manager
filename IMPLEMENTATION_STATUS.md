@@ -32,6 +32,7 @@ Epic 1.2   TERMINÉ   Store foundation
 Epic 1.3   TERMINÉ   Organization invitations
 Epic 1.4   TERMINÉ   Membership lifecycle
 Epic 1.5   TERMINÉ   Roles, permissions & scopes
+Epic 1.5b  TERMINÉ   User accounts & onboarding
 Epic 1.6   À FAIRE   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
 Epic 1.8   À FAIRE   Administration API
@@ -3034,6 +3035,55 @@ feat(access): protect last organization owner
 feat(access): integrate membership role assignments
 feat(access): secure owner role invitations
 feat(access): provision initial organization owner
+```
+
+## Epic 1.5 bis — User accounts & onboarding
+
+**Statut : TERMINÉ**
+
+Cette étape corrective comble un manque du planning initial : les parcours
+d'invitation supposaient l'existence préalable d'un utilisateur authentifié,
+sans définir comment une personne obtenait son compte.
+
+### Réalisé
+
+- compte `User` global persistant, email canonique unique, statut et
+  organisation par défaut ;
+- hachage des mots de passe avec Argon2id ;
+- endpoint public `POST /api/auth/register` créant atomiquement le compte, la
+  première organisation, le membership actif et le rôle owner initial ;
+- endpoint public `POST /api/auth/invitations/{token}/register` créant le
+  compte d'une personne invitée puis acceptant l'invitation dans la même
+  transaction tenant ;
+- provider Symfony chargeant les utilisateurs persistés et leur membership
+  actif, avec maintien du provider bootstrap pour la compatibilité actuelle ;
+- droits SQL du rôle `zandu_runtime` et RLS sur les comptes utilisateurs ;
+- tests API complets allant de l'inscription à l'obtention d'un JWT pour le
+  premier owner et pour un invité sans compte.
+
+La récupération de mot de passe, la vérification d'email et le changement
+d'organisation active ne font pas partie de cette correction et restent à
+planifier dans un durcissement ultérieur de l'authentification.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (217 tests, 637 assertions)
+Parcours API d'onboarding : OK (2 tests, 19 assertions)
+Migrations développement et test : à jour (Version20260823050000)
+Doctrine mapping : valide
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(identity): add persistent user accounts
+feat(auth): add user onboarding workflows
 ```
 
 ## Prochaine étape
