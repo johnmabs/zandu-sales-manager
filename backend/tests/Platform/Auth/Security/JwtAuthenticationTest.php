@@ -9,9 +9,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class JwtAuthenticationTest extends WebTestCase
 {
+    private static int $clientSequence = 10;
+
     public function testValidLoginReturnsAUsableAccessToken(): void
     {
-        $client = self::createClient();
+        $client = $this->createIsolatedClient();
         $client->jsonRequest('POST', '/api/auth/login', [
             'email' => 'admin@zandu.test',
             'password' => 'zandu-test-password',
@@ -35,7 +37,7 @@ final class JwtAuthenticationTest extends WebTestCase
 
     public function testInvalidLoginIsRejected(): void
     {
-        $client = self::createClient();
+        $client = $this->createIsolatedClient();
         $client->jsonRequest('POST', '/api/auth/login', [
             'email' => 'admin@zandu.test',
             'password' => 'invalid-password',
@@ -46,7 +48,7 @@ final class JwtAuthenticationTest extends WebTestCase
 
     public function testProtectedApiRejectsAnAnonymousRequest(): void
     {
-        $client = self::createClient();
+        $client = $this->createIsolatedClient();
         $client->request('GET', '/api');
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
@@ -54,7 +56,7 @@ final class JwtAuthenticationTest extends WebTestCase
 
     public function testRefreshTokenIsRotatedAndReuseRevokesTheSession(): void
     {
-        $client = self::createClient();
+        $client = $this->createIsolatedClient();
         $client->disableReboot();
         $login = $this->login($client);
         $originalRefreshToken = $login['refreshToken'];
@@ -75,7 +77,7 @@ final class JwtAuthenticationTest extends WebTestCase
 
     public function testLogoutRevokesTheRefreshSession(): void
     {
-        $client = self::createClient();
+        $client = $this->createIsolatedClient();
         $client->disableReboot();
         $refreshToken = $this->login($client)['refreshToken'];
 
@@ -109,5 +111,10 @@ final class JwtAuthenticationTest extends WebTestCase
         self::assertIsArray($payload);
 
         return $payload;
+    }
+
+    private function createIsolatedClient(): object
+    {
+        return self::createClient(server: ['REMOTE_ADDR' => '192.0.2.' . ++self::$clientSequence]);
     }
 }

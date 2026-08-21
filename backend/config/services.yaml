@@ -56,6 +56,12 @@ services:
             $appSecret: '%kernel.secret%'
             $jwtPassphrase: '%env(JWT_PASSPHRASE)%'
 
+    Zandu\Platform\Auth\Security\PublicAuthRateLimitSubscriber:
+        arguments:
+            $authenticationLimiter: '@limiter.authentication'
+            $onboardingLimiter: '@limiter.onboarding'
+            $tokenSessionLimiter: '@limiter.token_session'
+
     Zandu\Modules\Organization\Domain\OrganizationRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository
 
