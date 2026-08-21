@@ -12,7 +12,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Zandu\Modules\IdentityAccess\Application\RegisterFromInvitation\RegisterFromInvitation;
 use Zandu\Modules\IdentityAccess\Application\RegisterFromInvitation\RegisterFromInvitationHandler;
-use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 
 final readonly class RegisterFromInvitationController
@@ -31,7 +30,7 @@ final readonly class RegisterFromInvitationController
 
         try {
             $result = ($this->handler)(new RegisterFromInvitation($token, $password, $correlationId));
-        } catch (InvalidArgumentException|OrganizationInvitationNotFound) {
+        } catch (InvalidArgumentException) {
             return $this->invalidInvitation();
         } catch (LogicException $exception) {
             return new JsonResponse(['code' => 'INVITATION_REGISTRATION_CONFLICT', 'message' => $exception->getMessage()], Response::HTTP_CONFLICT);

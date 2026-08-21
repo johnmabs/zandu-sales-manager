@@ -11,6 +11,7 @@ use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\Accept
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
 use Zandu\Modules\IdentityAccess\Application\Contract\PasswordHasher;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
+use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
 use Zandu\Modules\IdentityAccess\Domain\User\User;
 use Zandu\Modules\IdentityAccess\Domain\User\UserEmail;
 use Zandu\Modules\IdentityAccess\Domain\User\UserRepository;
@@ -43,7 +44,11 @@ final readonly class RegisterFromInvitationHandler
         $organizationId = $this->tokens->organizationId($command->token);
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): RegisteredFromInvitation {
-            $invitation = $this->invitations->getByTokenHash($organizationId, $this->tokens->hash($command->token));
+            try {
+                $invitation = $this->invitations->getByTokenHash($organizationId, $this->tokens->hash($command->token));
+            } catch (OrganizationInvitationNotFound $exception) {
+                throw new InvalidArgumentException('The invitation is invalid or inactive.', previous: $exception);
+            }
             $email = UserEmail::fromString($invitation->email()->value());
             if (null !== $this->users->findByEmail($email)) {
                 throw new LogicException('A user account already exists for this invitation email; sign in to accept it.');
