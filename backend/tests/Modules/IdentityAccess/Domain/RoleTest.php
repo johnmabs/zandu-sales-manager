@@ -7,7 +7,7 @@ namespace Zandu\Tests\Modules\IdentityAccess\Domain;
 use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\TestCase;
-use Zandu\Modules\IdentityAccess\Domain\Access\PermissionCode;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\Role;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleStatus;

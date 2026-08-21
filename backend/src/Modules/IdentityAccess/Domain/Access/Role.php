@@ -6,6 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Domain\Access;
 
 use InvalidArgumentException;
 use LogicException;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\RoleId;
 

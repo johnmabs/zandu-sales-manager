@@ -6,6 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Domain\Access;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\StoreId;

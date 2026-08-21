@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Domain\Access;
 
 use LogicException;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 

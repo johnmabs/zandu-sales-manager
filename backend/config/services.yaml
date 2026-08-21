@@ -113,6 +113,9 @@ services:
     Zandu\Modules\IdentityAccess\Application\Contract\MembershipAccessGuard:
         alias: Zandu\Modules\IdentityAccess\Application\FreshMembershipAccessGuard
 
+    Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService:
+        alias: Zandu\Modules\IdentityAccess\Application\EffectiveAuthorizationService
+
     Zandu\Platform\Auth\Refresh\RefreshSessionStore:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\DbalRefreshSessionStore
 

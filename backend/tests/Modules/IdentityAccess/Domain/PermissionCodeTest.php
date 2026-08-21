@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Tests\Modules\IdentityAccess\Domain;
 
 use PHPUnit\Framework\TestCase;
-use Zandu\Modules\IdentityAccess\Domain\Access\PermissionCode;
+use Zandu\SharedKernel\Access\PermissionCode;
 
 final class PermissionCodeTest extends TestCase
 {

@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Domain\Access\AccessScope;
-use Zandu\Modules\IdentityAccess\Domain\Access\PermissionCode;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\Role;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;

@@ -72,9 +72,14 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $identityAccessContract = Layer::withName('IdentityAccessContract')->collectors(
+        ClassLikeConfig::create('.*Zandu\\Modules\\IdentityAccess\\Application\\Contract\\.*'),
+    );
+
     $identityAccess = Layer::withName('IdentityAccess')->collectors(
-        ClassLikeConfig::create(
-            '.*Zandu\\Modules\\IdentityAccess\\.*',
+        BoolConfig::create(
+            must: [ClassLikeConfig::create('.*Zandu\\Modules\\IdentityAccess\\.*')],
+            mustNot: [ClassLikeConfig::create('.*Zandu\\Modules\\IdentityAccess\\Application\\Contract\\.*')],
         ),
     );
 
@@ -115,6 +120,7 @@ return static function (DeptracConfig $config): void {
             $cashManagement,
             $cashManagementContract,
             $identityAccess,
+            $identityAccessContract,
             $operations,
             $organization,
             $organizationContract,
@@ -131,10 +137,11 @@ return static function (DeptracConfig $config): void {
             Ruleset::forLayer($inventoryContract),
             Ruleset::forLayer($cashManagementContract),
             Ruleset::forLayer($identityAccess)
-                ->accesses($organizationContract),
+                ->accesses($identityAccessContract, $organizationContract),
+            Ruleset::forLayer($identityAccessContract),
             Ruleset::forLayer($operations),
             Ruleset::forLayer($organization)
-                ->accesses($organizationContract),
+                ->accesses($identityAccessContract, $organizationContract),
             Ruleset::forLayer($organizationContract),
         );
 };

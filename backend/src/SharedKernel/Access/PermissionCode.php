@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zandu\Modules\IdentityAccess\Domain\Access;
+namespace Zandu\SharedKernel\Access;
 
 enum PermissionCode: string
 {
