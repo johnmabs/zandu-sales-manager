@@ -1180,7 +1180,8 @@ POST /api/auth/login
   consommation à usage unique du token ;
 - authentification des comptes persistés avec résolution du membership actif ;
 - organisation par défaut conservée pour établir le contexte tenant initial ;
-- RLS appliquée à la table des utilisateurs pour le rôle applicatif runtime.
+- identité `User` globale, hors RLS tenant conformément à l'ADR-0018 ; son accès
+  SQL runtime actuel doit être réduit avant la production.
 
 Le choix ou changement d'organisation pour un utilisateur multi-organisation,
 la récupération de mot de passe et la vérification d'adresse email restent des

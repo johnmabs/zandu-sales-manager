@@ -3057,13 +3057,18 @@ sans définir comment une personne obtenait son compte.
   transaction tenant ;
 - provider Symfony chargeant les utilisateurs persistés et leur membership
   actif, avec maintien du provider bootstrap pour la compatibilité actuelle ;
-- droits SQL du rôle `zandu_runtime` et RLS sur les comptes utilisateurs ;
+- droits SQL provisoires du rôle `zandu_runtime` sur les comptes globaux ;
 - tests API complets allant de l'inscription à l'obtention d'un JWT pour le
   premier owner et pour un invité sans compte.
 
 La récupération de mot de passe, la vérification d'email et le changement
 d'organisation active ne font pas partie de cette correction et restent à
 planifier dans un durcissement ultérieur de l'authentification.
+
+L'ADR-0018 formalise désormais que `User` est global : sa table n'est pas
+tenant-owned et n'est donc pas protégée par une policy RLS. L'accès SQL actuel
+de `zandu_runtime` à cette table reste provisoire ; une identité PostgreSQL
+d'authentification minimale et distincte doit le remplacer avant la production.
 
 ### Validations
 
