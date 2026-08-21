@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Tests\Modules\IdentityAccess\Application;
 
 use DateTimeImmutable;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\CancelOrganizationInvitation\CancelOrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Application\CancelOrganizationInvitation\CancelOrganizationInvitationHandler;
@@ -13,6 +14,9 @@ use Zandu\Modules\IdentityAccess\Application\ExpireOrganizationInvitations\Expir
 use Zandu\Modules\IdentityAccess\Application\ExpireOrganizationInvitations\ExpireOrganizationInvitationsHandler;
 use Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember\InviteOrganizationMember;
 use Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember\InviteOrganizationMemberHandler;
+use Zandu\Modules\IdentityAccess\Domain\Access\LastOrganizationOwner;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
+use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\ActiveInvitationAlreadyExists;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
@@ -20,6 +24,8 @@ use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
+use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
+use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
 use Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService;
 use Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
@@ -29,7 +35,10 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OrganizationInvitationId;
+use Zandu\SharedKernel\Identity\OrganizationMembershipId;
+use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\Identity\UserId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -60,7 +69,7 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
         self::assertSame('member@example.com', $created->invitation->email()->value());
         self::assertNotSame($created->revealToken(), $created->invitation->tokenHash());
         self::assertSame($created->invitation->tokenHash(), $tokens->hash($created->revealToken()));
-        self::assertSame(['CASHIER'], $policy->roleCodes);
+        self::assertSame(1, $policy->calls);
         self::assertSame(self::ORGANIZATION_ID, $transaction->organizationId?->toString());
         self::assertSame('2026-08-29T10:00:00+00:00', $created->invitation->expiresAt()->format('c'));
     }
@@ -74,6 +83,24 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
 
         $this->expectException(ActiveInvitationAlreadyExists::class);
         $handler($command);
+    }
+
+    public function testOwnerInvitationRequiresAnActiveOwner(): void
+    {
+        $handler = $this->handler(
+            new InvitationTestRepository(),
+            new RecordingInvitationPolicy(),
+            new SecureInvitationTokenService('test-pepper', new SymfonyUuidFactory()),
+            new InvitationTestTransaction(),
+        );
+
+        $this->expectException(LogicException::class);
+        $handler(new InviteOrganizationMember(
+            'owner@example.com',
+            [IntendedRoleAssignment::forRole(RoleCode::ORGANIZATION_OWNER)],
+            null,
+            $this->context(),
+        ));
     }
 
     public function testCancellationAndMaterializedExpirationPersistTransitions(): void
@@ -119,6 +146,7 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
     private function handler(OrganizationInvitationRepository $repository, MemberInvitationPolicy $policy, InvitationTokenService $tokens, TenantTransaction $transaction): InviteOrganizationMemberHandler
     {
         $uuid = (new SymfonyUuidFactory())->fromString(self::INVITATION_ID);
+        $systemRoles = new SystemRoleCatalog(new SymfonyUuidFactory());
         return new InviteOrganizationMemberHandler(
             $repository,
             $policy,
@@ -132,6 +160,8 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
             },
             new FrozenClock(new DateTimeImmutable('2026-08-22T10:00:00+00:00')),
             $transaction,
+            $systemRoles,
+            new LastOrganizationOwner(new EmptyMembershipRepository(), $systemRoles),
         );
     }
 
@@ -150,10 +180,27 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
 
 final class RecordingInvitationPolicy implements MemberInvitationPolicy
 {
-    /** @var list<string> */ public array $roleCodes = [];
-    public function assertCanInvite(ActorContext $actorContext, array $roleCodes, array $selectedStoreIds): void
+    public int $calls = 0;
+    public function assertCanInvite(ActorContext $actorContext, array $selectedStoreIds): void
     {
-        $this->roleCodes = $roleCodes;
+        ++$this->calls;
+    }
+}
+
+final class EmptyMembershipRepository implements OrganizationMembershipRepository
+{
+    public function save(OrganizationMembership $membership): void {}
+    public function get(OrganizationId $organizationId, OrganizationMembershipId $membershipId): OrganizationMembership
+    {
+        throw new LogicException('Membership not found.');
+    }
+    public function findByUser(OrganizationId $organizationId, UserId $userId): ?OrganizationMembership
+    {
+        return null;
+    }
+    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
+    {
+        return 0;
     }
 }
 

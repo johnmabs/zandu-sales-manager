@@ -14,11 +14,9 @@ use Zandu\SharedKernel\Identity\StoreId;
 
 final readonly class CreatorMemberInvitationPolicy implements MemberInvitationPolicy
 {
-    private const SYSTEM_ROLE_CODES = ['ORGANIZATION_OWNER', 'STORE_MANAGER', 'CASHIER', 'ACCOUNTANT'];
-
     public function __construct(private OrganizationRepository $organizations, private StoreRepository $stores) {}
 
-    public function assertCanInvite(ActorContext $actorContext, array $roleCodes, array $selectedStoreIds): void
+    public function assertCanInvite(ActorContext $actorContext, array $selectedStoreIds): void
     {
         $organizationId = $actorContext->organizationId();
         $organization = $this->organizations->get($organizationId);
@@ -27,11 +25,6 @@ final readonly class CreatorMemberInvitationPolicy implements MemberInvitationPo
         }
         if (!$organization->createdBy()->equals($actorContext->actorId())) {
             throw new LogicException('The actor is not authorized to invite organization members.');
-        }
-        foreach ($roleCodes as $roleCode) {
-            if (!in_array($roleCode, self::SYSTEM_ROLE_CODES, true)) {
-                throw new LogicException(sprintf('Unknown intended role "%s".', $roleCode));
-            }
         }
         foreach ($selectedStoreIds as $storeId) {
             if (null === $this->stores->find($organizationId, $storeId)) {

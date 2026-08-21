@@ -10,8 +10,7 @@ use Zandu\SharedKernel\Identity\StoreId;
 interface MemberInvitationPolicy
 {
     /**
-     * @param non-empty-list<string> $roleCodes
-     * @param list<StoreId>           $selectedStoreIds
+     * @param list<StoreId> $selectedStoreIds
      */
-    public function assertCanInvite(ActorContext $actorContext, array $roleCodes, array $selectedStoreIds): void;
+    public function assertCanInvite(ActorContext $actorContext, array $selectedStoreIds): void;
 }

@@ -25,7 +25,6 @@ final readonly class CancelOrganizationInvitationHandler
         $organizationId = $command->actorContext->organizationId();
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): OrganizationInvitation {
             $invitation = $this->invitations->get($organizationId, $command->invitationId);
-            $roleCodes = array_map(static fn($assignment): string => $assignment->roleCode(), $invitation->intendedRoleAssignments());
             $stores = [];
             foreach ($invitation->intendedRoleAssignments() as $assignment) {
                 foreach ($assignment->storeIds() as $storeId) {
@@ -34,7 +33,7 @@ final readonly class CancelOrganizationInvitationHandler
             }
             /** @var list<StoreId> $storeIds */
             $storeIds = array_values($stores);
-            $this->policy->assertCanInvite($command->actorContext, $roleCodes, $storeIds);
+            $this->policy->assertCanInvite($command->actorContext, $storeIds);
             $invitation->cancel($this->clock->now());
             $this->invitations->save($invitation);
             return $invitation;

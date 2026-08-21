@@ -6,6 +6,9 @@ namespace Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember;
 
 use DateInterval;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
+use Zandu\Modules\IdentityAccess\Domain\Access\LastOrganizationOwner;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
+use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\ActiveInvitationAlreadyExists;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
@@ -26,6 +29,8 @@ final readonly class InviteOrganizationMemberHandler
         private IdGenerator $idGenerator,
         private Clock $clock,
         private TenantTransaction $transaction,
+        private SystemRoleCatalog $systemRoles,
+        private LastOrganizationOwner $lastOwner,
     ) {}
 
     public function __invoke(InviteOrganizationMember $command): CreatedOrganizationInvitation
@@ -35,16 +40,19 @@ final readonly class InviteOrganizationMemberHandler
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): CreatedOrganizationInvitation {
             $now = $this->clock->now();
             $email = InvitationEmail::fromString($command->email);
-            $roleCodes = array_map(static fn($assignment): string => $assignment->roleCode(), $command->intendedRoleAssignments);
             $storesById = [];
             foreach ($command->intendedRoleAssignments as $assignment) {
+                $role = $this->systemRoles->get(RoleCode::fromString($assignment->roleCode()));
+                if ($this->systemRoles->isOrganizationOwner($role->id())) {
+                    $this->lastOwner->assertActiveOwner($command->actorContext);
+                }
                 foreach ($assignment->storeIds() as $storeId) {
                     $storesById[$storeId->toString()] = $storeId;
                 }
             }
             /** @var list<StoreId> $selectedStoreIds */
             $selectedStoreIds = array_values($storesById);
-            $this->policy->assertCanInvite($command->actorContext, $roleCodes, $selectedStoreIds);
+            $this->policy->assertCanInvite($command->actorContext, $selectedStoreIds);
             if ($this->invitations->pendingExists($organizationId, $email, $now)) {
                 throw ActiveInvitationAlreadyExists::forEmail($email);
             }
