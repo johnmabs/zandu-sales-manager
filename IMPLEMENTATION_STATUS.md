@@ -2661,10 +2661,47 @@ docs(status): close authentication foundation
 
 ### Epic 0.7 — Spikes architecturaux
 
+**Statut : TERMINÉ**
+
+### Résultats
+
+- Spike A : les effets Sale, Inventory, Cash et Outbox sont atomiques ; trois
+  points d’échec injectés laissent zéro effet partiel ;
+- Spike B : `SKIP LOCKED`, reprise après crash, at-least-once, retries,
+  dead-letter et consumer idempotent sont prouvés ;
+- Spike C : le round-trip Decimal/PostgreSQL est exact sur le corpus produit et
+  les calculs de taxe, remise, allocation, costing et refund ;
+- Spike E : optimistic locking et UPDATE conditionnel protègent tous deux
+  `quantity >= 0`, avec UPDATE conditionnel retenu pour le chemin chaud.
+
+Les tests PostgreSQL sont automatiquement précédés de la création et de la
+migration de `zandu_test` dans `make test` et donc dans la CI.
+
+### Décisions
+
+- ADR-0014 : `NUMERIC(30,12)` pour quantités/taux/intermédiaires et
+  `NUMERIC(30,6)` pour Money persisté ;
+- ADR-0015 : UPDATE conditionnel pour la consommation simple de stock ;
+- ADR-0016 : transactional outbox, livraison at-least-once et ledger consumer.
+
+### Validation
+
+```text
+PHPUnit Docker : OK (128 tests, 371 assertions)
+PostgreSQL de test : créé et migré automatiquement
+Composer et conteneur Symfony : valides
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+```
+
+## Prochaine étape
+
+### Epic 0.8 — Operations & observability
+
 **Statut : À FAIRE**
 
-Exécuter et documenter les spikes CompleteSale, Outbox, Decimal et concurrence
-de stock avec PostgreSQL réel.
+Ajouter les logs structurés, l’instrumentation OpenTelemetry, les endpoints de
+santé, le graceful shutdown et les métriques worker/outbox, puis conclure le
+Spike G d’infrastructure.
 
 ---
 
@@ -2686,7 +2723,7 @@ de stock avec PostgreSQL réel.
 [x] SharedKernel foundation validée
 [x] API foundation validée
 [x] authentication foundation validée
-[ ] architectural spikes réalisés
+[x] architectural spikes réalisés
 [ ] exploitation et observabilité minimales validées
 [ ] documentation finale du Lot 0 à jour
 [ ] CI finale entièrement verte
