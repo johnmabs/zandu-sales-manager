@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Zandu\Modules\Organization\Application\OperationalMode;
+use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Modules\Organization\Application\OrganizationOperationalGuard;
 use Zandu\Modules\Organization\Application\StoreOperationalGuard;
 use Zandu\Modules\Organization\Domain\CountryCode;

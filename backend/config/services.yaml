@@ -84,6 +84,9 @@ services:
     Zandu\Modules\Organization\Application\Contract\OrganizationOnboardingProvisioner:
         alias: Zandu\Modules\Organization\Application\OrganizationOnboardingService
 
+    Zandu\Modules\Organization\Application\Contract\OperationalGuard:
+        alias: Zandu\Modules\Organization\Application\TenantOperationalGuard
+
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
 

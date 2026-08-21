@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Application;
 
 use LogicException;
+use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Modules\Organization\Domain\Organization;
 use Zandu\Modules\Organization\Domain\OrganizationStatus;
 
