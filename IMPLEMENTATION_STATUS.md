@@ -33,6 +33,7 @@ Epic 1.3   TERMINÉ   Organization invitations
 Epic 1.4   TERMINÉ   Membership lifecycle
 Epic 1.5   TERMINÉ   Roles, permissions & scopes
 Epic 1.5b  TERMINÉ   User accounts & onboarding
+Epic 1.5c  TERMINÉ   Authentication security hardening
 Epic 1.6   À FAIRE   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
 Epic 1.8   À FAIRE   Administration API
@@ -3089,6 +3090,61 @@ Composer audit : aucune vulnérabilité connue
 ```text
 feat(identity): add persistent user accounts
 feat(auth): add user onboarding workflows
+```
+
+## Epic 1.5 ter — Authentication security hardening
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- compte bootstrap disponible uniquement en `dev` et `test`, sans fallback en
+  production ;
+- erreur publique stable pour une invitation inconnue ou invalide, sans erreur
+  HTTP 500 ;
+- secrets de développement sortis de la configuration commune ;
+- démarrage HTTP production refusé si `APP_SECRET` ou `JWT_PASSPHRASE` contient
+  moins de 32 caractères ;
+- rate limiting des endpoints publics d'authentification et d'onboarding avec
+  réponses `429` et header `Retry-After` ;
+- environnement Docker lu au runtime au lieu d'être figé dans l'image par
+  `composer dump-env prod` ;
+- fixtures limitées aux environnements `dev` et `test` ;
+- ADR-0018 sur l'identité globale, les memberships tenant-owned et la sélection
+  future d'une organisation active.
+
+### Dette explicitement reportée avant production
+
+- séparer physiquement la connexion PostgreSQL de migration de la connexion
+  runtime `LOGIN NOBYPASSRLS` ;
+- réduire l'accès SQL global aux comptes via une identité d'authentification
+  dédiée ;
+- durcir l'image finale avec un utilisateur non-root et un build multi-stage ;
+- fournir les clés JWT via le secret manager de la plateforme de déploiement.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (225 tests, 656 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+Image de production reconstruite : valide
+Smoke test staging avec secrets injectés au runtime : valide
+```
+
+### Commits
+
+```text
+fix(auth): disable bootstrap account in production
+fix(auth): normalize invalid invitation response
+docs(adr): define global identity tenancy model
+fix(security): reject weak production secrets
+feat(security): rate limit public authentication
+refactor(auth): translate invitation lookup failure
+fix(container): preserve runtime security environment
 ```
 
 ## Prochaine étape
