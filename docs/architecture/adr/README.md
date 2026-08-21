@@ -31,6 +31,9 @@ Un ADR accepté n’est pas réécrit pour masquer l’historique d’une nouvel
 | [ADR-0011](0011-sqlite-pos-local-storage.md) | SQLite pour le stockage local POS | ACCEPTED |
 | [ADR-0012](0012-docker-deployment-artifact.md) | Docker comme artifact de déploiement | ACCEPTED |
 | [ADR-0013](0013-opentelemetry-observability.md) | OpenTelemetry comme standard d’observabilité | ACCEPTED |
+| [ADR-0014](0014-postgresql-numeric-precision.md) | Précision PostgreSQL des décimaux métier | ACCEPTED |
+| [ADR-0015](0015-stock-concurrency-strategy.md) | Stratégie de concurrence pour le stock | ACCEPTED |
+| [ADR-0016](0016-transactional-outbox-processing.md) | Traitement de la transactional outbox | ACCEPTED |
 
 ## Décisions encore ouvertes ou proposées
 
@@ -40,8 +43,6 @@ Ces éléments ne disposent pas encore d’un ADR `ACCEPTED` :
 |---|---|---|
 | Plateforme de déploiement : Render / Frankfurt | PROPOSED | Spike infrastructure + test de latence |
 | Backend d’observabilité : Grafana Cloud | PROPOSED | Spike infrastructure |
-| Précision PostgreSQL de `Money` | OPEN | Spike C |
-| Précision technique de `Quantity` | OPEN | Spike C + produits réels |
 | Chiffrement SQLite | OPEN | Spike sécurité/offline |
 | Rotation des clés POS | OPEN | Spike sécurité/offline |
 | Survente offline | OPEN | Décision métier |

@@ -27,13 +27,11 @@ Les calculs monétaires, quantités, conversions, taxes et coûts doivent être 
 
 Toute opération pouvant perdre de la précision exige une politique d’arrondi explicite.
 
-## Open questions
+## Resolution des questions de persistence
 
-Cet ADR ne fixe pas encore :
+Les précisions initiales de persistence et de calcul intermédiaire ont été
+validées par le Spike C puis fixées dans
+[ADR-0014](0014-postgresql-numeric-precision.md).
 
-- le `NUMERIC(p,s)` final ;
-- la scale technique de `Quantity` ;
-- la précision intermédiaire du costing ;
-- les règles fiscales d’arrondi.
-
-Ces éléments sont conditionnés par le Spike C.
+Les règles fiscales propres à la juridiction restent une décision métier à
+documenter avant leur implémentation ; l’exigence d’arrondi explicite demeure.
