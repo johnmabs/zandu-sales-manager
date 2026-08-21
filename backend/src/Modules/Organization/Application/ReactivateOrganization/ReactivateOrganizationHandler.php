@@ -7,6 +7,7 @@ namespace Zandu\Modules\Organization\Application\ReactivateOrganization;
 use Zandu\Modules\Organization\Application\TenantOrganizationLoader;
 use Zandu\Modules\Organization\Domain\Organization;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
+use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
 final readonly class ReactivateOrganizationHandler
@@ -15,14 +16,20 @@ final readonly class ReactivateOrganizationHandler
         private TenantOrganizationLoader $loader,
         private OrganizationRepository $organizations,
         private Clock $clock,
+        private TenantTransaction $transaction,
     ) {}
 
     public function __invoke(ReactivateOrganization $command): Organization
     {
-        $organization = $this->loader->get($command->organizationId, $command->actorContext);
-        $organization->reactivate($command->actorContext->actorId(), $this->clock->now());
-        $this->organizations->save($organization);
+        return $this->transaction->transactional(
+            $command->actorContext->organizationId(),
+            function () use ($command): Organization {
+                $organization = $this->loader->get($command->organizationId, $command->actorContext);
+                $organization->reactivate($command->actorContext->actorId(), $this->clock->now());
+                $this->organizations->save($organization);
 
-        return $organization;
+                return $organization;
+            },
+        );
     }
 }

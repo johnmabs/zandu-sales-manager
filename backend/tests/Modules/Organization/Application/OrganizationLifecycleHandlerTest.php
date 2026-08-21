@@ -42,6 +42,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
     private LifecycleOrganizationRepository $repository;
     private TenantOrganizationLoader $loader;
     private FrozenClock $clock;
+    private InMemoryTenantTransaction $transaction;
 
     protected function setUp(): void
     {
@@ -49,11 +50,12 @@ final class OrganizationLifecycleHandlerTest extends TestCase
         $this->repository->save($this->organization());
         $this->loader = new TenantOrganizationLoader($this->repository);
         $this->clock = new FrozenClock(new DateTimeImmutable('2026-08-22T10:00:00+00:00'));
+        $this->transaction = new InMemoryTenantTransaction();
     }
 
     public function testProfileUpdateUsesTheTrustedActorContext(): void
     {
-        $handler = new UpdateOrganizationHandler($this->loader, $this->repository, $this->clock);
+        $handler = new UpdateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
         $organization = $handler(new UpdateOrganization(
             $this->organizationId(),
             'Zandu Congo',
@@ -67,12 +69,13 @@ final class OrganizationLifecycleHandlerTest extends TestCase
         self::assertSame('Zandu Congo', $organization->name()->value());
         self::assertSame(self::ACTOR_ID, $organization->updatedBy()->toString());
         self::assertSame(2, $organization->version());
+        self::assertSame(self::ORGANIZATION_ID, $this->transaction->lastOrganizationId?->toString());
     }
 
     public function testSuspensionAndReactivationAreExplicitUseCases(): void
     {
-        $suspend = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock);
-        $reactivate = new ReactivateOrganizationHandler($this->loader, $this->repository, $this->clock);
+        $suspend = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
+        $reactivate = new ReactivateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
 
         $organization = $suspend(new SuspendOrganization($this->organizationId(), $this->actorContext()));
         self::assertSame(OrganizationStatus::Suspended, $organization->status());
@@ -84,7 +87,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
 
     public function testClosureRequestIsAnExplicitUseCase(): void
     {
-        $handler = new RequestOrganizationClosureHandler($this->loader, $this->repository, $this->clock);
+        $handler = new RequestOrganizationClosureHandler($this->loader, $this->repository, $this->clock, $this->transaction);
 
         $organization = $handler(new RequestOrganizationClosure($this->organizationId(), $this->actorContext()));
 
@@ -95,7 +98,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
     public function testCrossTenantLookupIsReportedAsNotFound(): void
     {
         $factory = new SymfonyUuidFactory();
-        $handler = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock);
+        $handler = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
 
         $this->expectException(OrganizationNotFound::class);
         $handler(new SuspendOrganization(

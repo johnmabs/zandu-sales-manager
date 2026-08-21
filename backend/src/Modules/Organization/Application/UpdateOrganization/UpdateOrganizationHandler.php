@@ -12,6 +12,7 @@ use Zandu\Modules\Organization\Domain\OrganizationName;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
 final readonly class UpdateOrganizationHandler
@@ -20,22 +21,28 @@ final readonly class UpdateOrganizationHandler
         private TenantOrganizationLoader $loader,
         private OrganizationRepository $organizations,
         private Clock $clock,
+        private TenantTransaction $transaction,
     ) {}
 
     public function __invoke(UpdateOrganization $command): Organization
     {
-        $organization = $this->loader->get($command->organizationId, $command->actorContext);
-        $organization->updateProfile(
-            OrganizationName::fromString($command->name),
-            CountryCode::fromString($command->countryCode),
-            Currency::fromCode($command->defaultCurrency),
-            TimeZone::fromString($command->defaultTimeZone),
-            Locale::fromString($command->defaultLocale),
-            $command->actorContext->actorId(),
-            $this->clock->now(),
-        );
-        $this->organizations->save($organization);
+        return $this->transaction->transactional(
+            $command->actorContext->organizationId(),
+            function () use ($command): Organization {
+                $organization = $this->loader->get($command->organizationId, $command->actorContext);
+                $organization->updateProfile(
+                    OrganizationName::fromString($command->name),
+                    CountryCode::fromString($command->countryCode),
+                    Currency::fromCode($command->defaultCurrency),
+                    TimeZone::fromString($command->defaultTimeZone),
+                    Locale::fromString($command->defaultLocale),
+                    $command->actorContext->actorId(),
+                    $this->clock->now(),
+                );
+                $this->organizations->save($organization);
 
-        return $organization;
+                return $organization;
+            },
+        );
     }
 }

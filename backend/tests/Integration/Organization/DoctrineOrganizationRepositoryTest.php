@@ -17,6 +17,7 @@ use Zandu\Modules\Organization\Domain\OrganizationStatus;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Money\Currency;
@@ -73,12 +74,20 @@ final class DoctrineOrganizationRepositoryTest extends KernelTestCase
     public function testAggregateRoundTripsThroughPostgreSql(): void
     {
         $organization = $this->organization();
-        $this->repository->save($organization);
-        $organization->suspend($this->actorId(), new DateTimeImmutable('2026-08-22T10:00:00+00:00'));
-        $this->repository->save($organization);
-        $this->entityManager->clear();
+        $restored = (new DoctrineTenantTransaction(
+            $this->entityManager->getConnection(),
+            'zandu_runtime',
+        ))->transactional(
+            $organization->id(),
+            function () use ($organization): Organization {
+                $this->repository->save($organization);
+                $organization->suspend($this->actorId(), new DateTimeImmutable('2026-08-22T10:00:00+00:00'));
+                $this->repository->save($organization);
+                $this->entityManager->clear();
 
-        $restored = $this->repository->get($organization->id());
+                return $this->repository->get($organization->id());
+            },
+        );
 
         self::assertSame(self::ORGANIZATION_ID, $restored->id()->toString());
         self::assertSame('Zandu', $restored->name()->value());

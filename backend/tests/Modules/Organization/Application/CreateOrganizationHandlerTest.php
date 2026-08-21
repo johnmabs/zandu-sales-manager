@@ -45,6 +45,7 @@ final class CreateOrganizationHandlerTest extends TestCase
                 }
             },
             new FrozenClock(new DateTimeImmutable('2026-08-22T08:00:00+00:00')),
+            new InMemoryTenantTransaction(),
         );
 
         $organization = $handler(new CreateOrganization(

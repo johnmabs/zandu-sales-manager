@@ -30,7 +30,7 @@ final readonly class DoctrineTenantTransaction implements TenantTransaction
         $this->connection->beginTransaction();
 
         try {
-            $quotedRole = $this->connection->getDatabasePlatform()->quoteIdentifier($this->runtimeRole);
+            $quotedRole = $this->connection->getDatabasePlatform()->quoteSingleIdentifier($this->runtimeRole);
             $this->connection->executeStatement('SET LOCAL ROLE ' . $quotedRole);
             $this->connection->fetchOne(
                 "SELECT set_config('app.organization_id', ?, true)",
