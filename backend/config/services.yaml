@@ -42,6 +42,13 @@ services:
     Zandu\SharedKernel\Time\Clock:
         alias: Zandu\Platform\Time\SystemClock
 
+    Zandu\SharedKernel\Tenancy\TenantTransaction:
+        alias: Zandu\Platform\Persistence\DoctrineTenantTransaction
+
+    Zandu\Platform\Persistence\DoctrineTenantTransaction:
+        arguments:
+            $runtimeRole: "%env(TENANT_DATABASE_ROLE)%"
+
     Zandu\Modules\Organization\Domain\OrganizationRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository
 

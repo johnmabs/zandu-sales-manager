@@ -128,6 +128,7 @@ return static function (DeptracConfig $config): void {
                     $symfony,
                     $apiPlatform,
                     $brickMath,
+                    $doctrine,
                     $openTelemetry,
                     $monolog,
                 ),
