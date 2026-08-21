@@ -68,6 +68,9 @@ services:
     Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService
 
+    Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository:
+        alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationInvitationRepository
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"
