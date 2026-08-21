@@ -6,6 +6,7 @@ namespace Zandu\Tests\Modules\Organization\Application;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\Organization\Application\Contract\InitialOrganizationOwnerProvisioner;
 use Zandu\Modules\Organization\Application\CreateOrganization\CreateOrganization;
 use Zandu\Modules\Organization\Application\CreateOrganization\CreateOrganizationHandler;
 use Zandu\Modules\Organization\Domain\Event\OrganizationCreated;
@@ -35,6 +36,7 @@ final class CreateOrganizationHandlerTest extends TestCase
         $factory = new SymfonyUuidFactory();
         $repository = new InMemoryOrganizationRepository();
         $generatedUuid = $factory->fromString(self::NEW_ORGANIZATION_ID);
+        $ownerProvisioner = new RecordingInitialOwnerProvisioner();
         $handler = new CreateOrganizationHandler(
             $repository,
             new class ($generatedUuid) implements IdGenerator {
@@ -46,6 +48,7 @@ final class CreateOrganizationHandlerTest extends TestCase
             },
             new FrozenClock(new DateTimeImmutable('2026-08-22T08:00:00+00:00')),
             new InMemoryTenantTransaction(),
+            $ownerProvisioner,
         );
 
         $organization = $handler(new CreateOrganization(
@@ -67,6 +70,17 @@ final class CreateOrganizationHandlerTest extends TestCase
         self::assertSame(OrganizationStatus::Active, $organization->status());
         self::assertSame($organization, $repository->get($organization->id()));
         self::assertInstanceOf(OrganizationCreated::class, $organization->releaseEvents()[0]);
+        self::assertSame(self::NEW_ORGANIZATION_ID, $ownerProvisioner->organizationId?->toString());
+    }
+}
+
+final class RecordingInitialOwnerProvisioner implements InitialOrganizationOwnerProvisioner
+{
+    public ?OrganizationId $organizationId = null;
+
+    public function provision(OrganizationId $organizationId, ActorContext $actorContext, DateTimeImmutable $occurredAt): void
+    {
+        $this->organizationId = $organizationId;
     }
 }
 

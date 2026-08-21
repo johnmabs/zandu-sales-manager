@@ -64,6 +64,9 @@ services:
     Zandu\Modules\Organization\Application\Contract\MembershipManagementPolicy:
         alias: Zandu\Modules\Organization\Application\CreatorMembershipManagementPolicy
 
+    Zandu\Modules\Organization\Application\Contract\InitialOrganizationOwnerProvisioner:
+        alias: Zandu\Modules\IdentityAccess\Application\ProvisionInitialOrganizationOwner
+
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
 

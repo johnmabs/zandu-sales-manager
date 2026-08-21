@@ -48,6 +48,17 @@ final class OrganizationMembership
         return new self($id, $organizationId, $userId, MembershipStatus::Active, $roleAssignments, 1, $actorId, $occurredAt, $actorId, $occurredAt, null, null, null, null, 1);
     }
 
+    public static function activateInitialOwner(
+        OrganizationMembershipId $id,
+        OrganizationId $organizationId,
+        UserId $userId,
+        RoleAssignment $ownerAssignment,
+        ActorId $actorId,
+        DateTimeImmutable $occurredAt,
+    ): self {
+        return self::activateFromInvitation($id, $organizationId, $userId, [$ownerAssignment], $actorId, $occurredAt);
+    }
+
     /** @param non-empty-list<RoleAssignment> $roleAssignments */
     public static function reconstitute(
         OrganizationMembershipId $id,

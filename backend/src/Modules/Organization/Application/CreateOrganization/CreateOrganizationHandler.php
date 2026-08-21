@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Organization\Application\CreateOrganization;
 
+use Zandu\Modules\Organization\Application\Contract\InitialOrganizationOwnerProvisioner;
 use Zandu\Modules\Organization\Domain\CountryCode;
 use Zandu\Modules\Organization\Domain\Locale;
 use Zandu\Modules\Organization\Domain\Organization;
@@ -23,6 +24,7 @@ final readonly class CreateOrganizationHandler
         private IdGenerator $idGenerator,
         private Clock $clock,
         private TenantTransaction $transaction,
+        private InitialOrganizationOwnerProvisioner $initialOwner,
     ) {}
 
     public function __invoke(CreateOrganization $command): Organization
@@ -32,6 +34,7 @@ final readonly class CreateOrganizationHandler
         return $this->transaction->transactional(
             $organizationId,
             function () use ($command, $organizationId): Organization {
+                $now = $this->clock->now();
                 $organization = Organization::create(
                     $organizationId,
                     OrganizationName::fromString($command->name),
@@ -40,9 +43,10 @@ final readonly class CreateOrganizationHandler
                     TimeZone::fromString($command->defaultTimeZone),
                     Locale::fromString($command->defaultLocale),
                     $command->actorContext->actorId(),
-                    $this->clock->now(),
+                    $now,
                 );
                 $this->organizations->save($organization);
+                $this->initialOwner->provision($organizationId, $command->actorContext, $now);
 
                 return $organization;
             },
