@@ -14,8 +14,7 @@ final readonly class IssuedRefreshToken
         private SessionId $sessionId,
         private string $userIdentifier,
         private DateTimeImmutable $expiresAt,
-    ) {
-    }
+    ) {}
 
     public function token(): string
     {

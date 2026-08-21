@@ -21,8 +21,7 @@ final readonly class CorrelationIdRequestSubscriber implements EventSubscriberIn
     public function __construct(
         private UuidFactory $uuidFactory,
         private IdGenerator $idGenerator,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

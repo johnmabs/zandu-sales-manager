@@ -13,8 +13,7 @@ final readonly class Money
     public function __construct(
         private Decimal $amount,
         private Currency $currency,
-    ) {
-    }
+    ) {}
 
     public static function fromString(
         string $amount,

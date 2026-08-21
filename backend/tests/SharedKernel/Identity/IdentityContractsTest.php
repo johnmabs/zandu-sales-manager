@@ -42,9 +42,7 @@ final class IdentityContractsTest extends TestCase
 
 final readonly class InMemoryUuid implements Uuid
 {
-    public function __construct(private string $value)
-    {
-    }
+    public function __construct(private string $value) {}
 
     public function equals(Uuid $other): bool
     {
@@ -67,9 +65,7 @@ final class InMemoryUuidFactory implements UuidFactory
 
 final readonly class FixedIdGenerator implements IdGenerator
 {
-    public function __construct(private Uuid $uuid)
-    {
-    }
+    public function __construct(private Uuid $uuid) {}
 
     public function generate(): Uuid
     {

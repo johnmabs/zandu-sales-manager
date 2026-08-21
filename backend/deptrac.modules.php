@@ -11,19 +11,19 @@ use Deptrac\Deptrac\Contract\Config\Ruleset;
 return static function (DeptracConfig $config): void {
     $salesContract = Layer::withName('SalesContract')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*'
+            '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*',
         ),
     );
 
     $inventoryContract = Layer::withName('InventoryContract')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\Inventory\\Application\\Contract\\.*'
+            '.*Zandu\\Modules\\Inventory\\Application\\Contract\\.*',
         ),
     );
 
     $cashManagementContract = Layer::withName('CashManagementContract')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*'
+            '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*',
         ),
     );
 
@@ -31,12 +31,12 @@ return static function (DeptracConfig $config): void {
         BoolConfig::create(
             must: [
                 ClassLikeConfig::create(
-                    '.*Zandu\\Modules\\Sales\\.*'
+                    '.*Zandu\\Modules\\Sales\\.*',
                 ),
             ],
             mustNot: [
                 ClassLikeConfig::create(
-                    '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*'
+                    '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*',
                 ),
             ],
         ),
@@ -46,12 +46,12 @@ return static function (DeptracConfig $config): void {
         BoolConfig::create(
             must: [
                 ClassLikeConfig::create(
-                    '.*Zandu\\Modules\\Inventory\\.*'
+                    '.*Zandu\\Modules\\Inventory\\.*',
                 ),
             ],
             mustNot: [
                 ClassLikeConfig::create(
-                    '.*Zandu\\Modules\\Inventory\\Application\\Contract\\.*'
+                    '.*Zandu\\Modules\\Inventory\\Application\\Contract\\.*',
                 ),
             ],
         ),
@@ -61,12 +61,12 @@ return static function (DeptracConfig $config): void {
         BoolConfig::create(
             must: [
                 ClassLikeConfig::create(
-                    '.*Zandu\\Modules\\CashManagement\\.*'
+                    '.*Zandu\\Modules\\CashManagement\\.*',
                 ),
             ],
             mustNot: [
                 ClassLikeConfig::create(
-                    '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*'
+                    '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*',
                 ),
             ],
         ),
@@ -74,13 +74,13 @@ return static function (DeptracConfig $config): void {
 
     $identityAccess = Layer::withName('IdentityAccess')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\IdentityAccess\\.*'
+            '.*Zandu\\Modules\\IdentityAccess\\.*',
         ),
     );
 
     $operations = Layer::withName('Operations')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\Operations\\.*'
+            '.*Zandu\\Modules\\Operations\\.*',
         ),
     );
 
@@ -102,19 +102,12 @@ return static function (DeptracConfig $config): void {
                     $inventoryContract,
                     $cashManagementContract,
                 ),
-
             Ruleset::forLayer($inventory),
-
             Ruleset::forLayer($cashManagement),
-
             Ruleset::forLayer($salesContract),
-
             Ruleset::forLayer($inventoryContract),
-
             Ruleset::forLayer($cashManagementContract),
-
             Ruleset::forLayer($identityAccess),
-
             Ruleset::forLayer($operations),
         );
 };

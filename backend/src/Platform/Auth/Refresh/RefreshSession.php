@@ -19,8 +19,7 @@ final class RefreshSession
         private array $usedTokenHashes,
         private readonly DateTimeImmutable $expiresAt,
         private ?DateTimeImmutable $revokedAt = null,
-    ) {
-    }
+    ) {}
 
     public function rotate(string $presentedHash, string $replacementHash, DateTimeImmutable $now): void
     {

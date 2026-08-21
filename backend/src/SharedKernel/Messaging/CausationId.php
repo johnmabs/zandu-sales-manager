@@ -6,6 +6,4 @@ namespace Zandu\SharedKernel\Messaging;
 
 use Zandu\SharedKernel\Identity\TypedId;
 
-final readonly class CausationId extends TypedId
-{
-}
+final readonly class CausationId extends TypedId {}

@@ -74,9 +74,7 @@ final class TypedIdTest extends TestCase
 
 final readonly class TypedIdUuid implements Uuid
 {
-    public function __construct(private string $value)
-    {
-    }
+    public function __construct(private string $value) {}
 
     public function equals(Uuid $other): bool
     {

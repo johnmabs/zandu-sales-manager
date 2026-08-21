@@ -44,23 +44,17 @@ final class ApplicationCommandProcessorTest extends TestCase
 
 final readonly class TestCommandInput
 {
-    public function __construct(public string $reference)
-    {
-    }
+    public function __construct(public string $reference) {}
 }
 
 final readonly class TestCommand
 {
-    public function __construct(public string $reference)
-    {
-    }
+    public function __construct(public string $reference) {}
 }
 
 final readonly class TestCommandOutput
 {
-    public function __construct(public string $reference)
-    {
-    }
+    public function __construct(public string $reference) {}
 }
 
 /**
@@ -74,7 +68,7 @@ final class TestCommandProcessor extends ApplicationCommandProcessor
             throw new LogicException('Unexpected command input.');
         }
 
-        return new TestCommand($data->reference.'@'.($uriVariables['organizationId'] ?? 'none'));
+        return new TestCommand($data->reference . '@' . ($uriVariables['organizationId'] ?? 'none'));
     }
 
     protected function handle(object $command): Result

@@ -20,14 +20,13 @@ final readonly class RefreshSessionManager
         private UuidFactory $uuidFactory,
         private Clock $clock,
         private int $ttlSeconds,
-    ) {
-    }
+    ) {}
 
     public function issue(string $userIdentifier): IssuedRefreshToken
     {
         $sessionId = SessionId::generate($this->idGenerator);
         $token = $this->token($sessionId);
-        $expiresAt = $this->clock->now()->add(new DateInterval('PT'.$this->ttlSeconds.'S'));
+        $expiresAt = $this->clock->now()->add(new DateInterval('PT' . $this->ttlSeconds . 'S'));
 
         $this->store->add(new RefreshSession(
             $sessionId,
@@ -78,7 +77,7 @@ final readonly class RefreshSessionManager
 
     private function token(SessionId $sessionId): string
     {
-        return $sessionId->toString().'.'.rtrim(strtr(base64_encode(random_bytes(self::TOKEN_BYTES)), '+/', '-_'), '=');
+        return $sessionId->toString() . '.' . rtrim(strtr(base64_encode(random_bytes(self::TOKEN_BYTES)), '+/', '-_'), '=');
     }
 
     private function sessionIdFromToken(string $token): SessionId

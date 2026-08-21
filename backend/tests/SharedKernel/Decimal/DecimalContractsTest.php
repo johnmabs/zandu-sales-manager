@@ -35,7 +35,7 @@ final class DecimalContractsTest extends TestCase
                 'toString',
             ],
             array_map(
-                static fn (ReflectionMethod $method): string => $method->getName(),
+                static fn(ReflectionMethod $method): string => $method->getName(),
                 $reflection->getMethods(),
             ),
         );

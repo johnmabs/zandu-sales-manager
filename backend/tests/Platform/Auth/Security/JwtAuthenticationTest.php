@@ -27,7 +27,7 @@ final class JwtAuthenticationTest extends WebTestCase
         self::assertIsString($payload['refreshToken']);
 
         $client->request('GET', '/api', server: [
-            'HTTP_AUTHORIZATION' => 'Bearer '.$payload['token'],
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $payload['token'],
         ]);
 
         self::assertResponseIsSuccessful();

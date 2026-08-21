@@ -11,9 +11,7 @@ use Zandu\Platform\Auth\Refresh\RefreshSessionManager;
 
 final readonly class LoginRefreshTokenSubscriber
 {
-    public function __construct(private RefreshSessionManager $refreshSessions)
-    {
-    }
+    public function __construct(private RefreshSessionManager $refreshSessions) {}
 
     #[AsEventListener(event: Events::AUTHENTICATION_SUCCESS)]
     public function __invoke(AuthenticationSuccessEvent $event): void

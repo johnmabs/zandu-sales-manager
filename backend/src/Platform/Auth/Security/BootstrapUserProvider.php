@@ -20,8 +20,7 @@ final readonly class BootstrapUserProvider implements UserProviderInterface
         private string $actorId,
         private string $organizationId,
         private string $userId,
-    ) {
-    }
+    ) {}
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {

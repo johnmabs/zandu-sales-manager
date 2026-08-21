@@ -10,73 +10,73 @@ use Deptrac\Deptrac\Contract\Config\Ruleset;
 return static function (DeptracConfig $config): void {
     $domain = Layer::withName('Domain')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\[^\\]+\\Domain\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Domain\\.*',
         ),
     );
 
     $application = Layer::withName('Application')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\[^\\]+\\Application\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Application\\.*',
         ),
     );
 
     $infrastructure = Layer::withName('Infrastructure')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\[^\\]+\\Infrastructure\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Infrastructure\\.*',
         ),
     );
 
     $presentation = Layer::withName('Presentation')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Modules\\[^\\]+\\Presentation\\.*'
+            '.*Zandu\\Modules\\[^\\]+\\Presentation\\.*',
         ),
     );
 
     $sharedKernel = Layer::withName('SharedKernel')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\SharedKernel\\.*'
+            '.*Zandu\\SharedKernel\\.*',
         ),
     );
 
     $platform = Layer::withName('Platform')->collectors(
         ClassLikeConfig::create(
-            '.*Zandu\\Platform\\.*'
+            '.*Zandu\\Platform\\.*',
         ),
     );
 
     $symfony = Layer::withName('Symfony')->collectors(
         ClassLikeConfig::create(
-            '.*Symfony\\.*'
+            '.*Symfony\\.*',
         ),
     );
 
     $doctrine = Layer::withName('Doctrine')->collectors(
         ClassLikeConfig::create(
-            '.*Doctrine\\.*'
+            '.*Doctrine\\.*',
         ),
     );
 
     $apiPlatform = Layer::withName('ApiPlatform')->collectors(
         ClassLikeConfig::create(
-            '.*ApiPlatform\\.*'
+            '.*ApiPlatform\\.*',
         ),
     );
 
     $brickMath = Layer::withName('BrickMath')->collectors(
         ClassLikeConfig::create(
-            '.*Brick\\Math\\.*'
+            '.*Brick\\Math\\.*',
         ),
     );
 
     $openTelemetry = Layer::withName('OpenTelemetry')->collectors(
         ClassLikeConfig::create(
-            '.*OpenTelemetry\\.*'
+            '.*OpenTelemetry\\.*',
         ),
     );
 
     $monolog = Layer::withName('Monolog')->collectors(
         ClassLikeConfig::create(
-            '.*Monolog\\.*'
+            '.*Monolog\\.*',
         ),
     );
 
@@ -99,13 +99,11 @@ return static function (DeptracConfig $config): void {
         ->rulesets(
             Ruleset::forLayer($domain)
                 ->accesses($sharedKernel),
-
             Ruleset::forLayer($application)
                 ->accesses(
                     $domain,
                     $sharedKernel,
                 ),
-
             Ruleset::forLayer($infrastructure)
                 ->accesses(
                     $domain,
@@ -116,7 +114,6 @@ return static function (DeptracConfig $config): void {
                     $doctrine,
                     $apiPlatform,
                 ),
-
             Ruleset::forLayer($presentation)
                 ->accesses(
                     $application,
@@ -124,9 +121,7 @@ return static function (DeptracConfig $config): void {
                     $symfony,
                     $apiPlatform,
                 ),
-
             Ruleset::forLayer($sharedKernel),
-
             Ruleset::forLayer($platform)
                 ->accesses(
                     $sharedKernel,

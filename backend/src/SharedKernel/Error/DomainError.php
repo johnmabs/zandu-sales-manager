@@ -11,8 +11,7 @@ final readonly class DomainError
     private function __construct(
         private string $code,
         private string $message,
-    ) {
-    }
+    ) {}
 
     public static function create(string $code, string $message): self
     {

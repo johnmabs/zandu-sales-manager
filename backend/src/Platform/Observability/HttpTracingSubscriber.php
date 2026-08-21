@@ -16,9 +16,7 @@ final readonly class HttpTracingSubscriber implements EventSubscriberInterface
     private const SPAN_ATTRIBUTE = '_zandu_http_span';
     private const SCOPE_ATTRIBUTE = '_zandu_http_span_scope';
 
-    public function __construct(private TracerInterface $tracer)
-    {
-    }
+    public function __construct(private TracerInterface $tracer) {}
 
     public static function getSubscribedEvents(): array
     {
@@ -35,7 +33,7 @@ final readonly class HttpTracingSubscriber implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        $span = $this->tracer->spanBuilder($request->getMethod().' '.$request->getPathInfo())
+        $span = $this->tracer->spanBuilder($request->getMethod() . ' ' . $request->getPathInfo())
             ->setAttribute('http.request.method', $request->getMethod())
             ->setAttribute('url.path', $request->getPathInfo())
             ->startSpan();

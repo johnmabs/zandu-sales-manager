@@ -9,9 +9,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final readonly class MetricsController
 {
-    public function __construct(private OperationalMetrics $metrics)
-    {
-    }
+    public function __construct(private OperationalMetrics $metrics) {}
 
     #[Route('/metrics', name: 'operations_metrics', methods: ['GET'])]
     public function __invoke(): Response
@@ -19,11 +17,11 @@ final readonly class MetricsController
         $lines = [];
 
         foreach ($this->metrics->snapshot() as $name => $value) {
-            $lines[] = '# TYPE '.$name.' gauge';
-            $lines[] = $name.' '.$value;
+            $lines[] = '# TYPE ' . $name . ' gauge';
+            $lines[] = $name . ' ' . $value;
         }
 
-        return new Response(implode("\n", $lines)."\n", headers: [
+        return new Response(implode("\n", $lines) . "\n", headers: [
             'Content-Type' => 'text/plain; version=0.0.4; charset=utf-8',
         ]);
     }

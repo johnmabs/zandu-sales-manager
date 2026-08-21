@@ -19,8 +19,7 @@ final readonly class DbalRefreshSessionStore implements RefreshSessionStore
     public function __construct(
         private Connection $connection,
         private UuidFactory $uuidFactory,
-    ) {
-    }
+    ) {}
 
     public function add(RefreshSession $session): void
     {

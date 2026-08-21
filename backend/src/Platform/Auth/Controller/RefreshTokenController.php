@@ -13,16 +13,19 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Zandu\Platform\Api\Exception\ApplicationErrorException;
 use Zandu\Platform\Auth\Refresh\InvalidRefreshToken;
 use Zandu\Platform\Auth\Refresh\RefreshSessionManager;
+use Zandu\Platform\Auth\Security\AuthenticatedUser;
 use Zandu\SharedKernel\Error\DomainError;
 
 final readonly class RefreshTokenController
 {
+    /**
+     * @param UserProviderInterface<AuthenticatedUser> $userProvider
+     */
     public function __construct(
         private RefreshSessionManager $refreshSessions,
         private JWTTokenManagerInterface $jwtTokens,
         private UserProviderInterface $userProvider,
-    ) {
-    }
+    ) {}
 
     #[Route('/api/auth/refresh', name: 'api_auth_refresh', methods: ['POST'])]
     public function refresh(Request $request): JsonResponse

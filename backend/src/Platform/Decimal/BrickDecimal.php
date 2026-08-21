@@ -11,9 +11,7 @@ use Zandu\SharedKernel\Decimal\RoundingMode;
 
 final readonly class BrickDecimal implements Decimal
 {
-    public function __construct(private BigDecimal $value)
-    {
-    }
+    public function __construct(private BigDecimal $value) {}
 
     public function add(Decimal $other): Decimal
     {

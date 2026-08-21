@@ -10,9 +10,7 @@ use Zandu\SharedKernel\Decimal\RoundingMode;
 
 final readonly class Quantity
 {
-    public function __construct(private Decimal $value)
-    {
-    }
+    public function __construct(private Decimal $value) {}
 
     public static function fromString(string $value, DecimalFactory $decimalFactory): self
     {

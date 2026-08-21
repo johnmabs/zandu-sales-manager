@@ -8,9 +8,7 @@ use InvalidArgumentException;
 
 final readonly class Currency
 {
-    private function __construct(private string $code)
-    {
-    }
+    private function __construct(private string $code) {}
 
     public static function fromCode(string $code): self
     {

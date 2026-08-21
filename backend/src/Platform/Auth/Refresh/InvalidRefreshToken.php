@@ -6,6 +6,4 @@ namespace Zandu\Platform\Auth\Refresh;
 
 use RuntimeException;
 
-class InvalidRefreshToken extends RuntimeException
-{
-}
+class InvalidRefreshToken extends RuntimeException {}

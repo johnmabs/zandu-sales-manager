@@ -21,8 +21,7 @@ final readonly class ActorContext
         private DateTimeImmutable $authenticatedAt,
         private ?UserId $userId = null,
         private ?SessionId $sessionId = null,
-    ) {
-    }
+    ) {}
 
     public function actorId(): ActorId
     {

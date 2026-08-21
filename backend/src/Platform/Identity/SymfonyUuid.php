@@ -9,9 +9,7 @@ use Zandu\SharedKernel\Identity\Uuid;
 
 final readonly class SymfonyUuid implements Uuid
 {
-    public function __construct(private UuidV7 $uuid)
-    {
-    }
+    public function __construct(private UuidV7 $uuid) {}
 
     public function equals(Uuid $other): bool
     {

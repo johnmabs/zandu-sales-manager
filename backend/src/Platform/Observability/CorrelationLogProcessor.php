@@ -14,9 +14,7 @@ use Zandu\SharedKernel\Messaging\CorrelationId;
 #[AsMonologProcessor]
 final readonly class CorrelationLogProcessor
 {
-    public function __construct(private RequestStack $requestStack)
-    {
-    }
+    public function __construct(private RequestStack $requestStack) {}
 
     public function __invoke(LogRecord $record): LogRecord
     {

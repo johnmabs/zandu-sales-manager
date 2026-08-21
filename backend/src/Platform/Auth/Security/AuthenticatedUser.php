@@ -15,8 +15,7 @@ final readonly class AuthenticatedUser implements UserInterface, PasswordAuthent
         private string $actorId,
         private string $organizationId,
         private string $userId,
-    ) {
-    }
+    ) {}
 
     public function getUserIdentifier(): string
     {
@@ -33,9 +32,7 @@ final readonly class AuthenticatedUser implements UserInterface, PasswordAuthent
         return ['ROLE_USER'];
     }
 
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 
     public function actorId(): string
     {

@@ -29,8 +29,7 @@ final readonly class ActorContextResolver
         private RequestStack $requestStack,
         private UuidFactory $uuidFactory,
         private Clock $clock,
-    ) {
-    }
+    ) {}
 
     public function resolve(): ActorContext
     {
@@ -45,7 +44,7 @@ final readonly class ActorContextResolver
         }
 
         $authenticatedAt = $token->hasAttribute(JwtAuthenticatedSubscriber::AUTHENTICATED_AT_ATTRIBUTE)
-            ? (new DateTimeImmutable('@'.(string) $token->getAttribute(
+            ? (new DateTimeImmutable('@' . (string) $token->getAttribute(
                 JwtAuthenticatedSubscriber::AUTHENTICATED_AT_ATTRIBUTE,
             )))->setTimezone(new DateTimeZone('UTC'))
             : $this->clock->now();

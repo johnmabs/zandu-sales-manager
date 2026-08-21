@@ -6,9 +6,7 @@ namespace Zandu\SharedKernel\Identity;
 
 abstract readonly class TypedId
 {
-    final public function __construct(private Uuid $uuid)
-    {
-    }
+    final public function __construct(private Uuid $uuid) {}
 
     final public static function fromString(string $value, UuidFactory $factory): static
     {

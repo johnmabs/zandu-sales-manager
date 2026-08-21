@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Zandu\Tests\Integration;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Tools\DsnParser;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 use PHPUnit\Framework\TestCase;
 
 abstract class PostgresTestCase extends TestCase
@@ -60,6 +60,6 @@ abstract class PostgresTestCase extends TestCase
             return $url;
         }
 
-        return substr($base, 0, $databaseSeparator).$parts['path'].'_test'.$query;
+        return substr($base, 0, $databaseSeparator) . $parts['path'] . '_test' . $query;
     }
 }

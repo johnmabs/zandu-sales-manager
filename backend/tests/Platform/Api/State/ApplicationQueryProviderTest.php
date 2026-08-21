@@ -32,8 +32,7 @@ final readonly class TestQuery
     public function __construct(
         public string $saleId,
         public string $locale,
-    ) {
-    }
+    ) {}
 }
 
 final readonly class TestReadModel
@@ -41,8 +40,7 @@ final readonly class TestReadModel
     public function __construct(
         public string $saleId,
         public string $locale,
-    ) {
-    }
+    ) {}
 }
 
 /**

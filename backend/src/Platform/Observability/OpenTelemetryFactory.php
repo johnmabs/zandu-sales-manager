@@ -20,7 +20,7 @@ final class OpenTelemetryFactory
         }
 
         $transport = (new OtlpHttpTransportFactory())->create(
-            rtrim($endpoint, '/').'/v1/traces',
+            rtrim($endpoint, '/') . '/v1/traces',
             'application/x-protobuf',
         );
         $provider = new TracerProvider(new SimpleSpanProcessor(new SpanExporter($transport)));

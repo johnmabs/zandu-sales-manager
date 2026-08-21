@@ -35,7 +35,7 @@ final class CompleteSaleTransactionTest extends PostgresTestCase
             $this->completeSale($phase);
             self::fail('The injected failure should abort the transaction.');
         } catch (RuntimeException $exception) {
-            self::assertSame('Injected '.$phase.' failure.', $exception->getMessage());
+            self::assertSame('Injected ' . $phase . ' failure.', $exception->getMessage());
         }
 
         self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM architecture_spike.sale'));
@@ -84,7 +84,7 @@ final class CompleteSaleTransactionTest extends PostgresTestCase
     private function failAt(string $phase, ?string $failurePhase): void
     {
         if ($phase === $failurePhase) {
-            throw new RuntimeException('Injected '.$phase.' failure.');
+            throw new RuntimeException('Injected ' . $phase . ' failure.');
         }
     }
 }

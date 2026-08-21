@@ -9,9 +9,7 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class FrozenClock implements Clock
 {
-    public function __construct(private DateTimeImmutable $dateTime)
-    {
-    }
+    public function __construct(private DateTimeImmutable $dateTime) {}
 
     public function now(): DateTimeImmutable
     {

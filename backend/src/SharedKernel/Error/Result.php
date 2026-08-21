@@ -15,8 +15,7 @@ final readonly class Result
         private bool $successful,
         private mixed $value,
         private ?DomainError $error,
-    ) {
-    }
+    ) {}
 
     /**
      * @template TValue

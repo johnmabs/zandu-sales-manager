@@ -87,9 +87,7 @@ final class CorrelationIdRequestSubscriberTest extends TestCase
 
 final readonly class FixedIdGenerator implements IdGenerator
 {
-    public function __construct(private string $value)
-    {
-    }
+    public function __construct(private string $value) {}
 
     public function generate(): Uuid
     {
