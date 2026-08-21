@@ -34,7 +34,7 @@ lint:
 
 quality:
 	docker compose exec backend vendor/bin/php-cs-fixer check --sequential --show-progress=none
-	docker compose exec backend vendor/bin/phpstan analyse --configuration=phpstan.dist.neon --no-progress --debug
+	docker compose exec backend vendor/bin/phpstan analyse --configuration=phpstan.dist.neon --no-progress --debug --memory-limit=512M
 
 security:
 	docker compose exec backend composer audit --locked
