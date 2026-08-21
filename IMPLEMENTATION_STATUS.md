@@ -2793,12 +2793,20 @@ docs(status): close Lot 0 gate
 - use cases `CreateOrganization`, `UpdateOrganization`, `SuspendOrganization`,
   `ReactivateOrganization` et `RequestOrganizationClosure` ;
 - chargement tenant-safe fondé sur l'`OrganizationId` de l'`ActorContext`.
+- rôle PostgreSQL `zandu_runtime` sans privilège superuser ni `BYPASSRLS` ;
+- RLS `ENABLE` et `FORCE` avec policy `USING`/`WITH CHECK` sur la table racine
+  des organizations ;
+- contexte `app.organization_id` et rôle runtime limités à chaque transaction ;
+- tous les use cases Organization exécutés dans une `TenantTransaction` ;
+- comportement fail-closed, rejet cross-tenant et absence de fuite après commit
+  ou rollback prouvés sur PostgreSQL réel.
 
 ### Validations
 
 ```text
-PHPUnit Docker : OK (151 tests, 441 assertions)
+PHPUnit Docker : OK (157 tests, 451 assertions)
 Round-trip Organization/PostgreSQL : OK (1 test, 6 assertions)
+PostgreSQL RLS : OK (6 tests, 9 assertions)
 Doctrine mapping : 1 entité valide
 PHP-CS-Fixer : 0 fichier à corriger
 PHPStan niveau 6 : 0 erreur
@@ -2820,6 +2828,12 @@ feat(organization): add create organization use case
 refactor(organization): avoid Doctrine layer name collision
 feat(organization): add organization lifecycle use cases
 docs(status): close Organization foundation
+docs(adr): require PostgreSQL row level security
+feat(tenant): enable organization row level security
+feat(tenant): add transaction scoped RLS context
+feat(organization): enforce tenant transactions in use cases
+test(tenant): verify runtime role and rollback isolation
+docs(status): record Organization RLS implementation
 ```
 
 ## Prochaine étape
@@ -2831,9 +2845,9 @@ docs(status): close Organization foundation
 Implémenter l'aggregate `Store`, ses value objects, sa persistance tenant-safe,
 ses use cases de lifecycle et le process manager `StoreClosure`.
 
-Avant la persistance de `Store`, implémenter l'ADR-0017 désormais accepté :
-contexte tenant transactionnel, rôle applicatif sans `BYPASSRLS`, policies
-PostgreSQL fail-closed et tests d'isolation au niveau SQL.
+L'ADR-0017 est désormais implémenté pour la table Organization. Chaque nouvelle
+table tenant-owned de l'Epic 1.2 doit réutiliser la `TenantTransaction`, accorder
+ses droits au rôle `zandu_runtime` et définir sa propre policy RLS fail-closed.
 
 ---
 
