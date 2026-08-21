@@ -52,6 +52,9 @@ services:
     Zandu\Modules\Organization\Domain\OrganizationRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository
 
+    Zandu\Modules\Organization\Domain\Store\StoreRepository:
+        alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreRepository
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"
