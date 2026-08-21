@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Membership\MembershipStatus;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
@@ -41,6 +42,25 @@ final readonly class DoctrineOrganizationMembershipRepository implements Organiz
         return $record instanceof OrganizationMembershipRecord
             ? $this->toAggregate($record)
             : throw OrganizationMembershipNotFound::withId($membershipId);
+    }
+    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleCode $roleCode): int
+    {
+        $rows = $this->entityManager->getConnection()->fetchFirstColumn(
+            <<<'SQL'
+                SELECT id
+                FROM identity_access.organization_memberships
+                WHERE organization_id = :organization_id
+                  AND status = 'ACTIVE'
+                  AND role_assignments::jsonb @> CAST(:assignment AS JSONB)
+                FOR UPDATE
+                SQL,
+            [
+                'organization_id' => $organizationId->toString(),
+                'assignment' => json_encode([['roleCode' => $roleCode->value()]], JSON_THROW_ON_ERROR),
+            ],
+        );
+
+        return count($rows);
     }
     private function toAggregate(OrganizationMembershipRecord $record): OrganizationMembership
     {

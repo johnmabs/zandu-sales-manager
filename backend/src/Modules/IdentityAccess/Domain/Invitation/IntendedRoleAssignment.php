@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Domain\Invitation;
 
 use InvalidArgumentException;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\SharedKernel\Identity\StoreId;
 
 final readonly class IntendedRoleAssignment
@@ -31,6 +32,11 @@ final readonly class IntendedRoleAssignment
     public function roleCode(): string
     {
         return $this->roleCode;
+    }
+
+    public function matches(RoleCode $roleCode): bool
+    {
+        return $this->roleCode === $roleCode->value();
     }
 
     /** @return list<StoreId> */

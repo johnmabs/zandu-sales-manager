@@ -7,6 +7,7 @@ namespace Zandu\Modules\IdentityAccess\Domain\Membership;
 use DateTimeImmutable;
 use DateTimeZone;
 use LogicException;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
@@ -132,6 +133,16 @@ final class OrganizationMembership
     public function roleAssignments(): array
     {
         return $this->roleAssignments;
+    }
+    public function hasRole(RoleCode $roleCode): bool
+    {
+        foreach ($this->roleAssignments as $assignment) {
+            if ($assignment->matches($roleCode)) {
+                return true;
+            }
+        }
+
+        return false;
     }
     public function authorizationVersion(): int
     {

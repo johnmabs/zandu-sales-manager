@@ -9,6 +9,7 @@ use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitationHandler;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
@@ -161,6 +162,10 @@ final class AcceptanceMembershipRepository implements OrganizationMembershipRepo
     public function findByUser(OrganizationId $organizationId, UserId $userId): ?OrganizationMembership
     {
         return $this->membership;
+    }
+    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleCode $roleCode): int
+    {
+        return 0;
     }
 }
 

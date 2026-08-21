@@ -13,7 +13,7 @@ final readonly class RevokeOrganizationMembershipHandler
     public function __construct(private MembershipLifecycleService $lifecycle, private Clock $clock) {}
     public function __invoke(RevokeOrganizationMembership $command): OrganizationMembership
     {
-        return $this->lifecycle->execute(
+        return $this->lifecycle->deactivate(
             $command->membershipId,
             $command->actorContext,
             fn(OrganizationMembership $membership) => $membership->revoke($command->actorContext->actorId(), $this->clock->now()),

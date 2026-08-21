@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\FreshMembershipAccessGuard;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
@@ -71,6 +72,10 @@ final readonly class GuardMembershipRepository implements OrganizationMembership
     public function findByUser(OrganizationId $organizationId, UserId $userId): ?OrganizationMembership
     {
         return $this->membership;
+    }
+    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleCode $roleCode): int
+    {
+        return 0;
     }
 }
 
