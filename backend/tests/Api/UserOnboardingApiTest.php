@@ -121,6 +121,22 @@ SQL, [self::INVITED_ORGANIZATION_ID, 'Invitation onboarding', self::INVITER_ID, 
         self::assertArrayHasKey('token', $login);
     }
 
+    public function testUnknownInvitationTokenReturnsAStablePublicError(): void
+    {
+        $client = self::createClient();
+        $client->jsonRequest(
+            'POST',
+            '/api/auth/invitations/' . self::INVITED_ORGANIZATION_ID . '.AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/register',
+            ['password' => 'a-strong-password-for-invitee'],
+        );
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertJsonStringEqualsJsonString(
+            '{"code":"INVALID_INVITATION_REGISTRATION","message":"The invitation is invalid or inactive."}',
+            (string) $client->getResponse()->getContent(),
+        );
+    }
+
     private function cleanup(): void
     {
         $connection = $this->entityManager->getConnection();

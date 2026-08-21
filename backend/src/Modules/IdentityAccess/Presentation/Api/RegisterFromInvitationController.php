@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Zandu\Modules\IdentityAccess\Application\RegisterFromInvitation\RegisterFromInvitation;
 use Zandu\Modules\IdentityAccess\Application\RegisterFromInvitation\RegisterFromInvitationHandler;
+use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 
 final readonly class RegisterFromInvitationController
@@ -30,8 +31,8 @@ final readonly class RegisterFromInvitationController
 
         try {
             $result = ($this->handler)(new RegisterFromInvitation($token, $password, $correlationId));
-        } catch (InvalidArgumentException $exception) {
-            return new JsonResponse(['code' => 'INVALID_INVITATION_REGISTRATION', 'message' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (InvalidArgumentException|OrganizationInvitationNotFound) {
+            return $this->invalidInvitation();
         } catch (LogicException $exception) {
             return new JsonResponse(['code' => 'INVITATION_REGISTRATION_CONFLICT', 'message' => $exception->getMessage()], Response::HTTP_CONFLICT);
         }
@@ -40,5 +41,13 @@ final readonly class RegisterFromInvitationController
             'userId' => $result->userId->toString(),
             'organizationId' => $result->organizationId->toString(),
         ], Response::HTTP_CREATED);
+    }
+
+    private function invalidInvitation(): JsonResponse
+    {
+        return new JsonResponse([
+            'code' => 'INVALID_INVITATION_REGISTRATION',
+            'message' => 'The invitation is invalid or inactive.',
+        ], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }
