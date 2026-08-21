@@ -34,7 +34,7 @@ Epic 1.4   TERMINÉ   Membership lifecycle
 Epic 1.5   TERMINÉ   Roles, permissions & scopes
 Epic 1.5b  TERMINÉ   User accounts & onboarding
 Epic 1.5c  TERMINÉ   Authentication security hardening
-Epic 1.6   À FAIRE   Authorization & operational guards
+Epic 1.6   TERMINÉ   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
 Epic 1.8   À FAIRE   Administration API
 Epic 1.9   À FAIRE   Integration & tenant isolation tests
@@ -3147,15 +3147,60 @@ refactor(auth): translate invitation lookup failure
 fix(container): preserve runtime security environment
 ```
 
+## Epic 1.6 — Authorization & operational guards
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- contrat public `AuthorizationService::authorize()` fondé sur une permission
+  atomique et une `ResourceScope`, sans rôle brut dans les handlers métier ;
+- résolution des droits depuis l'utilisateur authentifié, son
+  `authorizationVersion`, son membership actif, ses attributions non expirées
+  et le catalogue typé des rôles système ;
+- contrôle serveur des portées organisation, tous magasins et magasins
+  sélectionnés ;
+- rejet des contextes cross-tenant et des tokens dont la version
+  d'autorisation est périmée ;
+- `OrganizationOperationalGuard` et `StoreOperationalGuard` centralisés avec
+  modes standard, remédiation et terminaison ;
+- protection des commandes sensibles d'organisation, de magasin,
+  d'invitation, de cycle de vie des memberships et d'attribution de rôles ;
+- suppression des politiques d'autorisation fondées sur le créateur de
+  l'organisation ; l'invariant du dernier owner reste protégé séparément ;
+- une organisation ou un magasin suspendu refuse les nouvelles opérations,
+  tout en autorisant les transitions explicites de remédiation ou terminaison.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (238 tests, 671 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(access): add authorization service
+feat(organization): add operational guards
+refactor(organization): expose operational guard contract
+feat(organization): enforce command authorization
+feat(access): enforce administration permissions
+style(access): normalize code formatting
+```
+
 ## Prochaine étape
 
-### Epic 1.6 — Authorization & operational guards
+### Epic 1.7 — Security audit & event integration
 
 **Statut : À FAIRE**
 
-Résoudre les permissions effectives depuis les memberships actifs, leurs rôles
-et leurs scopes, puis appliquer les guards d'autorisation et de statut
-opérationnel aux use cases du Lot 1.
+Rendre les opérations d'administration traçables et auditables, intégrer les
+événements de sécurité et préparer leur consommation fiable.
 
 ---
 
