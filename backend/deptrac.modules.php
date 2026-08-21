@@ -130,7 +130,8 @@ return static function (DeptracConfig $config): void {
             Ruleset::forLayer($salesContract),
             Ruleset::forLayer($inventoryContract),
             Ruleset::forLayer($cashManagementContract),
-            Ruleset::forLayer($identityAccess),
+            Ruleset::forLayer($identityAccess)
+                ->accesses($organizationContract),
             Ruleset::forLayer($operations),
             Ruleset::forLayer($organization)
                 ->accesses($organizationContract),
