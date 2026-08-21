@@ -14,6 +14,3 @@ services:
     Zandu\Modules\IdentityAccess\Infrastructure\Security\PersistentUserProvider:
         arguments:
             $bootstrap: '@Zandu\Platform\Auth\Security\BootstrapUserProvider'
-
-    Zandu\Platform\Auth\Refresh\RefreshSessionStore:
-        alias: Zandu\Platform\Auth\Refresh\InMemoryRefreshSessionStore

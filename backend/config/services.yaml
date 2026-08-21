@@ -20,6 +20,7 @@ services:
         resource: "../src/"
         exclude:
             - "../src/Platform/Api/Exception/*.php"
+            - "../src/Platform/Auth/Security/BootstrapUserProvider.php"
             - "../src/Platform/Decimal/BrickDecimal.php"
             - "../src/Platform/Identity/SymfonyUuid.php"
             - "../src/SharedKernel/Context/*.php"
@@ -92,16 +93,12 @@ services:
     Zandu\Modules\IdentityAccess\Domain\User\UserRepository:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineUserRepository
 
+    Zandu\Modules\IdentityAccess\Infrastructure\Security\PersistentUserProvider:
+        arguments:
+            $bootstrap: null
+
     Zandu\Modules\IdentityAccess\Application\Contract\MembershipAccessGuard:
         alias: Zandu\Modules\IdentityAccess\Application\FreshMembershipAccessGuard
-
-    Zandu\Platform\Auth\Security\BootstrapUserProvider:
-        arguments:
-            $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"
-            $passwordHash: "%env(AUTH_BOOTSTRAP_PASSWORD_HASH)%"
-            $actorId: "%env(AUTH_BOOTSTRAP_ACTOR_ID)%"
-            $organizationId: "%env(AUTH_BOOTSTRAP_ORGANIZATION_ID)%"
-            $userId: "%env(AUTH_BOOTSTRAP_USER_ID)%"
 
     Zandu\Platform\Auth\Refresh\RefreshSessionStore:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\DbalRefreshSessionStore

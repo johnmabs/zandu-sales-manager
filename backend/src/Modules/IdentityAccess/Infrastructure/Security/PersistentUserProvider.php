@@ -24,14 +24,17 @@ final readonly class PersistentUserProvider implements UserProviderInterface
         private UserRepository $users,
         private OrganizationMembershipRepository $memberships,
         private TenantTransaction $transaction,
-        private BootstrapUserProvider $bootstrap,
+        private ?BootstrapUserProvider $bootstrap = null,
     ) {}
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
         $user = $this->users->findByEmail(UserEmail::fromString($identifier));
-        if (null === $user) {
+        if (null === $user && null !== $this->bootstrap) {
             return $this->bootstrap->loadUserByIdentifier($identifier);
+        }
+        if (null === $user) {
+            throw $this->notFound($identifier);
         }
         if (UserStatus::Active !== $user->status()) {
             throw $this->notFound($identifier);
