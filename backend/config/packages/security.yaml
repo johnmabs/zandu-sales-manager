@@ -6,7 +6,7 @@ security:
     # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
     providers:
         zandu_users:
-            id: Zandu\Platform\Auth\Security\BootstrapUserProvider
+            id: Zandu\Modules\IdentityAccess\Infrastructure\Security\PersistentUserProvider
 
     firewalls:
         dev:
@@ -34,6 +34,8 @@ security:
         - { path: ^/health/(live|ready)$, roles: PUBLIC_ACCESS }
         - { path: ^/metrics$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/register$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/invitations/.+/register$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/(refresh|logout)$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

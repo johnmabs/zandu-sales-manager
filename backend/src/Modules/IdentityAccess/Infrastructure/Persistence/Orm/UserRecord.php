@@ -20,6 +20,8 @@ final class UserRecord
         private string $actorId,
         #[ORM\Column(length: 254, unique: true)]
         private string $email,
+        #[ORM\Column(type: 'guid')]
+        private string $defaultOrganizationId,
         #[ORM\Column(length: 255)]
         private string $passwordHash,
         #[ORM\Column(length: 16)]
@@ -38,6 +40,7 @@ final class UserRecord
             $user->id()->toString(),
             $user->actorId()->toString(),
             $user->email()->value(),
+            $user->defaultOrganizationId()->toString(),
             $user->passwordHash(),
             $user->status()->value,
             $user->createdAt(),
@@ -57,6 +60,10 @@ final class UserRecord
     public function email(): string
     {
         return $this->email;
+    }
+    public function defaultOrganizationId(): string
+    {
+        return $this->defaultOrganizationId;
     }
     public function passwordHash(): string
     {

@@ -7,6 +7,7 @@ namespace Zandu\Modules\IdentityAccess\Domain\User;
 use DateTimeImmutable;
 use LogicException;
 use Zandu\SharedKernel\Identity\ActorId;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UserId;
 
 final class User
@@ -15,6 +16,7 @@ final class User
         private readonly UserId $id,
         private readonly ActorId $actorId,
         private readonly UserEmail $email,
+        private readonly OrganizationId $defaultOrganizationId,
         private string $passwordHash,
         private UserStatus $status,
         private readonly DateTimeImmutable $createdAt,
@@ -30,23 +32,25 @@ final class User
         UserId $id,
         ActorId $actorId,
         UserEmail $email,
+        OrganizationId $defaultOrganizationId,
         string $passwordHash,
         DateTimeImmutable $occurredAt,
     ): self {
-        return new self($id, $actorId, $email, $passwordHash, UserStatus::Active, $occurredAt, $occurredAt, 1);
+        return new self($id, $actorId, $email, $defaultOrganizationId, $passwordHash, UserStatus::Active, $occurredAt, $occurredAt, 1);
     }
 
     public static function reconstitute(
         UserId $id,
         ActorId $actorId,
         UserEmail $email,
+        OrganizationId $defaultOrganizationId,
         string $passwordHash,
         UserStatus $status,
         DateTimeImmutable $createdAt,
         DateTimeImmutable $updatedAt,
         int $version,
     ): self {
-        return new self($id, $actorId, $email, $passwordHash, $status, $createdAt, $updatedAt, $version);
+        return new self($id, $actorId, $email, $defaultOrganizationId, $passwordHash, $status, $createdAt, $updatedAt, $version);
     }
 
     public function id(): UserId
@@ -62,6 +66,11 @@ final class User
     public function email(): UserEmail
     {
         return $this->email;
+    }
+
+    public function defaultOrganizationId(): OrganizationId
+    {
+        return $this->defaultOrganizationId;
     }
 
     public function passwordHash(): string

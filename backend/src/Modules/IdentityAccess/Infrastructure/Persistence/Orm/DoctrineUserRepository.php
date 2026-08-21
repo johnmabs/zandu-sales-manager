@@ -10,6 +10,7 @@ use Zandu\Modules\IdentityAccess\Domain\User\UserEmail;
 use Zandu\Modules\IdentityAccess\Domain\User\UserRepository;
 use Zandu\Modules\IdentityAccess\Domain\User\UserStatus;
 use Zandu\SharedKernel\Identity\ActorId;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UserId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 
@@ -34,6 +35,7 @@ final readonly class DoctrineUserRepository implements UserRepository
             UserId::fromString($record->id(), $this->uuidFactory),
             ActorId::fromString($record->actorId(), $this->uuidFactory),
             UserEmail::fromString($record->email()),
+            OrganizationId::fromString($record->defaultOrganizationId(), $this->uuidFactory),
             $record->passwordHash(),
             UserStatus::from($record->status()),
             $record->createdAt(),

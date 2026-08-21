@@ -67,6 +67,9 @@ services:
     Zandu\Modules\Organization\Application\Contract\InitialOrganizationOwnerProvisioner:
         alias: Zandu\Modules\IdentityAccess\Application\ProvisionInitialOrganizationOwner
 
+    Zandu\Modules\Organization\Application\Contract\OrganizationOnboardingProvisioner:
+        alias: Zandu\Modules\Organization\Application\OrganizationOnboardingService
+
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
 
@@ -76,6 +79,9 @@ services:
 
     Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService
+
+    Zandu\Modules\IdentityAccess\Application\Contract\PasswordHasher:
+        alias: Zandu\Modules\IdentityAccess\Infrastructure\Security\NativePasswordHasher
 
     Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationInvitationRepository
