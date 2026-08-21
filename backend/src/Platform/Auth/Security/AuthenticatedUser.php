@@ -15,6 +15,7 @@ final readonly class AuthenticatedUser implements UserInterface, PasswordAuthent
         private string $actorId,
         private string $organizationId,
         private string $userId,
+        private int $authorizationVersion = 0,
     ) {}
 
     public function getUserIdentifier(): string
@@ -47,5 +48,10 @@ final readonly class AuthenticatedUser implements UserInterface, PasswordAuthent
     public function userId(): string
     {
         return $this->userId;
+    }
+
+    public function authorizationVersion(): int
+    {
+        return $this->authorizationVersion;
     }
 }

@@ -12,6 +12,7 @@ final class JwtAuthenticatedSubscriber
 {
     public const AUTHENTICATED_AT_ATTRIBUTE = '_zandu_authenticated_at';
     public const SESSION_ID_ATTRIBUTE = '_zandu_session_id';
+    public const AUTHORIZATION_VERSION_ATTRIBUTE = '_zandu_authorization_version';
 
     #[AsEventListener(event: Events::JWT_AUTHENTICATED)]
     public function __invoke(JWTAuthenticatedEvent $event): void
@@ -25,6 +26,9 @@ final class JwtAuthenticatedSubscriber
 
         if (isset($payload['sessionId']) && is_string($payload['sessionId'])) {
             $token->setAttribute(self::SESSION_ID_ATTRIBUTE, $payload['sessionId']);
+        }
+        if (isset($payload['authorizationVersion']) && is_int($payload['authorizationVersion'])) {
+            $token->setAttribute(self::AUTHORIZATION_VERSION_ATTRIBUTE, $payload['authorizationVersion']);
         }
     }
 }

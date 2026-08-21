@@ -22,6 +22,7 @@ final readonly class ActorContext
         private ?UserId $userId = null,
         private ?SessionId $sessionId = null,
         private ?string $email = null,
+        private ?int $authorizationVersion = null,
     ) {}
 
     public function actorId(): ActorId
@@ -62,5 +63,10 @@ final readonly class ActorContext
     public function email(): ?string
     {
         return $this->email;
+    }
+
+    public function authorizationVersion(): ?int
+    {
+        return $this->authorizationVersion;
     }
 }

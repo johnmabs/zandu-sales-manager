@@ -80,6 +80,9 @@ services:
     Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationMembershipRepository
 
+    Zandu\Modules\IdentityAccess\Application\Contract\MembershipAccessGuard:
+        alias: Zandu\Modules\IdentityAccess\Application\FreshMembershipAccessGuard
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"

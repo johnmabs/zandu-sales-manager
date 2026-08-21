@@ -64,6 +64,9 @@ final readonly class ActorContextResolver
             UserId::fromString($user->userId(), $this->uuidFactory),
             $sessionId,
             $user->getUserIdentifier(),
+            $token->hasAttribute(JwtAuthenticatedSubscriber::AUTHORIZATION_VERSION_ATTRIBUTE)
+                ? (int) $token->getAttribute(JwtAuthenticatedSubscriber::AUTHORIZATION_VERSION_ATTRIBUTE)
+                : null,
         );
     }
 }

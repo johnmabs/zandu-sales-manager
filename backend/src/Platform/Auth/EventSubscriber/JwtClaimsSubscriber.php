@@ -24,6 +24,7 @@ final class JwtClaimsSubscriber
             'actorId' => $user->actorId(),
             'organizationId' => $user->organizationId(),
             'userId' => $user->userId(),
+            'authorizationVersion' => $user->authorizationVersion(),
         ]);
     }
 }
