@@ -55,7 +55,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
 
     public function testProfileUpdateUsesTheTrustedActorContext(): void
     {
-        $handler = new UpdateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
+        $handler = new UpdateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
         $organization = $handler(new UpdateOrganization(
             $this->organizationId(),
             'Zandu Congo',
@@ -74,8 +74,8 @@ final class OrganizationLifecycleHandlerTest extends TestCase
 
     public function testSuspensionAndReactivationAreExplicitUseCases(): void
     {
-        $suspend = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
-        $reactivate = new ReactivateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
+        $suspend = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $reactivate = new ReactivateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
 
         $organization = $suspend(new SuspendOrganization($this->organizationId(), $this->actorContext()));
         self::assertSame(OrganizationStatus::Suspended, $organization->status());
@@ -87,7 +87,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
 
     public function testClosureRequestIsAnExplicitUseCase(): void
     {
-        $handler = new RequestOrganizationClosureHandler($this->loader, $this->repository, $this->clock, $this->transaction);
+        $handler = new RequestOrganizationClosureHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
 
         $organization = $handler(new RequestOrganizationClosure($this->organizationId(), $this->actorContext()));
 
@@ -98,7 +98,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
     public function testCrossTenantLookupIsReportedAsNotFound(): void
     {
         $factory = new SymfonyUuidFactory();
-        $handler = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction);
+        $handler = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
 
         $this->expectException(OrganizationNotFound::class);
         $handler(new SuspendOrganization(

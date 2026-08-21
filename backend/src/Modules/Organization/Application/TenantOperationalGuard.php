@@ -8,8 +8,9 @@ use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Modules\Organization\Domain\Organization;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
-use Zandu\Modules\Organization\Domain\Store\Store;
+use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\SharedKernel\Context\ActorContext;
+use Zandu\SharedKernel\Identity\StoreId;
 
 final readonly class TenantOperationalGuard implements OperationalGuard
 {
@@ -17,17 +18,22 @@ final readonly class TenantOperationalGuard implements OperationalGuard
         private OrganizationRepository $organizations,
         private OrganizationOperationalGuard $organizationGuard,
         private StoreOperationalGuard $storeGuard,
+        private StoreRepository $stores,
     ) {}
 
-    public function assertOrganization(Organization $organization, OperationalMode $mode = OperationalMode::Standard): void
+    public function assertTenant(ActorContext $actorContext, OperationalMode $mode = OperationalMode::Standard): void
+    {
+        $this->assertOrganization($this->organizations->get($actorContext->organizationId()), $mode);
+    }
+
+    private function assertOrganization(Organization $organization, OperationalMode $mode = OperationalMode::Standard): void
     {
         $this->organizationGuard->assertAllows($organization, $mode);
     }
 
-    public function assertStore(ActorContext $actorContext, Store $store, OperationalMode $mode = OperationalMode::Standard): void
+    public function assertStore(ActorContext $actorContext, StoreId $storeId, OperationalMode $mode = OperationalMode::Standard): void
     {
-        $organization = $this->organizations->get($actorContext->organizationId());
-        $this->organizationGuard->assertAllows($organization, $mode);
-        $this->storeGuard->assertAllows($store, $mode);
+        $this->assertTenant($actorContext, $mode);
+        $this->storeGuard->assertAllows($this->stores->get($actorContext->organizationId(), $storeId), $mode);
     }
 }

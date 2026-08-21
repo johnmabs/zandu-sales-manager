@@ -64,6 +64,18 @@ final class OperationalGuardTest extends TestCase
         (new OrganizationOperationalGuard())->assertAllows($organization, OperationalMode::Termination);
     }
 
+    public function testClosurePendingStoreAllowsCancellationButNoStandardOperation(): void
+    {
+        $store = $this->store();
+        $store->requestClosure($this->actorId(), $this->now());
+
+        (new StoreOperationalGuard())->assertAllows($store, OperationalMode::Remediation);
+        self::addToAssertionCount(1);
+
+        $this->expectException(LogicException::class);
+        (new StoreOperationalGuard())->assertAllows($store);
+    }
+
     /** @param callable():void $operation */
     private function assertGuardOutcome(bool $allowed, callable $operation): void
     {

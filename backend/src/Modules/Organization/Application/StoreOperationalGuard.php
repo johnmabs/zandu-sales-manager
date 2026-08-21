@@ -16,7 +16,7 @@ final readonly class StoreOperationalGuard
         $allowed = match ($store->status()) {
             StoreStatus::Active => true,
             StoreStatus::Suspended => OperationalMode::Standard !== $mode,
-            StoreStatus::ClosurePending => OperationalMode::Termination === $mode,
+            StoreStatus::ClosurePending => OperationalMode::Standard !== $mode,
             StoreStatus::Closed => false,
         };
 

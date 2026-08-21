@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Organization\Application\Contract;
 
-use Zandu\Modules\Organization\Domain\Organization;
-use Zandu\Modules\Organization\Domain\Store\Store;
 use Zandu\SharedKernel\Context\ActorContext;
+use Zandu\SharedKernel\Identity\StoreId;
 
 interface OperationalGuard
 {
-    public function assertOrganization(
-        Organization $organization,
+    public function assertTenant(
+        ActorContext $actorContext,
         OperationalMode $mode = OperationalMode::Standard,
     ): void;
 
     public function assertStore(
         ActorContext $actorContext,
-        Store $store,
+        StoreId $storeId,
         OperationalMode $mode = OperationalMode::Standard,
     ): void;
 }

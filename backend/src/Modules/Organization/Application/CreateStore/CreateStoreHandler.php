@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Organization\Application\CreateStore;
 
-use LogicException;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Domain\Locale;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
-use Zandu\Modules\Organization\Domain\OrganizationStatus;
 use Zandu\Modules\Organization\Domain\Store\Store;
 use Zandu\Modules\Organization\Domain\Store\StoreAddress;
 use Zandu\Modules\Organization\Domain\Store\StoreCode;
@@ -15,6 +16,7 @@ use Zandu\Modules\Organization\Domain\Store\StoreCodeAlreadyExists;
 use Zandu\Modules\Organization\Domain\Store\StoreName;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\Modules\Organization\Domain\TimeZone;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Money\Currency;
@@ -29,6 +31,8 @@ final readonly class CreateStoreHandler
         private IdGenerator $idGenerator,
         private Clock $clock,
         private TenantTransaction $transaction,
+        private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(CreateStore $command): Store
@@ -37,9 +41,8 @@ final readonly class CreateStoreHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): Store {
             $organization = $this->organizations->get($organizationId);
-            if (OrganizationStatus::Active !== $organization->status()) {
-                throw new LogicException('A store can only be created in an active organization.');
-            }
+            $this->authorization->authorize($command->actorContext, PermissionCode::StoreCreate, ResourceScope::organization($organizationId));
+            $this->operationalGuard->assertTenant($command->actorContext);
 
             $code = StoreCode::fromString($command->code);
             if ($this->stores->codeExists($organizationId, $code)) {

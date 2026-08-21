@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Organization\Application\RequestStoreClosure;
 
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Modules\Organization\Application\Contract\StoreClosureBlockerProvider;
 use Zandu\Modules\Organization\Application\TenantStoreLoader;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosure;
 use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\StoreClosureId;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -24,6 +29,8 @@ final readonly class RequestStoreClosureHandler
         private IdGenerator $idGenerator,
         private Clock $clock,
         private TenantTransaction $transaction,
+        private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(RequestStoreClosure $command): StoreClosure
@@ -32,6 +39,8 @@ final readonly class RequestStoreClosureHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): StoreClosure {
             $store = $this->loader->get($command->storeId, $command->actorContext);
+            $this->authorization->authorize($command->actorContext, PermissionCode::StoreClose, ResourceScope::store($store->organizationId(), $store->id()));
+            $this->operationalGuard->assertStore($command->actorContext, $store->id(), OperationalMode::Termination);
             $occurredAt = $this->clock->now();
             $store->requestClosure($command->actorContext->actorId(), $occurredAt);
             $closure = StoreClosure::request(

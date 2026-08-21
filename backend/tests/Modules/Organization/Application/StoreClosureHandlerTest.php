@@ -63,6 +63,8 @@ final class StoreClosureHandlerTest extends TestCase
             $this->idGenerator(),
             new FrozenClock(new DateTimeImmutable('2026-08-22T10:00:00+00:00')),
             new InMemoryTenantTransaction(),
+            new AllowAllAuthorizationService(),
+            new AllowAllOperationalGuard(),
         );
 
         $closure = $handler(new RequestStoreClosure($this->storeId(), 'Fin du bail', $this->context()));
@@ -92,11 +94,13 @@ final class StoreClosureHandlerTest extends TestCase
             $this->idGenerator(),
             $clock,
             $transaction,
+            new AllowAllAuthorizationService(),
+            new AllowAllOperationalGuard(),
         );
         $closure = $request(new RequestStoreClosure($this->storeId(), 'Regroupement', $this->context()));
         self::assertSame(StoreClosureStatus::Ready, $closure->status());
 
-        $cancel = new CancelStoreClosureHandler(new TenantStoreLoader($stores), $stores, $closures, $clock, $transaction);
+        $cancel = new CancelStoreClosureHandler(new TenantStoreLoader($stores), $stores, $closures, $clock, $transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
         $store = $cancel(new CancelStoreClosure($this->storeId(), $this->context()));
 
         self::assertSame(StoreClosureStatus::Cancelled, $closure->status());
