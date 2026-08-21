@@ -1,6 +1,7 @@
 # Zandu Sales Manager — Suivi d’implémentation
 
-Ce document suit l’avancement réel de l’implémentation de **Zandu Sales Manager** à partir du **Lot 0 — Architecture exécutable**.
+Ce document suit l’avancement réel de l’implémentation de **Zandu Sales Manager**
+à partir du **Lot 0 — Architecture exécutable**.
 
 Il ne remplace ni la spécification DDD, ni les ADR, ni le backlog du Lot 0.  
 Son rôle est de conserver une trace simple de ce qui a effectivement été réalisé dans le repository.
@@ -23,8 +24,20 @@ Epic 0.8   TERMINÉ   Operations & observability
 Gate Lot 0 TERMINÉ   Validation finale de l’architecture exécutable
 ```
 
-Le Lot 0 est clos. La prochaine phase doit être définie dans un backlog dédié
-avant le démarrage d’un nouveau vertical slice métier.
+Le Lot 0 est clos. Le Lot 1 — Administration opérationnelle est en cours :
+
+```text
+Epic 1.1   TERMINÉ   Organization foundation
+Epic 1.2   À FAIRE   Store foundation
+Epic 1.3   À FAIRE   Organization invitations
+Epic 1.4   À FAIRE   Membership lifecycle
+Epic 1.5   À FAIRE   Roles, permissions & scopes
+Epic 1.6   À FAIRE   Authorization & operational guards
+Epic 1.7   À FAIRE   Security audit & event integration
+Epic 1.8   À FAIRE   Administration API
+Epic 1.9   À FAIRE   Integration & tenant isolation tests
+Gate Lot 1 À FAIRE   Administration opérationnelle complète
+```
 
 ## Definition of Done globale
 
@@ -54,6 +67,7 @@ avant le démarrage d’un nouveau vertical slice métier.
 - Spécification d’architecture DDD v1.1
 - ADR techniques 0001–0016
 - `zandu-lot-0-architecture-executable.md`
+- `zandu-lot-1-administration-operationnelle.md`
 
 ---
 
@@ -2754,6 +2768,68 @@ fix(ci): increase PHPStan memory limit
 docs(spike-g): record infrastructure validation
 docs(status): close Lot 0 gate
 ```
+
+---
+
+# Lot 1 — Administration opérationnelle
+
+## Epic 1.1 — Organization foundation
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- bounded context `Organization` ajouté avec ses frontières Deptrac ;
+- aggregate `Organization` et statuts `ACTIVE`, `SUSPENDED`,
+  `CLOSURE_PENDING`, `CLOSED` ;
+- value objects `OrganizationName`, `CountryCode`, `Locale` et `TimeZone` ;
+- événements de création, modification, suspension, réactivation, demande de
+  fermeture et fermeture définitive ;
+- lifecycle explicite sans opération métier de suppression ;
+- acteurs, timestamps UTC et version d'aggregate conservés à chaque mutation ;
+- contrat `OrganizationRepository` et erreur `OrganizationNotFound` ;
+- persistance Doctrine ORM isolée dans Infrastructure et migration PostgreSQL
+  `Version20260822090000` ;
+- use cases `CreateOrganization`, `UpdateOrganization`, `SuspendOrganization`,
+  `ReactivateOrganization` et `RequestOrganizationClosure` ;
+- chargement tenant-safe fondé sur l'`OrganizationId` de l'`ActorContext`.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (151 tests, 441 assertions)
+Round-trip Organization/PostgreSQL : OK (1 test, 6 assertions)
+Doctrine mapping : 1 entité valide
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+docs(planning): add Lot 1 administration backlog
+refactor(organization): add bounded context structure
+feat(organization): add organization value objects
+feat(organization): add organization aggregate lifecycle
+feat(organization): add organization repository contract
+feat(organization): persist organization aggregate
+feat(organization): add create organization use case
+refactor(organization): avoid Doctrine layer name collision
+feat(organization): add organization lifecycle use cases
+docs(status): close Organization foundation
+```
+
+## Prochaine étape
+
+### Epic 1.2 — Store foundation
+
+**Statut : À FAIRE**
+
+Implémenter l'aggregate `Store`, ses value objects, sa persistance tenant-safe,
+ses use cases de lifecycle et le process manager `StoreClosure`.
 
 ---
 
