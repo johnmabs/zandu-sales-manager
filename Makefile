@@ -18,6 +18,8 @@ restart:
 	docker compose restart
 
 test:
+	docker compose exec backend php bin/console doctrine:database:create --if-not-exists --env=test
+	docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction --env=test
 	docker compose exec backend php bin/phpunit
 
 lint:
