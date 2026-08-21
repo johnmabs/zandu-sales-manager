@@ -27,6 +27,10 @@ final class OrganizationMembership
         private readonly DateTimeImmutable $createdAt,
         private ActorId $updatedBy,
         private DateTimeImmutable $updatedAt,
+        private ?ActorId $suspendedBy,
+        private ?DateTimeImmutable $suspendedAt,
+        private ?ActorId $revokedBy,
+        private ?DateTimeImmutable $revokedAt,
         private int $version,
     ) {}
 
@@ -40,7 +44,7 @@ final class OrganizationMembership
         DateTimeImmutable $occurredAt,
     ): self {
         $occurredAt = self::utc($occurredAt);
-        return new self($id, $organizationId, $userId, MembershipStatus::Active, $roleAssignments, 1, $actorId, $occurredAt, $actorId, $occurredAt, 1);
+        return new self($id, $organizationId, $userId, MembershipStatus::Active, $roleAssignments, 1, $actorId, $occurredAt, $actorId, $occurredAt, null, null, null, null, 1);
     }
 
     /** @param non-empty-list<IntendedRoleAssignment> $roleAssignments */
@@ -55,9 +59,13 @@ final class OrganizationMembership
         DateTimeImmutable $createdAt,
         ActorId $updatedBy,
         DateTimeImmutable $updatedAt,
+        ?ActorId $suspendedBy,
+        ?DateTimeImmutable $suspendedAt,
+        ?ActorId $revokedBy,
+        ?DateTimeImmutable $revokedAt,
         int $version,
     ): self {
-        return new self($id, $organizationId, $userId, $status, $roleAssignments, $authorizationVersion, $createdBy, $createdAt, $updatedBy, $updatedAt, $version);
+        return new self($id, $organizationId, $userId, $status, $roleAssignments, $authorizationVersion, $createdBy, $createdAt, $updatedBy, $updatedAt, $suspendedBy, $suspendedAt, $revokedBy, $revokedAt, $version);
     }
 
     /** @param non-empty-list<IntendedRoleAssignment> $roleAssignments */
@@ -68,6 +76,39 @@ final class OrganizationMembership
         }
         $this->status = MembershipStatus::Active;
         $this->roleAssignments = $roleAssignments;
+        $this->suspendedBy = null;
+        $this->suspendedAt = null;
+        $this->changedBy($actorId, $occurredAt);
+    }
+
+    public function suspend(ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        $this->requireStatus(MembershipStatus::Active, 'Only an active membership can be suspended.');
+        $occurredAt = self::utc($occurredAt);
+        $this->status = MembershipStatus::Suspended;
+        $this->suspendedBy = $actorId;
+        $this->suspendedAt = $occurredAt;
+        $this->changedBy($actorId, $occurredAt);
+    }
+
+    public function reactivate(ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        $this->requireStatus(MembershipStatus::Suspended, 'Only a suspended membership can be reactivated.');
+        $this->status = MembershipStatus::Active;
+        $this->suspendedBy = null;
+        $this->suspendedAt = null;
+        $this->changedBy($actorId, $occurredAt);
+    }
+
+    public function revoke(ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        if (!in_array($this->status, [MembershipStatus::Active, MembershipStatus::Suspended], true)) {
+            throw new LogicException('Only an active or suspended membership can be revoked.');
+        }
+        $occurredAt = self::utc($occurredAt);
+        $this->status = MembershipStatus::Revoked;
+        $this->revokedBy = $actorId;
+        $this->revokedAt = $occurredAt;
         $this->changedBy($actorId, $occurredAt);
     }
 
@@ -112,6 +153,22 @@ final class OrganizationMembership
     {
         return $this->updatedAt;
     }
+    public function suspendedBy(): ?ActorId
+    {
+        return $this->suspendedBy;
+    }
+    public function suspendedAt(): ?DateTimeImmutable
+    {
+        return $this->suspendedAt;
+    }
+    public function revokedBy(): ?ActorId
+    {
+        return $this->revokedBy;
+    }
+    public function revokedAt(): ?DateTimeImmutable
+    {
+        return $this->revokedAt;
+    }
     public function version(): int
     {
         return $this->version;
@@ -127,5 +184,11 @@ final class OrganizationMembership
     private static function utc(DateTimeImmutable $dateTime): DateTimeImmutable
     {
         return $dateTime->setTimezone(new DateTimeZone('UTC'));
+    }
+    private function requireStatus(MembershipStatus $status, string $message): void
+    {
+        if ($this->status !== $status) {
+            throw new LogicException($message);
+        }
     }
 }

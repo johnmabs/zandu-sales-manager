@@ -36,6 +36,14 @@ final class OrganizationMembershipRecord
         private string $updatedBy,
         #[ORM\Column(type: 'datetimetz_immutable')]
         private DateTimeImmutable $updatedAt,
+        #[ORM\Column(type: 'guid', nullable: true)]
+        private ?string $suspendedBy,
+        #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
+        private ?DateTimeImmutable $suspendedAt,
+        #[ORM\Column(type: 'guid', nullable: true)]
+        private ?string $revokedBy,
+        #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
+        private ?DateTimeImmutable $revokedAt,
         #[ORM\Column]
         private int $version,
     ) {}
@@ -57,6 +65,10 @@ final class OrganizationMembershipRecord
             $membership->createdAt(),
             $membership->updatedBy()->toString(),
             $membership->updatedAt(),
+            $membership->suspendedBy()?->toString(),
+            $membership->suspendedAt(),
+            $membership->revokedBy()?->toString(),
+            $membership->revokedAt(),
             $membership->version(),
         );
     }
@@ -68,6 +80,10 @@ final class OrganizationMembershipRecord
         $this->authorizationVersion = $current->authorizationVersion;
         $this->updatedBy = $current->updatedBy;
         $this->updatedAt = $current->updatedAt;
+        $this->suspendedBy = $current->suspendedBy;
+        $this->suspendedAt = $current->suspendedAt;
+        $this->revokedBy = $current->revokedBy;
+        $this->revokedAt = $current->revokedAt;
         $this->version = $current->version;
     }
     public function id(): string
@@ -109,6 +125,22 @@ final class OrganizationMembershipRecord
     public function updatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+    public function suspendedBy(): ?string
+    {
+        return $this->suspendedBy;
+    }
+    public function suspendedAt(): ?DateTimeImmutable
+    {
+        return $this->suspendedAt;
+    }
+    public function revokedBy(): ?string
+    {
+        return $this->revokedBy;
+    }
+    public function revokedAt(): ?DateTimeImmutable
+    {
+        return $this->revokedAt;
     }
     public function version(): int
     {

@@ -154,6 +154,10 @@ final class AcceptanceMembershipRepository implements OrganizationMembershipRepo
     {
         $this->membership = $membership;
     }
+    public function get(OrganizationId $organizationId, OrganizationMembershipId $membershipId): OrganizationMembership
+    {
+        return $this->membership ?? throw new LogicException('Membership not found.');
+    }
     public function findByUser(OrganizationId $organizationId, UserId $userId): ?OrganizationMembership
     {
         return $this->membership;

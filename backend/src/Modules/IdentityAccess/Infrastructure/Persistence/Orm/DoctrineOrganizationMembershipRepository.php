@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Membership\MembershipStatus;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
+use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipNotFound;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
@@ -30,9 +31,19 @@ final readonly class DoctrineOrganizationMembershipRepository implements Organiz
         $record = $this->entityManager->getRepository(OrganizationMembershipRecord::class)->findOneBy([
             'organizationId' => $organizationId->toString(), 'userId' => $userId->toString(),
         ]);
-        if (!$record instanceof OrganizationMembershipRecord) {
-            return null;
-        }
+        return $record instanceof OrganizationMembershipRecord ? $this->toAggregate($record) : null;
+    }
+    public function get(OrganizationId $organizationId, OrganizationMembershipId $membershipId): OrganizationMembership
+    {
+        $record = $this->entityManager->getRepository(OrganizationMembershipRecord::class)->findOneBy([
+            'organizationId' => $organizationId->toString(), 'id' => $membershipId->toString(),
+        ]);
+        return $record instanceof OrganizationMembershipRecord
+            ? $this->toAggregate($record)
+            : throw OrganizationMembershipNotFound::withId($membershipId);
+    }
+    private function toAggregate(OrganizationMembershipRecord $record): OrganizationMembership
+    {
         $assignments = array_map(fn(array $assignment): IntendedRoleAssignment => IntendedRoleAssignment::forRole(
             $assignment['roleCode'],
             array_map(fn(string $id): StoreId => StoreId::fromString($id, $this->uuidFactory), $assignment['storeIds']),
@@ -48,6 +59,10 @@ final readonly class DoctrineOrganizationMembershipRepository implements Organiz
             $record->createdAt(),
             ActorId::fromString($record->updatedBy(), $this->uuidFactory),
             $record->updatedAt(),
+            null !== $record->suspendedBy() ? ActorId::fromString($record->suspendedBy(), $this->uuidFactory) : null,
+            $record->suspendedAt(),
+            null !== $record->revokedBy() ? ActorId::fromString($record->revokedBy(), $this->uuidFactory) : null,
+            $record->revokedAt(),
             $record->version(),
         );
     }
