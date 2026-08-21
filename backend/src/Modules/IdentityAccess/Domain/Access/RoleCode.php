@@ -8,6 +8,11 @@ use InvalidArgumentException;
 
 final readonly class RoleCode
 {
+    public const string ORGANIZATION_OWNER = 'ORGANIZATION_OWNER';
+    public const string STORE_MANAGER = 'STORE_MANAGER';
+    public const string CASHIER = 'CASHIER';
+    public const string ACCOUNTANT = 'ACCOUNTANT';
+
     private function __construct(private string $value) {}
     public static function fromString(string $value): self
     {
@@ -16,6 +21,11 @@ final readonly class RoleCode
             throw new InvalidArgumentException('A valid role code is required.');
         }
         return new self($value);
+    }
+
+    public static function organizationOwner(): self
+    {
+        return new self(self::ORGANIZATION_OWNER);
     }
     public function value(): string
     {
