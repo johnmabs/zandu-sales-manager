@@ -29,8 +29,8 @@ Le Lot 0 est clos. Le Lot 1 — Administration opérationnelle est en cours :
 ```text
 Epic 1.1   TERMINÉ   Organization foundation
 Epic 1.2   TERMINÉ   Store foundation
-Epic 1.3   À FAIRE   Organization invitations
-Epic 1.4   À FAIRE   Membership lifecycle
+Epic 1.3   TERMINÉ   Organization invitations
+Epic 1.4   EN COURS  Membership lifecycle
 Epic 1.5   À FAIRE   Roles, permissions & scopes
 Epic 1.6   À FAIRE   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
@@ -2886,15 +2886,62 @@ feat(store): add store lifecycle use cases
 feat(store): add store closure process manager
 ```
 
+## Epic 1.3 — Organization invitations
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- aggregate `OrganizationInvitation` avec lifecycle `PENDING`, `ACCEPTED`,
+  `EXPIRED`, `CANCELLED`, intentions de rôles et événements métier ;
+- tokens URL-safe avec 256 bits aléatoires, routage tenant explicite et
+  empreinte HMAC seule persistée ;
+- persistance Doctrine et RLS fail-closed des invitations ;
+- `InviteOrganizationMember` avec organisation active, contrôle provisoire du
+  créateur, validation des rôles/stores et conflit d'invitation explicite ;
+- annulation et expiration matérialisée par lots ;
+- acceptation atomique fondée sur l'utilisateur authentifié, vérification de
+  l'email, création/réactivation du membership et usage unique du token ;
+- test PostgreSQL réel couvrant hash-only, acceptation et isolation
+  cross-tenant.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (190 tests, 548 assertions)
+Parcours invitation PostgreSQL : OK (1 test, 5 assertions)
+Migrations développement et test : à jour (Version20260822190000)
+Doctrine mapping : valide
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(identity): add organization invitation aggregate
+feat(identity): add secure invitation tokens
+refactor(identity): make invitation tokens tenant routable
+feat(identity): persist organization invitations with RLS
+feat(identity): add member invitation use case
+feat(identity): handle invitation cancellation and expiration
+feat(identity): add invitation acceptance workflow
+test(identity): cover invitation acceptance and tenant isolation
+```
+
 ## Prochaine étape
 
-### Epic 1.3 — Organization invitations
+### Epic 1.4 — Membership lifecycle
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
-Implémenter le lifecycle d'invitation d'un utilisateur dans une organization,
-avec token à usage unique, expiration, révocation, acceptation atomique et
-isolation tenant conformément au backlog du Lot 1.
+L'aggregate `OrganizationMembership` et sa persistance RLS sont déjà en place,
+car ils étaient indispensables à l'acceptation des invitations. Implémenter la
+suite du lifecycle : suspension, réactivation, révocation et invalidation par
+`authorizationVersion`.
 
 ---
 
