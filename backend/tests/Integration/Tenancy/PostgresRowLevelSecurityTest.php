@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Tests\Integration\Tenancy;
 
 use Doctrine\DBAL\Exception as DbalException;
+use RuntimeException;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\OrganizationId;
@@ -48,6 +49,26 @@ final class PostgresRowLevelSecurityTest extends PostgresTestCase
         self::assertSame([self::ORGANIZATION_A], $visibleIds);
     }
 
+    public function testTenantTransactionUsesRestrictedRuntimeRole(): void
+    {
+        $role = $this->transactions()->transactional(
+            $this->organizationId(self::ORGANIZATION_A),
+            fn(): array => [
+                'current_user' => $this->connection->fetchOne('SELECT current_user'),
+                'rolsuper' => $this->connection->fetchOne(
+                    'SELECT rolsuper FROM pg_roles WHERE rolname = current_user',
+                ),
+                'rolbypassrls' => $this->connection->fetchOne(
+                    'SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user',
+                ),
+            ],
+        );
+
+        self::assertSame('zandu_runtime', $role['current_user'] ?? null);
+        self::assertFalse($role['rolsuper'] ?? true);
+        self::assertFalse($role['rolbypassrls'] ?? true);
+    }
+
     public function testMissingTenantContextIsFailClosed(): void
     {
         $this->connection->beginTransaction();
@@ -83,6 +104,26 @@ final class PostgresRowLevelSecurityTest extends PostgresTestCase
             $this->connection->executeStatement('SET LOCAL ROLE zandu_runtime');
             self::assertSame('', $this->connection->fetchOne("SELECT current_setting('app.organization_id', true)"));
             self::assertSame(0, $this->connection->fetchOne('SELECT COUNT(*) FROM organization.organizations'));
+        } finally {
+            $this->connection->rollBack();
+        }
+    }
+
+    public function testTenantContextDoesNotLeakAfterRollback(): void
+    {
+        try {
+            $this->transactions()->transactional(
+                $this->organizationId(self::ORGANIZATION_A),
+                static fn(): never => throw new RuntimeException('Injected failure.'),
+            );
+        } catch (RuntimeException) {
+        }
+
+        $this->connection->beginTransaction();
+
+        try {
+            $this->connection->executeStatement('SET LOCAL ROLE zandu_runtime');
+            self::assertSame('', $this->connection->fetchOne("SELECT current_setting('app.organization_id', true)"));
         } finally {
             $this->connection->rollBack();
         }
