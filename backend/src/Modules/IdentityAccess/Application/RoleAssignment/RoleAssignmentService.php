@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Application\RoleAssignment;
 
 use DateTimeImmutable;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\AccessScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\LastOrganizationOwner;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
-use Zandu\Modules\Organization\Application\Contract\MembershipManagementPolicy;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Organization\Application\Contract\OperationalMode;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
 use Zandu\SharedKernel\Identity\RoleId;
@@ -22,11 +26,12 @@ final readonly class RoleAssignmentService
 {
     public function __construct(
         private OrganizationMembershipRepository $memberships,
-        private MembershipManagementPolicy $policy,
         private LastOrganizationOwner $lastOwner,
         private SystemRoleCatalog $systemRoles,
         private TenantTransaction $transaction,
         private Clock $clock,
+        private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function assign(
@@ -37,7 +42,8 @@ final readonly class RoleAssignmentService
         ActorContext $actorContext,
     ): OrganizationMembership {
         return $this->transaction->transactional($actorContext->organizationId(), function () use ($membershipId, $roleId, $scope, $expiresAt, $actorContext): OrganizationMembership {
-            $this->policy->assertCanManage($actorContext);
+            $this->authorization->authorize($actorContext, PermissionCode::RoleAssign, ResourceScope::organization($actorContext->organizationId()));
+            $this->operationalGuard->assertTenant($actorContext);
             $this->systemRoles->getById($roleId);
             $membership = $this->memberships->get($actorContext->organizationId(), $membershipId);
             $this->lastOwner->protectAssignmentChange($membership, $roleId, $actorContext, false);
@@ -55,7 +61,8 @@ final readonly class RoleAssignmentService
         ActorContext $actorContext,
     ): OrganizationMembership {
         return $this->transaction->transactional($actorContext->organizationId(), function () use ($membershipId, $roleId, $actorContext): OrganizationMembership {
-            $this->policy->assertCanManage($actorContext);
+            $this->authorization->authorize($actorContext, PermissionCode::RoleRevoke, ResourceScope::organization($actorContext->organizationId()));
+            $this->operationalGuard->assertTenant($actorContext, OperationalMode::Remediation);
             $this->systemRoles->getById($roleId);
             $membership = $this->memberships->get($actorContext->organizationId(), $membershipId);
             $this->lastOwner->protectAssignmentChange($membership, $roleId, $actorContext, true);

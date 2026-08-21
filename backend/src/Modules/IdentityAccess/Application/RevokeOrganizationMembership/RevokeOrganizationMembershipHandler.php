@@ -6,6 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Application\RevokeOrganizationMembership;
 
 use Zandu\Modules\IdentityAccess\Application\MembershipLifecycle\MembershipLifecycleService;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Time\Clock;
 
 final readonly class RevokeOrganizationMembershipHandler
@@ -16,6 +17,7 @@ final readonly class RevokeOrganizationMembershipHandler
         return $this->lifecycle->deactivate(
             $command->membershipId,
             $command->actorContext,
+            PermissionCode::MemberRevoke,
             fn(OrganizationMembership $membership) => $membership->revoke($command->actorContext->actorId(), $this->clock->now()),
         );
     }

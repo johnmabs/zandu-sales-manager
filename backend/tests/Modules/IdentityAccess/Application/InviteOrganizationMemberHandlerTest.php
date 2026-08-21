@@ -120,6 +120,8 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
             $policy,
             new FrozenClock(new DateTimeImmutable('2026-08-22T11:00:00+00:00')),
             $transaction,
+            new AllowAllAuthorizationService(),
+            new AllowAllOperationalGuard(),
         );
         self::assertSame(InvitationStatus::Cancelled, $cancel(new CancelOrganizationInvitation($created->invitation->id(), $this->context()))->status());
 
@@ -162,6 +164,8 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
             $transaction,
             $systemRoles,
             new LastOrganizationOwner(new EmptyMembershipRepository(), $systemRoles),
+            new AllowAllAuthorizationService(),
+            new AllowAllOperationalGuard(),
         );
     }
 

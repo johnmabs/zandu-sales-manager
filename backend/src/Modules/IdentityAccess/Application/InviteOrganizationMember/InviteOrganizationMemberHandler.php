@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember;
 
 use DateInterval;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
+use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\LastOrganizationOwner;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
@@ -14,6 +16,8 @@ use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
 use Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 use Zandu\SharedKernel\Identity\StoreId;
@@ -31,6 +35,8 @@ final readonly class InviteOrganizationMemberHandler
         private TenantTransaction $transaction,
         private SystemRoleCatalog $systemRoles,
         private LastOrganizationOwner $lastOwner,
+        private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(InviteOrganizationMember $command): CreatedOrganizationInvitation
@@ -38,6 +44,8 @@ final readonly class InviteOrganizationMemberHandler
         $organizationId = $command->actorContext->organizationId();
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): CreatedOrganizationInvitation {
+            $this->authorization->authorize($command->actorContext, PermissionCode::MemberInvite, ResourceScope::organization($organizationId));
+            $this->operationalGuard->assertTenant($command->actorContext);
             $now = $this->clock->now();
             $email = InvitationEmail::fromString($command->email);
             $storesById = [];

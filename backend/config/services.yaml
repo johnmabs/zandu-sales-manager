@@ -75,9 +75,6 @@ services:
     Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy:
         alias: Zandu\Modules\Organization\Application\CreatorMemberInvitationPolicy
 
-    Zandu\Modules\Organization\Application\Contract\MembershipManagementPolicy:
-        alias: Zandu\Modules\Organization\Application\CreatorMembershipManagementPolicy
-
     Zandu\Modules\Organization\Application\Contract\InitialOrganizationOwnerProvisioner:
         alias: Zandu\Modules\IdentityAccess\Application\ProvisionInitialOrganizationOwner
 

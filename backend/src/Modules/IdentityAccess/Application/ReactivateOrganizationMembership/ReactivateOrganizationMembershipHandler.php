@@ -6,6 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Application\ReactivateOrganizationMembers
 
 use Zandu\Modules\IdentityAccess\Application\MembershipLifecycle\MembershipLifecycleService;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Time\Clock;
 
 final readonly class ReactivateOrganizationMembershipHandler
@@ -16,6 +17,7 @@ final readonly class ReactivateOrganizationMembershipHandler
         return $this->lifecycle->execute(
             $command->membershipId,
             $command->actorContext,
+            PermissionCode::MemberSuspend,
             fn(OrganizationMembership $membership) => $membership->reactivate($command->actorContext->actorId(), $this->clock->now()),
         );
     }
