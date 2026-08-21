@@ -21,6 +21,7 @@ final readonly class ActorContext
         private DateTimeImmutable $authenticatedAt,
         private ?UserId $userId = null,
         private ?SessionId $sessionId = null,
+        private ?string $email = null,
     ) {}
 
     public function actorId(): ActorId
@@ -56,5 +57,10 @@ final readonly class ActorContext
     public function sessionId(): ?SessionId
     {
         return $this->sessionId;
+    }
+
+    public function email(): ?string
+    {
+        return $this->email;
     }
 }

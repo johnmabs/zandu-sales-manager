@@ -63,6 +63,7 @@ final readonly class ActorContextResolver
             $authenticatedAt,
             UserId::fromString($user->userId(), $this->uuidFactory),
             $sessionId,
+            $user->getUserIdentifier(),
         );
     }
 }
