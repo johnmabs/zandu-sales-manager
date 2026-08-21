@@ -3,6 +3,8 @@ services:
         autowire: true
         autoconfigure: true
 
+    Zandu\DataFixtures\AppFixtures: ~
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"

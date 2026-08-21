@@ -8,6 +8,8 @@ WORKDIR /app
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+COPY docker/php-runtime.ini "$PHP_INI_DIR/conf.d/zz-zandu-runtime.ini"
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     git \
@@ -32,9 +34,6 @@ RUN composer install \
     --optimize-autoloader
 
 COPY . .
-
-RUN composer dump-env prod \
-    && rm .env
 
 RUN composer dump-autoload \
     --no-dev \

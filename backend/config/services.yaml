@@ -19,6 +19,7 @@ services:
     Zandu\:
         resource: "../src/"
         exclude:
+            - "../src/DataFixtures/"
             - "../src/Platform/Api/Exception/*.php"
             - "../src/Platform/Auth/Security/BootstrapUserProvider.php"
             - "../src/Platform/Decimal/BrickDecimal.php"
