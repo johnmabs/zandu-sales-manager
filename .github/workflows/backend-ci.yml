@@ -71,6 +71,9 @@ jobs:
       - name: Validate architecture
         run: make architecture
 
+      - name: Audit locked dependencies
+        run: make security
+
       - name: Validate immutable production image
         run: make staging-test
 
