@@ -13,7 +13,7 @@ use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 #[ORM\UniqueConstraint(name: 'membership_tenant_user_unique', columns: ['organization_id', 'user_id'])]
 final class OrganizationMembershipRecord
 {
-    /** @param non-empty-list<array{roleCode:string, storeIds:list<string>}> $roleAssignments */
+    /** @param non-empty-list<array{roleId:string, scopeType:string, storeIds:list<string>, assignedBy:string, assignedAt:string, expiresAt:?string}> $roleAssignments */
     private function __construct(
         #[ORM\Id]
         #[ORM\Column(type: 'guid')]
@@ -51,8 +51,12 @@ final class OrganizationMembershipRecord
     public static function fromAggregate(OrganizationMembership $membership): self
     {
         $assignments = array_map(static fn($assignment): array => [
-            'roleCode' => $assignment->roleCode(),
-            'storeIds' => array_map(static fn($id): string => $id->toString(), $assignment->storeIds()),
+            'roleId' => $assignment->roleId()->toString(),
+            'scopeType' => $assignment->scope()->type()->value,
+            'storeIds' => array_map(static fn($id): string => $id->toString(), $assignment->scope()->storeIds()),
+            'assignedBy' => $assignment->assignedBy()->toString(),
+            'assignedAt' => $assignment->assignedAt()->format(DATE_ATOM),
+            'expiresAt' => $assignment->expiresAt()?->format(DATE_ATOM),
         ], $membership->roleAssignments());
         return new self(
             $membership->id()->toString(),
@@ -102,7 +106,7 @@ final class OrganizationMembershipRecord
     {
         return $this->status;
     }
-    /** @return non-empty-list<array{roleCode:string, storeIds:list<string>}> */ public function roleAssignments(): array
+    /** @return non-empty-list<array{roleId:string, scopeType:string, storeIds:list<string>, assignedBy:string, assignedAt:string, expiresAt:?string}> */ public function roleAssignments(): array
     {
         return $this->roleAssignments;
     }

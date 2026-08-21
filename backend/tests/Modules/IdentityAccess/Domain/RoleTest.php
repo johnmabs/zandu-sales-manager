@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Tests\Modules\IdentityAccess\Domain;
 
+use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Domain\Access\PermissionCode;
@@ -40,6 +41,20 @@ final class RoleTest extends TestCase
         self::assertSame(RoleStatus::Archived, $role->status());
         self::assertFalse($role->grants(PermissionCode::StoreRead));
         self::assertSame(2, $role->version());
+    }
+
+    public function testCustomRoleCannotReuseAReservedSystemCode(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Role::custom(
+            $this->roleId(),
+            OrganizationId::fromString('0198d1b1-b2a4-7b6e-8e0e-608484906502', new SymfonyUuidFactory()),
+            RoleCode::organizationOwner(),
+            'Fake owner',
+            null,
+            [PermissionCode::OrganizationRead],
+        );
     }
 
     private function roleId(): RoleId

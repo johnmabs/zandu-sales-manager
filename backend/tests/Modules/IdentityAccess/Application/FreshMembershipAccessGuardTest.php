@@ -8,7 +8,9 @@ use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\FreshMembershipAccessGuard;
-use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
+use Zandu\Modules\IdentityAccess\Domain\Access\AccessScope;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
+use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
@@ -18,6 +20,7 @@ use Zandu\SharedKernel\Context\ActorType;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
+use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\UserId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -34,7 +37,12 @@ final class FreshMembershipAccessGuardTest extends TestCase
             OrganizationMembershipId::fromString('0198d401-147c-72d5-b75a-a936797ff9c8', $factory),
             $organizationId,
             $userId,
-            [IntendedRoleAssignment::forRole('CASHIER')],
+            [RoleAssignment::assign(
+                (new SystemRoleCatalog($factory))->roles()[2]->id(),
+                AccessScope::organization($organizationId),
+                $actorId,
+                new DateTimeImmutable('2026-08-22T10:00:00+00:00'),
+            )],
             $actorId,
             new DateTimeImmutable('2026-08-22T10:00:00+00:00'),
         );
@@ -73,7 +81,7 @@ final readonly class GuardMembershipRepository implements OrganizationMembership
     {
         return $this->membership;
     }
-    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleCode $roleCode): int
+    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return 0;
     }

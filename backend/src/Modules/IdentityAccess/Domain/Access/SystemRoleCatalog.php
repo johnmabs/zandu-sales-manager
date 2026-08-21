@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\IdentityAccess\Domain\Access;
 
+use LogicException;
 use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 
@@ -65,6 +66,33 @@ final readonly class SystemRoleCatalog
     public function organizationOwnerRoleId(): RoleId
     {
         return $this->roleId(self::ORGANIZATION_OWNER_ID);
+    }
+
+    public function get(RoleCode $code): Role
+    {
+        foreach ($this->roles() as $role) {
+            if ($role->code()->equals($code)) {
+                return $role;
+            }
+        }
+
+        throw new LogicException(sprintf('Unknown system role "%s".', $code->value()));
+    }
+
+    public function getById(RoleId $roleId): Role
+    {
+        foreach ($this->roles() as $role) {
+            if ($role->id()->equals($roleId)) {
+                return $role;
+            }
+        }
+
+        throw new LogicException(sprintf('Unknown system role "%s".', $roleId->toString()));
+    }
+
+    public function isOrganizationOwner(RoleId $roleId): bool
+    {
+        return $this->organizationOwnerRoleId()->equals($roleId);
     }
 
     private function roleId(string $value): RoleId

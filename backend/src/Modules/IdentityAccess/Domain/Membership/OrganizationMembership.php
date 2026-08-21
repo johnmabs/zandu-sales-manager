@@ -7,16 +7,16 @@ namespace Zandu\Modules\IdentityAccess\Domain\Membership;
 use DateTimeImmutable;
 use DateTimeZone;
 use LogicException;
-use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
-use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
+use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\UserId;
 
 final class OrganizationMembership
 {
-    /** @param non-empty-list<IntendedRoleAssignment> $roleAssignments */
+    /** @param non-empty-list<RoleAssignment> $roleAssignments */
     private function __construct(
         private readonly OrganizationMembershipId $id,
         private readonly OrganizationId $organizationId,
@@ -35,7 +35,7 @@ final class OrganizationMembership
         private int $version,
     ) {}
 
-    /** @param non-empty-list<IntendedRoleAssignment> $roleAssignments */
+    /** @param non-empty-list<RoleAssignment> $roleAssignments */
     public static function activateFromInvitation(
         OrganizationMembershipId $id,
         OrganizationId $organizationId,
@@ -48,7 +48,7 @@ final class OrganizationMembership
         return new self($id, $organizationId, $userId, MembershipStatus::Active, $roleAssignments, 1, $actorId, $occurredAt, $actorId, $occurredAt, null, null, null, null, 1);
     }
 
-    /** @param non-empty-list<IntendedRoleAssignment> $roleAssignments */
+    /** @param non-empty-list<RoleAssignment> $roleAssignments */
     public static function reconstitute(
         OrganizationMembershipId $id,
         OrganizationId $organizationId,
@@ -69,7 +69,7 @@ final class OrganizationMembership
         return new self($id, $organizationId, $userId, $status, $roleAssignments, $authorizationVersion, $createdBy, $createdAt, $updatedBy, $updatedAt, $suspendedBy, $suspendedAt, $revokedBy, $revokedAt, $version);
     }
 
-    /** @param non-empty-list<IntendedRoleAssignment> $roleAssignments */
+    /** @param non-empty-list<RoleAssignment> $roleAssignments */
     public function activateFromInvitationAgain(array $roleAssignments, ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
         if (!in_array($this->status, [MembershipStatus::Invited, MembershipStatus::Suspended], true)) {
@@ -113,6 +113,37 @@ final class OrganizationMembership
         $this->changedBy($actorId, $occurredAt);
     }
 
+    public function assignRole(RoleAssignment $assignment, ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        $this->requireStatus(MembershipStatus::Active, 'Roles can only be assigned to an active membership.');
+        if (!$assignment->scope()->organizationId()->equals($this->organizationId)) {
+            throw new LogicException('A role assignment must belong to the membership organization.');
+        }
+        if ($this->hasRoleId($assignment->roleId())) {
+            throw new LogicException('The role is already assigned to this membership.');
+        }
+
+        $this->roleAssignments[] = $assignment;
+        $this->changedBy($actorId, $occurredAt);
+    }
+
+    public function removeRole(RoleId $roleId, ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        $this->requireStatus(MembershipStatus::Active, 'Roles can only be removed from an active membership.');
+        if (!$this->hasRoleId($roleId)) {
+            throw new LogicException('The role is not assigned to this membership.');
+        }
+        if (1 === count($this->roleAssignments)) {
+            throw new LogicException('An active membership must keep at least one role assignment.');
+        }
+
+        $this->roleAssignments = array_values(array_filter(
+            $this->roleAssignments,
+            static fn(RoleAssignment $assignment): bool => !$assignment->roleId()->equals($roleId),
+        ));
+        $this->changedBy($actorId, $occurredAt);
+    }
+
     public function id(): OrganizationMembershipId
     {
         return $this->id;
@@ -129,15 +160,15 @@ final class OrganizationMembership
     {
         return $this->status;
     }
-    /** @return non-empty-list<IntendedRoleAssignment> */
+    /** @return non-empty-list<RoleAssignment> */
     public function roleAssignments(): array
     {
         return $this->roleAssignments;
     }
-    public function hasRole(RoleCode $roleCode): bool
+    public function hasRoleId(\Zandu\SharedKernel\Identity\RoleId $roleId): bool
     {
         foreach ($this->roleAssignments as $assignment) {
-            if ($assignment->matches($roleCode)) {
+            if ($assignment->roleId()->equals($roleId)) {
                 return true;
             }
         }

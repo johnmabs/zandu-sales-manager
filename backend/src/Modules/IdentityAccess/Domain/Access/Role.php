@@ -33,6 +33,10 @@ final class Role
     /** @param non-empty-list<PermissionCode> $permissions */
     public static function custom(RoleId $id, OrganizationId $organizationId, RoleCode $code, string $name, ?string $description, array $permissions): self
     {
+        if ($code->isReservedForSystemRole()) {
+            throw new InvalidArgumentException('System role codes cannot be used by custom roles.');
+        }
+
         return new self($id, $organizationId, $code, RoleType::Custom, RoleStatus::Active, self::normalizeName($name), self::normalizeDescription($description), self::unique($permissions), 1);
     }
 

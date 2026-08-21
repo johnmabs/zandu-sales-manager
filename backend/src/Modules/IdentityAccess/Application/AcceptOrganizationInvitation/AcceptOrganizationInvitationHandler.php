@@ -6,6 +6,11 @@ namespace Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation;
 
 use LogicException;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
+use Zandu\Modules\IdentityAccess\Domain\Access\AccessScope;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
+use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
+use Zandu\Modules\IdentityAccess\Domain\Access\ScopedStore;
+use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
@@ -24,6 +29,7 @@ final readonly class AcceptOrganizationInvitationHandler
         private IdGenerator $idGenerator,
         private Clock $clock,
         private TenantTransaction $transaction,
+        private SystemRoleCatalog $systemRoles,
     ) {}
 
     public function __invoke(AcceptOrganizationInvitation $command): OrganizationMembership
@@ -40,19 +46,31 @@ final readonly class AcceptOrganizationInvitationHandler
                 throw new LogicException('The authenticated email does not match the invitation.');
             }
             $now = $this->clock->now();
+            $roleAssignments = array_map(function ($intended) use ($invitation, $organizationId, $now): RoleAssignment {
+                $role = $this->systemRoles->get(RoleCode::fromString($intended->roleCode()));
+                $storeIds = $intended->storeIds();
+                $scope = [] === $storeIds
+                    ? AccessScope::organization($organizationId)
+                    : AccessScope::selectedStores($organizationId, array_map(
+                        static fn($storeId): ScopedStore => new ScopedStore($storeId, $organizationId),
+                        $storeIds,
+                    ));
+
+                return RoleAssignment::assign($role->id(), $scope, $invitation->invitedBy(), $now);
+            }, $invitation->intendedRoleAssignments());
             $membership = $this->memberships->findByUser($organizationId, $userId);
             if (null === $membership) {
                 $membership = OrganizationMembership::activateFromInvitation(
                     OrganizationMembershipId::generate($this->idGenerator),
                     $organizationId,
                     $userId,
-                    $invitation->intendedRoleAssignments(),
+                    $roleAssignments,
                     $command->actorContext->actorId(),
                     $now,
                 );
             } else {
                 $membership->activateFromInvitationAgain(
-                    $invitation->intendedRoleAssignments(),
+                    $roleAssignments,
                     $command->actorContext->actorId(),
                     $now,
                 );

@@ -35,4 +35,9 @@ final readonly class RoleCode
     {
         return $this->value === $other->value;
     }
+
+    public function isReservedForSystemRole(): bool
+    {
+        return in_array($this->value, [self::ORGANIZATION_OWNER, self::STORE_MANAGER, self::CASHIER, self::ACCOUNTANT], true);
+    }
 }

@@ -9,7 +9,7 @@ use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitationHandler;
-use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
+use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
@@ -28,6 +28,7 @@ use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
+use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\UserId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Messaging\CorrelationId;
@@ -46,7 +47,10 @@ final class AcceptOrganizationInvitationHandlerTest extends TestCase
         $membership = $handler(new AcceptOrganizationInvitation($rawToken, $this->context('member@example.com')));
 
         self::assertSame(MembershipStatus::Active, $membership->status());
-        self::assertSame('CASHIER', $membership->roleAssignments()[0]->roleCode());
+        self::assertSame(
+            (new SystemRoleCatalog(new SymfonyUuidFactory()))->get(\Zandu\Modules\IdentityAccess\Domain\Access\RoleCode::fromString('CASHIER'))->id()->toString(),
+            $membership->roleAssignments()[0]->roleId()->toString(),
+        );
         self::assertSame(InvitationStatus::Accepted, $invitations->invitation->status());
         self::assertSame($membership, $memberships->membership);
         self::assertSame(self::ORGANIZATION_ID, $transaction->organizationId?->toString());
@@ -102,6 +106,7 @@ final class AcceptOrganizationInvitationHandlerTest extends TestCase
             },
             new FrozenClock(new DateTimeImmutable('2026-08-22T11:00:00+00:00')),
             $transaction,
+            new SystemRoleCatalog($factory),
         );
         return [$handler, $issued->reveal(), $invitations, $memberships, $transaction];
     }
@@ -163,7 +168,7 @@ final class AcceptanceMembershipRepository implements OrganizationMembershipRepo
     {
         return $this->membership;
     }
-    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleCode $roleCode): int
+    public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return 0;
     }

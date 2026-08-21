@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitationHandler;
+use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
@@ -112,6 +113,7 @@ final class OrganizationInvitationWorkflowTest extends KernelTestCase
             },
             new FrozenClock(new DateTimeImmutable('2026-08-22T11:00:00+00:00')),
             $transactions,
+            new SystemRoleCatalog($factory),
         );
         $membership = $handler(new AcceptOrganizationInvitation($issued->reveal(), $this->actorContext($factory, $organizationB)));
         self::assertSame(self::ORGANIZATION_A, $membership->organizationId()->toString());
@@ -129,6 +131,10 @@ final class OrganizationInvitationWorkflowTest extends KernelTestCase
         );
         self::assertSame(MembershipStatus::Suspended, $restoredMembership?->status());
         self::assertSame(2, $restoredMembership?->authorizationVersion());
+        self::assertSame(
+            (new SystemRoleCatalog($factory))->get(\Zandu\Modules\IdentityAccess\Domain\Access\RoleCode::fromString('CASHIER'))->id()->toString(),
+            $restoredMembership?->roleAssignments()[0]->roleId()->toString(),
+        );
         self::assertNull($transactions->transactional(
             $organizationB,
             fn() => $memberships->findByUser($organizationA, UserId::fromString(self::USER_ID, $factory)),
