@@ -30,7 +30,7 @@ Le Lot 0 est clos. Le Lot 1 — Administration opérationnelle est en cours :
 Epic 1.1   TERMINÉ   Organization foundation
 Epic 1.2   TERMINÉ   Store foundation
 Epic 1.3   TERMINÉ   Organization invitations
-Epic 1.4   EN COURS  Membership lifecycle
+Epic 1.4   TERMINÉ   Membership lifecycle
 Epic 1.5   À FAIRE   Roles, permissions & scopes
 Epic 1.6   À FAIRE   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
@@ -2932,16 +2932,61 @@ feat(identity): add invitation acceptance workflow
 test(identity): cover invitation acceptance and tenant isolation
 ```
 
+## Epic 1.4 — Membership lifecycle
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- aggregate `OrganizationMembership` tenant-owned avec unicité
+  `(organization_id, user_id)` ;
+- statuts `INVITED`, `ACTIVE`, `SUSPENDED`, `REVOKED`, acteurs et timestamps
+  de lifecycle conservés en UTC ;
+- persistance Doctrine et RLS fail-closed ;
+- création et réactivation atomiques depuis une invitation acceptée ;
+- use cases `SuspendOrganizationMembership`,
+  `ReactivateOrganizationMembership` et `RevokeOrganizationMembership` ;
+- révocation terminale préservant les références historiques ;
+- incrément conjoint de `authorizationVersion` et de la version d'aggregate à
+  chaque changement d'accès ;
+- claim JWT `authorizationVersion`, propagation dans `ActorContext` et guard
+  serveur relisant le membership actif sous RLS ;
+- rejet immédiat des versions obsolètes et des memberships non actifs ;
+- test PostgreSQL de persistance du lifecycle et d'occultation cross-tenant.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (192 tests, 561 assertions)
+Parcours PostgreSQL Invitation/Membership : OK (1 test, 8 assertions)
+Migrations développement et test : à jour (Version20260822210000)
+Doctrine mapping : valide
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(identity): add organization membership aggregate
+feat(identity): persist organization memberships with RLS
+feat(identity): add membership lifecycle
+feat(auth): enforce membership authorization version
+test(identity): verify membership persistence and tenant isolation
+```
+
 ## Prochaine étape
 
-### Epic 1.4 — Membership lifecycle
+### Epic 1.5 — Roles, permissions & scopes
 
-**Statut : EN COURS**
+**Statut : À FAIRE**
 
-L'aggregate `OrganizationMembership` et sa persistance RLS sont déjà en place,
-car ils étaient indispensables à l'acceptation des invitations. Implémenter la
-suite du lifecycle : suspension, réactivation, révocation et invalidation par
-`authorizationVersion`.
+Implémenter le catalogue de permissions d'administration, les rôles système et
+custom, les scopes Organization/Selected Stores, les role assignments et
+l'invariant du dernier owner actif.
 
 ---
 
