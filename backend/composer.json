@@ -30,6 +30,8 @@
     "require-dev": {
         "deptrac/deptrac": "^4.7",
         "doctrine/doctrine-fixtures-bundle": "^4.3",
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^13.3",
         "symfony/browser-kit": "7.4.*",
         "symfony/css-selector": "7.4.*"

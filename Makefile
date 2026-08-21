@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint architecture auth-keys staging-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-sql
+.PHONY: install start stop restart test lint quality architecture auth-keys staging-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-sql
 
 install:
 	docker compose build
@@ -31,6 +31,10 @@ test:
 lint:
 	docker compose exec backend composer validate --no-check-publish
 	docker compose exec backend php bin/console lint:container
+
+quality:
+	docker compose exec backend vendor/bin/php-cs-fixer check --sequential --show-progress=none
+	docker compose exec backend vendor/bin/phpstan analyse --configuration=phpstan.dist.neon --no-progress --debug
 
 shell:
 	docker compose exec backend bash

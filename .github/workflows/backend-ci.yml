@@ -62,6 +62,9 @@ jobs:
       - name: Validate code and configuration
         run: make lint
 
+      - name: Validate coding standards and static analysis
+        run: make quality
+
       - name: Run tests
         run: make test
 
