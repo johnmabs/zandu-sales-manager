@@ -33,6 +33,9 @@ RUN composer install \
 
 COPY . .
 
+RUN composer dump-env prod \
+    && rm .env
+
 RUN composer dump-autoload \
     --no-dev \
     --classmap-authoritative
