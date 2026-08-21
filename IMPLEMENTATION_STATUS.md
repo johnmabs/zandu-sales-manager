@@ -31,7 +31,7 @@ Epic 1.1   TERMINÉ   Organization foundation
 Epic 1.2   TERMINÉ   Store foundation
 Epic 1.3   TERMINÉ   Organization invitations
 Epic 1.4   TERMINÉ   Membership lifecycle
-Epic 1.5   À FAIRE   Roles, permissions & scopes
+Epic 1.5   EN COURS  Roles, permissions & scopes
 Epic 1.6   À FAIRE   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
 Epic 1.8   À FAIRE   Administration API
@@ -2978,15 +2978,68 @@ feat(auth): enforce membership authorization version
 test(identity): verify membership persistence and tenant isolation
 ```
 
+## Epic 1.5 — Roles, permissions & scopes
+
+**Statut : EN COURS**
+
+### Réalisé
+
+- catalogue fermé des 16 permissions d'administration nécessaires au Lot 1 ;
+- aggregate `Role` distinguant les rôles `SYSTEM` globaux et immuables des
+  rôles `CUSTOM` tenant-owned et archivables ;
+- rôle archivé ne délivrant aucune permission ;
+- catalogue stable des rôles système `ORGANIZATION_OWNER`, `STORE_MANAGER`,
+  `CASHIER` et `ACCOUNTANT`, sans permissions anticipées des lots futurs ;
+- scopes `ORGANIZATION` et `SELECTED_STORES`, avec déduplication des magasins
+  et rejet d'un mélange inter-organisation ;
+- `RoleAssignment` auditée, optionnellement expirante, tenant compte du rôle
+  archivé et du scope lors du calcul d'un droit ;
+- protection transactionnelle du dernier owner lors de la suspension et de la
+  révocation d'un membership ;
+- verrouillage PostgreSQL `FOR UPDATE` des memberships owner actifs pour éviter
+  une violation concurrente de l'invariant.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (205 tests, 600 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(access): add administration permission catalog
+feat(access): add role aggregate
+feat(access): seed system roles
+feat(access): add organization and store access scopes
+feat(access): add role assignments
+feat(access): protect last organization owner
+```
+
+### Reste à faire pour clôturer l'Epic
+
+- intégrer les `RoleAssignment` effectives au membership à la place des seules
+  intentions issues des invitations ;
+- ajouter les opérations d'attribution et de retrait de rôle ;
+- réserver l'attribution et le retrait d'`ORGANIZATION_OWNER` à un owner actif ;
+- protéger le dernier owner lors du retrait d'une attribution ;
+- éliminer la validation applicative provisoire fondée sur une liste brute de
+  codes de rôles.
+
 ## Prochaine étape
 
-### Epic 1.5 — Roles, permissions & scopes
+### Epic 1.5.6 — Finaliser l'invariant du dernier owner
 
 **Statut : À FAIRE**
 
-Implémenter le catalogue de permissions d'administration, les rôles système et
-custom, les scopes Organization/Selected Stores, les role assignments et
-l'invariant du dernier owner actif.
+Brancher les affectations typées au membership, implémenter leur attribution et
+leur retrait, puis prouver les refus d'auto-élévation et de retrait du dernier
+owner par des tests négatifs.
 
 ---
 
