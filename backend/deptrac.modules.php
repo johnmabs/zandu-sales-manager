@@ -84,6 +84,27 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $organizationContract = Layer::withName('OrganizationContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Organization\\Application\\Contract\\.*',
+        ),
+    );
+
+    $organization = Layer::withName('Organization')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Organization\\.*',
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Organization\\Application\\Contract\\.*',
+                ),
+            ],
+        ),
+    );
+
     $config
         ->paths('./src')
         ->layers(
@@ -95,6 +116,8 @@ return static function (DeptracConfig $config): void {
             $cashManagementContract,
             $identityAccess,
             $operations,
+            $organization,
+            $organizationContract,
         )
         ->rulesets(
             Ruleset::forLayer($sales)
@@ -109,5 +132,7 @@ return static function (DeptracConfig $config): void {
             Ruleset::forLayer($cashManagementContract),
             Ruleset::forLayer($identityAccess),
             Ruleset::forLayer($operations),
+            Ruleset::forLayer($organization),
+            Ruleset::forLayer($organizationContract),
         );
 };
