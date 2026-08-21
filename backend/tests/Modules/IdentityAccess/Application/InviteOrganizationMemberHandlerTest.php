@@ -6,12 +6,17 @@ namespace Zandu\Tests\Modules\IdentityAccess\Application;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\IdentityAccess\Application\CancelOrganizationInvitation\CancelOrganizationInvitation;
+use Zandu\Modules\IdentityAccess\Application\CancelOrganizationInvitation\CancelOrganizationInvitationHandler;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
+use Zandu\Modules\IdentityAccess\Application\ExpireOrganizationInvitations\ExpireOrganizationInvitations;
+use Zandu\Modules\IdentityAccess\Application\ExpireOrganizationInvitations\ExpireOrganizationInvitationsHandler;
 use Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember\InviteOrganizationMember;
 use Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember\InviteOrganizationMemberHandler;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\ActiveInvitationAlreadyExists;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
+use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
@@ -71,6 +76,46 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
         $handler($command);
     }
 
+    public function testCancellationAndMaterializedExpirationPersistTransitions(): void
+    {
+        $repository = new InvitationTestRepository();
+        $policy = new RecordingInvitationPolicy();
+        $transaction = new InvitationTestTransaction();
+        $tokens = new SecureInvitationTokenService('test-pepper', new SymfonyUuidFactory());
+        $created = $this->handler($repository, $policy, $tokens, $transaction)(new InviteOrganizationMember(
+            'first@example.com',
+            [IntendedRoleAssignment::forRole('CASHIER')],
+            null,
+            $this->context(),
+        ));
+        $cancel = new CancelOrganizationInvitationHandler(
+            $repository,
+            $policy,
+            new FrozenClock(new DateTimeImmutable('2026-08-22T11:00:00+00:00')),
+            $transaction,
+        );
+        self::assertSame(InvitationStatus::Cancelled, $cancel(new CancelOrganizationInvitation($created->invitation->id(), $this->context()))->status());
+
+        $expired = OrganizationInvitation::invite(
+            OrganizationInvitationId::fromString('0198d311-147c-72d5-b75a-a936797ff9c8', new SymfonyUuidFactory()),
+            OrganizationId::fromString(self::ORGANIZATION_ID, new SymfonyUuidFactory()),
+            InvitationEmail::fromString('expired@example.com'),
+            ActorId::fromString(self::ACTOR_ID, new SymfonyUuidFactory()),
+            'expired-token-hash',
+            new DateTimeImmutable('2026-08-22T12:00:00+00:00'),
+            [IntendedRoleAssignment::forRole('CASHIER')],
+            new DateTimeImmutable('2026-08-22T10:00:00+00:00'),
+        );
+        $repository->save($expired);
+        $expire = new ExpireOrganizationInvitationsHandler(
+            $repository,
+            new FrozenClock(new DateTimeImmutable('2026-08-22T13:00:00+00:00')),
+            $transaction,
+        );
+        self::assertSame(1, $expire(new ExpireOrganizationInvitations($this->context())));
+        self::assertSame(InvitationStatus::Expired, $expired->status());
+    }
+
     private function handler(OrganizationInvitationRepository $repository, MemberInvitationPolicy $policy, InvitationTokenService $tokens, TenantTransaction $transaction): InviteOrganizationMemberHandler
     {
         $uuid = (new SymfonyUuidFactory())->fromString(self::INVITATION_ID);
@@ -124,14 +169,17 @@ final class InvitationTestTransaction implements TenantTransaction
 
 final class InvitationTestRepository implements OrganizationInvitationRepository
 {
-    /** @var list<OrganizationInvitation> */ private array $invitations = [];
+    /** @var array<string, OrganizationInvitation> */ private array $invitations = [];
     public function save(OrganizationInvitation $invitation): void
     {
-        $this->invitations[] = $invitation;
+        $this->invitations[$invitation->id()->toString()] = $invitation;
     }
     public function get(OrganizationId $organizationId, OrganizationInvitationId $invitationId): OrganizationInvitation
     {
-        throw OrganizationInvitationNotFound::forToken();
+        $invitation = $this->invitations[$invitationId->toString()] ?? null;
+        return $invitation instanceof OrganizationInvitation && $invitation->organizationId()->equals($organizationId)
+            ? $invitation
+            : throw OrganizationInvitationNotFound::forToken();
     }
     public function getByTokenHash(OrganizationId $organizationId, string $tokenHash): OrganizationInvitation
     {
@@ -148,6 +196,10 @@ final class InvitationTestRepository implements OrganizationInvitationRepository
     }
     public function findExpiredPending(OrganizationId $organizationId, DateTimeImmutable $now, int $limit): array
     {
-        return [];
+        return array_slice(array_values(array_filter(
+            $this->invitations,
+            static fn(OrganizationInvitation $invitation): bool => $invitation->organizationId()->equals($organizationId)
+                && InvitationStatus::Pending === $invitation->status() && $invitation->expiresAt() <= $now,
+        )), 0, $limit);
     }
 }
