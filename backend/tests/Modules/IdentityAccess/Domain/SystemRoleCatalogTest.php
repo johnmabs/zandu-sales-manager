@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Zandu\Tests\Modules\IdentityAccess\Domain;
 
 use PHPUnit\Framework\TestCase;
-use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleType;
 use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\SharedKernel\Access\PermissionCode;
 
 final class SystemRoleCatalogTest extends TestCase
 {

@@ -7,11 +7,11 @@ namespace Zandu\Tests\Modules\IdentityAccess\Domain;
 use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\TestCase;
-use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\Role;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleStatus;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\RoleId;
 

@@ -10,8 +10,8 @@ use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\Accept
 use Zandu\Modules\IdentityAccess\Application\AcceptOrganizationInvitation\AcceptOrganizationInvitationHandler;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
 use Zandu\Modules\IdentityAccess\Application\Contract\PasswordHasher;
-use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
+use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
 use Zandu\Modules\IdentityAccess\Domain\User\User;
 use Zandu\Modules\IdentityAccess\Domain\User\UserEmail;
 use Zandu\Modules\IdentityAccess\Domain\User\UserRepository;
