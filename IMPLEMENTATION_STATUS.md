@@ -31,7 +31,7 @@ Epic 1.1   TERMINÉ   Organization foundation
 Epic 1.2   TERMINÉ   Store foundation
 Epic 1.3   TERMINÉ   Organization invitations
 Epic 1.4   TERMINÉ   Membership lifecycle
-Epic 1.5   EN COURS  Roles, permissions & scopes
+Epic 1.5   TERMINÉ   Roles, permissions & scopes
 Epic 1.6   À FAIRE   Authorization & operational guards
 Epic 1.7   À FAIRE   Security audit & event integration
 Epic 1.8   À FAIRE   Administration API
@@ -2980,7 +2980,7 @@ test(identity): verify membership persistence and tenant isolation
 
 ## Epic 1.5 — Roles, permissions & scopes
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Réalisé
 
@@ -2998,11 +2998,23 @@ test(identity): verify membership persistence and tenant isolation
   révocation d'un membership ;
 - verrouillage PostgreSQL `FOR UPDATE` des memberships owner actifs pour éviter
   une violation concurrente de l'invariant.
+- conversion des intentions d'invitation en `RoleAssignment` typées lors de
+  l'acceptation, avec migration réversible des memberships existants ;
+- opérations transactionnelles d'attribution et de retrait de rôles, avec
+  incrément de l'`authorizationVersion` ;
+- codes des rôles système réservés et impossibles à réutiliser par un rôle
+  custom archivable ;
+- attribution et retrait d'`ORGANIZATION_OWNER` réservés à un owner actif ;
+- création atomique du membership owner initial avec toute nouvelle
+  organisation, vérifiée sur PostgreSQL réel ;
+- décisions applicatives fondées sur les identités de rôles et le catalogue
+  typé, sans comparaison brute du nom du rôle.
 
 ### Validations
 
 ```text
-PHPUnit Docker : OK (205 tests, 600 assertions)
+PHPUnit Docker : OK (213 tests, 616 assertions)
+Migrations développement et test : à jour (Version20260822230000)
 PHP-CS-Fixer : 0 fichier à corriger
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
@@ -3019,27 +3031,20 @@ feat(access): seed system roles
 feat(access): add organization and store access scopes
 feat(access): add role assignments
 feat(access): protect last organization owner
+feat(access): integrate membership role assignments
+feat(access): secure owner role invitations
+feat(access): provision initial organization owner
 ```
-
-### Reste à faire pour clôturer l'Epic
-
-- intégrer les `RoleAssignment` effectives au membership à la place des seules
-  intentions issues des invitations ;
-- ajouter les opérations d'attribution et de retrait de rôle ;
-- réserver l'attribution et le retrait d'`ORGANIZATION_OWNER` à un owner actif ;
-- protéger le dernier owner lors du retrait d'une attribution ;
-- éliminer la validation applicative provisoire fondée sur une liste brute de
-  codes de rôles.
 
 ## Prochaine étape
 
-### Epic 1.5.6 — Finaliser l'invariant du dernier owner
+### Epic 1.6 — Authorization & operational guards
 
 **Statut : À FAIRE**
 
-Brancher les affectations typées au membership, implémenter leur attribution et
-leur retrait, puis prouver les refus d'auto-élévation et de retrait du dernier
-owner par des tests négatifs.
+Résoudre les permissions effectives depuis les memberships actifs, leurs rôles
+et leurs scopes, puis appliquer les guards d'autorisation et de statut
+opérationnel aux use cases du Lot 1.
 
 ---
 
