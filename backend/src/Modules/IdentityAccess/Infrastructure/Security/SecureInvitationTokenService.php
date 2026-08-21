@@ -7,14 +7,17 @@ namespace Zandu\Modules\IdentityAccess\Infrastructure\Security;
 use InvalidArgumentException;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
 use Zandu\Modules\IdentityAccess\Application\Contract\IssuedInvitationToken;
+use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\UuidFactory;
 
 final readonly class SecureInvitationTokenService implements InvitationTokenService
 {
-    public function __construct(private string $pepper) {}
+    public function __construct(private string $pepper, private UuidFactory $uuidFactory) {}
 
-    public function issue(): IssuedInvitationToken
+    public function issue(OrganizationId $organizationId): IssuedInvitationToken
     {
-        $rawToken = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        $secret = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        $rawToken = $organizationId->toString() . '.' . $secret;
 
         return new IssuedInvitationToken($rawToken, $this->hash($rawToken));
     }
@@ -26,5 +29,19 @@ final readonly class SecureInvitationTokenService implements InvitationTokenServ
         }
 
         return hash_hmac('sha256', $rawToken, $this->pepper);
+    }
+
+    public function organizationId(string $rawToken): OrganizationId
+    {
+        $separator = strpos($rawToken, '.');
+        if (36 !== $separator) {
+            throw new InvalidArgumentException('Invalid invitation token.');
+        }
+
+        try {
+            return OrganizationId::fromString(substr($rawToken, 0, $separator), $this->uuidFactory);
+        } catch (InvalidArgumentException) {
+            throw new InvalidArgumentException('Invalid invitation token.');
+        }
     }
 }
