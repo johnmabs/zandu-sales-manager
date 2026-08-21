@@ -83,6 +83,9 @@ services:
     Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository:
         alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationMembershipRepository
 
+    Zandu\Modules\IdentityAccess\Domain\User\UserRepository:
+        alias: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineUserRepository
+
     Zandu\Modules\IdentityAccess\Application\Contract\MembershipAccessGuard:
         alias: Zandu\Modules\IdentityAccess\Application\FreshMembershipAccessGuard
 
