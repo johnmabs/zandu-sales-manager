@@ -15,6 +15,7 @@ use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationNotFound;
+use Zandu\Modules\IdentityAccess\Domain\Membership\MembershipStatus;
 use Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationInvitationRepository;
 use Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationMembershipRepository;
 use Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService;
@@ -117,6 +118,20 @@ final class OrganizationInvitationWorkflowTest extends KernelTestCase
         self::assertSame(InvitationStatus::Accepted, $transactions->transactional(
             $organizationA,
             fn() => $invitations->getByTokenHash($organizationA, $issued->tokenHash())->status(),
+        ));
+
+        $membership->suspend(ActorId::fromString(self::ACTOR_ID, $factory), new DateTimeImmutable('2026-08-22T12:00:00+00:00'));
+        $transactions->transactional($organizationA, fn() => $memberships->save($membership));
+        $this->entityManager->clear();
+        $restoredMembership = $transactions->transactional(
+            $organizationA,
+            fn() => $memberships->findByUser($organizationA, UserId::fromString(self::USER_ID, $factory)),
+        );
+        self::assertSame(MembershipStatus::Suspended, $restoredMembership?->status());
+        self::assertSame(2, $restoredMembership?->authorizationVersion());
+        self::assertNull($transactions->transactional(
+            $organizationB,
+            fn() => $memberships->findByUser($organizationA, UserId::fromString(self::USER_ID, $factory)),
         ));
 
         $this->expectException(OrganizationInvitationNotFound::class);
