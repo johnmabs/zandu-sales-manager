@@ -28,7 +28,7 @@ Le Lot 0 est clos. Le Lot 1 — Administration opérationnelle est en cours :
 
 ```text
 Epic 1.1   TERMINÉ   Organization foundation
-Epic 1.2   À FAIRE   Store foundation
+Epic 1.2   TERMINÉ   Store foundation
 Epic 1.3   À FAIRE   Organization invitations
 Epic 1.4   À FAIRE   Membership lifecycle
 Epic 1.5   À FAIRE   Roles, permissions & scopes
@@ -2836,18 +2836,65 @@ test(tenant): verify runtime role and rollback isolation
 docs(status): record Organization RLS implementation
 ```
 
+## Epic 1.2 — Store foundation
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- aggregate `Store` avec identité et code immuables, profil localisé, devise,
+  fuseau métier, lifecycle audité en UTC et versionnement ;
+- value objects `StoreCode`, `StoreName`, `StoreAddress` et événements de
+  création, modification, suspension, réactivation et fermeture ;
+- unicité PostgreSQL `(organization_id, code)` et devise obligatoirement égale
+  à la devise par défaut de l'organisation ;
+- repository tenant-scoped et persistance Doctrine des stores ;
+- RLS fail-closed `ENABLE`/`FORCE` sur `organization.stores` ;
+- use cases `CreateStore`, `UpdateStore`, `SuspendStore` et `ReactivateStore`,
+  tous exécutés dans une `TenantTransaction` ;
+- process manager `StoreClosure` avec statuts `REQUESTED`, `IN_PROGRESS`,
+  `READY`, `COMPLETED` et `CANCELLED` ;
+- workflows `RequestStoreClosure` et `CancelStoreClosure` ;
+- contrat public `StoreClosureBlockerProvider`, sans dépendance envers les
+  futurs modules, et fournisseur vide utilisé par défaut ;
+- persistance Doctrine des fermetures, unicité d'une fermeture active par
+  store et RLS fail-closed sur `organization.store_closures` ;
+- tests PostgreSQL du round-trip, de l'unicité par tenant et de l'occultation
+  cross-tenant des stores et fermetures.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (175 tests, 498 assertions)
+Tests Store/StoreClosure ciblés : OK (6 tests, 14 assertions)
+Migrations développement et test : à jour (Version20260822150000)
+Doctrine mapping : valide
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(store): add store aggregate and value objects
+feat(store): add tenant scoped store repository contract
+feat(store): persist store aggregate with RLS
+feat(store): add store lifecycle use cases
+feat(store): add store closure process manager
+```
+
 ## Prochaine étape
 
-### Epic 1.2 — Store foundation
+### Epic 1.3 — Organization invitations
 
 **Statut : À FAIRE**
 
-Implémenter l'aggregate `Store`, ses value objects, sa persistance tenant-safe,
-ses use cases de lifecycle et le process manager `StoreClosure`.
-
-L'ADR-0017 est désormais implémenté pour la table Organization. Chaque nouvelle
-table tenant-owned de l'Epic 1.2 doit réutiliser la `TenantTransaction`, accorder
-ses droits au rôle `zandu_runtime` et définir sa propre policy RLS fail-closed.
+Implémenter le lifecycle d'invitation d'un utilisateur dans une organization,
+avec token à usage unique, expiration, révocation, acceptation atomique et
+isolation tenant conformément au backlog du Lot 1.
 
 ---
 
