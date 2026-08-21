@@ -1625,12 +1625,12 @@ Les futurs bounded contexts devront suivre la stratégie de persistence définie
 Epic 0.1   TERMINÉ   Initialisation du repository backend
 Epic 0.2   TERMINÉ   Fitness tests d’architecture
 Epic 0.3   TERMINÉ   Persistence foundation
-Epic 0.4   EN COURS  SharedKernel foundation
-Epic 0.5   À FAIRE   API foundation
-Epic 0.6   À FAIRE   Authentication foundation
-Epic 0.7   À FAIRE   Architectural spikes
-Epic 0.8   À FAIRE   Operations & observability
-Gate Lot 0 À FAIRE   Validation finale de l’architecture exécutable
+Epic 0.4   TERMINÉ   SharedKernel foundation
+Epic 0.5   TERMINÉ   API foundation
+Epic 0.6   TERMINÉ   Authentication foundation
+Epic 0.7   TERMINÉ   Architectural spikes
+Epic 0.8   TERMINÉ   Operations & observability
+Gate Lot 0 TERMINÉ   Validation finale de l’architecture exécutable
 ```
 
 ---
@@ -2697,11 +2697,55 @@ Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
 
 ### Epic 0.8 — Operations & observability
 
-**Statut : À FAIRE**
+**Statut : TERMINÉ**
 
-Ajouter les logs structurés, l’instrumentation OpenTelemetry, les endpoints de
-santé, le graceful shutdown et les métriques worker/outbox, puis conclure le
-Spike G d’infrastructure.
+### Réalisé
+
+- logs JSON structurés enrichis avec corrélation et trace ;
+- instrumentation HTTP OpenTelemetry et export OTLP configurable ;
+- endpoints `/health/live`, `/health/ready` et `/metrics` ;
+- socle de graceful shutdown par gestion des signaux ;
+- métriques `outbox_pending_count`, `outbox_oldest_pending_age`,
+  `outbox_publish_failures`, `worker_retry_count` et `dead_letter_count` ;
+- image de production immuable compilée pour l'environnement `prod` ;
+- migration contrôlée, staging local et restauration PostgreSQL intégrés à la
+  CI ;
+- PHP-CS-Fixer, PHPStan niveau 6 et audit Composer intégrés à la CI.
+
+### Spike G et validations finales
+
+Le Spike G est documenté dans `docs/spikes/lot-0-infrastructure-spike.md`. Le
+staging validé est local et utilise l'image de production contre PostgreSQL.
+Les choix Render et Grafana Cloud restent `PROPOSED`, car aucun compte externe
+n'était nécessaire pour valider les contrats d'infrastructure et OTLP.
+
+```text
+PHPUnit Docker : OK (134 tests, 393 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+Conteneur Symfony : valide
+Image Docker production : build réussi
+Staging local et readiness PostgreSQL : réussis
+Backup/restore PostgreSQL : réussi (2 migrations restaurées)
+```
+
+### Commits
+
+```text
+feat(observability): add structured logs and OTLP tracing
+feat(operations): add health and metrics endpoints
+feat(operations): add graceful process shutdown
+fix(docker): compile production environment defaults
+ci(operations): validate staging and backup restore
+style(backend): apply PER-CS formatting
+ci(quality): add coding standards and static analysis
+ci(security): audit locked dependencies
+fix(ci): increase PHPStan memory limit
+docs(spike-g): record infrastructure validation
+docs(status): close Lot 0 gate
+```
 
 ---
 
@@ -2724,10 +2768,10 @@ Spike G d’infrastructure.
 [x] API foundation validée
 [x] authentication foundation validée
 [x] architectural spikes réalisés
-[ ] exploitation et observabilité minimales validées
-[ ] documentation finale du Lot 0 à jour
-[ ] CI finale entièrement verte
-[ ] Gate Lot 0 validé
+[x] exploitation et observabilité minimales validées
+[x] documentation finale du Lot 0 à jour
+[x] CI finale entièrement verte
+[x] Gate Lot 0 validé
 ```
 
 ---

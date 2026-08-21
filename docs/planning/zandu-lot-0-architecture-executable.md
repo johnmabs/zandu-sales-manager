@@ -1189,33 +1189,33 @@ ci(build): build backend Docker image
 Le Lot 0 est `DONE` uniquement lorsque :
 
 ```text
-[ ] Symfony backend exécutable
-[ ] Modular monolith matérialisé
-[ ] Architecture fitness tests actifs
-[ ] PostgreSQL opérationnel
-[ ] Doctrine ORM / DBAL / Migrations opérationnels
-[ ] TransactionManager validé
-[ ] UUID v7 abstraction et implémentation validées
-[ ] Decimal abstraction validée
-[ ] Money et Quantity disponibles
-[ ] API Platform + OpenAPI opérationnels
-[ ] Error contract stable
-[ ] CorrelationId propagé
-[ ] Idempotency-Key foundation disponible
-[ ] JWT access token opérationnel
-[ ] Refresh token rotation opérationnelle
-[ ] ActorContext dérivé de l’identité authentifiée
-[ ] Spike A conclu
-[ ] Spike B conclu
-[ ] Spike C conclu
-[ ] Spike E conclu
-[ ] décisions numériques nécessaires documentées
-[ ] Docker production image validée
-[ ] OpenTelemetry opérationnel
-[ ] liveness/readiness opérationnels
-[ ] staging validé
-[ ] backup restore testé
-[ ] ADR concernés mis à jour
+[x] Symfony backend exécutable
+[x] Modular monolith matérialisé
+[x] Architecture fitness tests actifs
+[x] PostgreSQL opérationnel
+[x] Doctrine ORM / DBAL / Migrations opérationnels
+[x] TransactionManager validé
+[x] UUID v7 abstraction et implémentation validées
+[x] Decimal abstraction validée
+[x] Money et Quantity disponibles
+[x] API Platform + OpenAPI opérationnels
+[x] Error contract stable
+[x] CorrelationId propagé
+[x] Idempotency-Key foundation disponible
+[x] JWT access token opérationnel
+[x] Refresh token rotation opérationnelle
+[x] ActorContext dérivé de l’identité authentifiée
+[x] Spike A conclu
+[x] Spike B conclu
+[x] Spike C conclu
+[x] Spike E conclu
+[x] décisions numériques nécessaires documentées
+[x] Docker production image validée
+[x] OpenTelemetry opérationnel
+[x] liveness/readiness opérationnels
+[x] staging validé
+[x] backup restore testé
+[x] ADR concernés mis à jour
 ```
 
 ---
