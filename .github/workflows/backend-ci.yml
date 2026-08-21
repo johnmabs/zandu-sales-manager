@@ -56,6 +56,9 @@ jobs:
       - name: Show service status
         run: docker compose ps
 
+      - name: Apply controlled migrations
+        run: make database-migrate
+
       - name: Validate code and configuration
         run: make lint
 
@@ -64,6 +67,12 @@ jobs:
 
       - name: Validate architecture
         run: make architecture
+
+      - name: Validate immutable production image
+        run: make staging-test
+
+      - name: Verify PostgreSQL backup and restore
+        run: make backup-restore-test
 
       - name: Stop services
         if: always()

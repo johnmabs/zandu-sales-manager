@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint architecture auth-keys shell logs ps database-create database-migrate database-rollback database-status database-sql
+.PHONY: install start stop restart test lint architecture auth-keys staging-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-sql
 
 install:
 	docker compose build
@@ -7,6 +7,12 @@ install:
 
 auth-keys:
 	docker compose run --rm backend php bin/console lexik:jwt:generate-keypair --skip-if-exists
+
+staging-test:
+	sh scripts/test-staging.sh
+
+backup-restore-test:
+	sh scripts/test-backup-restore.sh
 
 start:
 	docker compose up -d
