@@ -68,6 +68,18 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $openTelemetry = Layer::withName('OpenTelemetry')->collectors(
+        ClassLikeConfig::create(
+            '.*OpenTelemetry\\.*'
+        ),
+    );
+
+    $monolog = Layer::withName('Monolog')->collectors(
+        ClassLikeConfig::create(
+            '.*Monolog\\.*'
+        ),
+    );
+
     $config
         ->paths('./src')
         ->layers(
@@ -81,6 +93,8 @@ return static function (DeptracConfig $config): void {
             $doctrine,
             $apiPlatform,
             $brickMath,
+            $openTelemetry,
+            $monolog,
         )
         ->rulesets(
             Ruleset::forLayer($domain)
@@ -119,6 +133,8 @@ return static function (DeptracConfig $config): void {
                     $symfony,
                     $apiPlatform,
                     $brickMath,
+                    $openTelemetry,
+                    $monolog,
                 ),
         );
 };

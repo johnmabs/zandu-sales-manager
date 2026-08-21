@@ -57,5 +57,11 @@ services:
         arguments:
             $ttlSeconds: "%env(int:AUTH_REFRESH_TTL)%"
 
+    OpenTelemetry\API\Trace\TracerInterface:
+        factory: [Zandu\Platform\Observability\OpenTelemetryFactory, createTracer]
+        arguments:
+            $enabled: "%env(bool:OTEL_ENABLED)%"
+            $endpoint: "%env(OTEL_EXPORTER_OTLP_ENDPOINT)%"
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
