@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zandu\Modules\Organization\Infrastructure\Persistence\Doctrine;
+namespace Zandu\Modules\Organization\Infrastructure\Persistence\Orm;
 
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;

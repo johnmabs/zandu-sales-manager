@@ -15,7 +15,7 @@ use Zandu\Modules\Organization\Domain\OrganizationName;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
 use Zandu\Modules\Organization\Domain\OrganizationStatus;
 use Zandu\Modules\Organization\Domain\TimeZone;
-use Zandu\Modules\Organization\Infrastructure\Persistence\Doctrine\DoctrineOrganizationRepository;
+use Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;

@@ -43,7 +43,7 @@ services:
         alias: Zandu\Platform\Time\SystemClock
 
     Zandu\Modules\Organization\Domain\OrganizationRepository:
-        alias: Zandu\Modules\Organization\Infrastructure\Persistence\Doctrine\DoctrineOrganizationRepository
+        alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository
 
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
