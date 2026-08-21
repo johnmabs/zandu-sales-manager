@@ -109,6 +109,11 @@ NOT_FOUND
 
 et non comme une révélation d’existence cross-tenant.
 
+Conformément à l'ADR-0017, cette isolation applicative est complétée par
+PostgreSQL Row Level Security sur toutes les tables tenant-owned. Le contexte
+`app.organization_id` est résolu côté serveur et reste local à la transaction.
+Les rôles applicatifs ne possèdent jamais `BYPASSRLS`.
+
 ---
 
 # 3. Règle de commits
@@ -552,6 +557,7 @@ Ajouter :
 - repository ;
 - migration ;
 - contrainte unique `(organization_id, store_code)` ;
+- activation et policy RLS tenant-safe conformément à l'ADR-0017 ;
 - tests PostgreSQL.
 
 ### Commit proposé
@@ -1937,6 +1943,9 @@ Le Lot 1 est `DONE` uniquement lorsque :
 [ ] OrganizationOperationalGuard actif
 [ ] StoreOperationalGuard actif
 [ ] tenant-scoped repositories
+[ ] PostgreSQL RLS actif sur toutes les tables tenant-owned
+[ ] rôle applicatif sans BYPASSRLS
+[ ] contexte tenant transactionnel sans fuite entre connexions
 [ ] aucune fuite d’existence cross-tenant
 [ ] SecurityAuditEntry opérationnel
 [ ] opérations sensibles auditées

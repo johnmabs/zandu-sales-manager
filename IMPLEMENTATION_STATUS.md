@@ -65,7 +65,7 @@ Gate Lot 1 À FAIRE   Administration opérationnelle complète
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0016
+- ADR techniques 0001–0017
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
 
@@ -2830,6 +2830,10 @@ docs(status): close Organization foundation
 
 Implémenter l'aggregate `Store`, ses value objects, sa persistance tenant-safe,
 ses use cases de lifecycle et le process manager `StoreClosure`.
+
+Avant la persistance de `Store`, implémenter l'ADR-0017 désormais accepté :
+contexte tenant transactionnel, rôle applicatif sans `BYPASSRLS`, policies
+PostgreSQL fail-closed et tests d'isolation au niveau SQL.
 
 ---
 
