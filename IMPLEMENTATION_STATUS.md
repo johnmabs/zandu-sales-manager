@@ -7,13 +7,58 @@ Son rôle est de conserver une trace simple de ce qui a effectivement été réa
 
 ---
 
+# Vue d’ensemble
+
+## État actuel du Lot 0
+
+```text
+Epic 0.1   TERMINÉ   Initialisation du repository backend
+Epic 0.2   TERMINÉ   Fitness tests d’architecture
+Epic 0.3   TERMINÉ   Persistence foundation
+Epic 0.4   TERMINÉ   SharedKernel foundation
+Epic 0.5   TERMINÉ   API foundation
+Epic 0.6   TERMINÉ   Authentication foundation
+Epic 0.7   TERMINÉ   Architectural spikes
+Epic 0.8   TERMINÉ   Operations & observability
+Gate Lot 0 TERMINÉ   Validation finale de l’architecture exécutable
+```
+
+Le Lot 0 est clos. La prochaine phase doit être définie dans un backlog dédié
+avant le démarrage d’un nouveau vertical slice métier.
+
+## Definition of Done globale
+
+```text
+[x] repository backend exécutable
+[x] runtime PHP reproductible
+[x] PostgreSQL local disponible
+[x] bootstrap développeur disponible
+[x] namespaces et structure DDD matérialisés
+[x] fitness tests d’architecture exécutables
+[x] frontières cross-context protégées
+[x] CI backend opérationnelle
+[x] violation architecturale fait échouer la CI
+[x] persistence foundation validée
+[x] SharedKernel foundation validée
+[x] API foundation validée
+[x] authentication foundation validée
+[x] architectural spikes réalisés
+[x] exploitation et observabilité minimales validées
+[x] documentation finale du Lot 0 à jour
+[x] CI finale entièrement verte
+[x] Gate Lot 0 validé
+```
+
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0013
+- ADR techniques 0001–0016
 - `zandu-lot-0-architecture-executable.md`
 
 ---
+
+La suite du document conserve l’historique détaillé des étapes, validations et
+commits du Lot 0.
 
 # Epic 0.1 — Initialisation du repository backend
 
@@ -60,9 +105,9 @@ build(backend): initialize Symfony application
 
 ---
 
-## Documentation d’architecture
+## Documentation d’architecture — état initial
 
-**Statut : EN COURS**
+**Statut à cette étape : EN COURS**
 
 Le dossier suivant est présent dans le repository :
 
@@ -80,7 +125,8 @@ Il contient les ADR techniques initiaux.
 docs(adr): add initial architecture decisions
 ```
 
-La spécification DDD v1.1 et le backlog du Lot 0 doivent encore être intégrés dans `docs/` s’ils ne le sont pas déjà.
+À cette étape, la spécification DDD v1.1 et le backlog du Lot 0 devaient encore
+être intégrés dans `docs/`.
 
 Structure cible :
 
@@ -1619,25 +1665,7 @@ Les futurs bounded contexts devront suivre la stratégie de persistence définie
 
 ---
 
-# État actuel du Lot 0
-
-```text
-Epic 0.1   TERMINÉ   Initialisation du repository backend
-Epic 0.2   TERMINÉ   Fitness tests d’architecture
-Epic 0.3   TERMINÉ   Persistence foundation
-Epic 0.4   TERMINÉ   SharedKernel foundation
-Epic 0.5   TERMINÉ   API foundation
-Epic 0.6   TERMINÉ   Authentication foundation
-Epic 0.7   TERMINÉ   Architectural spikes
-Epic 0.8   TERMINÉ   Operations & observability
-Gate Lot 0 TERMINÉ   Validation finale de l’architecture exécutable
-```
-
----
-
-# Prochaine étape
-
-## Epic 0.4 — SharedKernel foundation
+# Epic 0.4 — SharedKernel foundation
 
 **Statut : TERMINÉ**
 
@@ -1801,9 +1829,7 @@ feat(identity): implement UUID v7 with Symfony UID
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
-
-### 0.4.3 — Ajouter les identifiants métier typés initiaux
+## 0.4.3 — Ajouter les identifiants métier typés initiaux
 
 **Statut : TERMINÉ**
 
@@ -1878,9 +1904,7 @@ feat(identity): add initial typed domain identifiers
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
-
-### 0.4.4 — Ajouter l’abstraction Decimal
+## 0.4.4 — Ajouter l’abstraction Decimal
 
 **Statut : TERMINÉ**
 
@@ -1962,9 +1986,7 @@ feat(decimal): add exact decimal abstraction
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
-
-### 0.4.5 — Implémenter Decimal avec brick/math
+## 0.4.5 — Implémenter Decimal avec brick/math
 
 **Statut : TERMINÉ**
 
@@ -2047,9 +2069,7 @@ feat(decimal): implement decimal operations with brick math
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
-
-### 0.4.6 — Ajouter Money et Currency
+## 0.4.6 — Ajouter Money et Currency
 
 **Statut : TERMINÉ**
 
@@ -2128,9 +2148,7 @@ feat(money): add Money and Currency value objects
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
-
-### 0.4.7 — Ajouter Quantity
+## 0.4.7 — Ajouter Quantity
 
 **Statut : TERMINÉ**
 
@@ -2205,9 +2223,7 @@ feat(quantity): add exact Quantity value object
 
 Le commit est volontairement laissé à l’utilisateur.
 
-## Prochaine étape
-
-### 0.4.8 — Ajouter les primitives d’exécution nécessaires
+## 0.4.8 — Ajouter les primitives d’exécution nécessaires
 
 **Statut : TERMINÉ**
 
@@ -2555,13 +2571,11 @@ L’Epic 0.4 satisfait sa Definition of Done : les contrats du `SharedKernel`
 n’exposent aucune dépendance Symfony ou Brick, les UUID v7 et les décimaux
 exacts sont testés, et aucune primitive numérique n’utilise `float`.
 
-## Prochaine étape
-
-### Epic 0.5 — API foundation
+# Epic 0.5 — API foundation
 
 **Statut : TERMINÉ**
 
-### Réalisé
+## Réalisé
 
 - API Platform 4.3 et son intégration Doctrine ORM sont installés ;
 - OpenAPI est générable et expose le titre/version de l’API Zandu ;
@@ -2578,7 +2592,7 @@ exacts sont testés, et aucune primitive numérique n’utilise `float`.
 - `Idempotency-Key` est converti en `IdempotencyKey` typé et une valeur invalide
   produit le code stable `INVALID_IDEMPOTENCY_KEY`.
 
-### Tests et validations
+## Tests et validations
 
 Les tests couvrent la génération OpenAPI, les conventions Processor/Provider,
 la normalisation des erreurs, la propagation de corrélation et le traitement
@@ -2593,7 +2607,7 @@ Deptrac layers : 0 violation, 0 warning, 0 erreur
 Deptrac modules : 0 violation, 0 warning, 0 erreur
 ```
 
-### Commits
+## Commits
 
 ```text
 build(api): add API Platform and OpenAPI
@@ -2605,13 +2619,11 @@ feat(api): add idempotency key request handling
 docs(status): close API foundation
 ```
 
-## Prochaine étape
-
-### Epic 0.6 — Authentication foundation
+# Epic 0.6 — Authentication foundation
 
 **Statut : TERMINÉ**
 
-### Réalisé
+## Réalisé
 
 - Symfony SecurityBundle et LexikJWTAuthenticationBundle 3.2 sont installés ;
 - `/api/auth/login` authentifie un principal Zandu par email/mot de passe ;
@@ -2630,7 +2642,7 @@ docs(status): close API foundation
 - `ActorContextResolver` dérive acteur, tenant, user, session, corrélation et
   instant d’authentification exclusivement du principal et du JWT côté serveur.
 
-### Persistence et validations
+## Persistence et validations
 
 La migration `Version20260820223000` a été appliquée sur PostgreSQL réel. La
 table `identity_access.refresh_session` et son index utilisateur ont été
@@ -2648,7 +2660,7 @@ Conteneur Symfony : valide
 Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
 ```
 
-### Commits
+## Commits
 
 ```text
 feat(auth): add JWT access token authentication
@@ -2657,13 +2669,11 @@ feat(auth): resolve ActorContext from authenticated identity
 docs(status): close authentication foundation
 ```
 
-## Prochaine étape
-
-### Epic 0.7 — Spikes architecturaux
+# Epic 0.7 — Spikes architecturaux
 
 **Statut : TERMINÉ**
 
-### Résultats
+## Résultats
 
 - Spike A : les effets Sale, Inventory, Cash et Outbox sont atomiques ; trois
   points d’échec injectés laissent zéro effet partiel ;
@@ -2677,14 +2687,14 @@ docs(status): close authentication foundation
 Les tests PostgreSQL sont automatiquement précédés de la création et de la
 migration de `zandu_test` dans `make test` et donc dans la CI.
 
-### Décisions
+## Décisions
 
 - ADR-0014 : `NUMERIC(30,12)` pour quantités/taux/intermédiaires et
   `NUMERIC(30,6)` pour Money persisté ;
 - ADR-0015 : UPDATE conditionnel pour la consommation simple de stock ;
 - ADR-0016 : transactional outbox, livraison at-least-once et ledger consumer.
 
-### Validation
+## Validation
 
 ```text
 PHPUnit Docker : OK (128 tests, 371 assertions)
@@ -2693,13 +2703,11 @@ Composer et conteneur Symfony : valides
 Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
 ```
 
-## Prochaine étape
-
-### Epic 0.8 — Operations & observability
+# Epic 0.8 — Operations & observability
 
 **Statut : TERMINÉ**
 
-### Réalisé
+## Réalisé
 
 - logs JSON structurés enrichis avec corrélation et trace ;
 - instrumentation HTTP OpenTelemetry et export OTLP configurable ;
@@ -2712,7 +2720,7 @@ Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
   CI ;
 - PHP-CS-Fixer, PHPStan niveau 6 et audit Composer intégrés à la CI.
 
-### Spike G et validations finales
+## Spike G et validations finales
 
 Le Spike G est documenté dans `docs/spikes/lot-0-infrastructure-spike.md`. Le
 staging validé est local et utilise l'image de production contre PostgreSQL.
@@ -2731,7 +2739,7 @@ Staging local et readiness PostgreSQL : réussis
 Backup/restore PostgreSQL : réussi (2 migrations restaurées)
 ```
 
-### Commits
+## Commits
 
 ```text
 feat(observability): add structured logs and OTLP tracing
@@ -2745,33 +2753,6 @@ ci(security): audit locked dependencies
 fix(ci): increase PHPStan memory limit
 docs(spike-g): record infrastructure validation
 docs(status): close Lot 0 gate
-```
-
----
-
-# Definition of Done globale — Lot 0
-
-État provisoire :
-
-```text
-[x] repository backend exécutable
-[x] runtime PHP reproductible
-[x] PostgreSQL local disponible
-[x] bootstrap développeur disponible
-[x] namespaces et structure DDD matérialisés
-[x] fitness tests d’architecture exécutables
-[x] frontières cross-context protégées
-[x] CI backend opérationnelle
-[x] violation architecturale fait échouer la CI
-[x] persistence foundation validée
-[x] SharedKernel foundation validée
-[x] API foundation validée
-[x] authentication foundation validée
-[x] architectural spikes réalisés
-[x] exploitation et observabilité minimales validées
-[x] documentation finale du Lot 0 à jour
-[x] CI finale entièrement verte
-[x] Gate Lot 0 validé
 ```
 
 ---
