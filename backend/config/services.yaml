@@ -55,6 +55,12 @@ services:
     Zandu\Modules\Organization\Domain\Store\StoreRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreRepository
 
+    Zandu\Modules\Organization\Application\Contract\StoreClosureBlockerProvider:
+        alias: Zandu\Modules\Organization\Application\Contract\NoStoreClosureBlockers
+
+    Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
+        alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
+
     Zandu\Platform\Auth\Security\BootstrapUserProvider:
         arguments:
             $email: "%env(AUTH_BOOTSTRAP_EMAIL)%"

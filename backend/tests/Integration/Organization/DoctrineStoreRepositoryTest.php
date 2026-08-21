@@ -16,12 +16,18 @@ use Zandu\Modules\Organization\Domain\Store\StoreCode;
 use Zandu\Modules\Organization\Domain\Store\StoreName;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\Modules\Organization\Domain\Store\StoreStatus;
+use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosure;
+use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureNotFound;
+use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository;
+use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureStatus;
 use Zandu\Modules\Organization\Domain\TimeZone;
+use Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository;
 use Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreRepository;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\StoreClosureId;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Money\Currency;
 
@@ -32,10 +38,12 @@ final class DoctrineStoreRepositoryTest extends KernelTestCase
     private const STORE_A = '0198d233-147c-72d5-b75a-a936797ff9c8';
     private const STORE_A_DUPLICATE = '0198d234-537f-75b8-bd7f-550f88270881';
     private const STORE_B = '0198d235-3765-7eb3-8ef9-f3661c32bc08';
+    private const CLOSURE_A = '0198d255-3765-7eb3-8ef9-f3661c32bc08';
     private const ACTOR_ID = '0198d1b2-1dd7-7c6d-9855-25e5e205940c';
 
     private EntityManagerInterface $entityManager;
     private StoreRepository $repository;
+    private StoreClosureRepository $closures;
     private DoctrineTenantTransaction $transactions;
     private bool $databaseAvailable = false;
 
@@ -44,6 +52,7 @@ final class DoctrineStoreRepositoryTest extends KernelTestCase
         self::bootKernel();
         $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $this->repository = new DoctrineStoreRepository($this->entityManager, new SymfonyUuidFactory());
+        $this->closures = new DoctrineStoreClosureRepository($this->entityManager, new SymfonyUuidFactory());
         $this->transactions = new DoctrineTenantTransaction($this->entityManager->getConnection(), 'zandu_runtime');
 
         try {
@@ -126,6 +135,38 @@ final class DoctrineStoreRepositoryTest extends KernelTestCase
         self::assertNull($result);
     }
 
+    public function testStoreClosureRoundTripsAndIsHiddenFromAnotherTenant(): void
+    {
+        $store = $this->store(self::STORE_A, self::ORGANIZATION_A, 'CENTRE');
+        $this->transactions->transactional($store->organizationId(), function () use ($store): void {
+            $this->repository->save($store);
+            $closure = StoreClosure::request(
+                StoreClosureId::fromString(self::CLOSURE_A, new SymfonyUuidFactory()),
+                $store->organizationId(),
+                $store->id(),
+                'Fin du bail',
+                $this->actorId(),
+                new DateTimeImmutable('2026-08-22T16:00:00+00:00'),
+            );
+            $closure->evaluate(['OPEN_CASH_SESSION']);
+            $this->closures->save($closure);
+        });
+        $this->entityManager->clear();
+
+        $restored = $this->transactions->transactional(
+            $store->organizationId(),
+            fn(): StoreClosure => $this->closures->getActiveForStore($store->organizationId(), $store->id()),
+        );
+        self::assertSame(StoreClosureStatus::InProgress, $restored->status());
+        self::assertSame(['OPEN_CASH_SESSION'], $restored->blockers());
+
+        $this->expectException(StoreClosureNotFound::class);
+        $this->transactions->transactional(
+            $this->organizationId(self::ORGANIZATION_B),
+            fn(): StoreClosure => $this->closures->getActiveForStore($store->organizationId(), $store->id()),
+        );
+    }
+
     private function store(string $id, string $organizationId, string $code): Store
     {
         $factory = new SymfonyUuidFactory();
@@ -167,6 +208,10 @@ SQL, [$id, $name, self::ACTOR_ID, self::ACTOR_ID]);
     private function deleteFixtures(): void
     {
         $connection = $this->entityManager->getConnection();
+        $connection->executeStatement(
+            'DELETE FROM organization.store_closures WHERE organization_id IN (?, ?)',
+            [self::ORGANIZATION_A, self::ORGANIZATION_B],
+        );
         $connection->executeStatement(
             'DELETE FROM organization.stores WHERE organization_id IN (?, ?)',
             [self::ORGANIZATION_A, self::ORGANIZATION_B],
