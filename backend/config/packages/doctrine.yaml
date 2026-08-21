@@ -20,6 +20,12 @@ doctrine:
                 dir: "%kernel.project_dir%/src/Modules/Organization/Infrastructure/Persistence/Orm"
                 prefix: Zandu\Modules\Organization\Infrastructure\Persistence\Orm
                 alias: Organization
+            IdentityAccess:
+                type: attribute
+                is_bundle: false
+                dir: "%kernel.project_dir%/src/Modules/IdentityAccess/Infrastructure/Persistence/Orm"
+                prefix: Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm
+                alias: IdentityAccess
 
 when@test:
     doctrine:
