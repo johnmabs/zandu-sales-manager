@@ -7,6 +7,7 @@ namespace Zandu\Modules\IdentityAccess\Application\SuspendOrganizationMembership
 use Zandu\Modules\IdentityAccess\Application\MembershipLifecycle\MembershipLifecycleService;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
 use Zandu\SharedKernel\Time\Clock;
 
 final readonly class SuspendOrganizationMembershipHandler
@@ -18,6 +19,7 @@ final readonly class SuspendOrganizationMembershipHandler
             $command->membershipId,
             $command->actorContext,
             PermissionCode::MemberSuspend,
+            SecurityAction::MemberSuspended,
             fn(OrganizationMembership $membership) => $membership->suspend($command->actorContext->actorId(), $this->clock->now()),
         );
     }

@@ -16,6 +16,10 @@ use Zandu\Modules\Organization\Domain\OrganizationRepository;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -28,6 +32,7 @@ final readonly class UpdateOrganizationHandler
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(UpdateOrganization $command): Organization
@@ -38,6 +43,7 @@ final readonly class UpdateOrganizationHandler
                 $organization = $this->loader->get($command->organizationId, $command->actorContext);
                 $this->authorization->authorize($command->actorContext, PermissionCode::OrganizationUpdate, ResourceScope::organization($organization->id()));
                 $this->operationalGuard->assertTenant($command->actorContext);
+                $now = $this->clock->now();
                 $organization->updateProfile(
                     OrganizationName::fromString($command->name),
                     CountryCode::fromString($command->countryCode),
@@ -45,9 +51,10 @@ final readonly class UpdateOrganizationHandler
                     TimeZone::fromString($command->defaultTimeZone),
                     Locale::fromString($command->defaultLocale),
                     $command->actorContext->actorId(),
-                    $this->clock->now(),
+                    $now,
                 );
                 $this->organizations->save($organization);
+                $this->audit->recordSuccess($command->actorContext, SecurityAction::OrganizationUpdated, ResourceReference::for('organization', $organization->id()), SafeAuditMetadata::empty(), $now);
 
                 return $organization;
             },

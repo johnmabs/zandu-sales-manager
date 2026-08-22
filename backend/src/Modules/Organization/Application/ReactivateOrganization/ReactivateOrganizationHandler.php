@@ -12,6 +12,10 @@ use Zandu\Modules\Organization\Application\TenantOrganizationLoader;
 use Zandu\Modules\Organization\Domain\Organization;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -24,6 +28,7 @@ final readonly class ReactivateOrganizationHandler
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(ReactivateOrganization $command): Organization
@@ -34,8 +39,10 @@ final readonly class ReactivateOrganizationHandler
                 $organization = $this->loader->get($command->organizationId, $command->actorContext);
                 $this->authorization->authorize($command->actorContext, PermissionCode::OrganizationSuspend, ResourceScope::organization($organization->id()));
                 $this->operationalGuard->assertTenant($command->actorContext, OperationalMode::Remediation);
-                $organization->reactivate($command->actorContext->actorId(), $this->clock->now());
+                $now = $this->clock->now();
+                $organization->reactivate($command->actorContext->actorId(), $now);
                 $this->organizations->save($organization);
+                $this->audit->recordSuccess($command->actorContext, SecurityAction::OrganizationReactivated, ResourceReference::for('organization', $organization->id()), SafeAuditMetadata::empty(), $now);
 
                 return $organization;
             },

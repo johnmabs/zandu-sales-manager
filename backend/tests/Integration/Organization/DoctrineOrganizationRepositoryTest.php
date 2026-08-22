@@ -22,7 +22,11 @@ use Zandu\Modules\Organization\Domain\OrganizationStatus;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\Platform\Identity\SymfonyUuidV7Generator;
+use Zandu\Platform\Persistence\DbalOutboxRepository;
+use Zandu\Platform\Persistence\DbalSecurityAuditRepository;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
+use Zandu\Platform\SecurityAudit\TransactionalSecurityAuditTrail;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Context\ActorType;
 use Zandu\SharedKernel\Identity\ActorId;
@@ -70,6 +74,8 @@ final class DoctrineOrganizationRepositoryTest extends KernelTestCase
             'DELETE FROM identity_access.organization_memberships WHERE organization_id = ?',
             [self::ORGANIZATION_ID],
         );
+        $this->entityManager->getConnection()->executeStatement('DELETE FROM messaging.outbox_messages WHERE organization_id = ?', [self::ORGANIZATION_ID]);
+        $this->entityManager->getConnection()->executeStatement('DELETE FROM security.security_audit_entries WHERE organization_id = ?', [self::ORGANIZATION_ID]);
         $this->entityManager->getConnection()->executeStatement(
             'DELETE FROM organization.organizations WHERE id = ?',
             [self::ORGANIZATION_ID],
@@ -83,6 +89,8 @@ final class DoctrineOrganizationRepositoryTest extends KernelTestCase
                 'DELETE FROM identity_access.organization_memberships WHERE organization_id = ?',
                 [self::ORGANIZATION_ID],
             );
+            $this->entityManager->getConnection()->executeStatement('DELETE FROM messaging.outbox_messages WHERE organization_id = ?', [self::ORGANIZATION_ID]);
+            $this->entityManager->getConnection()->executeStatement('DELETE FROM security.security_audit_entries WHERE organization_id = ?', [self::ORGANIZATION_ID]);
             $this->entityManager->getConnection()->executeStatement(
                 'DELETE FROM organization.organizations WHERE id = ?',
                 [self::ORGANIZATION_ID],
@@ -143,6 +151,11 @@ final class DoctrineOrganizationRepositoryTest extends KernelTestCase
             new FrozenClock(new DateTimeImmutable('2026-08-22T08:00:00+00:00')),
             $transaction,
             new ProvisionInitialOrganizationOwner($memberships, $catalog, $generator),
+            new TransactionalSecurityAuditTrail(
+                new DbalSecurityAuditRepository($this->entityManager->getConnection()),
+                new DbalOutboxRepository($this->entityManager->getConnection()),
+                new SymfonyUuidV7Generator(),
+            ),
         );
         $context = new ActorContext(
             $this->actorId(),

@@ -20,6 +20,10 @@ use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -33,6 +37,7 @@ final readonly class CreateStoreHandler
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(CreateStore $command): Store
@@ -63,6 +68,7 @@ final readonly class CreateStoreHandler
                 $this->clock->now(),
             );
             $this->stores->save($store);
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::StoreCreated, ResourceReference::for('store', $store->id()), SafeAuditMetadata::empty(), $store->updatedAt());
 
             return $store;
         });

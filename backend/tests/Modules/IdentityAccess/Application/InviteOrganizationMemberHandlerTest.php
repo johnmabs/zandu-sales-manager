@@ -166,6 +166,7 @@ final class InviteOrganizationMemberHandlerTest extends TestCase
             new LastOrganizationOwner(new EmptyMembershipRepository(), $systemRoles),
             new AllowAllAuthorizationService(),
             new AllowAllOperationalGuard(),
+            new AllowAllSecurityAuditTrail(),
         );
     }
 

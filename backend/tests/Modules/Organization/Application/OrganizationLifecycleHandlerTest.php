@@ -30,6 +30,7 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
 final class OrganizationLifecycleHandlerTest extends TestCase
@@ -55,7 +56,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
 
     public function testProfileUpdateUsesTheTrustedActorContext(): void
     {
-        $handler = new UpdateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $handler = new UpdateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
         $organization = $handler(new UpdateOrganization(
             $this->organizationId(),
             'Zandu Congo',
@@ -74,8 +75,9 @@ final class OrganizationLifecycleHandlerTest extends TestCase
 
     public function testSuspensionAndReactivationAreExplicitUseCases(): void
     {
-        $suspend = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
-        $reactivate = new ReactivateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $audit = new RecordingSecurityAuditTrail();
+        $suspend = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), $audit);
+        $reactivate = new ReactivateOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), $audit);
 
         $organization = $suspend(new SuspendOrganization($this->organizationId(), $this->actorContext()));
         self::assertSame(OrganizationStatus::Suspended, $organization->status());
@@ -83,6 +85,9 @@ final class OrganizationLifecycleHandlerTest extends TestCase
         $organization = $reactivate(new ReactivateOrganization($this->organizationId(), $this->actorContext()));
         self::assertSame(OrganizationStatus::Active, $organization->status());
         self::assertSame(3, $organization->version());
+        self::assertSame(SecurityAction::OrganizationSuspended, $audit->records[0][0]);
+        self::assertSame(SecurityAction::OrganizationReactivated, $audit->records[1][0]);
+        self::assertSame(self::ORGANIZATION_ID, $audit->records[0][1]->id);
     }
 
     public function testClosureRequestIsAnExplicitUseCase(): void
@@ -98,7 +103,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
     public function testCrossTenantLookupIsReportedAsNotFound(): void
     {
         $factory = new SymfonyUuidFactory();
-        $handler = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $handler = new SuspendOrganizationHandler($this->loader, $this->repository, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
 
         $this->expectException(OrganizationNotFound::class);
         $handler(new SuspendOrganization(

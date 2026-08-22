@@ -14,6 +14,10 @@ use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -25,6 +29,7 @@ final readonly class CreateOrganizationHandler
         private Clock $clock,
         private TenantTransaction $transaction,
         private InitialOrganizationOwnerProvisioner $initialOwner,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(CreateOrganization $command): Organization
@@ -47,6 +52,7 @@ final readonly class CreateOrganizationHandler
                 );
                 $this->organizations->save($organization);
                 $this->initialOwner->provision($organizationId, $command->actorContext, $now);
+                $this->audit->recordSuccess($command->actorContext, SecurityAction::OrganizationCreated, ResourceReference::for('organization', $organizationId), SafeAuditMetadata::empty(), $now, $organizationId);
 
                 return $organization;
             },

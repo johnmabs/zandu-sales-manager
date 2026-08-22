@@ -15,6 +15,10 @@ use Zandu\Modules\Organization\Domain\Store\StoreName;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -27,6 +31,7 @@ final readonly class UpdateStoreHandler
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(UpdateStore $command): Store
@@ -35,15 +40,17 @@ final readonly class UpdateStoreHandler
             $store = $this->loader->get($command->storeId, $command->actorContext);
             $this->authorization->authorize($command->actorContext, PermissionCode::StoreUpdate, ResourceScope::store($store->organizationId(), $store->id()));
             $this->operationalGuard->assertStore($command->actorContext, $store->id());
+            $now = $this->clock->now();
             $store->update(
                 StoreName::fromString($command->name),
                 null !== $command->address ? StoreAddress::fromString($command->address) : null,
                 TimeZone::fromString($command->timeZone),
                 Locale::fromString($command->locale),
                 $command->actorContext->actorId(),
-                $this->clock->now(),
+                $now,
             );
             $this->stores->save($store);
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::StoreUpdated, ResourceReference::for('store', $store->id()), SafeAuditMetadata::empty(), $now);
 
             return $store;
         });

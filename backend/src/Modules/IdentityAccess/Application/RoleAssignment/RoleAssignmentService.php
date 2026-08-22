@@ -19,6 +19,10 @@ use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
 use Zandu\SharedKernel\Identity\RoleId;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -32,6 +36,7 @@ final readonly class RoleAssignmentService
         private Clock $clock,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function assign(
@@ -50,6 +55,8 @@ final readonly class RoleAssignmentService
             $now = $this->clock->now();
             $membership->assignRole(RoleAssignment::assign($roleId, $scope, $actorContext->actorId(), $now, $expiresAt), $actorContext->actorId(), $now);
             $this->memberships->save($membership);
+            $action = $this->systemRoles->isOrganizationOwner($roleId) ? SecurityAction::OwnerAssigned : SecurityAction::RoleAssigned;
+            $this->audit->recordSuccess($actorContext, $action, ResourceReference::for('organization_membership', $membership->id()), SafeAuditMetadata::fromArray(['roleId' => $roleId->toString()]), $now);
 
             return $membership;
         });
@@ -66,8 +73,11 @@ final readonly class RoleAssignmentService
             $this->systemRoles->getById($roleId);
             $membership = $this->memberships->get($actorContext->organizationId(), $membershipId);
             $this->lastOwner->protectAssignmentChange($membership, $roleId, $actorContext, true);
-            $membership->removeRole($roleId, $actorContext->actorId(), $this->clock->now());
+            $now = $this->clock->now();
+            $membership->removeRole($roleId, $actorContext->actorId(), $now);
             $this->memberships->save($membership);
+            $action = $this->systemRoles->isOrganizationOwner($roleId) ? SecurityAction::OwnerRemoved : SecurityAction::RoleRemoved;
+            $this->audit->recordSuccess($actorContext, $action, ResourceReference::for('organization_membership', $membership->id()), SafeAuditMetadata::fromArray(['roleId' => $roleId->toString()]), $now);
 
             return $membership;
         });

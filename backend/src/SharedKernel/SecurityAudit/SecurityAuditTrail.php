@@ -6,6 +6,7 @@ namespace Zandu\SharedKernel\SecurityAudit;
 
 use DateTimeImmutable;
 use Zandu\SharedKernel\Context\ActorContext;
+use Zandu\SharedKernel\Identity\OrganizationId;
 
 interface SecurityAuditTrail
 {
@@ -15,5 +16,6 @@ interface SecurityAuditTrail
         ResourceReference $target,
         SafeAuditMetadata $metadata,
         DateTimeImmutable $occurredAt,
+        ?OrganizationId $organizationId = null,
     ): void;
 }

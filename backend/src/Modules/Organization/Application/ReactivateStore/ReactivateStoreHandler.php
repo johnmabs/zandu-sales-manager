@@ -12,12 +12,16 @@ use Zandu\Modules\Organization\Application\TenantStoreLoader;
 use Zandu\Modules\Organization\Domain\Store\Store;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
 final readonly class ReactivateStoreHandler
 {
-    public function __construct(private TenantStoreLoader $loader, private StoreRepository $stores, private Clock $clock, private TenantTransaction $transaction, private AuthorizationService $authorization, private OperationalGuard $operationalGuard) {}
+    public function __construct(private TenantStoreLoader $loader, private StoreRepository $stores, private Clock $clock, private TenantTransaction $transaction, private AuthorizationService $authorization, private OperationalGuard $operationalGuard, private SecurityAuditTrail $audit) {}
 
     public function __invoke(ReactivateStore $command): Store
     {
@@ -25,8 +29,10 @@ final readonly class ReactivateStoreHandler
             $store = $this->loader->get($command->storeId, $command->actorContext);
             $this->authorization->authorize($command->actorContext, PermissionCode::StoreSuspend, ResourceScope::store($store->organizationId(), $store->id()));
             $this->operationalGuard->assertStore($command->actorContext, $store->id(), OperationalMode::Remediation);
-            $store->reactivate($command->actorContext->actorId(), $this->clock->now());
+            $now = $this->clock->now();
+            $store->reactivate($command->actorContext->actorId(), $now);
             $this->stores->save($store);
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::StoreReactivated, ResourceReference::for('store', $store->id()), SafeAuditMetadata::empty(), $now);
 
             return $store;
         });

@@ -14,6 +14,10 @@ use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 
 final readonly class MembershipLifecycleService
@@ -24,26 +28,28 @@ final readonly class MembershipLifecycleService
         private LastOrganizationOwner $lastOwner,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     /** @param callable(OrganizationMembership): void $transition */
-    public function execute(OrganizationMembershipId $membershipId, ActorContext $actorContext, PermissionCode $permission, callable $transition): OrganizationMembership
+    public function execute(OrganizationMembershipId $membershipId, ActorContext $actorContext, PermissionCode $permission, SecurityAction $action, callable $transition): OrganizationMembership
     {
         $organizationId = $actorContext->organizationId();
-        return $this->transaction->transactional($organizationId, function () use ($membershipId, $actorContext, $permission, $transition, $organizationId): OrganizationMembership {
+        return $this->transaction->transactional($organizationId, function () use ($membershipId, $actorContext, $permission, $action, $transition, $organizationId): OrganizationMembership {
             $this->authorization->authorize($actorContext, $permission, ResourceScope::organization($organizationId));
             $this->operationalGuard->assertTenant($actorContext, OperationalMode::Remediation);
             $membership = $this->memberships->get($organizationId, $membershipId);
             $transition($membership);
             $this->memberships->save($membership);
+            $this->audit->recordSuccess($actorContext, $action, ResourceReference::for('organization_membership', $membership->id()), SafeAuditMetadata::empty(), $membership->updatedAt());
             return $membership;
         });
     }
 
     /** @param callable(OrganizationMembership): void $transition */
-    public function deactivate(OrganizationMembershipId $membershipId, ActorContext $actorContext, PermissionCode $permission, callable $transition): OrganizationMembership
+    public function deactivate(OrganizationMembershipId $membershipId, ActorContext $actorContext, PermissionCode $permission, SecurityAction $action, callable $transition): OrganizationMembership
     {
-        return $this->execute($membershipId, $actorContext, $permission, function (OrganizationMembership $membership) use ($transition): void {
+        return $this->execute($membershipId, $actorContext, $permission, $action, function (OrganizationMembership $membership) use ($transition): void {
             $this->lastOwner->protectDeactivation($membership);
             $transition($membership);
         });

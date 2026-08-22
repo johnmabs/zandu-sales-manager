@@ -21,6 +21,10 @@ use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -37,6 +41,7 @@ final readonly class InviteOrganizationMemberHandler
         private LastOrganizationOwner $lastOwner,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(InviteOrganizationMember $command): CreatedOrganizationInvitation
@@ -77,6 +82,7 @@ final readonly class InviteOrganizationMemberHandler
                 $now,
             );
             $this->invitations->save($invitation);
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::MemberInvited, ResourceReference::for('organization_invitation', $invitation->id()), SafeAuditMetadata::fromArray(['assignmentCount' => count($command->intendedRoleAssignments)]), $now);
 
             return new CreatedOrganizationInvitation($invitation, $token->reveal());
         });

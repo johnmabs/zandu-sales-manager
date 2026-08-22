@@ -125,16 +125,16 @@ final class StoreLifecycleHandlerTest extends TestCase
         ));
         $loader = new TenantStoreLoader($this->stores);
 
-        $update = new UpdateStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $update = new UpdateStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
         $store = $update(new UpdateStore($store->id(), 'Centre-ville', 'Plateau', 'Africa/Brazzaville', 'fr_CG', $this->context()));
         self::assertSame('Centre-ville', $store->name()->value());
         self::assertSame('Plateau', $store->address()?->value());
 
-        $suspend = new SuspendStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $suspend = new SuspendStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
         $store = $suspend(new SuspendStore($store->id(), $this->context()));
         self::assertSame(StoreStatus::Suspended, $store->status());
 
-        $reactivate = new ReactivateStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard());
+        $reactivate = new ReactivateStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
         $store = $reactivate(new ReactivateStore($store->id(), $this->context()));
         self::assertSame(StoreStatus::Active, $store->status());
         self::assertSame(4, $store->version());
@@ -158,6 +158,7 @@ final class StoreLifecycleHandlerTest extends TestCase
             $this->transaction,
             new AllowAllAuthorizationService(),
             new AllowAllOperationalGuard(),
+            new RecordingSecurityAuditTrail(),
         );
     }
 

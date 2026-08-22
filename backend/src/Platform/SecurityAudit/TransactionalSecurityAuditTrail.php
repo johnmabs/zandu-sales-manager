@@ -7,6 +7,7 @@ namespace Zandu\Platform\SecurityAudit;
 use DateTimeImmutable;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\IdGenerator;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OutboxMessageId;
 use Zandu\SharedKernel\Identity\SecurityAuditEntryId;
 use Zandu\SharedKernel\Messaging\OutboxMessage;
@@ -34,11 +35,13 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
         ResourceReference $target,
         SafeAuditMetadata $metadata,
         DateTimeImmutable $occurredAt,
+        ?OrganizationId $organizationId = null,
     ): void {
+        $tenantId = $organizationId ?? $actorContext->organizationId();
         $entryId = SecurityAuditEntryId::generate($this->idGenerator);
         $this->audits->append(new SecurityAuditEntry(
             $entryId,
-            $actorContext->organizationId(),
+            $tenantId,
             ActorReference::fromContext($actorContext),
             $action,
             $target,
@@ -54,7 +57,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
         ));
         $this->outbox->append(new OutboxMessage(
             OutboxMessageId::generate($this->idGenerator),
-            $actorContext->organizationId(),
+            $tenantId,
             'security.audit.recorded.v1',
             [
                 'auditEntryId' => $entryId->toString(),
