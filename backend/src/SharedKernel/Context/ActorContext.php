@@ -9,6 +9,7 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
 use Zandu\SharedKernel\Identity\UserId;
+use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 
 final readonly class ActorContext
@@ -23,6 +24,7 @@ final readonly class ActorContext
         private ?SessionId $sessionId = null,
         private ?string $email = null,
         private ?int $authorizationVersion = null,
+        private ?CausationId $causationId = null,
     ) {}
 
     public function actorId(): ActorId
@@ -68,5 +70,10 @@ final readonly class ActorContext
     public function authorizationVersion(): ?int
     {
         return $this->authorizationVersion;
+    }
+
+    public function causationId(): ?CausationId
+    {
+        return $this->causationId;
     }
 }

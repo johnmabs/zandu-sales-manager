@@ -72,7 +72,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             $reason,
             $metadata,
             $actorContext->correlationId(),
-            null,
+            $actorContext->causationId(),
             $actorContext->sessionId(),
             null,
             null,
@@ -81,7 +81,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
         $this->outbox->append(new OutboxMessage(
             OutboxMessageId::generate($this->idGenerator),
             $tenantId,
-            'security.audit.recorded.v1',
+            $this->integrationEventType($action),
             [
                 'auditEntryId' => $entryId->toString(),
                 'action' => $action->value,
@@ -90,8 +90,31 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
                 'outcome' => $outcome->value,
             ],
             $actorContext->correlationId(),
-            null,
+            $actorContext->causationId(),
             $occurredAt,
         ));
+    }
+
+    private function integrationEventType(SecurityAction $action): string
+    {
+        return match ($action) {
+            SecurityAction::OrganizationCreated => 'organization.created.v1',
+            SecurityAction::OrganizationUpdated => 'organization.updated.v1',
+            SecurityAction::OrganizationSuspended => 'organization.suspended.v1',
+            SecurityAction::OrganizationReactivated => 'organization.reactivated.v1',
+            SecurityAction::StoreCreated => 'organization.store_created.v1',
+            SecurityAction::StoreUpdated => 'organization.store_updated.v1',
+            SecurityAction::StoreSuspended => 'organization.store_suspended.v1',
+            SecurityAction::StoreReactivated => 'organization.store_reactivated.v1',
+            SecurityAction::MemberInvited => 'identity_access.member_invited.v1',
+            SecurityAction::MemberSuspended => 'identity_access.member_suspended.v1',
+            SecurityAction::MemberReactivated => 'identity_access.member_reactivated.v1',
+            SecurityAction::MemberRevoked => 'identity_access.member_revoked.v1',
+            SecurityAction::RoleAssigned => 'identity_access.role_assigned.v1',
+            SecurityAction::RoleRemoved => 'identity_access.role_removed.v1',
+            SecurityAction::OwnerAssigned => 'identity_access.owner_assigned.v1',
+            SecurityAction::OwnerRemoved => 'identity_access.owner_removed.v1',
+            SecurityAction::AuthorizationDenied => 'security.authorization_denied.v1',
+        };
     }
 }

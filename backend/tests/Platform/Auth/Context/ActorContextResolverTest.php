@@ -16,6 +16,7 @@ use Zandu\Platform\Auth\EventSubscriber\JwtAuthenticatedSubscriber;
 use Zandu\Platform\Auth\Security\AuthenticatedUser;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Context\ActorType;
+use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
@@ -44,6 +45,10 @@ final class ActorContextResolverTest extends TestCase
             CorrelationIdRequestSubscriber::REQUEST_ATTRIBUTE,
             CorrelationId::fromString('0198c729-19da-75be-b508-1a4b36cf8d7a', $factory),
         );
+        $request->attributes->set(
+            CorrelationIdRequestSubscriber::CAUSATION_REQUEST_ATTRIBUTE,
+            CausationId::fromString('0198c729-19da-75be-b508-1a4b36cf8d7b', $factory),
+        );
         $requestStack = new RequestStack();
         $requestStack->push($request);
         $resolver = new ActorContextResolver(
@@ -60,6 +65,7 @@ final class ActorContextResolverTest extends TestCase
         self::assertSame('0198c729-51d8-7c2d-aadd-03429295336d', $context->userId()?->toString());
         self::assertSame('0198c729-8428-73d7-9e51-34cd5517c927', $context->sessionId()?->toString());
         self::assertSame('0198c729-19da-75be-b508-1a4b36cf8d7a', $context->correlationId()->toString());
+        self::assertSame('0198c729-19da-75be-b508-1a4b36cf8d7b', $context->causationId()?->toString());
         self::assertSame(ActorType::User, $context->actorType());
         self::assertSame('2026-08-20T20:00:00+00:00', $context->authenticatedAt()->format(DATE_ATOM));
     }

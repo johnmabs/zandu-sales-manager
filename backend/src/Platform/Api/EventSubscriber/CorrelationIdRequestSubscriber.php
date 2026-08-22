@@ -11,12 +11,15 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 
 final readonly class CorrelationIdRequestSubscriber implements EventSubscriberInterface
 {
     public const HEADER_NAME = 'X-Correlation-ID';
     public const REQUEST_ATTRIBUTE = '_zandu_correlation_id';
+    public const CAUSATION_HEADER_NAME = 'X-Causation-ID';
+    public const CAUSATION_REQUEST_ATTRIBUTE = '_zandu_causation_id';
 
     public function __construct(
         private UuidFactory $uuidFactory,
@@ -49,6 +52,18 @@ final readonly class CorrelationIdRequestSubscriber implements EventSubscriberIn
         }
 
         $request->attributes->set(self::REQUEST_ATTRIBUTE, $correlationId);
+
+        $causationHeader = $request->headers->get(self::CAUSATION_HEADER_NAME);
+        if (null !== $causationHeader) {
+            try {
+                $request->attributes->set(
+                    self::CAUSATION_REQUEST_ATTRIBUTE,
+                    CausationId::fromString($causationHeader, $this->uuidFactory),
+                );
+            } catch (InvalidArgumentException) {
+                // Invalid optional causation identifiers are intentionally ignored.
+            }
+        }
     }
 
     public function onKernelResponse(ResponseEvent $event): void

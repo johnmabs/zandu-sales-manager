@@ -19,6 +19,7 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
 use Zandu\SharedKernel\Identity\UserId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -37,6 +38,9 @@ final readonly class ActorContextResolver
         $user = $token?->getUser();
         $correlationId = $this->requestStack->getCurrentRequest()?->attributes->get(
             CorrelationIdRequestSubscriber::REQUEST_ATTRIBUTE,
+        );
+        $causationId = $this->requestStack->getCurrentRequest()?->attributes->get(
+            CorrelationIdRequestSubscriber::CAUSATION_REQUEST_ATTRIBUTE,
         );
 
         if (!$user instanceof AuthenticatedUser || !$correlationId instanceof CorrelationId) {
@@ -67,6 +71,7 @@ final readonly class ActorContextResolver
             $token->hasAttribute(JwtAuthenticatedSubscriber::AUTHORIZATION_VERSION_ATTRIBUTE)
                 ? (int) $token->getAttribute(JwtAuthenticatedSubscriber::AUTHORIZATION_VERSION_ATTRIBUTE)
                 : null,
+            $causationId instanceof CausationId ? $causationId : null,
         );
     }
 }

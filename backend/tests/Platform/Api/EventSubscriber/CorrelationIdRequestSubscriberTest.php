@@ -14,6 +14,7 @@ use Zandu\Platform\Api\EventSubscriber\CorrelationIdRequestSubscriber;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\Uuid;
+use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 
 final class CorrelationIdRequestSubscriberTest extends TestCase
@@ -45,6 +46,17 @@ final class CorrelationIdRequestSubscriberTest extends TestCase
             self::assertInstanceOf(CorrelationId::class, $correlationId);
             self::assertSame(self::GENERATED_ID, $correlationId->toString());
         }
+    }
+
+    public function testItPropagatesAValidOptionalCausationId(): void
+    {
+        $request = new Request(server: ['HTTP_X_CAUSATION_ID' => self::PROVIDED_ID]);
+
+        $this->subscriber()->onKernelRequest($this->requestEvent($request));
+
+        $causationId = $request->attributes->get(CorrelationIdRequestSubscriber::CAUSATION_REQUEST_ATTRIBUTE);
+        self::assertInstanceOf(CausationId::class, $causationId);
+        self::assertSame(self::PROVIDED_ID, $causationId->toString());
     }
 
     public function testItAddsTheCorrelationIdToTheResponse(): void

@@ -54,7 +54,7 @@ final class TransactionalSecurityAuditTrailTest extends TestCase
 
         self::assertCount(1, $audits->entries);
         self::assertCount(1, $outbox->messages);
-        self::assertSame('security.audit.recorded.v1', $outbox->messages[0]->type);
+        self::assertSame('organization.suspended.v1', $outbox->messages[0]->type);
         self::assertSame('ORGANIZATION_SUSPENDED', $outbox->messages[0]->payload['action']);
         self::assertSame($audits->entries[0]->id->toString(), $outbox->messages[0]->payload['auditEntryId']);
     }
