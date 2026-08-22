@@ -47,6 +47,9 @@ services:
     Zandu\SharedKernel\Tenancy\TenantTransaction:
         alias: Zandu\Platform\Persistence\DoctrineTenantTransaction
 
+    Zandu\SharedKernel\SecurityAudit\SecurityAuditRepository:
+        alias: Zandu\Platform\Persistence\DbalSecurityAuditRepository
+
     Zandu\Platform\Persistence\DoctrineTenantTransaction:
         arguments:
             $runtimeRole: "%env(TENANT_DATABASE_ROLE)%"
