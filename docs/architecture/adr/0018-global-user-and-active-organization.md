@@ -33,6 +33,12 @@ La sélection d'une organisation active doit :
 4. éventuellement mettre à jour `defaultOrganizationId` uniquement après cette
    validation.
 
+Tant que ce parcours de sélection et le renouvellement des tokens ne sont pas
+disponibles, la plateforme n'expose aucune création d'organisation
+supplémentaire : un owner crée son unique organisation lors de son inscription.
+Cette restriction est applicative et transitoire ; le modèle global `User` et
+les memberships tenant-owned restent compatibles avec le multi-organisation.
+
 Une invitation destinée à un email possédant déjà un compte est acceptée par un
 parcours authentifié. Le token prouve l'invitation, mais ne remplace jamais
 l'authentification de ce compte. Une personne sans compte utilise le parcours

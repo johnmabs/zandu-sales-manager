@@ -10,7 +10,6 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 
 #[ApiResource(operations: [
-    new Post(name: 'organization_create', uriTemplate: '/organizations', input: OrganizationInput::class, processor: OrganizationProcessor::class),
     new Get(name: 'organization_get', uriTemplate: '/organizations/{id}', provider: OrganizationProvider::class),
     new Patch(name: 'organization_update', uriTemplate: '/organizations/{id}', read: false, input: OrganizationInput::class, processor: OrganizationProcessor::class),
     new Post(name: 'organization_suspend', uriTemplate: '/organizations/{id}/suspend', read: false, input: false, processor: OrganizationProcessor::class),

@@ -129,12 +129,17 @@ Les opérations Organization suivantes sont actuellement exposées :
 
 | Méthode | Endpoint | Intention |
 | --- | --- | --- |
-| `POST` | `/api/organizations` | Créer une organisation et son owner initial |
 | `GET` | `/api/organizations/{id}` | Consulter l'organisation active du tenant |
 | `PATCH` | `/api/organizations/{id}` | Modifier son profil |
 | `POST` | `/api/organizations/{id}/suspend` | Suspendre explicitement l'organisation |
 | `POST` | `/api/organizations/{id}/reactivate` | Réactiver l'organisation |
 | `POST` | `/api/organizations/{id}/closure-request` | Demander sa fermeture |
+
+Pour l'instant, un owner ne peut créer qu'une seule organisation sur la
+plateforme. Celle-ci est créée exclusivement pendant l'inscription via
+`POST /api/auth/register`. Le modèle conserve les memberships par organisation
+afin de permettre le multi-organisation plus tard, lorsque le changement
+d'organisation active et le renouvellement des tokens seront disponibles.
 
 Exemple de modification :
 

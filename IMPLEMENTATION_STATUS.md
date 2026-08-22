@@ -3053,6 +3053,9 @@ sans définir comment une personne obtenait son compte.
 - hachage des mots de passe avec Argon2id ;
 - endpoint public `POST /api/auth/register` créant atomiquement le compte, la
   première organisation, le membership actif et le rôle owner initial ;
+- création d'organisation supplémentaire non exposée : un owner possède une
+  seule organisation tant que le changement d'organisation active n'est pas
+  disponible, sans fermer le modèle au multi-organisation futur ;
 - endpoint public `POST /api/auth/invitations/{token}/register` créant le
   compte d'une personne invitée puis acceptant l'invitation dans la même
   transaction tenant ;

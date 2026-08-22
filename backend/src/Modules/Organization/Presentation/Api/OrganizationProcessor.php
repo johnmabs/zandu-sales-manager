@@ -7,8 +7,6 @@ namespace Zandu\Modules\Organization\Presentation\Api;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use InvalidArgumentException;
-use Zandu\Modules\Organization\Application\CreateOrganization\CreateOrganization;
-use Zandu\Modules\Organization\Application\CreateOrganization\CreateOrganizationHandler;
 use Zandu\Modules\Organization\Application\ReactivateOrganization\ReactivateOrganization;
 use Zandu\Modules\Organization\Application\ReactivateOrganization\ReactivateOrganizationHandler;
 use Zandu\Modules\Organization\Application\RequestOrganizationClosure\RequestOrganizationClosure;
@@ -28,7 +26,6 @@ final readonly class OrganizationProcessor implements ProcessorInterface
         private ActorContextResolver $actors,
         private UuidFactory $uuidFactory,
         private OrganizationResourceFactory $resources,
-        private CreateOrganizationHandler $create,
         private UpdateOrganizationHandler $update,
         private SuspendOrganizationHandler $suspend,
         private ReactivateOrganizationHandler $reactivate,
@@ -39,13 +36,6 @@ final readonly class OrganizationProcessor implements ProcessorInterface
     {
         $actor = $this->actors->resolve();
         $name = $operation->getName();
-        if ('organization_create' === $name) {
-            $input = $this->input($data);
-            $organization = ($this->create)(new CreateOrganization($input->name, $input->countryCode, $input->defaultCurrency, $input->defaultTimeZone, $input->defaultLocale, $actor));
-
-            return $this->resources->fromAggregate($organization);
-        }
-
         $id = OrganizationId::fromString($this->id($uriVariables), $this->uuidFactory);
         if ('organization_update' === $name) {
             $input = $this->input($data);

@@ -1524,7 +1524,6 @@ Exposer les capacités du Lot 1 via l’API sans transformer les aggregates en C
 Endpoints candidats :
 
 ```text
-POST /organizations
 GET /organizations/{id}
 PATCH /organizations/{id}
 
@@ -1534,6 +1533,12 @@ POST /organizations/{id}/closure-request
 ```
 
 Les transitions métier restent des opérations explicites.
+
+La création est temporairement limitée à la première organisation via
+`POST /auth/register` : un owner ne peut posséder qu'une seule organisation
+tant que la sélection d'une organisation active et le renouvellement des tokens
+ne sont pas implémentés. Le cas d'usage `CreateOrganization` reste interne pour
+préserver l'évolution future vers le multi-organisation.
 
 ### Commit proposé
 
