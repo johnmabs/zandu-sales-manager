@@ -26,7 +26,7 @@ restart:
 test:
 	docker compose exec backend php bin/console doctrine:database:create --if-not-exists --env=test
 	docker compose exec backend php bin/console doctrine:migrations:migrate --no-interaction --env=test
-	docker compose exec backend php bin/phpunit
+	docker compose exec -e APP_ENV=test backend php bin/phpunit
 
 lint:
 	docker compose exec backend composer validate --no-check-publish
