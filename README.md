@@ -179,8 +179,22 @@ Les opérations Store suivantes sont également exposées :
 Toutes les lectures Store sont filtrées par l'organisation active et les
 opérations appliquent les permissions et scopes de magasins du token.
 
-Les APIs invitations, memberships et attributions de rôles constituent la
-suite de l'Epic 1.8 et ne sont pas encore exposées.
+Les opérations d'invitation suivantes sont exposées :
+
+| Méthode | Endpoint | Intention |
+| --- | --- | --- |
+| `POST` | `/api/member-invitations` | Inviter une personne avec ses rôles prévus |
+| `POST` | `/api/member-invitations/{id}/cancel` | Annuler une invitation en attente |
+| `POST` | `/api/invitations/{token}/accept` | Accepter l'invitation avec un compte authentifié |
+
+Le token brut n'est retourné qu'à la création afin d'être transmis à l'invité.
+Son hash n'apparaît jamais dans les ressources HTTP ou le contrat OpenAPI. Une
+personne sans compte utilise le parcours public
+`POST /api/auth/invitations/{token}/register` ; un compte existant doit être
+authentifié pour accepter l'invitation.
+
+Les APIs memberships et attributions de rôles constituent la suite de l'Epic
+1.8 et ne sont pas encore exposées.
 
 ## Commandes courantes
 

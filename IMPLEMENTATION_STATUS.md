@@ -3337,14 +3337,54 @@ Composer audit : aucune vulnérabilité connue
 feat(api): expose store administration endpoints
 ```
 
+### Étape 1.8.3 — Invitation API
+
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- création via `POST /api/member-invitations`, avec email, expiration
+  optionnelle et rôles prévus éventuellement limités à des magasins ;
+- annulation explicite via
+  `POST /api/member-invitations/{id}/cancel` ;
+- acceptation authentifiée d'un compte existant via
+  `POST /api/invitations/{token}/accept`, conformément à l'ADR-0018 ;
+- maintien du parcours public séparé
+  `POST /api/auth/invitations/{token}/register` pour une personne sans compte ;
+- token brut retourné uniquement dans la réponse de création et `tokenHash`
+  absent de toutes les vues, ressources et du contrat OpenAPI ;
+- réutilisation des permissions, scopes, gardes opérationnels, transactions et
+  validations d'email des handlers applicatifs existants ;
+- vues applicatives dédiées à l'invitation créée, annulée et acceptée, sans
+  dépendance Presentation vers Domain.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (260 tests, 746 assertions)
+Tests Invitation API et vues ciblés : OK (7 tests, 32 assertions)
+Routes Symfony Invitation : 3 opérations enregistrées
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(api): expose organization invitation endpoints
+```
+
 ## Prochaine étape
 
-### Étape 1.8.3 — Invitation API
+### Étape 1.8.4 — Membership API
 
 **Statut : À FAIRE**
 
-Exposer l'invitation, sa consultation et ses transitions via API Platform sans
-affaiblir le token à usage unique ni les contrôles d'autorisation existants.
+Exposer la collection tenant-scoped des memberships et leurs transitions de
+suspension, réactivation et révocation via API Platform.
 
 ---
 
