@@ -53,6 +53,7 @@ final readonly class CreateOrganizationHandler
                 $this->organizations->save($organization);
                 $this->initialOwner->provision($organizationId, $command->actorContext, $now);
                 $this->audit->recordSuccess($command->actorContext, SecurityAction::OrganizationCreated, ResourceReference::for('organization', $organizationId), SafeAuditMetadata::empty(), $now, $organizationId);
+                $this->audit->recordSuccess($command->actorContext, SecurityAction::OwnerAssigned, ResourceReference::for('organization', $organizationId), SafeAuditMetadata::fromArray(['initialOwner' => true]), $now, $organizationId);
 
                 return $organization;
             },
