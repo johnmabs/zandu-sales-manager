@@ -35,7 +35,7 @@ Epic 1.5   TERMINÉ   Roles, permissions & scopes
 Epic 1.5b  TERMINÉ   User accounts & onboarding
 Epic 1.5c  TERMINÉ   Authentication security hardening
 Epic 1.6   TERMINÉ   Authorization & operational guards
-Epic 1.7   À FAIRE   Security audit & event integration
+Epic 1.7   TERMINÉ   Security audit & event integration
 Epic 1.8   À FAIRE   Administration API
 Epic 1.9   À FAIRE   Integration & tenant isolation tests
 Gate Lot 1 À FAIRE   Administration opérationnelle complète
@@ -3193,14 +3193,69 @@ feat(access): enforce administration permissions
 style(access): normalize code formatting
 ```
 
+## Epic 1.7 — Security audit & event integration
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- modèle immuable `SecurityAuditEntry` avec acteur, cible, outcome, métadonnées
+  sûres, corrélation, causalité, session et contexte HTTP optionnel ;
+- catalogue complet des actions d'administration du Lot 1, y compris les
+  attributions et retraits d'owner ;
+- rejet préventif des clés de métadonnées susceptibles de contenir mots de
+  passe, tokens, secrets, cookies ou credentials ;
+- table `security.security_audit_entries` append-only pour le rôle runtime,
+  tenant-scoped et protégée par RLS ;
+- outbox applicative tenant-scoped `messaging.outbox_messages`, distincte du
+  prototype du Lot 0 et compatible avec la livraison at-least-once ;
+- audit obligatoire des créations, modifications, suspensions et
+  réactivations d'organisations et magasins, ainsi que des invitations,
+  memberships et attributions de rôles ;
+- refus d'autorisation persistés dans une transaction séparée après le rollback
+  métier, avec réponse HTTP `403` stable et sans donnée sensible ;
+- enveloppes d'intégration versionnées par action et propagation des
+  `correlationId` et `causationId` depuis les headers HTTP ;
+- atomicité métier + audit + outbox démontrée sur PostgreSQL pour le commit et
+  le rollback ;
+- `make test` force désormais `APP_ENV=test`, indépendamment de l'environnement
+  courant du conteneur développeur.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (251 tests, 706 assertions)
+Migrations développement et test : à jour (Version20260823090000)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(audit): add administration security audit model
+feat(audit): persist append-only security entries
+feat(outbox): add transactional audit envelope
+feat(audit): record successful administration actions
+feat(audit): record sensitive authorization denials
+test(audit): verify transactional audit atomicity
+feat(outbox): propagate causal administration events
+refactor(access): share authorization denial contract
+fix(test): enforce Symfony test environment
+feat(audit): record initial owner assignment
+```
+
 ## Prochaine étape
 
-### Epic 1.7 — Security audit & event integration
+### Epic 1.8 — Administration API
 
 **Statut : À FAIRE**
 
-Rendre les opérations d'administration traçables et auditables, intégrer les
-événements de sécurité et préparer leur consommation fiable.
+Exposer les commandes et lectures d'administration via API Platform, avec les
+contrats HTTP, erreurs et protections établis par les Epics précédents.
 
 ---
 
