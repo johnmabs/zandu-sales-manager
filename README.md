@@ -6,7 +6,8 @@ leurs droits d'accès.
 
 Le projet est actuellement en développement. Le **Lot 0 — Architecture
 exécutable** est terminé et le **Lot 1 — Administration opérationnelle** est en
-cours. L'état détaillé est disponible dans
+cours. Les Epics 1.1 à 1.7 sont terminés et l'Epic 1.8 — API
+d'administration est en cours. L'état détaillé est disponible dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## Stack technique
@@ -17,6 +18,8 @@ cours. L'état détaillé est disponible dans
 - authentification JWT ;
 - architecture en monolithe modulaire inspirée du DDD ;
 - isolation multi-tenant par transactions tenant-scoped et PostgreSQL RLS ;
+- autorisation par permissions atomiques et scopes organisation/magasins ;
+- audit de sécurité append-only et outbox transactionnelle ;
 - PHPUnit, PHPStan, PHP-CS-Fixer et Deptrac ;
 - Docker Compose pour l'environnement local.
 
@@ -106,7 +109,7 @@ curl --request POST http://localhost:8080/api/auth/login \
 Pour appeler un endpoint protégé :
 
 ```bash
-curl http://localhost:8080/api/example \
+curl http://localhost:8080/api/organizations/<organization-id> \
   --header 'Authorization: Bearer <token>'
 ```
 
@@ -120,6 +123,45 @@ curl --request POST \
   --data '{"password":"another-strong-password"}'
 ```
 
+## API d'administration disponible
+
+Les opérations Organization suivantes sont actuellement exposées :
+
+| Méthode | Endpoint | Intention |
+| --- | --- | --- |
+| `POST` | `/api/organizations` | Créer une organisation et son owner initial |
+| `GET` | `/api/organizations/{id}` | Consulter l'organisation active du tenant |
+| `PATCH` | `/api/organizations/{id}` | Modifier son profil |
+| `POST` | `/api/organizations/{id}/suspend` | Suspendre explicitement l'organisation |
+| `POST` | `/api/organizations/{id}/reactivate` | Réactiver l'organisation |
+| `POST` | `/api/organizations/{id}/closure-request` | Demander sa fermeture |
+
+Exemple de modification :
+
+```bash
+curl --request PATCH \
+  http://localhost:8080/api/organizations/<organization-id> \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/merge-patch+json' \
+  --header 'X-Correlation-ID: <uuid-v7>' \
+  --data '{
+    "name": "Ma société mise à jour",
+    "countryCode": "CG",
+    "defaultCurrency": "XAF",
+    "defaultTimeZone": "Africa/Brazzaville",
+    "defaultLocale": "fr_CG"
+  }'
+```
+
+Les ressources HTTP sont des DTO situés dans la couche
+`Modules/<Contexte>/Presentation/Api`. Les agrégats métier et les entités
+Doctrine ne sont jamais exposés directement. Les lectures restent
+tenant-scoped et les commandes sensibles appliquent autorisation, garde
+opérationnel, audit et outbox dans la transaction locale.
+
+Les APIs Store, invitations, memberships et attributions de rôles constituent
+la suite de l'Epic 1.8 et ne sont pas encore exposées.
+
 ## Commandes courantes
 
 | Commande | Rôle |
@@ -129,7 +171,7 @@ curl --request POST \
 | `make restart` | Redémarrer les services |
 | `make logs` | Suivre les logs Docker |
 | `make shell` | Ouvrir un shell dans le backend |
-| `make test` | Préparer la base de test et exécuter PHPUnit |
+| `make test` | Préparer la base et exécuter PHPUnit avec `APP_ENV=test` |
 | `make lint` | Valider Composer et le conteneur Symfony |
 | `make quality` | Exécuter PHP-CS-Fixer et PHPStan |
 | `make architecture` | Vérifier les couches et frontières des modules |
@@ -157,6 +199,7 @@ make security
 │   ├── public/              Point d'entrée HTTP
 │   ├── src/
 │   │   ├── Modules/         Bounded contexts métier
+│   │   │   └── */Presentation/Api  DTO et adaptateurs HTTP du contexte
 │   │   ├── Platform/        Adaptateurs techniques transverses
 │   │   └── SharedKernel/    Concepts partagés stables
 │   └── tests/               Tests unitaires, API et PostgreSQL
@@ -171,7 +214,9 @@ make security
 ```
 
 Les dépendances doivent respecter les frontières de couches et de bounded
-contexts contrôlées par les deux configurations Deptrac du backend.
+contexts contrôlées par les deux configurations Deptrac du backend. Un fitness
+test interdit également de placer une ressource API métier dans le dossier
+global générique `backend/src/ApiResource`.
 
 ## Documentation
 
