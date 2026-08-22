@@ -16,5 +16,8 @@ interface StoreRepository
 
     public function find(OrganizationId $organizationId, StoreId $storeId): ?Store;
 
+    /** @return list<Store> */
+    public function findAll(OrganizationId $organizationId): array;
+
     public function codeExists(OrganizationId $organizationId, StoreCode $code): bool;
 }

@@ -202,6 +202,15 @@ final class StoreUseCaseRepository implements StoreRepository
         $store = $this->stores[$storeId->toString()] ?? null;
         return $store instanceof Store && $store->organizationId()->equals($organizationId) ? $store : null;
     }
+
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_values(array_filter(
+            $this->stores,
+            static fn(Store $store): bool => $store->organizationId()->equals($organizationId),
+        ));
+    }
+
     public function codeExists(OrganizationId $organizationId, StoreCode $code): bool
     {
         foreach ($this->stores as $store) {

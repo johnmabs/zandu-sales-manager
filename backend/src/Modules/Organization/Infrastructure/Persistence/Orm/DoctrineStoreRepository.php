@@ -53,6 +53,16 @@ final readonly class DoctrineStoreRepository implements StoreRepository
         return $record instanceof StoreRecord ? $this->toAggregate($record) : null;
     }
 
+    public function findAll(OrganizationId $organizationId): array
+    {
+        $records = $this->entityManager->getRepository(StoreRecord::class)->findBy(
+            ['organizationId' => $organizationId->toString()],
+            ['name' => 'ASC', 'id' => 'ASC'],
+        );
+
+        return array_map($this->toAggregate(...), $records);
+    }
+
     public function codeExists(OrganizationId $organizationId, StoreCode $code): bool
     {
         return null !== $this->entityManager->getRepository(StoreRecord::class)->findOneBy([

@@ -49,4 +49,33 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertArrayHasKey('application/json', $requestBody->getContent());
         self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
     }
+
+    public function testStoreAdministrationOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $paths = $openApi->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/stores')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores')->getPost());
+        self::assertNotNull($paths->getPath('/api/stores/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/stores/{id}/suspend')->getPost());
+        self::assertNotNull($paths->getPath('/api/stores/{id}/reactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/stores/{id}/closure-request')->getPost());
+    }
+
+    public function testStorePatchAcceptsJsonAndMergePatchJson(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $requestBody = $openApi->getPaths()
+            ->getPath('/api/stores/{id}')
+            ->getPatch()
+            ?->getRequestBody();
+
+        self::assertNotNull($requestBody);
+        self::assertArrayHasKey('application/json', $requestBody->getContent());
+        self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
+    }
 }

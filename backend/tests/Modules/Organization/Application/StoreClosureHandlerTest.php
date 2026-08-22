@@ -176,6 +176,12 @@ final class ClosureTestStoreRepository implements StoreRepository
     {
         return $this->store->organizationId()->equals($organizationId) && $this->store->id()->equals($storeId) ? $this->store : null;
     }
+
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return $this->store->organizationId()->equals($organizationId) ? [$this->store] : [];
+    }
+
     public function codeExists(OrganizationId $organizationId, StoreCode $code): bool
     {
         return false;
