@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Application;
 
 use LogicException;
-use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationDenied;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Membership\MembershipStatus;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
+use Zandu\SharedKernel\Access\AuthorizationDenied;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Time\Clock;
 

@@ -7,7 +7,6 @@ namespace Zandu\Modules\IdentityAccess\Application\InviteOrganizationMember;
 use DateInterval;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\IdentityAccess\Application\Contract\InvitationTokenService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\LastOrganizationOwner;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleCode;
 use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
@@ -18,6 +17,7 @@ use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationReposit
 use Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 use Zandu\SharedKernel\Identity\StoreId;

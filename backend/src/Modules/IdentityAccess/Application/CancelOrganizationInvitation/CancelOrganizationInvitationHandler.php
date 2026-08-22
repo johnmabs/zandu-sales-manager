@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Application\CancelOrganizationInvitation;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitationRepository;
 use Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;

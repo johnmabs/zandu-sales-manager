@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Application\UpdateOrganization;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\TenantOrganizationLoader;
 use Zandu\Modules\Organization\Domain\CountryCode;
@@ -15,6 +14,7 @@ use Zandu\Modules\Organization\Domain\OrganizationName;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Money\Currency;
 use Zandu\SharedKernel\SecurityAudit\ResourceReference;
 use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;

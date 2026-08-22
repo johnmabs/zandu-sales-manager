@@ -6,8 +6,6 @@ namespace Zandu\Tests\Modules\IdentityAccess\Application;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
-use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationDenied;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Application\EffectiveAuthorizationService;
 use Zandu\Modules\IdentityAccess\Domain\Access\AccessScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
@@ -16,7 +14,9 @@ use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\SharedKernel\Access\AuthorizationDenied;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Context\ActorType;
 use Zandu\SharedKernel\Identity\ActorId;

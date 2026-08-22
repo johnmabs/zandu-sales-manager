@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Application\CreateStore;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Domain\Locale;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
@@ -17,6 +16,7 @@ use Zandu\Modules\Organization\Domain\Store\StoreName;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\Modules\Organization\Domain\TimeZone;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Money\Currency;

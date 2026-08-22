@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Application\MembershipLifecycle;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\LastOrganizationOwner;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembership;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
 use Zandu\SharedKernel\SecurityAudit\ResourceReference;

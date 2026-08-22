@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Application\CancelStoreClosure;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Modules\Organization\Application\TenantStoreLoader;
@@ -13,6 +12,7 @@ use Zandu\Modules\Organization\Domain\Store\Store;
 use Zandu\Modules\Organization\Domain\Store\StoreRepository;
 use Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 

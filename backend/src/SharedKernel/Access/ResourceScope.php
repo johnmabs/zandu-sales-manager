@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zandu\Modules\IdentityAccess\Application\Contract;
+namespace Zandu\SharedKernel\Access;
 
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\StoreId;

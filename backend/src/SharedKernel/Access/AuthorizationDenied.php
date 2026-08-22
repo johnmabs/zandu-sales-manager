@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Zandu\Modules\IdentityAccess\Application\Contract;
+namespace Zandu\SharedKernel\Access;
 
 use RuntimeException;
-use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Context\ActorContext;
 
 final class AuthorizationDenied extends RuntimeException

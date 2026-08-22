@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\IdentityAccess\Application\Contract;
 
+use Zandu\SharedKernel\Access\AuthorizationDenied;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 
 interface AuthorizationService

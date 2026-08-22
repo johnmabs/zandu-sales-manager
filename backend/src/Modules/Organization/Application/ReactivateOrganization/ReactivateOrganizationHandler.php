@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Application\ReactivateOrganization;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\IdentityAccess\Application\Contract\ResourceScope;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Modules\Organization\Application\TenantOrganizationLoader;
 use Zandu\Modules\Organization\Domain\Organization;
 use Zandu\Modules\Organization\Domain\OrganizationRepository;
 use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\SecurityAudit\ResourceReference;
 use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
 use Zandu\SharedKernel\SecurityAudit\SecurityAction;

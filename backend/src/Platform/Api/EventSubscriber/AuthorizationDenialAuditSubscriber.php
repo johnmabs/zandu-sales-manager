@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationDenied;
+use Zandu\SharedKernel\Access\AuthorizationDenied;
 use Zandu\SharedKernel\SecurityAudit\ResourceReference;
 use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
 use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
