@@ -3297,15 +3297,54 @@ fix(api): limit owners to initial organization
 refactor(api): enforce organization presentation boundaries
 ```
 
+### Étape 1.8.2 — Store API
+
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- collection tenant-scoped via `GET /api/stores`, ordonnée de manière stable ;
+- création et consultation via `POST /api/stores` et `GET /api/stores/{id}` ;
+- modification via `PATCH /api/stores/{id}`, avec des contrats d'entrée
+  distincts pour la création et la modification ;
+- transitions explicites de suspension, réactivation et demande de fermeture ;
+- réponse dédiée à la demande de fermeture exposant son statut et ses éventuels
+  blockers ;
+- contrôles `STORE_READ` tenant/store-scoped sur les lectures et réutilisation
+  des autorisations, gardes opérationnels et transactions des handlers sur les
+  commandes ;
+- vues applicatives `StoreView` et `StoreClosureView`, sans dépendance de la
+  présentation vers les aggregates Domain ;
+- documentation OpenAPI vérifiant les sept routes et les formats JSON du
+  `PATCH`.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (258 tests, 736 assertions)
+Tests Store API ciblés : OK (11 tests, 39 assertions)
+Routes Symfony Store : 7 opérations enregistrées
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(api): expose store administration endpoints
+```
+
 ## Prochaine étape
 
-### Étape 1.8.2 — Store API
+### Étape 1.8.3 — Invitation API
 
 **Statut : À FAIRE**
 
-Exposer les commandes et lectures d'administration des magasins via API
-Platform, en réutilisant les mêmes frontières de présentation que l'étape
-Organization.
+Exposer l'invitation, sa consultation et ses transitions via API Platform sans
+affaiblir le token à usage unique ni les contrôles d'autorisation existants.
 
 ---
 

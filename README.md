@@ -164,8 +164,23 @@ Doctrine ne sont jamais exposés directement. Les lectures restent
 tenant-scoped et les commandes sensibles appliquent autorisation, garde
 opérationnel, audit et outbox dans la transaction locale.
 
-Les APIs Store, invitations, memberships et attributions de rôles constituent
-la suite de l'Epic 1.8 et ne sont pas encore exposées.
+Les opérations Store suivantes sont également exposées :
+
+| Méthode | Endpoint | Intention |
+| --- | --- | --- |
+| `GET` | `/api/stores` | Lister les magasins du tenant actif |
+| `POST` | `/api/stores` | Créer un magasin |
+| `GET` | `/api/stores/{id}` | Consulter un magasin du tenant |
+| `PATCH` | `/api/stores/{id}` | Modifier un magasin |
+| `POST` | `/api/stores/{id}/suspend` | Suspendre un magasin |
+| `POST` | `/api/stores/{id}/reactivate` | Réactiver un magasin |
+| `POST` | `/api/stores/{id}/closure-request` | Demander la fermeture d'un magasin |
+
+Toutes les lectures Store sont filtrées par l'organisation active et les
+opérations appliquent les permissions et scopes de magasins du token.
+
+Les APIs invitations, memberships et attributions de rôles constituent la
+suite de l'Epic 1.8 et ne sont pas encore exposées.
 
 ## Commandes courantes
 
