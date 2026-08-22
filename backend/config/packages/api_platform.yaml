@@ -3,7 +3,8 @@ api_platform:
     version: 0.1.0
     mapping:
         paths:
-            - '%kernel.project_dir%/src/ApiResource'
+            - '%kernel.project_dir%/src/Modules/Organization/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/IdentityAccess/Presentation/Api'
     defaults:
         stateless: true
         cache_headers:

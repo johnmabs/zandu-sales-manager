@@ -21,4 +21,18 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertSame('Zandu Sales Manager API', $openApi->getInfo()->getTitle());
         self::assertSame('0.1.0', $openApi->getInfo()->getVersion());
     }
+
+    public function testOrganizationAdministrationOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $paths = $openApi->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/organizations')->getPost());
+        self::assertNotNull($paths->getPath('/api/organizations/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/organizations/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/organizations/{id}/suspend')->getPost());
+        self::assertNotNull($paths->getPath('/api/organizations/{id}/reactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/organizations/{id}/closure-request')->getPost());
+    }
 }
