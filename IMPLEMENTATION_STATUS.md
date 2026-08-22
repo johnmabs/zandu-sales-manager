@@ -3251,14 +3251,61 @@ fix(test): enforce Symfony test environment
 feat(audit): record initial owner assignment
 ```
 
+## Epic 1.8 — Administration API
+
+**Statut : EN COURS**
+
+### Étape 1.8.1 — Organization API
+
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- ressource de présentation API Platform localisée dans le module
+  `Organization`, sans aggregate exposé comme CRUD générique ;
+- lecture du profil de l'organisation active via
+  `GET /api/organizations/{id}` ;
+- modification du profil via `PATCH /api/organizations/{id}`, acceptant
+  `application/merge-patch+json` et `application/json` ;
+- transitions métier explicites de suspension, réactivation et demande de
+  fermeture ;
+- création d'une organisation supplémentaire volontairement non exposée : la
+  première organisation reste créée par `POST /api/auth/register` tant que le
+  multi-organisation complet n'est pas disponible ;
+- contrôle du tenant, autorisation applicative, audit de sécurité et outbox
+  conservés par les handlers existants ;
+- frontière de présentation corrigée avec `CurrentActorProvider` et
+  `OrganizationView`, sans dépendance directe vers Platform ou Domain.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (256 tests, 726 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(api): expose organization administration endpoints
+fix(api): accept json organization patches
+fix(api): limit owners to initial organization
+refactor(api): enforce organization presentation boundaries
+```
+
 ## Prochaine étape
 
-### Epic 1.8 — Administration API
+### Étape 1.8.2 — Store API
 
 **Statut : À FAIRE**
 
-Exposer les commandes et lectures d'administration via API Platform, avec les
-contrats HTTP, erreurs et protections établis par les Epics précédents.
+Exposer les commandes et lectures d'administration des magasins via API
+Platform, en réutilisant les mêmes frontières de présentation que l'étape
+Organization.
 
 ---
 
