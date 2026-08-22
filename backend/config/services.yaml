@@ -44,6 +44,9 @@ services:
     Zandu\SharedKernel\Time\Clock:
         alias: Zandu\Platform\Time\SystemClock
 
+    Zandu\SharedKernel\Context\CurrentActorProvider:
+        alias: Zandu\Platform\Auth\Context\ActorContextResolver
+
     Zandu\SharedKernel\Tenancy\TenantTransaction:
         alias: Zandu\Platform\Persistence\DoctrineTenantTransaction
 

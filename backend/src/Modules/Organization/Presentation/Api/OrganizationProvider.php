@@ -8,10 +8,11 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use InvalidArgumentException;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\OrganizationViewFactory;
 use Zandu\Modules\Organization\Application\TenantOrganizationLoader;
-use Zandu\Platform\Auth\Context\ActorContextResolver;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
+use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -20,11 +21,12 @@ use Zandu\SharedKernel\Tenancy\TenantTransaction;
 final readonly class OrganizationProvider implements ProviderInterface
 {
     public function __construct(
-        private ActorContextResolver $actors,
+        private CurrentActorProvider $actors,
         private UuidFactory $uuidFactory,
         private TenantTransaction $transaction,
         private TenantOrganizationLoader $organizations,
         private AuthorizationService $authorization,
+        private OrganizationViewFactory $views,
         private OrganizationResourceFactory $resources,
     ) {}
 
@@ -41,7 +43,7 @@ final readonly class OrganizationProvider implements ProviderInterface
             $organization = $this->organizations->get($id, $actor);
             $this->authorization->authorize($actor, PermissionCode::OrganizationRead, ResourceScope::organization($id));
 
-            return $this->resources->fromAggregate($organization);
+            return $this->resources->fromView($this->views->fromAggregate($organization));
         });
     }
 }

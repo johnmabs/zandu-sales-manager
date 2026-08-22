@@ -7,6 +7,7 @@ namespace Zandu\Modules\Organization\Presentation\Api;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use InvalidArgumentException;
+use Zandu\Modules\Organization\Application\OrganizationViewFactory;
 use Zandu\Modules\Organization\Application\ReactivateOrganization\ReactivateOrganization;
 use Zandu\Modules\Organization\Application\ReactivateOrganization\ReactivateOrganizationHandler;
 use Zandu\Modules\Organization\Application\RequestOrganizationClosure\RequestOrganizationClosure;
@@ -15,7 +16,7 @@ use Zandu\Modules\Organization\Application\SuspendOrganization\SuspendOrganizati
 use Zandu\Modules\Organization\Application\SuspendOrganization\SuspendOrganizationHandler;
 use Zandu\Modules\Organization\Application\UpdateOrganization\UpdateOrganization;
 use Zandu\Modules\Organization\Application\UpdateOrganization\UpdateOrganizationHandler;
-use Zandu\Platform\Auth\Context\ActorContextResolver;
+use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 
@@ -23,8 +24,9 @@ use Zandu\SharedKernel\Identity\UuidFactory;
 final readonly class OrganizationProcessor implements ProcessorInterface
 {
     public function __construct(
-        private ActorContextResolver $actors,
+        private CurrentActorProvider $actors,
         private UuidFactory $uuidFactory,
+        private OrganizationViewFactory $views,
         private OrganizationResourceFactory $resources,
         private UpdateOrganizationHandler $update,
         private SuspendOrganizationHandler $suspend,
@@ -41,7 +43,7 @@ final readonly class OrganizationProcessor implements ProcessorInterface
             $input = $this->input($data);
             $organization = ($this->update)(new UpdateOrganization($id, $input->name, $input->countryCode, $input->defaultCurrency, $input->defaultTimeZone, $input->defaultLocale, $actor));
 
-            return $this->resources->fromAggregate($organization);
+            return $this->resources->fromView($this->views->fromAggregate($organization));
         }
         $organization = match ($name) {
             'organization_suspend' => ($this->suspend)(new SuspendOrganization($id, $actor)),
@@ -50,7 +52,7 @@ final readonly class OrganizationProcessor implements ProcessorInterface
             default => throw new InvalidArgumentException('Unsupported organization operation.'),
         };
 
-        return $this->resources->fromAggregate($organization);
+        return $this->resources->fromView($this->views->fromAggregate($organization));
     }
 
     private function input(mixed $data): OrganizationInput

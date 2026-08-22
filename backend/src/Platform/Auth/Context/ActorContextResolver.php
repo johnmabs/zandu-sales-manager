@@ -14,6 +14,7 @@ use Zandu\Platform\Auth\EventSubscriber\JwtAuthenticatedSubscriber;
 use Zandu\Platform\Auth\Security\AuthenticatedUser;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Context\ActorType;
+use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
@@ -23,7 +24,7 @@ use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Time\Clock;
 
-final readonly class ActorContextResolver
+final readonly class ActorContextResolver implements CurrentActorProvider
 {
     public function __construct(
         private TokenStorageInterface $tokenStorage,
