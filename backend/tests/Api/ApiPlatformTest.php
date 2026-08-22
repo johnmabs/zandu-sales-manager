@@ -78,4 +78,16 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertArrayHasKey('application/json', $requestBody->getContent());
         self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
     }
+
+    public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $paths = $openApi->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/member-invitations')->getPost());
+        self::assertNotNull($paths->getPath('/api/member-invitations/{id}/cancel')->getPost());
+        self::assertNotNull($paths->getPath('/api/invitations/{token}/accept')->getPost());
+        self::assertStringNotContainsString('tokenHash', json_encode($openApi, JSON_THROW_ON_ERROR));
+    }
 }
