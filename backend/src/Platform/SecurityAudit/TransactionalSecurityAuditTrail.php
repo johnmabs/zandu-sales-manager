@@ -37,6 +37,29 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
         DateTimeImmutable $occurredAt,
         ?OrganizationId $organizationId = null,
     ): void {
+        $this->record($actorContext, $action, $target, AuditOutcome::Success, null, $metadata, $occurredAt, $organizationId);
+    }
+
+    public function recordDenied(
+        ActorContext $actorContext,
+        ResourceReference $target,
+        string $reason,
+        SafeAuditMetadata $metadata,
+        DateTimeImmutable $occurredAt,
+    ): void {
+        $this->record($actorContext, SecurityAction::AuthorizationDenied, $target, AuditOutcome::Denied, $reason, $metadata, $occurredAt, null);
+    }
+
+    private function record(
+        ActorContext $actorContext,
+        SecurityAction $action,
+        ResourceReference $target,
+        AuditOutcome $outcome,
+        ?string $reason,
+        SafeAuditMetadata $metadata,
+        DateTimeImmutable $occurredAt,
+        ?OrganizationId $organizationId,
+    ): void {
         $tenantId = $organizationId ?? $actorContext->organizationId();
         $entryId = SecurityAuditEntryId::generate($this->idGenerator);
         $this->audits->append(new SecurityAuditEntry(
@@ -45,8 +68,8 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             ActorReference::fromContext($actorContext),
             $action,
             $target,
-            AuditOutcome::Success,
-            null,
+            $outcome,
+            $reason,
             $metadata,
             $actorContext->correlationId(),
             null,
@@ -64,7 +87,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
                 'action' => $action->value,
                 'targetType' => $target->type,
                 'targetId' => $target->id,
-                'outcome' => AuditOutcome::Success->value,
+                'outcome' => $outcome->value,
             ],
             $actorContext->correlationId(),
             null,

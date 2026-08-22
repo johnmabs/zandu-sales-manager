@@ -29,13 +29,13 @@ final readonly class EffectiveAuthorizationService implements AuthorizationServi
         $claimedVersion = $actorContext->authorizationVersion();
         if (!$resourceScope->organizationId->equals($actorContext->organizationId())
             || null === $userId || null === $claimedVersion) {
-            throw AuthorizationDenied::forPermission($permission);
+            throw AuthorizationDenied::forPermission($actorContext, $permission, $resourceScope);
         }
 
         $membership = $this->memberships->findByUser($actorContext->organizationId(), $userId);
         if (null === $membership || MembershipStatus::Active !== $membership->status()
             || $membership->authorizationVersion() !== $claimedVersion) {
-            throw AuthorizationDenied::forPermission($permission);
+            throw AuthorizationDenied::forPermission($actorContext, $permission, $resourceScope);
         }
 
         $now = $this->clock->now();
@@ -51,6 +51,6 @@ final readonly class EffectiveAuthorizationService implements AuthorizationServi
             }
         }
 
-        throw AuthorizationDenied::forPermission($permission);
+        throw AuthorizationDenied::forPermission($actorContext, $permission, $resourceScope);
     }
 }

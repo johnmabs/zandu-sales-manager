@@ -21,4 +21,6 @@ final class RecordingSecurityAuditTrail implements SecurityAuditTrail
     {
         $this->records[] = [$action, $target];
     }
+
+    public function recordDenied(ActorContext $actorContext, ResourceReference $target, string $reason, SafeAuditMetadata $metadata, DateTimeImmutable $occurredAt): void {}
 }

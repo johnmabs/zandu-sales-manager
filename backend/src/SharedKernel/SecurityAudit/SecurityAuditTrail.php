@@ -18,4 +18,12 @@ interface SecurityAuditTrail
         DateTimeImmutable $occurredAt,
         ?OrganizationId $organizationId = null,
     ): void;
+
+    public function recordDenied(
+        ActorContext $actorContext,
+        ResourceReference $target,
+        string $reason,
+        SafeAuditMetadata $metadata,
+        DateTimeImmutable $occurredAt,
+    ): void;
 }
