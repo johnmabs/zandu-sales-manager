@@ -50,6 +50,12 @@ services:
     Zandu\SharedKernel\SecurityAudit\SecurityAuditRepository:
         alias: Zandu\Platform\Persistence\DbalSecurityAuditRepository
 
+    Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail:
+        alias: Zandu\Platform\SecurityAudit\TransactionalSecurityAuditTrail
+
+    Zandu\SharedKernel\Messaging\OutboxRepository:
+        alias: Zandu\Platform\Persistence\DbalOutboxRepository
+
     Zandu\Platform\Persistence\DoctrineTenantTransaction:
         arguments:
             $runtimeRole: "%env(TENANT_DATABASE_ROLE)%"
