@@ -35,4 +35,18 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/organizations/{id}/reactivate')->getPost());
         self::assertNotNull($paths->getPath('/api/organizations/{id}/closure-request')->getPost());
     }
+
+    public function testOrganizationPatchAcceptsJsonAndMergePatchJson(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $requestBody = $openApi->getPaths()
+            ->getPath('/api/organizations/{id}')
+            ->getPatch()
+            ?->getRequestBody();
+
+        self::assertNotNull($requestBody);
+        self::assertArrayHasKey('application/json', $requestBody->getContent());
+        self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
+    }
 }

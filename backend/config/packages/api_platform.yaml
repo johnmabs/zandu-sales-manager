@@ -5,6 +5,11 @@ api_platform:
         paths:
             - '%kernel.project_dir%/src/Modules/Organization/Presentation/Api'
             - '%kernel.project_dir%/src/Modules/IdentityAccess/Presentation/Api'
+    patch_formats:
+        json:
+            mime_types:
+                - 'application/merge-patch+json'
+                - 'application/json'
     defaults:
         stateless: true
         cache_headers:
