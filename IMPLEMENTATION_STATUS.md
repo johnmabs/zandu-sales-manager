@@ -3536,10 +3536,47 @@ test(organization): cover organization bootstrap workflow
 
 ### Étape 1.9.2 — Parcours multi-store
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- scénario HTTP/PostgreSQL avec deux organisations et deux magasins dans le
+  tenant A ;
+- rejet `409 CONFLICT` d'un code magasin dupliqué dans la même organisation ;
+- création réussie du même code dans une organisation différente ;
+- attribution du rôle `STORE_MANAGER` au scope `SELECTED_STORES` sur A1 et A2 ;
+- renouvellement du JWT après incrément de `authorizationVersion` ;
+- cycle de vie de A1 vérifié : suspension, réactivation puis demande de
+  fermeture `READY` sans blocker ;
+- collection du tenant A limitée à ses deux magasins malgré la présence du
+  magasin homonyme dans le tenant B.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (272 tests, 912 assertions)
+Parcours multi-store ciblé : OK (1 test, 47 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(store): cover multi-store administration workflow
+```
+
+## Prochaine étape
+
+### Étape 1.9.3 — Parcours invitation
+
 **Statut : À FAIRE**
 
-Valider les codes uniques par tenant, les scopes de magasins et le cycle de
-vie complet dans un scénario comportant plusieurs organisations et magasins.
+Valider l'invitation complète d'un membre, l'application des rôles prévus et
+les cas négatifs de token et d'isolation tenant.
 
 ---
 
