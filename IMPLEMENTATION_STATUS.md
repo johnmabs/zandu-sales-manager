@@ -3573,10 +3573,49 @@ test(store): cover multi-store administration workflow
 
 ### Étape 1.9.3 — Parcours invitation
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- parcours HTTP complet owner → invitation → acceptation par un compte
+  existant authentifié ;
+- membership créé `ACTIVE` dans l'organisation invitante et rôle `CASHIER`
+  appliqué au scope `ORGANIZATION` ;
+- token déjà utilisé, email authentifié incorrect, invitation annulée et
+  invitation expirée rejetés en `422 DOMAIN_RULE_VIOLATION` ;
+- annulation cross-tenant masquée en `404 NOT_FOUND` ;
+- désérialisation des `roleAssignments` imbriqués corrigée pour le payload JSON
+  réellement reçu par API Platform ;
+- variable URI publique `{token}` reliée explicitement à la metadata de la
+  ressource afin que l'endpoint d'acceptation atteigne son processor.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (273 tests, 977 assertions)
+Parcours invitation ciblé : OK (1 test, 65 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+fix(api): make invitation endpoints executable
+test(identity): cover invitation lifecycle
+```
+
+## Prochaine étape
+
+### Étape 1.9.4 — Parcours permissions et scopes
+
 **Statut : À FAIRE**
 
-Valider l'invitation complète d'un membre, l'application des rôles prévus et
-les cas négatifs de token et d'isolation tenant.
+Valider qu'un `STORE_MANAGER` limité au magasin A peut modifier A mais reçoit
+un refus serveur lorsqu'il tente de modifier le magasin B.
 
 ---
 
