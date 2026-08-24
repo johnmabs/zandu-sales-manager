@@ -22,6 +22,7 @@ use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 final class UserOnboardingApiTest extends WebTestCase
 {
     private const EMAIL = 'onboarding-api@example.com';
+    private const FOREIGN_ORGANIZATION_ID = '0198e100-147c-72d5-b75a-a936797ff9c8';
     private const INVITED_EMAIL = 'invited-onboarding-api@example.com';
     private const INVITED_ORGANIZATION_ID = '0198e101-147c-72d5-b75a-a936797ff9c8';
     private const INVITATION_ID = '0198e102-147c-72d5-b75a-a936797ff9c8';
@@ -49,7 +50,7 @@ final class UserOnboardingApiTest extends WebTestCase
         parent::tearDown();
     }
 
-    public function testVisitorCanRegisterThenLogin(): void
+    public function testVisitorCanBootstrapAnActiveOrganizationThenUseItAsItsOwner(): void
     {
         $client = self::createClient();
         $client->jsonRequest('POST', '/api/auth/register', [
@@ -68,6 +69,23 @@ final class UserOnboardingApiTest extends WebTestCase
         self::assertArrayHasKey('userId', $registration);
         self::assertArrayHasKey('organizationId', $registration);
 
+        $organization = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT name, status FROM organization.organizations WHERE id = ?',
+            [$registration['organizationId']],
+        );
+        self::assertSame(['name' => 'Onboarding API', 'status' => 'ACTIVE'], $organization);
+
+        $membership = $this->entityManager->getConnection()->fetchAssociative(
+            'SELECT status, role_assignments FROM identity_access.organization_memberships WHERE organization_id = ? AND user_id = ?',
+            [$registration['organizationId'], $registration['userId']],
+        );
+        self::assertIsArray($membership);
+        self::assertSame('ACTIVE', $membership['status']);
+        $assignments = json_decode((string) $membership['role_assignments'], true, flags: JSON_THROW_ON_ERROR);
+        self::assertCount(1, $assignments);
+        self::assertSame('00000000-0000-7000-8000-000000000001', $assignments[0]['roleId']);
+        self::assertSame('ORGANIZATION', $assignments[0]['scopeType']);
+
         $client->jsonRequest('POST', '/api/auth/login', [
             'email' => self::EMAIL,
             'password' => 'a-strong-password-for-zandu',
@@ -78,6 +96,23 @@ final class UserOnboardingApiTest extends WebTestCase
         self::assertIsArray($login);
         self::assertArrayHasKey('token', $login);
         self::assertArrayHasKey('refreshToken', $login);
+
+        $client->request('GET', '/api/organizations/' . $registration['organizationId'], server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $login['token'],
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('ACTIVE', json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['status']);
+
+        $this->entityManager->getConnection()->executeStatement(<<<'SQL'
+INSERT INTO organization.organizations (id,name,status,country_code,default_currency,default_time_zone,default_locale,created_by,created_at,updated_by,updated_at,version)
+VALUES (?,?,'ACTIVE','CG','XAF','Africa/Brazzaville','fr_CG',?,NOW(),?,NOW(),1)
+SQL, [self::FOREIGN_ORGANIZATION_ID, 'Foreign organization', $registration['userId'], $registration['userId']]);
+
+        $client->request('GET', '/api/organizations/' . self::FOREIGN_ORGANIZATION_ID, server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $login['token'],
+        ]);
+        self::assertResponseStatusCodeSame(404);
+        self::assertSame('NOT_FOUND', json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['code']);
     }
 
     public function testInvitedVisitorWithoutAccountCanRegisterThenLogin(): void
@@ -152,6 +187,7 @@ SQL, [self::INVITED_ORGANIZATION_ID, 'Invitation onboarding', self::INVITER_ID, 
         $connection->executeStatement('DELETE FROM identity_access.organization_invitations WHERE organization_id = ?', [self::INVITED_ORGANIZATION_ID]);
         $connection->executeStatement('DELETE FROM identity_access.users WHERE email = ?', [self::INVITED_EMAIL]);
         $connection->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::INVITED_ORGANIZATION_ID]);
+        $connection->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::FOREIGN_ORGANIZATION_ID]);
         $this->entityManager->clear();
     }
 }
