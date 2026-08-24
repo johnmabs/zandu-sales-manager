@@ -28,6 +28,7 @@ security:
             stateless: true
             provider: zandu_users
             jwt: ~
+            entry_point: Zandu\Platform\Auth\Security\JsonAuthenticationEntryPoint
 
     # Note: Only the *first* matching rule is applied
     access_control:

@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Domain\Store;
 
 use RuntimeException;
+use Zandu\SharedKernel\Error\ResourceNotFound;
 use Zandu\SharedKernel\Identity\StoreId;
 
-final class StoreNotFound extends RuntimeException
+final class StoreNotFound extends RuntimeException implements ResourceNotFound
 {
     public static function withId(StoreId $id): self
     {

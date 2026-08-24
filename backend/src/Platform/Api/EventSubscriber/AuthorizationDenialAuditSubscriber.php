@@ -52,7 +52,7 @@ final readonly class AuthorizationDenialAuditSubscriber implements EventSubscrib
         });
 
         $event->setResponse(new JsonResponse([
-            'code' => 'AUTHORIZATION_DENIED',
+            'code' => 'FORBIDDEN',
             'message' => 'You are not authorized to perform this operation.',
             'correlationId' => $context->correlationId()->toString(),
         ], Response::HTTP_FORBIDDEN));

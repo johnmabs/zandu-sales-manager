@@ -59,6 +59,7 @@ final class AuthorizationDenialAuditSubscriberTest extends TestCase
         self::assertSame(['permission' => 'ROLE_ASSIGN'], $audit->metadata?->toArray());
         self::assertSame('ORGANIZATION', $audit->target?->type);
         self::assertSame(Response::HTTP_FORBIDDEN, $event->getResponse()?->getStatusCode());
+        self::assertStringContainsString('"code":"FORBIDDEN"', (string) $event->getResponse()?->getContent());
         self::assertStringNotContainsString('token', (string) $event->getResponse()?->getContent());
     }
 }
