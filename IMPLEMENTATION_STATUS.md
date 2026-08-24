@@ -36,7 +36,7 @@ Epic 1.5b  TERMINÉ   User accounts & onboarding
 Epic 1.5c  TERMINÉ   Authentication security hardening
 Epic 1.6   TERMINÉ   Authorization & operational guards
 Epic 1.7   TERMINÉ   Security audit & event integration
-Epic 1.8   À FAIRE   Administration API
+Epic 1.8   TERMINÉ   Administration API
 Epic 1.9   À FAIRE   Integration & tenant isolation tests
 Gate Lot 1 À FAIRE   Administration opérationnelle complète
 ```
@@ -3253,7 +3253,7 @@ feat(audit): record initial owner assignment
 
 ## Epic 1.8 — Administration API
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 1.8.1 — Organization API
 
@@ -3416,8 +3416,6 @@ Composer audit : aucune vulnérabilité connue
 feat(api): expose membership administration endpoints
 ```
 
-## Prochaine étape
-
 ### Étape 1.8.5 — Role assignment API
 
 **Statut : TERMINÉE**
@@ -3460,14 +3458,49 @@ Composer audit : aucune vulnérabilité connue
 feat(api): expose role assignment endpoints
 ```
 
+### Étape 1.8.6 — OpenAPI et error contract
+
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- enveloppe JSON uniforme avec `code`, `message` et `correlationId` ;
+- codes stables `VALIDATION_ERROR`, `UNAUTHENTICATED`, `FORBIDDEN`,
+  `NOT_FOUND`, `CONFLICT` et `DOMAIN_RULE_VIOLATION` ;
+- point d'entrée de sécurité JSON pour les requêtes non authentifiées ;
+- exceptions not-found et conflict identifiées par des contrats du
+  SharedKernel, sans couplage Platform vers les modules métier ;
+- messages publics génériques empêchant la fuite des détails internes ;
+- stratégie `404 NOT_FOUND` conservée pour toute ressource cross-tenant ;
+- six réponses d'erreur documentées sur chaque opération d'administration
+  dans le contrat OpenAPI, avec schéma et exemple JSON.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (270 tests, 801 assertions)
+Tests contrat d'erreurs et OpenAPI ciblés : OK (17 tests, 84 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+```
+
+### Commits
+
+```text
+feat(api): normalize administration errors
+docs(api): document administration API contracts
+```
+
 ## Prochaine étape
 
-### Étape 1.8.6 — OpenAPI et error contract
+### Étape 1.9.1 — Parcours Organization complet
 
 **Statut : À FAIRE**
 
-Finaliser la documentation OpenAPI des payloads, réponses et erreurs HTTP
-stables de l'API d'administration.
+Valider sur PostgreSQL réel le parcours authentifié de création d'une
+organisation active et du membership owner associé, avec isolation tenant.
 
 ---
 

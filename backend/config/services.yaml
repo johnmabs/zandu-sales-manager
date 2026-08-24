@@ -75,6 +75,11 @@ services:
             $onboardingLimiter: '@limiter.onboarding'
             $tokenSessionLimiter: '@limiter.token_session'
 
+    Zandu\Platform\Api\OpenApi\AdministrationOpenApiFactory:
+        decorates: 'api_platform.openapi.factory'
+        arguments:
+            $decorated: '@Zandu\Platform\Api\OpenApi\AdministrationOpenApiFactory.inner'
+
     Zandu\Modules\Organization\Domain\OrganizationRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository
 

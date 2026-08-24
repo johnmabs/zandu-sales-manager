@@ -6,10 +6,8 @@ leurs droits d'accès.
 
 Le projet est actuellement en développement. Le **Lot 0 — Architecture
 exécutable** est terminé et le **Lot 1 — Administration opérationnelle** est en
-cours. Les Epics 1.1 à 1.7 ainsi que les étapes Organization, Store, Invitation,
-Membership et Role assignment de l'Epic 1.8 sont terminés. La finalisation du
-contrat OpenAPI et des erreurs constitue la prochaine étape. L'état détaillé est
-disponible dans
+cours. Les Epics 1.1 à 1.8 sont terminés ; la prochaine étape porte sur les
+tests d'intégration et d'isolation tenant de l'Epic 1.9. L'état détaillé est disponible dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## Stack technique
@@ -165,6 +163,32 @@ Les ressources HTTP sont des DTO situés dans la couche
 Doctrine ne sont jamais exposés directement. Les lectures restent
 tenant-scoped et les commandes sensibles appliquent autorisation, garde
 opérationnelle, audit et outbox dans la transaction locale.
+
+### Contrat d'erreurs
+
+Les opérations d'administration documentent et renvoient un format JSON stable :
+
+```json
+{
+  "code": "NOT_FOUND",
+  "message": "The requested resource was not found.",
+  "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+}
+```
+
+| HTTP | Code stable | Signification |
+| --- | --- | --- |
+| `400` | `VALIDATION_ERROR` | Payload ou paramètres invalides |
+| `401` | `UNAUTHENTICATED` | Authentification absente ou invalide |
+| `403` | `FORBIDDEN` | Permission insuffisante |
+| `404` | `NOT_FOUND` | Ressource inexistante ou appartenant à un autre tenant |
+| `409` | `CONFLICT` | Conflit avec l'état courant |
+| `422` | `DOMAIN_RULE_VIOLATION` | Invariant métier violé |
+
+Les messages internes des exceptions ne sont pas exposés. Une ressource d'un
+autre tenant produit volontairement `404 NOT_FOUND` afin de ne pas révéler son
+existence. Le détail interactif du contrat est disponible dans Swagger UI sur
+<http://localhost:8080/api/docs>.
 
 Les opérations Store suivantes sont également exposées :
 

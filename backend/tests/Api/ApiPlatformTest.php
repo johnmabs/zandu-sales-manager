@@ -114,4 +114,27 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/members/{id}/role-assignments')->getPost());
         self::assertNotNull($paths->getPath('/api/members/{id}/role-assignments/{assignmentId}')->getDelete());
     }
+
+    public function testAdministrationErrorContractIsDocumented(): void
+    {
+        self::bootKernel();
+        $operation = self::getContainer()->get(OpenApiFactoryInterface::class)([])
+            ->getPaths()->getPath('/api/members/{id}')->getGet();
+
+        self::assertNotNull($operation);
+        $contracts = [
+            400 => 'VALIDATION_ERROR',
+            401 => 'UNAUTHENTICATED',
+            403 => 'FORBIDDEN',
+            404 => 'NOT_FOUND',
+            409 => 'CONFLICT',
+            422 => 'DOMAIN_RULE_VIOLATION',
+        ];
+        foreach ($contracts as $status => $code) {
+            self::assertArrayHasKey((string) $status, $operation->getResponses());
+            $content = $operation->getResponses()[(string) $status]->getContent();
+            self::assertArrayHasKey('application/json', $content);
+            self::assertSame([$code], $content['application/json']->getSchema()['properties']['code']['enum']);
+        }
+    }
 }
