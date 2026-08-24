@@ -37,7 +37,7 @@ Epic 1.5c  TERMINÉ   Authentication security hardening
 Epic 1.6   TERMINÉ   Authorization & operational guards
 Epic 1.7   TERMINÉ   Security audit & event integration
 Epic 1.8   TERMINÉ   Administration API
-Epic 1.9   À FAIRE   Integration & tenant isolation tests
+Epic 1.9   EN COURS  Integration & tenant isolation tests
 Gate Lot 1 À FAIRE   Administration opérationnelle complète
 ```
 
@@ -3497,10 +3497,42 @@ docs(api): document administration API contracts
 
 ### Étape 1.9.1 — Parcours Organization complet
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- parcours HTTP réel depuis l'inscription publique jusqu'à l'authentification
+  JWT de l'owner ;
+- vérification en PostgreSQL de l'organisation créée avec le statut `ACTIVE` ;
+- vérification du membership owner `ACTIVE`, de son unique rôle système
+  `ORGANIZATION_OWNER` et de son scope `ORGANIZATION` ;
+- consultation authentifiée de l'organisation active via l'API ;
+- preuve qu'une organisation étrangère est masquée par `404 NOT_FOUND`.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (270 tests, 811 assertions)
+Parcours onboarding API ciblé : OK (3 tests, 26 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit
+
+```text
+test(organization): cover organization bootstrap workflow
+```
+
+## Prochaine étape
+
+### Étape 1.9.2 — Parcours multi-store
+
 **Statut : À FAIRE**
 
-Valider sur PostgreSQL réel le parcours authentifié de création d'une
-organisation active et du membership owner associé, avec isolation tenant.
+Valider les codes uniques par tenant, les scopes de magasins et le cycle de
+vie complet dans un scénario comportant plusieurs organisations et magasins.
 
 ---
 
