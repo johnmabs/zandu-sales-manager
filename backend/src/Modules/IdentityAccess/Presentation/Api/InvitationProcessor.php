@@ -41,7 +41,11 @@ final readonly class InvitationProcessor implements ProcessorInterface
         if ('member_invitation_create' === $name) {
             $input = $data instanceof CreateInvitationInput ? $data : throw new InvalidArgumentException('Invitation input is required.');
             $assignments = array_map(
-                fn(IntendedRoleAssignmentInput $assignment) => $this->assignments->create($assignment->roleCode, $assignment->storeIds),
+                function (mixed $assignment) {
+                    $input = $this->intendedAssignmentInput($assignment);
+
+                    return $this->assignments->create($input->roleCode, $input->storeIds);
+                },
                 $input->roleAssignments,
             );
             $created = ($this->invite)(new InviteOrganizationMember(
@@ -66,6 +70,29 @@ final readonly class InvitationProcessor implements ProcessorInterface
         }
 
         throw new InvalidArgumentException('Unsupported invitation operation.');
+    }
+
+    private function intendedAssignmentInput(mixed $assignment): IntendedRoleAssignmentInput
+    {
+        if ($assignment instanceof IntendedRoleAssignmentInput) {
+            return $assignment;
+        }
+        if (!is_array($assignment)) {
+            throw new InvalidArgumentException('Each intended role assignment must be an object.');
+        }
+
+        $roleCode = $assignment['roleCode'] ?? null;
+        $storeIds = $assignment['storeIds'] ?? [];
+        if (!is_string($roleCode) || !is_array($storeIds) || !array_is_list($storeIds)) {
+            throw new InvalidArgumentException('An intended role assignment requires a roleCode and a storeIds list.');
+        }
+        foreach ($storeIds as $storeId) {
+            if (!is_string($storeId)) {
+                throw new InvalidArgumentException('Every intended store identifier must be a string.');
+            }
+        }
+
+        return new IntendedRoleAssignmentInput($roleCode, $storeIds);
     }
 
     /** @param array<string,mixed> $uriVariables */
