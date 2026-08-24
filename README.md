@@ -6,9 +6,9 @@ leurs droits d'accès.
 
 Le projet est actuellement en développement. Le **Lot 0 — Architecture
 exécutable** est terminé et le **Lot 1 — Administration opérationnelle** est en
-cours. Les Epics 1.1 à 1.7 ainsi que les étapes Organization, Store et
-Invitation de l'Epic 1.8 sont terminés. L'API Membership constitue la prochaine
-étape. L'état détaillé est disponible dans
+cours. Les Epics 1.1 à 1.7 ainsi que les étapes Organization, Store, Invitation
+et Membership de l'Epic 1.8 sont terminés. La gestion des attributions de rôles
+constitue la prochaine étape. L'état détaillé est disponible dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## Stack technique
@@ -230,8 +230,22 @@ Si elle ne possède pas encore de compte, elle utilise plutôt le parcours
 public présenté dans la section « Premier parcours utilisateur ». L'email du
 compte authentifié ou créé doit toujours correspondre à celui de l'invitation.
 
-Les APIs memberships et attributions de rôles constituent la suite de l'Epic
-1.8 et ne sont pas encore exposées.
+Les opérations Membership suivantes sont exposées :
+
+| Méthode | Endpoint | Intention |
+| --- | --- | --- |
+| `GET` | `/api/members` | Lister les memberships du tenant actif |
+| `GET` | `/api/members/{id}` | Consulter un membership du tenant |
+| `POST` | `/api/members/{id}/suspend` | Suspendre temporairement un membre |
+| `POST` | `/api/members/{id}/reactivate` | Réactiver un membre suspendu |
+| `POST` | `/api/members/{id}/revoke` | Révoquer définitivement un membre |
+
+Les lectures exigent `MEMBER_READ`. Les transitions appliquent les permissions
+dédiées, protègent le dernier owner actif et incrémentent
+`authorizationVersion`, ce qui invalide les anciens tokens du membre modifié.
+
+L'API d'attribution et de retrait des rôles constitue la prochaine étape de
+l'Epic 1.8 et n'est pas encore exposée.
 
 ## Commandes courantes
 

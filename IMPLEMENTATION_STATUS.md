@@ -3377,14 +3377,53 @@ Composer audit : aucune vulnérabilité connue
 feat(api): expose organization invitation endpoints
 ```
 
+### Étape 1.8.4 — Membership API
+
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- collection tenant-scoped et ordonnée via `GET /api/members` ;
+- consultation d'un membership via `GET /api/members/{id}` ;
+- transitions explicites de suspension, réactivation et révocation ;
+- lecture protégée par `MEMBER_READ` et transitions réutilisant les permissions
+  `MEMBER_SUSPEND` et `MEMBER_REVOKE` des handlers existants ;
+- protection transactionnelle du dernier owner conservée lors de la suspension
+  et de la révocation ;
+- exposition de `authorizationVersion`, des rôles et de leurs scopes sans
+  exposer l'aggregate ni les données d'authentification du compte global ;
+- incrément de `authorizationVersion` par les transitions, rendant les anciens
+  tokens du membre immédiatement obsolètes ;
+- lecture de collection vérifiée sur PostgreSQL réel dans une transaction
+  tenant-scoped sous RLS.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (261 tests, 753 assertions)
+Tests Membership API ciblés : OK (8 tests, 39 assertions)
+Routes Symfony Membership : 5 opérations enregistrées
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(api): expose membership administration endpoints
+```
+
 ## Prochaine étape
 
-### Étape 1.8.4 — Membership API
+### Étape 1.8.5 — Role assignment API
 
 **Statut : À FAIRE**
 
-Exposer la collection tenant-scoped des memberships et leurs transitions de
-suspension, réactivation et révocation via API Platform.
+Exposer le catalogue des rôles ainsi que l'attribution et le retrait de rôles
+sur un membership via API Platform.
 
 ---
 
