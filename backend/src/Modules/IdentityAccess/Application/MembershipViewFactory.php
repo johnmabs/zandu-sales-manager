@@ -11,6 +11,7 @@ final readonly class MembershipViewFactory
     public function fromAggregate(OrganizationMembership $membership): MembershipView
     {
         $assignments = array_map(static fn($assignment): array => [
+            'assignmentId' => $assignment->roleId()->toString(),
             'roleId' => $assignment->roleId()->toString(),
             'scopeType' => $assignment->scope()->type()->value,
             'storeIds' => array_map(static fn($storeId): string => $storeId->toString(), $assignment->scope()->storeIds()),

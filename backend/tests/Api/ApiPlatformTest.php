@@ -103,4 +103,15 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/members/{id}/reactivate')->getPost());
         self::assertNotNull($paths->getPath('/api/members/{id}/revoke')->getPost());
     }
+
+    public function testRoleAssignmentOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $paths = $openApi->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/roles')->getGet());
+        self::assertNotNull($paths->getPath('/api/members/{id}/role-assignments')->getPost());
+        self::assertNotNull($paths->getPath('/api/members/{id}/role-assignments/{assignmentId}')->getDelete());
+    }
 }

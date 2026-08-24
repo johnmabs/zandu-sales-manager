@@ -6,7 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Application;
 
 final readonly class MembershipView
 {
-    /** @param non-empty-list<array{roleId: string, scopeType: string, storeIds: list<string>, assignedAt: string, expiresAt: ?string}> $roleAssignments */
+    /** @param non-empty-list<array{assignmentId: string, roleId: string, scopeType: string, storeIds: list<string>, assignedAt: string, expiresAt: ?string}> $roleAssignments */
     public function __construct(
         public string $id,
         public string $organizationId,
