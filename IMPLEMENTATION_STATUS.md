@@ -3420,10 +3420,54 @@ feat(api): expose membership administration endpoints
 
 ### Étape 1.8.5 — Role assignment API
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- catalogue protégé par `ROLE_READ` via `GET /api/roles`, exposant les quatre
+  rôles système, leurs permissions et leur statut ;
+- attribution via `POST /api/members/{id}/role-assignments`, avec scope
+  `ORGANIZATION` ou `SELECTED_STORES` et expiration optionnelle ;
+- retrait explicite via
+  `DELETE /api/members/{id}/role-assignments/{assignmentId}` ;
+- convention actuelle `assignmentId = roleId`, cohérente avec l'invariant d'une
+  seule attribution par rôle et par membership ;
+- validation des magasins sélectionnés dans l'organisation active et rejet des
+  payloads ambigus combinant scope organisation et magasins ;
+- permissions `ROLE_ASSIGN` et `ROLE_REVOKE`, audit de sécurité et garde
+  opérationnelle conservés par le service applicatif existant ;
+- protection spécifique des attributions owner et invariant du dernier owner
+  lors du retrait ;
+- retour du membership mis à jour avec nouvelle `authorizationVersion`, rendant
+  les anciens tokens immédiatement obsolètes.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (262 tests, 756 assertions)
+Tests OpenAPI ciblés : OK (8 tests, 34 assertions)
+Routes Symfony Role assignment : 3 opérations enregistrées
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(api): expose role assignment endpoints
+```
+
+## Prochaine étape
+
+### Étape 1.8.6 — OpenAPI et error contract
+
 **Statut : À FAIRE**
 
-Exposer le catalogue des rôles ainsi que l'attribution et le retrait de rôles
-sur un membership via API Platform.
+Finaliser la documentation OpenAPI des payloads, réponses et erreurs HTTP
+stables de l'API d'administration.
 
 ---
 

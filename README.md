@@ -6,9 +6,10 @@ leurs droits d'accès.
 
 Le projet est actuellement en développement. Le **Lot 0 — Architecture
 exécutable** est terminé et le **Lot 1 — Administration opérationnelle** est en
-cours. Les Epics 1.1 à 1.7 ainsi que les étapes Organization, Store, Invitation
-et Membership de l'Epic 1.8 sont terminés. La gestion des attributions de rôles
-constitue la prochaine étape. L'état détaillé est disponible dans
+cours. Les Epics 1.1 à 1.7 ainsi que les étapes Organization, Store, Invitation,
+Membership et Role assignment de l'Epic 1.8 sont terminés. La finalisation du
+contrat OpenAPI et des erreurs constitue la prochaine étape. L'état détaillé est
+disponible dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## Stack technique
@@ -244,8 +245,23 @@ Les lectures exigent `MEMBER_READ`. Les transitions appliquent les permissions
 dédiées, protègent le dernier owner actif et incrémentent
 `authorizationVersion`, ce qui invalide les anciens tokens du membre modifié.
 
-L'API d'attribution et de retrait des rôles constitue la prochaine étape de
-l'Epic 1.8 et n'est pas encore exposée.
+Les opérations de rôles suivantes sont exposées :
+
+| Méthode | Endpoint | Intention |
+| --- | --- | --- |
+| `GET` | `/api/roles` | Lister le catalogue des rôles disponibles |
+| `POST` | `/api/members/{id}/role-assignments` | Attribuer un rôle et son scope |
+| `DELETE` | `/api/members/{id}/role-assignments/{assignmentId}` | Retirer un rôle |
+
+L'attribution accepte un `scopeType` égal à `ORGANIZATION` ou
+`SELECTED_STORES`, une liste `storeIds` pour le second cas et une expiration
+optionnelle. Dans le modèle actuel, un membership ne peut avoir qu'une
+attribution par rôle : `assignmentId` correspond donc au `roleId` affiché dans
+la ressource Membership.
+
+L'attribution ou le retrait incrémente `authorizationVersion`. Les opérations
+sur le rôle `ORGANIZATION_OWNER` appliquent en plus les protections dédiées aux
+owners, notamment l'interdiction de retirer le dernier owner actif.
 
 ## Commandes courantes
 
