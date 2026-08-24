@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Zandu\Platform\Api\Exception\ApplicationErrorException;
 use Zandu\Platform\Auth\Refresh\InvalidRefreshToken;
@@ -34,11 +35,16 @@ final readonly class RefreshTokenController
 
         try {
             $rotated = $this->refreshSessions->rotate($token);
-        } catch (InvalidRefreshToken) {
+            $user = $this->userProvider->loadUserByIdentifier($rotated->userIdentifier());
+            if ($user->organizationId() !== $rotated->organizationId()->toString()
+                || $user->authorizationVersion() !== $rotated->authorizationVersion()
+            ) {
+                $this->refreshSessions->revoke($rotated->token());
+                throw new InvalidRefreshToken('The refresh session principal is no longer current.');
+            }
+        } catch (InvalidRefreshToken|AuthenticationException) {
             throw $this->invalidRefreshToken();
         }
-
-        $user = $this->userProvider->loadUserByIdentifier($rotated->userIdentifier());
 
         return new JsonResponse([
             'token' => $this->jwtTokens->createFromPayload($user, [

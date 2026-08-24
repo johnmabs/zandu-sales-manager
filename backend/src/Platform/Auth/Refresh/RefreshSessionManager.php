@@ -6,6 +6,7 @@ namespace Zandu\Platform\Auth\Refresh;
 
 use DateInterval;
 use Zandu\SharedKernel\Identity\IdGenerator;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 use Zandu\SharedKernel\Time\Clock;
@@ -22,7 +23,7 @@ final readonly class RefreshSessionManager
         private int $ttlSeconds,
     ) {}
 
-    public function issue(string $userIdentifier): IssuedRefreshToken
+    public function issue(string $userIdentifier, OrganizationId $organizationId, int $authorizationVersion): IssuedRefreshToken
     {
         $sessionId = SessionId::generate($this->idGenerator);
         $token = $this->token($sessionId);
@@ -31,12 +32,14 @@ final readonly class RefreshSessionManager
         $this->store->add(new RefreshSession(
             $sessionId,
             $userIdentifier,
+            $organizationId,
+            $authorizationVersion,
             $this->hash($token),
             [],
             $expiresAt,
         ));
 
-        return new IssuedRefreshToken($token, $sessionId, $userIdentifier, $expiresAt);
+        return new IssuedRefreshToken($token, $sessionId, $userIdentifier, $organizationId, $authorizationVersion, $expiresAt);
     }
 
     public function rotate(string $token): IssuedRefreshToken
@@ -58,6 +61,8 @@ final readonly class RefreshSessionManager
                 $replacement,
                 $sessionId,
                 $session->userIdentifier(),
+                $session->organizationId(),
+                $session->authorizationVersion(),
                 $session->expiresAt(),
             );
         });

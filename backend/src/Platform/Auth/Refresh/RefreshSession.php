@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Platform\Auth\Refresh;
 
 use DateTimeImmutable;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
 
 final class RefreshSession
@@ -15,6 +16,8 @@ final class RefreshSession
     public function __construct(
         private readonly SessionId $id,
         private readonly string $userIdentifier,
+        private readonly OrganizationId $organizationId,
+        private readonly int $authorizationVersion,
         private string $currentTokenHash,
         private array $usedTokenHashes,
         private readonly DateTimeImmutable $expiresAt,
@@ -59,6 +62,16 @@ final class RefreshSession
     public function currentTokenHash(): string
     {
         return $this->currentTokenHash;
+    }
+
+    public function organizationId(): OrganizationId
+    {
+        return $this->organizationId;
+    }
+
+    public function authorizationVersion(): int
+    {
+        return $this->authorizationVersion;
     }
 
     /**

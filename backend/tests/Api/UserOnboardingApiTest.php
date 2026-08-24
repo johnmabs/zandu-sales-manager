@@ -113,6 +113,17 @@ SQL, [self::FOREIGN_ORGANIZATION_ID, 'Foreign organization', $registration['user
         ]);
         self::assertResponseStatusCodeSame(404);
         self::assertSame('NOT_FOUND', json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['code']);
+
+        $this->entityManager->getConnection()->executeStatement(
+            'UPDATE identity_access.organization_memberships SET authorization_version = authorization_version + 1 WHERE organization_id = ? AND user_id = ?',
+            [$registration['organizationId'], $registration['userId']],
+        );
+        $client->jsonRequest('POST', '/api/auth/refresh', ['refreshToken' => $login['refreshToken']]);
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(
+            'INVALID_REFRESH_TOKEN',
+            json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR)['code'],
+        );
     }
 
     public function testInvitedVisitorWithoutAccountCanRegisterThenLogin(): void

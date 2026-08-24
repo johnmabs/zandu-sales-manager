@@ -11,6 +11,7 @@ use Throwable;
 use Zandu\Platform\Auth\Refresh\RefreshSession;
 use Zandu\Platform\Auth\Refresh\RefreshSessionStore;
 use Zandu\Platform\Auth\Refresh\RefreshTokenReuse;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 
@@ -42,6 +43,8 @@ final readonly class DbalRefreshSessionStore implements RefreshSessionStore
         return new RefreshSession(
             SessionId::fromString((string) $row['id'], $this->uuidFactory),
             (string) $row['user_identifier'],
+            OrganizationId::fromString((string) $row['organization_id'], $this->uuidFactory),
+            (int) $row['authorization_version'],
             (string) $row['current_token_hash'],
             is_array($usedTokenHashes) ? array_values($usedTokenHashes) : [],
             new DateTimeImmutable((string) $row['expires_at']),
@@ -87,6 +90,8 @@ final readonly class DbalRefreshSessionStore implements RefreshSessionStore
         return [
             'id' => $session->id()->toString(),
             'user_identifier' => $session->userIdentifier(),
+            'organization_id' => $session->organizationId()->toString(),
+            'authorization_version' => $session->authorizationVersion(),
             'current_token_hash' => $session->currentTokenHash(),
             'used_token_hashes' => json_encode($session->usedTokenHashes(), JSON_THROW_ON_ERROR),
             'expires_at' => $session->expiresAt(),
@@ -101,6 +106,8 @@ final readonly class DbalRefreshSessionStore implements RefreshSessionStore
     {
         return [
             'id' => Types::GUID,
+            'organization_id' => Types::GUID,
+            'authorization_version' => Types::INTEGER,
             'used_token_hashes' => Types::JSON,
             'expires_at' => Types::DATETIMETZ_IMMUTABLE,
             'revoked_at' => Types::DATETIMETZ_IMMUTABLE,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Platform\Auth\Refresh;
 
 use DateTimeImmutable;
+use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SessionId;
 
 final readonly class IssuedRefreshToken
@@ -13,6 +14,8 @@ final readonly class IssuedRefreshToken
         private string $token,
         private SessionId $sessionId,
         private string $userIdentifier,
+        private OrganizationId $organizationId,
+        private int $authorizationVersion,
         private DateTimeImmutable $expiresAt,
     ) {}
 
@@ -34,5 +37,15 @@ final readonly class IssuedRefreshToken
     public function expiresAt(): DateTimeImmutable
     {
         return $this->expiresAt;
+    }
+
+    public function organizationId(): OrganizationId
+    {
+        return $this->organizationId;
+    }
+
+    public function authorizationVersion(): int
+    {
+        return $this->authorizationVersion;
     }
 }
