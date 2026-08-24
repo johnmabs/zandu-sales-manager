@@ -6,8 +6,9 @@ leurs droits d'accès.
 
 Le projet est actuellement en développement. Le **Lot 0 — Architecture
 exécutable** est terminé et le **Lot 1 — Administration opérationnelle** est en
-cours. Les Epics 1.1 à 1.7 sont terminés et l'Epic 1.8 — API
-d'administration est en cours. L'état détaillé est disponible dans
+cours. Les Epics 1.1 à 1.7 ainsi que les étapes Organization, Store et
+Invitation de l'Epic 1.8 sont terminés. L'API Membership constitue la prochaine
+étape. L'état détaillé est disponible dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## Stack technique
@@ -162,7 +163,7 @@ Les ressources HTTP sont des DTO situés dans la couche
 `Modules/<Contexte>/Presentation/Api`. Les agrégats métier et les entités
 Doctrine ne sont jamais exposés directement. Les lectures restent
 tenant-scoped et les commandes sensibles appliquent autorisation, garde
-opérationnel, audit et outbox dans la transaction locale.
+opérationnelle, audit et outbox dans la transaction locale.
 
 Les opérations Store suivantes sont également exposées :
 
@@ -192,6 +193,42 @@ Son hash n'apparaît jamais dans les ressources HTTP ou le contrat OpenAPI. Une
 personne sans compte utilise le parcours public
 `POST /api/auth/invitations/{token}/register` ; un compte existant doit être
 authentifié pour accepter l'invitation.
+
+Exemple d'invitation d'un caissier limité à un magasin :
+
+```bash
+curl --request POST http://localhost:8080/api/member-invitations \
+  --header 'Authorization: Bearer <access-token>' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Correlation-ID: <uuid-v7>' \
+  --data '{
+    "email": "cashier@example.com",
+    "roleAssignments": [
+      {
+        "roleCode": "CASHIER",
+        "storeIds": ["<store-id>"]
+      }
+    ]
+  }'
+```
+
+La réponse contient les informations non sensibles de l'invitation et un champ
+`token`. Il doit être transmis à la personne invitée et ne peut pas être relu
+ultérieurement depuis l'API.
+
+Si cette personne possède déjà un compte, elle se connecte avec son email puis
+accepte l'invitation avec son propre access token :
+
+```bash
+curl --request POST \
+  http://localhost:8080/api/invitations/<invitation-token>/accept \
+  --header 'Authorization: Bearer <invitee-access-token>' \
+  --header 'X-Correlation-ID: <uuid-v7>'
+```
+
+Si elle ne possède pas encore de compte, elle utilise plutôt le parcours
+public présenté dans la section « Premier parcours utilisateur ». L'email du
+compte authentifié ou créé doit toujours correspondre à celui de l'invitation.
 
 Les APIs memberships et attributions de rôles constituent la suite de l'Epic
 1.8 et ne sont pas encore exposées.
