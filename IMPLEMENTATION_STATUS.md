@@ -3473,13 +3473,19 @@ feat(api): expose role assignment endpoints
 - messages publics génériques empêchant la fuite des détails internes ;
 - stratégie `404 NOT_FOUND` conservée pour toute ressource cross-tenant ;
 - six réponses d'erreur documentées sur chaque opération d'administration
-  dans le contrat OpenAPI, avec schéma et exemple JSON.
+  dans le contrat OpenAPI, avec schéma et exemple JSON ;
+- test HTTP bout en bout des six couples statut/code, des JWT absent et
+  invalide, des violations Validator et des JSON malformés ;
+- erreurs JWT Lexik, validation API Platform et désérialisation JSON ramenées
+  dans la même enveloppe publique ;
+- `application/json` désormais négocié explicitement en entrée et en sortie.
 
 ### Validations
 
 ```text
-PHPUnit Docker : OK (270 tests, 801 assertions)
-Tests contrat d'erreurs et OpenAPI ciblés : OK (17 tests, 84 assertions)
+PHPUnit Docker : OK (271 tests, 865 assertions)
+Test HTTP exhaustif du contrat d'erreurs : OK (1 test, 54 assertions)
+Tests contrat d'erreurs et OpenAPI ciblés : OK
 PHP-CS-Fixer : 0 fichier à corriger
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
@@ -3491,6 +3497,7 @@ Conteneur Symfony et Composer : valides
 ```text
 feat(api): normalize administration errors
 docs(api): document administration API contracts
+fix(api): enforce administration HTTP error contract
 ```
 
 ## Prochaine étape
