@@ -3643,10 +3643,45 @@ test(identity): cover invitation lifecycle
 
 ### Étape 1.9.4 — Parcours permissions et scopes
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- parcours HTTP complet owner → création de deux magasins → invitation d'un
+  nouvel utilisateur comme `STORE_MANAGER` limité au magasin A ;
+- inscription de l'invité sans compte puis authentification dans le tenant de
+  l'organisation invitante ;
+- modification du magasin A autorisée avec le scope `SELECTED_STORES` ;
+- modification du magasin B refusée avec `403 FORBIDDEN` ;
+- absence de mutation du magasin B vérifiée directement dans PostgreSQL après
+  le refus.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (275 tests, 1007 assertions)
+Parcours permissions/scopes ciblé : OK (1 test, 24 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(access): verify store scoped authorization
+```
+
+## Prochaine étape
+
+### Étape 1.9.5 — Invariant du dernier owner
+
 **Statut : À FAIRE**
 
-Valider qu'un `STORE_MANAGER` limité au magasin A peut modifier A mais reçoit
-un refus serveur lorsqu'il tente de modifier le magasin B.
+Vérifier qu'un owner unique ne peut être ni suspendu ni révoqué, puis que la
+révocation redevient possible lorsqu'un second owner actif existe.
 
 ---
 
