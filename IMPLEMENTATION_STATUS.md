@@ -3500,6 +3500,37 @@ docs(api): document administration API contracts
 fix(api): enforce administration HTTP error contract
 ```
 
+## Durcissement transversal — Refresh sessions tenant-scoped
+
+**Statut : TERMINÉ**
+
+### Réalisé
+
+- chaque refresh session persistée porte désormais l'organisation active et la
+  version d'autorisation du membership au moment du login ;
+- la rotation conserve cette portée tenant et cette version ;
+- le renouvellement compare la session au principal actuellement chargé et
+  refuse de délivrer un access token si l'organisation ou la version
+  d'autorisation a changé ;
+- la session de remplacement est révoquée en cas de principal obsolète ;
+- la migration `Version20260824223000` rattache les sessions existantes à leur
+  membership actif, supprime celles qui ne peuvent pas être rattachées et rend
+  les nouvelles colonnes obligatoires ;
+- un test d'intégration valide la persistance DBAL et le parcours HTTP prouve
+  qu'une modification de `authorizationVersion` invalide le refresh token.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (274 tests, 983 assertions)
+Tests ciblés refresh/onboarding/persistance : OK (9 tests, 54 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
 ## Prochaine étape
 
 ### Étape 1.9.1 — Parcours Organization complet

@@ -113,6 +113,20 @@ curl http://localhost:8080/api/organizations/<organization-id> \
   --header 'Authorization: Bearer <token>'
 ```
 
+Renouveler l'access token avec le refresh token reçu au login :
+
+```bash
+curl --request POST http://localhost:8080/api/auth/refresh \
+  --header 'Content-Type: application/json' \
+  --data '{"refreshToken":"<refresh-token>"}'
+```
+
+Une refresh session est liée à l'organisation active et à la version
+d'autorisation du membership au moment du login. Une suspension, une
+révocation ou une modification des rôles rend donc cette session inutilisable :
+l'utilisateur doit se reconnecter pour obtenir des jetons cohérents avec ses
+droits courants.
+
 Une personne invitée qui ne possède pas encore de compte peut s'inscrire avec
 le token reçu :
 
