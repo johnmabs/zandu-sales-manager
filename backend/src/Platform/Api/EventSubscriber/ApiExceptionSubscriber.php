@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Platform\Api\EventSubscriber;
 
+use ApiPlatform\Validator\Exception\ValidationException;
 use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Serializer\Exception\NotEncodableValueException;
 use Zandu\SharedKernel\Error\ResourceConflict;
 use Zandu\SharedKernel\Error\ResourceNotFound;
 use Zandu\SharedKernel\Messaging\CorrelationId;
@@ -66,6 +68,11 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
                 'code' => 'CONFLICT',
                 'message' => 'The request conflicts with the current resource state.',
                 'status' => Response::HTTP_CONFLICT,
+            ],
+            $exception instanceof ValidationException, $exception instanceof NotEncodableValueException => [
+                'code' => 'VALIDATION_ERROR',
+                'message' => 'The request is invalid.',
+                'status' => Response::HTTP_BAD_REQUEST,
             ],
             $exception instanceof InvalidArgumentException => [
                 'code' => 'VALIDATION_ERROR',

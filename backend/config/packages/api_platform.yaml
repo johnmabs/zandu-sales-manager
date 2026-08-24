@@ -5,6 +5,9 @@ api_platform:
         paths:
             - '%kernel.project_dir%/src/Modules/Organization/Presentation/Api'
             - '%kernel.project_dir%/src/Modules/IdentityAccess/Presentation/Api'
+    formats:
+        jsonld: ['application/ld+json']
+        json: ['application/json']
     patch_formats:
         json:
             mime_types:
