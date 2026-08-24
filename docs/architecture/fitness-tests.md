@@ -74,13 +74,16 @@ SharedKernel
 Platform
 ```
 
-ainsi que les dépendances vers certains frameworks :
+ainsi que les dépendances vers certains frameworks et bibliothèques
+techniques :
 
 ```text
 Symfony
 Doctrine
 ApiPlatform
 BrickMath
+OpenTelemetry
+Monolog
 ```
 
 ---
@@ -190,7 +193,11 @@ Dépendances actuellement autorisées :
 Platform
 ├── SharedKernel
 ├── Symfony
-└── BrickMath
+├── ApiPlatform
+├── BrickMath
+├── Doctrine
+├── OpenTelemetry
+└── Monolog
 ```
 
 `Platform` héberge les mécanismes techniques transversaux explicitement prévus par l’architecture.
@@ -202,6 +209,16 @@ l’ADR-0007. Elle n’autorise pas `SharedKernel` à dépendre de Symfony.
 La dépendance vers BrickMath permet l’implémentation de l’arithmétique décimale
 exacte prévue par l’ADR-0008. Les contrats `Decimal`, `DecimalFactory` et
 `RoundingMode` restent indépendants de `Brick\Math`.
+
+API Platform et Doctrine sont utilisés par les mécanismes techniques
+transversaux de l'API et de la persistence, notamment la décoration OpenAPI,
+les transactions tenant et les repositories DBAL partagés. Ils ne deviennent
+pas pour autant accessibles à `Domain`, `Application`, `Presentation` ou
+`SharedKernel` au-delà des règles propres à chaque couche.
+
+OpenTelemetry et Monolog sont limités à `Platform` pour l'instrumentation et
+l'enrichissement des logs prévus par l'ADR-0013. Les modules métier ne doivent
+pas dépendre directement de ces fournisseurs techniques.
 
 ---
 
@@ -219,6 +236,9 @@ Les bounded contexts actuellement matérialisés sont :
 Sales
 Inventory
 CashManagement
+IdentityAccess
+Organization
+Operations
 ```
 
 Chaque module peut exposer une API applicative publique dans :
@@ -233,7 +253,12 @@ Les layers publics correspondants sont actuellement :
 SalesContract
 InventoryContract
 CashManagementContract
+IdentityAccessContract
+OrganizationContract
 ```
+
+`Operations` ne possède actuellement aucun `Application/Contract` public et
+n'autorise aucune dépendance vers un autre bounded context.
 
 ---
 
@@ -347,6 +372,30 @@ Inventory
 CashManagement
 ```
 
+`IdentityAccess` peut utiliser :
+
+```text
+IdentityAccessContract
+OrganizationContract
+```
+
+`Organization` peut utiliser :
+
+```text
+IdentityAccessContract
+OrganizationContract
+```
+
+L'accès d'un module à son propre layer `Contract` permet à son implémentation
+interne d'implémenter et de consommer ses contrats publics sans réintégrer ces
+classes dans le layer interne. Les dépendances réciproques entre
+`IdentityAccess` et `Organization` restent limitées à ces surfaces
+applicatives ; aucun des deux modules ne peut accéder directement au Domain, à
+l'Infrastructure ou à la Presentation de l'autre.
+
+`Inventory`, `CashManagement`, `Operations` et tous les layers `Contract`
+n'autorisent actuellement aucune dépendance inter-module supplémentaire.
+
 L’ajout d’une nouvelle dépendance inter-module doit être explicite dans `deptrac.modules.php`.
 
 Il est interdit d’ajouter une autorisation globale uniquement pour faire disparaître une violation Deptrac.
@@ -422,8 +471,12 @@ La chaîne de validation comprend notamment :
 build
 → install
 → lint
+→ quality
 → tests
 → architecture
+→ security
+→ staging
+→ backup/restore
 ```
 
 Une violation Deptrac doit provoquer l’échec de la CI.
@@ -490,11 +543,10 @@ Domain → Doctrine      configuré
 Domain → ApiPlatform   configuré
 ```
 
-Doctrine et API Platform ne sont pas encore présents dans le projet.
-
-Leur interdiction depuis `Domain` sera de nouveau vérifiée avec une dépendance réelle lors de leur introduction.
-
-Ils ne doivent pas être installés prématurément uniquement pour tester cette règle.
+Doctrine et API Platform sont désormais présents et utilisés dans
+`Infrastructure`, `Presentation` et `Platform` conformément au ruleset. Leur
+interdiction depuis `Domain` reste active dans `deptrac.layers.php` et toute
+dépendance future dans ce sens doit faire échouer l'analyse.
 
 ---
 
