@@ -90,4 +90,17 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/invitations/{token}/accept')->getPost());
         self::assertStringNotContainsString('tokenHash', json_encode($openApi, JSON_THROW_ON_ERROR));
     }
+
+    public function testMembershipAdministrationOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $paths = $openApi->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/members')->getGet());
+        self::assertNotNull($paths->getPath('/api/members/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/members/{id}/suspend')->getPost());
+        self::assertNotNull($paths->getPath('/api/members/{id}/reactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/members/{id}/revoke')->getPost());
+    }
 }

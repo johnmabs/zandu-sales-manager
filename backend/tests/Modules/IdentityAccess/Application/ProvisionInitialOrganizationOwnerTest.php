@@ -80,6 +80,10 @@ final class InitialOwnerMembershipRepository implements OrganizationMembershipRe
     {
         return $this->membership;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return null !== $this->membership ? [$this->membership] : [];
+    }
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return null === $this->membership ? 0 : 1;

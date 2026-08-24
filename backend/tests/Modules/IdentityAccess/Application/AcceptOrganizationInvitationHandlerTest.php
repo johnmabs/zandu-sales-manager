@@ -168,6 +168,10 @@ final class AcceptanceMembershipRepository implements OrganizationMembershipRepo
     {
         return $this->membership;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return null !== $this->membership ? [$this->membership] : [];
+    }
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return 0;

@@ -81,6 +81,10 @@ final readonly class GuardMembershipRepository implements OrganizationMembership
     {
         return $this->membership;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return [$this->membership];
+    }
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return 0;

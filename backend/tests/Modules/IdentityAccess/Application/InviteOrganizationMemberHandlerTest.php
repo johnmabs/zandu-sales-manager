@@ -203,6 +203,10 @@ final class EmptyMembershipRepository implements OrganizationMembershipRepositor
     {
         return null;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return [];
+    }
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return 0;

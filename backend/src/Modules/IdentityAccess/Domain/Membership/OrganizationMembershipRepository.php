@@ -14,5 +14,7 @@ interface OrganizationMembershipRepository
     public function save(OrganizationMembership $membership): void;
     public function get(OrganizationId $organizationId, OrganizationMembershipId $membershipId): OrganizationMembership;
     public function findByUser(OrganizationId $organizationId, UserId $userId): ?OrganizationMembership;
+    /** @return list<OrganizationMembership> */
+    public function findAll(OrganizationId $organizationId): array;
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int;
 }

@@ -47,6 +47,14 @@ final readonly class DoctrineOrganizationMembershipRepository implements Organiz
             ? $this->toAggregate($record)
             : throw OrganizationMembershipNotFound::withId($membershipId);
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        $records = $this->entityManager->getRepository(OrganizationMembershipRecord::class)->findBy(
+            ['organizationId' => $organizationId->toString()],
+            ['createdAt' => 'ASC', 'id' => 'ASC'],
+        );
+        return array_map($this->toAggregate(...), $records);
+    }
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         $rows = $this->entityManager->getConnection()->fetchFirstColumn(

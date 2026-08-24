@@ -92,11 +92,17 @@ final class RegisterOrganizationOwnerWorkflowTest extends KernelTestCase
             $result->organizationId,
             fn() => $memberships->findByUser($result->organizationId, UserId::fromString(self::USER_ID, $factory)),
         );
+        $membershipList = $transaction->transactional(
+            $result->organizationId,
+            fn() => $memberships->findAll($result->organizationId),
+        );
 
         self::assertSame(self::USER_ID, $result->userId->toString());
         self::assertSame('owner@example.com', $users->findByEmail(UserEmail::fromString('owner@example.com'))?->email()->value());
         self::assertSame('Zandu Onboarding', $transaction->transactional($result->organizationId, fn() => $organizations->get($result->organizationId))->name()->value());
         self::assertTrue($membership?->hasRoleId($catalog->organizationOwnerRoleId()));
+        self::assertCount(1, $membershipList);
+        self::assertSame(self::MEMBERSHIP_ID, $membershipList[0]->id()->toString());
         $authenticatedUser = self::getContainer()->get(PersistentUserProvider::class)->loadUserByIdentifier('owner@example.com');
         self::assertInstanceOf(AuthenticatedUser::class, $authenticatedUser);
         self::assertSame(self::ORGANIZATION_ID, $authenticatedUser->organizationId());

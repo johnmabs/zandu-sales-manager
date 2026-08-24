@@ -158,6 +158,10 @@ final readonly class AuthorizationMembershipRepository implements OrganizationMe
     {
         return $this->membership;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return [$this->membership];
+    }
     public function countActiveWithRoleForUpdate(OrganizationId $organizationId, RoleId $roleId): int
     {
         return 0;
