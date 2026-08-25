@@ -8,6 +8,7 @@ use Zandu\Modules\Catalog\Application\TenantCategoryLoader;
 use Zandu\Modules\Catalog\Domain\Category\Category;
 use Zandu\Modules\Catalog\Domain\Category\CategoryRepository;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -21,6 +22,7 @@ final readonly class MoveCategoryHandler
         private Clock $clock,
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(MoveCategory $command): Category
@@ -29,6 +31,7 @@ final readonly class MoveCategoryHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): Category {
             $this->authorization->authorize($command->actorContext, PermissionCode::CategoryUpdate, ResourceScope::organization($organizationId));
+            $this->operationalGuard->assertTenant($command->actorContext);
             $this->categories->lockHierarchy($organizationId);
             $category = $this->loader->get($command->categoryId, $command->actorContext);
             $parent = null !== $command->parentCategoryId

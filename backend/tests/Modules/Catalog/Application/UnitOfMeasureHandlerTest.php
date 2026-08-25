@@ -23,6 +23,8 @@ use Zandu\Modules\Catalog\Domain\UnitOfMeasureNotFound;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureStatus;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
@@ -32,6 +34,7 @@ use Zandu\SharedKernel\Decimal\RoundingMode;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Messaging\CorrelationId;
@@ -50,6 +53,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
     private RecordingTenantTransaction $transaction;
     private FrozenClock $clock;
     private RecordingUnitOfMeasureAuthorization $authorization;
+    private RecordingUnitOfMeasureOperationalGuard $operationalGuard;
 
     protected function setUp(): void
     {
@@ -57,6 +61,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
         $this->transaction = new RecordingTenantTransaction();
         $this->clock = new FrozenClock(new DateTimeImmutable('2026-08-25T17:00:00Z'));
         $this->authorization = new RecordingUnitOfMeasureAuthorization();
+        $this->operationalGuard = new RecordingUnitOfMeasureOperationalGuard();
     }
 
     public function testItCreatesANormalizedTenantOwnedUnit(): void
@@ -77,6 +82,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
         self::assertSame(UnitOfMeasureStatus::Active, $unit->status());
         self::assertSame(self::ORGANIZATION_ID, $this->transaction->lastOrganizationId?->toString());
         self::assertSame([PermissionCode::UnitOfMeasureCreate], $this->authorization->permissions);
+        self::assertSame(1, $this->operationalGuard->tenantChecks);
     }
 
     public function testItRejectsADuplicateCodeWithinTheTenant(): void
@@ -114,7 +120,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
         ));
         $loader = new TenantUnitOfMeasureLoader($this->units);
 
-        $update = new UpdateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization);
+        $update = new UpdateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $unit = $update(new UpdateUnitOfMeasure(
             $unit->id(),
             'Kilogramme net',
@@ -127,11 +133,11 @@ final class UnitOfMeasureHandlerTest extends TestCase
         self::assertSame(4, $unit->precision()->value());
         self::assertSame(RoundingMode::HalfEven, $unit->roundingMode());
 
-        $deactivate = new DeactivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization);
+        $deactivate = new DeactivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $unit = $deactivate(new DeactivateUnitOfMeasure($unit->id(), $this->context()));
         self::assertSame(UnitOfMeasureStatus::Inactive, $unit->status());
 
-        $activate = new ActivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization);
+        $activate = new ActivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $unit = $activate(new ActivateUnitOfMeasure($unit->id(), $this->context()));
         self::assertSame(UnitOfMeasureStatus::Active, $unit->status());
         self::assertSame(4, $unit->version());
@@ -141,6 +147,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
             PermissionCode::UnitOfMeasureDeactivate,
             PermissionCode::UnitOfMeasureActivate,
         ], $this->authorization->permissions);
+        self::assertSame(4, $this->operationalGuard->tenantChecks);
     }
 
     public function testLoaderCannotCrossTheActorTenantBoundary(): void
@@ -159,6 +166,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
             $this->clock,
             $this->transaction,
             $this->authorization,
+            $this->operationalGuard,
         );
 
         $this->expectException(UnitOfMeasureNotFound::class);
@@ -181,6 +189,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
             $this->clock,
             $this->transaction,
             $this->authorization,
+            $this->operationalGuard,
         );
     }
 
@@ -208,6 +217,22 @@ final class RecordingUnitOfMeasureAuthorization implements AuthorizationService
         $this->permissions[] = $permission;
         TestCase::assertTrue($actorContext->organizationId()->equals($resourceScope->organizationId));
         TestCase::assertNull($resourceScope->storeId);
+    }
+}
+
+final class RecordingUnitOfMeasureOperationalGuard implements OperationalGuard
+{
+    public int $tenantChecks = 0;
+
+    public function assertTenant(ActorContext $actorContext, OperationalMode $mode = OperationalMode::Standard): void
+    {
+        ++$this->tenantChecks;
+        TestCase::assertSame(OperationalMode::Standard, $mode);
+    }
+
+    public function assertStore(ActorContext $actorContext, StoreId $storeId, OperationalMode $mode = OperationalMode::Standard): void
+    {
+        TestCase::fail('UnitOfMeasure mutations must not use a store-scoped operational guard.');
     }
 }
 

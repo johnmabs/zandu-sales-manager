@@ -26,6 +26,8 @@ use Zandu\Modules\Catalog\Domain\Category\CategoryNotFound;
 use Zandu\Modules\Catalog\Domain\Category\CategoryRepository;
 use Zandu\Modules\Catalog\Domain\Category\CategoryStatus;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Organization\Application\Contract\OperationalMode;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
@@ -35,6 +37,7 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\CategoryId;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -54,6 +57,7 @@ final class CategoryHandlerTest extends TestCase
     private CategoryTenantTransaction $transaction;
     private FrozenClock $clock;
     private RecordingCategoryAuthorization $authorization;
+    private RecordingCategoryOperationalGuard $operationalGuard;
 
     protected function setUp(): void
     {
@@ -61,6 +65,7 @@ final class CategoryHandlerTest extends TestCase
         $this->transaction = new CategoryTenantTransaction();
         $this->clock = new FrozenClock(new DateTimeImmutable('2026-08-25T23:00:00Z'));
         $this->authorization = new RecordingCategoryAuthorization();
+        $this->operationalGuard = new RecordingCategoryOperationalGuard();
     }
 
     public function testItCreatesARootCategoryInsideALockedTenantTransaction(): void
@@ -73,6 +78,7 @@ final class CategoryHandlerTest extends TestCase
         self::assertSame(self::ORGANIZATION_ID, $this->transaction->lastOrganizationId?->toString());
         self::assertSame(self::ORGANIZATION_ID, $this->categories->lastLockedOrganizationId?->toString());
         self::assertSame([PermissionCode::CategoryCreate], $this->authorization->permissions);
+        self::assertSame(1, $this->operationalGuard->tenantChecks);
     }
 
     public function testItCreatesAChildOnlyFromAParentVisibleToTheTenant(): void
@@ -92,19 +98,19 @@ final class CategoryHandlerTest extends TestCase
         $category = $this->createHandler()(new CreateCategory('Boissons', null, $this->context()));
         $loader = new TenantCategoryLoader($this->categories);
 
-        $update = new UpdateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
+        $update = new UpdateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $category = $update(new UpdateCategory($category->id(), 'Boissons fraîches', $this->context()));
         self::assertSame('Boissons fraîches', $category->name()->value());
 
-        $deactivate = new DeactivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
+        $deactivate = new DeactivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $category = $deactivate(new DeactivateCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Inactive, $category->status());
 
-        $activate = new ActivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
+        $activate = new ActivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $category = $activate(new ActivateCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Active, $category->status());
 
-        $archive = new ArchiveCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
+        $archive = new ArchiveCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
         $category = $archive(new ArchiveCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Archived, $category->status());
         self::assertSame(5, $category->version());
@@ -115,6 +121,7 @@ final class CategoryHandlerTest extends TestCase
             PermissionCode::CategoryUpdate,
             PermissionCode::CategoryArchive,
         ], $this->authorization->permissions);
+        self::assertSame(5, $this->operationalGuard->tenantChecks);
     }
 
     public function testMoveToRootAndToAnotherBranchAreExplicit(): void
@@ -131,6 +138,7 @@ final class CategoryHandlerTest extends TestCase
             $this->clock,
             $this->transaction,
             $this->authorization,
+            $this->operationalGuard,
         );
 
         $category = $handler(new MoveCategory($category->id(), null, $this->context()));
@@ -140,6 +148,7 @@ final class CategoryHandlerTest extends TestCase
         self::assertTrue($category->parentCategoryId()?->equals($secondParent->id()));
         self::assertSame(self::ORGANIZATION_ID, $this->categories->lastLockedOrganizationId?->toString());
         self::assertSame([PermissionCode::CategoryUpdate, PermissionCode::CategoryUpdate], $this->authorization->permissions);
+        self::assertSame(2, $this->operationalGuard->tenantChecks);
     }
 
     public function testMoveRejectsDescendantAsParentUsingRepositoryAncestors(): void
@@ -154,6 +163,7 @@ final class CategoryHandlerTest extends TestCase
             $this->clock,
             $this->transaction,
             $this->authorization,
+            $this->operationalGuard,
         );
 
         $this->expectException(LogicException::class);
@@ -176,6 +186,7 @@ final class CategoryHandlerTest extends TestCase
             $this->clock,
             $this->transaction,
             $this->authorization,
+            $this->operationalGuard,
         );
     }
 
@@ -230,6 +241,22 @@ final class RecordingCategoryAuthorization implements AuthorizationService
         $this->permissions[] = $permission;
         TestCase::assertTrue($actorContext->organizationId()->equals($resourceScope->organizationId));
         TestCase::assertNull($resourceScope->storeId);
+    }
+}
+
+final class RecordingCategoryOperationalGuard implements OperationalGuard
+{
+    public int $tenantChecks = 0;
+
+    public function assertTenant(ActorContext $actorContext, OperationalMode $mode = OperationalMode::Standard): void
+    {
+        ++$this->tenantChecks;
+        TestCase::assertSame(OperationalMode::Standard, $mode);
+    }
+
+    public function assertStore(ActorContext $actorContext, StoreId $storeId, OperationalMode $mode = OperationalMode::Standard): void
+    {
+        TestCase::fail('Category mutations must not use a store-scoped operational guard.');
     }
 }
 

@@ -10,6 +10,7 @@ use Zandu\Modules\Catalog\Domain\UnitOfMeasureCode;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureCodeAlreadyExists;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Identity\IdGenerator;
@@ -25,6 +26,7 @@ final readonly class CreateUnitOfMeasureHandler
         private Clock $clock,
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(CreateUnitOfMeasure $command): UnitOfMeasure
@@ -33,6 +35,7 @@ final readonly class CreateUnitOfMeasureHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): UnitOfMeasure {
             $this->authorization->authorize($command->actorContext, PermissionCode::UnitOfMeasureCreate, ResourceScope::organization($organizationId));
+            $this->operationalGuard->assertTenant($command->actorContext);
             $code = UnitOfMeasureCode::fromString($command->code);
             if ($this->units->codeExists($organizationId, $code)) {
                 throw UnitOfMeasureCodeAlreadyExists::withCode($code);

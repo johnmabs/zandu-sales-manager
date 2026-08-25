@@ -8,6 +8,7 @@ use Zandu\Modules\Catalog\Domain\Category\Category;
 use Zandu\Modules\Catalog\Domain\Category\CategoryName;
 use Zandu\Modules\Catalog\Domain\Category\CategoryRepository;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Identity\CategoryId;
@@ -23,6 +24,7 @@ final readonly class CreateCategoryHandler
         private Clock $clock,
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(CreateCategory $command): Category
@@ -31,6 +33,7 @@ final readonly class CreateCategoryHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): Category {
             $this->authorization->authorize($command->actorContext, PermissionCode::CategoryCreate, ResourceScope::organization($organizationId));
+            $this->operationalGuard->assertTenant($command->actorContext);
             $this->categories->lockHierarchy($organizationId);
             $parent = null !== $command->parentCategoryId
                 ? $this->categories->get($organizationId, $command->parentCategoryId)

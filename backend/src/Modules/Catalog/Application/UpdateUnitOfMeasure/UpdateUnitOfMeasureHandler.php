@@ -9,6 +9,7 @@ use Zandu\Modules\Catalog\Application\UnitOfMeasureAttributes;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasure;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -22,6 +23,7 @@ final readonly class UpdateUnitOfMeasureHandler
         private Clock $clock,
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
+        private OperationalGuard $operationalGuard,
     ) {}
 
     public function __invoke(UpdateUnitOfMeasure $command): UnitOfMeasure
@@ -30,6 +32,7 @@ final readonly class UpdateUnitOfMeasureHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): UnitOfMeasure {
             $this->authorization->authorize($command->actorContext, PermissionCode::UnitOfMeasureUpdate, ResourceScope::organization($organizationId));
+            $this->operationalGuard->assertTenant($command->actorContext);
             $unit = $this->loader->get($command->unitId, $command->actorContext);
             $attributes = UnitOfMeasureAttributes::fromPrimitives(
                 $command->name,
