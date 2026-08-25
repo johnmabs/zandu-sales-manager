@@ -5363,16 +5363,57 @@ les mutations utilisent autorisation et guard opérationnel, les actions
 sensibles sont auditées, leur publication outbox est transactionnelle et les
 rollbacks sont testés.
 
+### Étape 2.8.1 — API Categories
+
+**Statut : TERMINÉE**
+
+Les huit endpoints Categories sont exposés : collection et item en lecture,
+création, modification, déplacement, activation, désactivation et archivage.
+
+La présentation est entièrement contenue dans
+`Catalog/Presentation/Api` avec des DTO input/resource, un provider, un
+processor et une factory dédiés. Aucun agrégat ni record Doctrine n'est exposé.
+Les lectures passent par `CategoryQueryService`, `CATALOG_READ` et une
+transaction tenant ; les mutations réutilisent les handlers sécurisés des
+étapes 2.7.
+
+Le workflow HTTP couvre la hiérarchie parent/enfant, la remise à la racine et le
+cycle de vie complet. Une tentative de lecture inter-tenant retourne le contrat
+opaque `404 NOT_FOUND`. `CategoryNotFound` a été alignée sur le marqueur partagé
+`ResourceNotFound` afin d'éviter une erreur 500.
+
+Les huit opérations et les formats `application/json` /
+`application/merge-patch+json` du PATCH sont présents dans OpenAPI.
+
+### Validations
+
+```text
+PHPUnit ciblé HTTP/OpenAPI : OK (11 tests, 103 assertions)
+PHPUnit complet : OK (405 tests, 1809 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(api): expose category management
+```
+
 ## Prochaine étape
 
-### Étape 2.8.1 — API Categories
+### Étape 2.8.2 — API Products
 
 **Statut : À FAIRE**
 
 Exposer les endpoints tenant-scoped de lecture, création, modification,
-déplacement, activation, désactivation et archivage des catégories via des DTO
-placés dans `Catalog/Presentation/Api`, sans exposer les agrégats ni les records
-Doctrine.
+activation, désactivation, réactivation et archivage des produits, avec les
+filtres collection utiles `status`, `type`, `categoryId`, `productCode` et
+`search`, via des DTO dans `Catalog/Presentation/Api`, sans ajouter de filtre
+non indexé arbitraire.
 
 ---
 
