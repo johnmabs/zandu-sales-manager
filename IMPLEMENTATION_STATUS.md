@@ -3751,11 +3751,46 @@ test(tenant): verify strict tenant isolation
 
 ### Étape 1.9.7 — Révocation immédiate
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- parcours HTTP avec un `STORE_MANAGER` authentifié et limité à un magasin ;
+- modification sensible autorisée avant chaque transition de membership ;
+- suspension puis révocation incrémentant chacune `authorizationVersion` ;
+- access tokens émis avant ces transitions immédiatement rejetés en
+  `401 UNAUTHENTICATED`, avant l'exécution de l'opération métier ;
+- réactivation suivie d'une nouvelle authentification prouvant qu'un token
+  portant la version courante rétablit l'accès ;
+- absence de mutation du magasin vérifiée directement dans PostgreSQL après
+  chaque rejet.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (278 tests, 1111 assertions)
+Parcours révocation immédiate ciblé : OK (1 test, 44 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(auth): verify immediate membership revocation
+```
+
+## Prochaine étape
+
+### Étape 1.9.8 — Atomicité audit et outbox
+
 **Statut : À FAIRE**
 
-Vérifier qu'après suspension ou révocation d'un membership et incrément de son
-`authorizationVersion`, un access token déjà émis ne peut plus exécuter une
-opération sensible.
+Injecter des échecs avant la persistance de l'audit, avant celle de l'outbox et
+avant le commit, puis vérifier qu'aucun effet administratif partiel ne subsiste.
 
 ---
 
