@@ -4020,11 +4020,51 @@ feat(catalog): add unit of measure model
 
 ### Étape 2.2.2 — Persistence UnitOfMeasure
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- mapping Doctrine isolé dans l'infrastructure Catalog ;
+- repository domaine et implémentation Doctrine avec recherche strictement
+  tenant-scoped ;
+- migration `Version20260825080000` appliquée en développement et en test ;
+- table `catalog.units_of_measure` protégée par RLS forcé pour
+  `zandu_runtime` ;
+- unicité du code par organisation, clés étrangères et contraintes PostgreSQL
+  sur dimension, précision, mode d'arrondi, statut et version ;
+- verrouillage optimiste Doctrine et rejet explicite des agrégats périmés ;
+- test de couverture RLS global étendu à la table Catalog ;
+- tests PostgreSQL réels couvrant round-trip, mise à jour, unicité tenant,
+  isolation RLS, tri et concurrence optimiste.
+
+### Validations
+
+```text
+Migration dev/test : appliquée
+Mapping Doctrine : valide
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+PHPUnit ciblé Catalog/RLS : OK (13 tests, 39 assertions)
+PHPUnit complet : OK (298 tests, 1177 assertions)
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): persist units of measure
+```
+
+## Prochaine étape
+
+### Étape 2.2.3 — Use cases UnitOfMeasure
+
 **Statut : À FAIRE**
 
-Ajouter le mapping Doctrine, le repository, la migration tenant/RLS, les
-contraintes d'unicité par organisation, l'optimistic locking et les tests
-PostgreSQL réels.
+Implémenter les commandes dédiées de création, mise à jour, activation et
+désactivation sans introduire de PATCH métier générique du statut.
 
 ---
 
