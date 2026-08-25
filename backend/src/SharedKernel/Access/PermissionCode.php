@@ -27,9 +27,27 @@ enum PermissionCode: string
 
     case SecurityAuditRead = 'SECURITY_AUDIT_READ';
 
+    case CatalogRead = 'CATALOG_READ';
+
+    case CategoryCreate = 'CATEGORY_CREATE';
+    case CategoryUpdate = 'CATEGORY_UPDATE';
+    case CategoryArchive = 'CATEGORY_ARCHIVE';
+
     case ProductCreate = 'PRODUCT_CREATE';
+    case ProductRead = 'PRODUCT_READ';
     case ProductUpdate = 'PRODUCT_UPDATE';
     case ProductActivate = 'PRODUCT_ACTIVATE';
     case ProductDeactivate = 'PRODUCT_DEACTIVATE';
     case ProductArchive = 'PRODUCT_ARCHIVE';
+
+    case PriceListCreate = 'PRICE_LIST_CREATE';
+    case PriceListRead = 'PRICE_LIST_READ';
+    case PriceListUpdate = 'PRICE_LIST_UPDATE';
+    case PriceListActivate = 'PRICE_LIST_ACTIVATE';
+    case PriceListArchive = 'PRICE_LIST_ARCHIVE';
+
+    case ProductPriceCreate = 'PRODUCT_PRICE_CREATE';
+    case ProductPriceRead = 'PRODUCT_PRICE_READ';
+    case ProductPriceUpdate = 'PRODUCT_PRICE_UPDATE';
+    case ProductPriceArchive = 'PRODUCT_PRICE_ARCHIVE';
 }
