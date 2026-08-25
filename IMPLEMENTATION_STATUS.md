@@ -5146,15 +5146,55 @@ Composer audit : aucune vulnérabilité connue
 feat(access): add catalog and pricing permissions
 ```
 
+### Étape 2.7.2 — Mettre à jour les rôles système
+
+**Statut : TERMINÉE**
+
+Les rôles système ont été étendus dans le bounded context IdentityAccess selon
+le principe du moindre privilège :
+
+- `ORGANIZATION_OWNER` conserve toutes les permissions, dont l'intégralité des
+  permissions Catalog/Pricing du Lot 2 ;
+- `STORE_MANAGER` reçoit la lecture du catalogue, des produits, des listes de
+  prix et des prix produit, sans mutation Catalog/Pricing ;
+- `CASHIER` reçoit uniquement les lectures store, catalogue, produit et prix
+  produit nécessaires au futur POS ;
+- `ACCOUNTANT` reçoit la lecture organization/store/audit ainsi que la lecture
+  des listes de prix et des prix produit ;
+- aucun rôle non-owner ne reçoit de permission d'administration Catalog/Pricing.
+
+La politique reste centralisée dans `SystemRoleCatalog` : aucun contrôle de rôle
+n'a été introduit dans Catalog ou Pricing. Les tests vérifient les attributions
+exactes et interdisent explicitement les mutations Catalog/Pricing aux rôles
+non-owner.
+
+### Validations
+
+```text
+PHPUnit ciblé rôles/autorisations : OK (6 tests, 32 assertions)
+PHPUnit complet : OK (400 tests, 1599 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(access): grant catalog permissions to system roles
+```
+
 ## Prochaine étape
 
-### Étape 2.7.2 — Mettre à jour les rôles système
+### Étape 2.7.3 — Appliquer `AuthorizationService`
 
 **Statut : À FAIRE**
 
-Attribuer les permissions Catalog/Pricing pertinentes aux rôles système selon
-le principe du moindre privilège, sans coder les décisions de rôle dans les
-bounded contexts Catalog ou Pricing.
+Faire appeler `AuthorizationService.authorize(...)` avec la permission adéquate
+par chaque handler Catalog/Pricing sensible, sans contrôle direct des rôles dans
+le code métier.
 
 ---
 
