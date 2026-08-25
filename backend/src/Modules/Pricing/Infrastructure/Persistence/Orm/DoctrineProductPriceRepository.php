@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Pricing\Infrastructure\Persistence\Orm;
 
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Zandu\Modules\Pricing\Domain\ProductPrice\ProductPrice;
@@ -56,6 +57,50 @@ final readonly class DoctrineProductPriceRepository implements ProductPriceRepos
             'organizationId' => $organizationId->toString(),
         ]);
 
+        return $this->aggregate($value);
+    }
+
+    public function findEffective(
+        OrganizationId $organizationId,
+        ProductId $productId,
+        ProductPackagingId $packagingId,
+        DateTimeImmutable $businessInstant,
+    ): ?ProductPrice {
+        $query = $this->em->createQueryBuilder()
+            ->select('productPrice')
+            ->from(ProductPriceRecord::class, 'productPrice')
+            ->innerJoin(
+                PriceListRecord::class,
+                'priceList',
+                'WITH',
+                'priceList.id = productPrice.priceListId AND priceList.organizationId = productPrice.organizationId AND priceList.currency = productPrice.currency',
+            )
+            ->andWhere('productPrice.organizationId = :organizationId')
+            ->andWhere('productPrice.productId = :productId')
+            ->andWhere('productPrice.packagingId = :packagingId')
+            ->andWhere('productPrice.status = :active')
+            ->andWhere('priceList.status = :active')
+            ->andWhere('(productPrice.validFrom IS NULL OR productPrice.validFrom <= :businessInstant)')
+            ->andWhere('(productPrice.validTo IS NULL OR productPrice.validTo >= :businessInstant)')
+            ->andWhere('(priceList.validFrom IS NULL OR priceList.validFrom <= :businessInstant)')
+            ->andWhere('(priceList.validTo IS NULL OR priceList.validTo >= :businessInstant)')
+            ->setParameter('organizationId', $organizationId->toString())
+            ->setParameter('productId', $productId->toString())
+            ->setParameter('packagingId', $packagingId->toString())
+            ->setParameter('active', ProductPriceStatus::Active->value)
+            ->setParameter('businessInstant', $businessInstant)
+            ->orderBy('priceList.priority', 'DESC')
+            ->addOrderBy('priceList.id', 'ASC')
+            ->addOrderBy('productPrice.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $this->aggregate($query);
+    }
+
+    private function aggregate(mixed $value): ?ProductPrice
+    {
         if (!$value instanceof ProductPriceRecord) {
             return null;
         }

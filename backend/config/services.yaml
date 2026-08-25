@@ -131,6 +131,9 @@ services:
     Zandu\Modules\Pricing\Domain\ProductPrice\ProductPriceRepository:
         alias: Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\DoctrineProductPriceRepository
 
+    Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
+        alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver
+
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
             $pepper: '%kernel.secret%'

@@ -37,6 +37,7 @@ final class DoctrineProductPriceRepositoryTest extends KernelTestCase
     private const OTHER_PRODUCT = '0198e4c2-147c-72d5-b75a-a936797ff9c8';
     private const PACKAGING = '0198e4d1-147c-72d5-b75a-a936797ff9c8';
     private const PRICE_LIST = '0198e4e1-147c-72d5-b75a-a936797ff9c8';
+    private const PRIORITY_PRICE_LIST = '0198e4e2-147c-72d5-b75a-a936797ff9c8';
     private const PRICE_A = '0198e4f1-147c-72d5-b75a-a936797ff9c8';
     private const PRICE_B = '0198e4f2-147c-72d5-b75a-a936797ff9c8';
     private const ACTOR = '0198c728-8f2d-7f43-92d8-3f0c75b80186';
@@ -143,17 +144,50 @@ final class DoctrineProductPriceRepositoryTest extends KernelTestCase
         $this->transaction->transactional($organizationId, fn() => $this->productPrices->save($productPrice));
     }
 
-    private function priceList(): PriceList
+    public function testEffectivePriceSelectionUsesHighestListPriorityDeterministically(): void
     {
+        $organizationId = $this->organizationId();
+        $standard = $this->priceList();
+        $priority = $this->priceList(self::PRIORITY_PRICE_LIST, 'PRIORITY', 10);
+        $standard->activate($this->actorId(), new DateTimeImmutable('2026-08-26T08:30:00Z'));
+        $priority->activate($this->actorId(), new DateTimeImmutable('2026-08-26T08:30:00Z'));
+        $this->transaction->transactional($organizationId, function () use ($standard, $priority): void {
+            $this->priceLists->save($standard);
+            $this->priceLists->save($priority);
+            $this->productPrices->save($this->productPrice(self::PRICE_A, $standard));
+            $this->productPrices->save($this->productPrice(self::PRICE_B, $priority));
+        });
+        $this->em->clear();
+
+        $effective = $this->transaction->transactional(
+            $organizationId,
+            fn(): ?ProductPrice => $this->productPrices->findEffective(
+                $organizationId,
+                ProductId::fromString(self::PRODUCT, $this->ids),
+                ProductPackagingId::fromString(self::PACKAGING, $this->ids),
+                new DateTimeImmutable('2026-08-26T10:00:00Z'),
+            ),
+        );
+
+        self::assertNotNull($effective);
+        self::assertSame(self::PRICE_B, $effective->id()->toString());
+        self::assertSame(self::PRIORITY_PRICE_LIST, $effective->priceListId()->toString());
+    }
+
+    private function priceList(
+        string $id = self::PRICE_LIST,
+        string $code = 'RETAIL',
+        int $priority = 0,
+    ): PriceList {
         return PriceList::createDraft(
-            PriceListId::fromString(self::PRICE_LIST, $this->ids),
+            PriceListId::fromString($id, $this->ids),
             $this->organizationId(),
-            PriceListCode::fromString('RETAIL'),
+            PriceListCode::fromString($code),
             PriceListName::fromString('Tarif standard'),
             Currency::fromCode('XAF'),
             null,
             null,
-            PriceListPriority::fromInt(0),
+            PriceListPriority::fromInt($priority),
             $this->actorId(),
             new DateTimeImmutable('2026-08-26T08:00:00Z'),
         );
