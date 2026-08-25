@@ -14,10 +14,12 @@ use Zandu\Modules\Catalog\Domain\Product\ProductCode;
 use Zandu\Modules\Catalog\Domain\Product\ProductName;
 use Zandu\Modules\Catalog\Domain\Product\ProductType;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ConversionFactor;
+use Zandu\Modules\Catalog\Domain\ProductPackaging\IncompatiblePackagingQuantity;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackaging;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingCode;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingName;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingPrecision;
+use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingQuantityConverter;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingStatus;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
@@ -196,8 +198,77 @@ final class ProductPackagingTest extends TestCase
         );
     }
 
+    public function testItConvertsIntegerAndDecimalQuantitiesExactly(): void
+    {
+        $converter = new ProductPackagingQuantityConverter();
+
+        self::assertSame('48', $converter->toBaseQuantity(
+            $this->quantity('2'),
+            $this->packaging(conversionFactor: '24', minimumQuantity: '1', quantityIncrement: '1', precision: 0),
+            0,
+        )->toString());
+        self::assertSame('1.500', $converter->toBaseQuantity(
+            $this->quantity('1.2'),
+            $this->packaging(conversionFactor: '1.25', minimumQuantity: '0.1', quantityIncrement: '0.1', precision: 1),
+            2,
+        )->toString());
+    }
+
+    public function testItSupportsTheMaximumDocumentedPrecisionWithoutRounding(): void
+    {
+        $quantity = (new ProductPackagingQuantityConverter())->toBaseQuantity(
+            $this->quantity('0.123456789012'),
+            $this->packaging(
+                conversionFactor: '1',
+                minimumQuantity: '0.000000000001',
+                quantityIncrement: '0.000000000001',
+                precision: 12,
+            ),
+            12,
+        );
+
+        self::assertSame('0.123456789012', $quantity->toString());
+    }
+
+    #[DataProvider('incompatibleQuantityCases')]
+    public function testItRejectsIncompatibleQuantities(
+        string $entered,
+        string $factor,
+        string $minimum,
+        string $increment,
+        int $packagingPrecision,
+        int $basePrecision,
+        string $message,
+    ): void {
+        $this->expectException(IncompatiblePackagingQuantity::class);
+        $this->expectExceptionMessage($message);
+
+        (new ProductPackagingQuantityConverter())->toBaseQuantity(
+            $this->quantity($entered),
+            $this->packaging(
+                conversionFactor: $factor,
+                minimumQuantity: $minimum,
+                quantityIncrement: $increment,
+                precision: $packagingPrecision,
+            ),
+            $basePrecision,
+        );
+    }
+
+    /** @return iterable<string, array{string, string, string, string, int, int, string}> */
+    public static function incompatibleQuantityCases(): iterable
+    {
+        yield 'not positive' => ['0', '1', '0.1', '0.1', 1, 1, 'greater than zero'];
+        yield 'packaging precision' => ['1.01', '1', '0.1', '0.1', 1, 2, 'packaging precision'];
+        yield 'below minimum' => ['0.5', '1', '1', '0.5', 1, 1, 'below the minimum'];
+        yield 'increment residue' => ['1.1', '1', '0.1', '0.25', 2, 2, 'exact multiple'];
+        yield 'base precision residue' => ['0.3', '0.5', '0.1', '0.1', 1, 1, 'base unit precision'];
+    }
+
     private function packaging(
+        string $conversionFactor = '24.000000000001',
         string $minimumQuantity = '0.25',
+        string $quantityIncrement = '0.25',
         int $precision = 2,
         bool $allowedForSale = true,
         bool $allowedForPurchase = true,
@@ -211,10 +282,10 @@ final class ProductPackagingTest extends TestCase
             ProductPackagingCode::fromString(' carton-24 '),
             ProductPackagingName::fromString(' Carton  de 24 '),
             UnitOfMeasureId::fromString(self::UNIT_ID, $factory),
-            new ConversionFactor($this->decimals->fromString('24.000000000001')),
+            new ConversionFactor($this->decimals->fromString($conversionFactor)),
             ProductPackagingPrecision::fromInt($precision),
             $this->quantity($minimumQuantity),
-            $this->quantity('0.25'),
+            $this->quantity($quantityIncrement),
             $allowedForSale,
             $allowedForPurchase,
             $this->actorId(),
