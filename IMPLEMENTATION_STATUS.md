@@ -4741,11 +4741,57 @@ feat(catalog): add product barcodes
 
 ### Étape 2.5.6 — Barcode resolver
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- contrat applicatif `BarcodeResolver` acceptant explicitement
+  `OrganizationId` et `Barcode` ;
+- résultat immutable `BarcodeResolution` exposant uniquement `ProductId` et
+  `ProductPackagingId` ;
+- implémentation repository-backed utilisant la recherche normalisée et
+  tenant-scoped ;
+- seuls les barcodes actifs sont résolus, un barcode retiré étant traité comme
+  introuvable ;
+- aucune distinction observable entre barcode absent et barcode appartenant à
+  un autre tenant : les deux produisent `NOT_FOUND` (`null`) ;
+- tests couvrant la normalisation, la résolution active, le retrait et
+  l'isolation cross-tenant.
+
+### Validations
+
+```text
+PHPUnit ciblé BarcodeResolver : OK (3 tests, 5 assertions)
+PHPUnit complet : OK (376 tests, 1450 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add barcode resolution
+```
+
+## Epic 2.5 — Product Packaging & Barcode
+
+**Statut : TERMINÉ**
+
+La Definition of Done de l'Epic est satisfaite : packaging de base explicite,
+conversion exacte sans arrondi silencieux, barcodes textuels tenant-uniques et
+résolution tenant-safe persistée sous PostgreSQL.
+
+## Prochaine étape
+
+### Étape 2.6.1 — Créer le sous-domaine / module logique Pricing
+
 **Statut : À FAIRE**
 
-Exposer le contrat applicatif tenant-scoped de résolution d'un barcode actif
-vers son produit et son packaging, avec un résultat non ambigu et les erreurs
-métier prévues par le planning.
+Définir la frontière logique de Pricing conformément aux décisions DDD du
+repository avant d'introduire le prix de vente de base d'un packaging.
 
 ---
 
