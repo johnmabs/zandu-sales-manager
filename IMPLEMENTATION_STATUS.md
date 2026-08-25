@@ -4319,10 +4319,51 @@ feat(catalog): add product value objects
 
 ### Étape 2.4.3 — Persistence Product
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- mapping Doctrine dédié `ProductRecord` et repository spécialisé, sans
+  repository générique ;
+- recherches strictement tenant-scoped par identifiant et par `ProductCode` ;
+- migration PostgreSQL avec unicité `(organization_id, product_code)`, index de
+  lecture, version optimiste et contraintes d'intégrité métier ;
+- clés étrangères composites garantissant que l'unité de base et la catégorie
+  appartiennent au même tenant que le produit ;
+- `tax_category_id` conservé sans clé étrangère tant que le modèle fiscal n'est
+  pas défini dans le cadrage ;
+- RLS activée et forcée pour le rôle restreint `zandu_runtime` ;
+- tests PostgreSQL couvrant le round-trip, l'unicité tenant, le RLS, les
+  références cross-tenant et le rejet des écritures optimistes obsolètes.
+
+### Validations
+
+```text
+PHPUnit ciblé Product + RLS : OK (14 tests, 42 assertions)
+PHPUnit complet : OK (341 tests, 1297 assertions)
+Mapping Doctrine : valide
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): persist product aggregate
+```
+
+## Prochaine étape
+
+### Étape 2.4.4 — Use case `CreateProduct`
+
 **Statut : À FAIRE**
 
-Ajouter le mapping Doctrine, le repository spécialisé, la migration PostgreSQL
-avec unicité du code par tenant, RLS, version optimiste, index et tests réels.
+Ajouter la commande et son handler avec contexte acteur, contrôles
+d'organisation opérationnelle, de permission et de références tenant-owned,
+puis créer le produit au statut `DRAFT`.
 
 ---
 
