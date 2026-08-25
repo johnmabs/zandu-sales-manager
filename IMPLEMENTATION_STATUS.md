@@ -3880,7 +3880,7 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 Epic 2.1   TERMINÉ   Catalog foundation
 Epic 2.2   TERMINÉ   Unit of measure
 Epic 2.3   TERMINÉ   Categories
-Epic 2.4   À FAIRE   Product lifecycle
+Epic 2.4   EN COURS  Product lifecycle
 Epic 2.5   À FAIRE   Product packaging & barcode
 Epic 2.6   À FAIRE   Basic Pricing
 Epic 2.7   À FAIRE   Authorization, audit & integration
@@ -4236,10 +4236,56 @@ prévenus lors des déplacements concurrents par sérialisation tenant.
 
 ### Étape 2.4.1 — Ajouter l'aggregate Product
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- agrégat `Product` tenant-owned représentant un SKU autonome, sans variante ;
+- statuts `DRAFT`, `ACTIVE`, `INACTIVE`, `ARCHIVED` et types `PHYSICAL`,
+  `SERVICE` ;
+- création systématique en brouillon et audit complet de création, première
+  activation et dernière modification ;
+- règle `SERVICE` incompatible avec `inventoryTracked=true` ;
+- première activation conditionnée par la présence explicite d'un packaging de
+  base ;
+- code produit et unité de base définitivement immuables après la première
+  activation, y compris lorsque le produit est inactif ;
+- désactivation, réactivation et archivage terminal sans suppression métier ;
+- produit inactif ou archivé toujours résolvable pour l'historique mais refusé
+  pour une nouvelle opération commerciale ;
+- événements `ProductCreated`, `ProductUpdated`, `ProductActivated`,
+  `ProductDeactivated`, `ProductReactivated` et `ProductArchived`.
+
+Les primitives code/nom sont temporairement normalisées par l'agrégat ; leur
+extraction dans les value objects dédiés appartient à l'étape 2.4.2.
+
+### Validations
+
+```text
+PHPUnit ciblé : OK (7 tests, 30 assertions)
+PHPUnit complet : OK (332 tests, 1281 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product aggregate lifecycle
+```
+
+## Prochaine étape
+
+### Étape 2.4.2 — Ajouter les value objects Product
+
 **Statut : À FAIRE**
 
-Implémenter le cœur du catalogue pour un SKU vendable, ses statuts et ses
-invariants métier, sans anticiper sa persistence ni son API.
+Extraire les invariants de normalisation et de validité dans `ProductCode` et
+`ProductName`, puis adapter l'agrégat et ses tests sans ajouter de wrapper sans
+valeur métier.
 
 ---
 
