@@ -121,12 +121,14 @@ final class PriceList
         DateTimeImmutable $occurredAt,
     ): void {
         $this->requireNotArchived('An archived price list cannot be updated.');
+        if (!$this->currency->equals($currency)) {
+            throw new LogicException('Price list currency is immutable.');
+        }
         $validFrom = null !== $validFrom ? self::utc($validFrom) : null;
         $validTo = null !== $validTo ? self::utc($validTo) : null;
         self::assertPeriod($validFrom, $validTo);
         $this->code = $code;
         $this->name = $name;
-        $this->currency = $currency;
         $this->validFrom = $validFrom;
         $this->validTo = $validTo;
         $this->priority = $priority;

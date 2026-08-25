@@ -79,7 +79,7 @@ final class PriceListTest extends TestCase
         $priceList->update(
             PriceListCode::fromString('wholesale'),
             PriceListName::fromString('Tarif grossiste'),
-            Currency::fromCode('eur'),
+            Currency::fromCode('xaf'),
             null,
             null,
             PriceListPriority::fromInt(10),
@@ -88,12 +88,29 @@ final class PriceListTest extends TestCase
         );
 
         self::assertSame('WHOLESALE', $priceList->code()->value());
-        self::assertSame('EUR', $priceList->currency()->code());
+        self::assertSame('XAF', $priceList->currency()->code());
         self::assertSame(10, $priceList->priority()->value());
         self::assertSame(self::ORGANIZATION_ID, $priceList->organizationId()->toString());
         self::assertSame(PriceListScope::Organization, $priceList->scope());
         self::assertSame(2, $priceList->version());
         self::assertInstanceOf(PriceListUpdated::class, $priceList->releaseEvents()[0]);
+    }
+
+    public function testCurrencyIsImmutable(): void
+    {
+        $priceList = $this->priceList();
+
+        $this->expectException(LogicException::class);
+        $priceList->update(
+            $priceList->code(),
+            $priceList->name(),
+            Currency::fromCode('EUR'),
+            $priceList->validFrom(),
+            $priceList->validTo(),
+            $priceList->priority(),
+            $this->actorId(),
+            new DateTimeImmutable(),
+        );
     }
 
     public function testLifecycleAndSelectionAreExplicit(): void
