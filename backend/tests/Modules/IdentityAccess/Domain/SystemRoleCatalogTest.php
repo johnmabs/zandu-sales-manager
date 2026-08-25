@@ -33,9 +33,37 @@ final class SystemRoleCatalogTest extends TestCase
         }
 
         self::assertCount(count(PermissionCode::cases()), $roles[0]->permissions());
-        self::assertTrue($roles[1]->grants(PermissionCode::StoreUpdate));
-        self::assertFalse($roles[1]->grants(PermissionCode::MemberRevoke));
-        self::assertSame([PermissionCode::StoreRead], $roles[2]->permissions());
-        self::assertTrue($roles[3]->grants(PermissionCode::SecurityAuditRead));
+        self::assertSame([
+            PermissionCode::OrganizationRead,
+            PermissionCode::StoreCreate,
+            PermissionCode::StoreRead,
+            PermissionCode::StoreUpdate,
+            PermissionCode::StoreSuspend,
+            PermissionCode::StoreClose,
+            PermissionCode::CatalogRead,
+            PermissionCode::ProductRead,
+            PermissionCode::PriceListRead,
+            PermissionCode::ProductPriceRead,
+        ], $roles[1]->permissions());
+        self::assertSame([
+            PermissionCode::StoreRead,
+            PermissionCode::CatalogRead,
+            PermissionCode::ProductRead,
+            PermissionCode::ProductPriceRead,
+        ], $roles[2]->permissions());
+        self::assertSame([
+            PermissionCode::OrganizationRead,
+            PermissionCode::StoreRead,
+            PermissionCode::SecurityAuditRead,
+            PermissionCode::PriceListRead,
+            PermissionCode::ProductPriceRead,
+        ], $roles[3]->permissions());
+
+        foreach (array_slice($roles, 1) as $nonOwnerRole) {
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::CategoryCreate));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::ProductUpdate));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::PriceListUpdate));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::ProductPriceUpdate));
+        }
     }
 }

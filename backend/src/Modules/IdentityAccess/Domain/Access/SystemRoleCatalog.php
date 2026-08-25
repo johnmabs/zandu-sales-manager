@@ -33,7 +33,7 @@ final readonly class SystemRoleCatalog
                 $this->roleId(self::STORE_MANAGER_ID),
                 RoleCode::fromString(RoleCode::STORE_MANAGER),
                 'Store manager',
-                'Manages stores within the assigned scope.',
+                'Manages stores and reads catalog and pricing within the assigned scope.',
                 [
                     PermissionCode::OrganizationRead,
                     PermissionCode::StoreCreate,
@@ -41,14 +41,23 @@ final readonly class SystemRoleCatalog
                     PermissionCode::StoreUpdate,
                     PermissionCode::StoreSuspend,
                     PermissionCode::StoreClose,
+                    PermissionCode::CatalogRead,
+                    PermissionCode::ProductRead,
+                    PermissionCode::PriceListRead,
+                    PermissionCode::ProductPriceRead,
                 ],
             ),
             Role::system(
                 $this->roleId(self::CASHIER_ID),
                 RoleCode::fromString(RoleCode::CASHIER),
                 'Cashier',
-                'Reads stores within the assigned scope.',
-                [PermissionCode::StoreRead],
+                'Reads stores, catalog and resolved product prices within the assigned scope.',
+                [
+                    PermissionCode::StoreRead,
+                    PermissionCode::CatalogRead,
+                    PermissionCode::ProductRead,
+                    PermissionCode::ProductPriceRead,
+                ],
             ),
             Role::system(
                 $this->roleId(self::ACCOUNTANT_ID),
@@ -59,6 +68,8 @@ final readonly class SystemRoleCatalog
                     PermissionCode::OrganizationRead,
                     PermissionCode::StoreRead,
                     PermissionCode::SecurityAuditRead,
+                    PermissionCode::PriceListRead,
+                    PermissionCode::ProductPriceRead,
                 ],
             ),
         ];
