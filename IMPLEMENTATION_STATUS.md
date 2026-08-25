@@ -4966,11 +4966,59 @@ feat(pricing): add product price aggregate
 
 ### Étape 2.6.5 — Persistence ProductPrice
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- mapping Doctrine `ProductPriceRecord` avec montant exact
+  `NUMERIC(30,12)` conformément à l'ADR-0014 ;
+- repository tenant-scoped `ProductPriceRepository` avec `get`, `find`,
+  reconstitution des objets `Money` et verrouillage optimiste ;
+- clé composite `(organization_id, price_list_id, currency)` garantissant que
+  le prix, sa liste, son tenant et sa devise restent cohérents ;
+- clé composite `(organization_id, product_id, packaging_id)` garantissant que
+  le packaging appartient réellement au produit et au tenant ciblés ;
+- contraintes SQL sur montant non négatif, devise, statut, période et version ;
+- extension `btree_gist` et contrainte d'exclusion empêchant deux périodes
+  `ACTIVE` de se chevaucher pour une même liste et un même packaging, bornes
+  inclusives comprises ;
+- index tenant-scoped adapté à la future résolution par produit, packaging,
+  statut et liste ;
+- RLS activée et forcée, droits minimaux accordés au rôle runtime ;
+- migration appliquée en développement et en test ;
+- tests PostgreSQL du round-trip exact, de la version, du non-chevauchement et
+  de la cohérence produit/packaging ;
+- fitness test RLS étendu à `pricing.product_prices`.
+
+### Validations
+
+```text
+PHPUnit ciblé persistence/RLS : OK (11 tests, 49 assertions)
+PHPUnit complet : OK (396 tests, 1534 assertions)
+Migrations développement et test : appliquées
+Mapping Doctrine : valide
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(pricing): persist product prices
+```
+
+## Prochaine étape
+
+### Étape 2.6.6 — Price resolver de base
+
 **Statut : À FAIRE**
 
-Ajouter mapping, repository tenant-scoped, contraintes et indexes de
-résolution, cohérence produit/packaging, verrouillage optimiste, RLS et tests
-PostgreSQL.
+Ajouter un resolver tenant-scoped et déterministe produisant le prix exact, sa
+liste, son identifiant et sa version à un instant métier, avec une absence de
+prix explicitement représentée par `ProductPriceNotFound`.
 
 ---
 
