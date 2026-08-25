@@ -4913,11 +4913,64 @@ feat(pricing): persist price lists
 
 ### Étape 2.6.4 — Ajouter ProductPrice
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- agrégat tenant-owned `ProductPrice` avec identifiant typé, `PriceListId`,
+  `ProductId`, `ProductPackagingId`, montant exact, période, statut et version ;
+- cible `ProductPriceTarget` fondée uniquement sur les identifiants partagés,
+  sans dépendance de Pricing vers les aggregates internes de Catalog ;
+- organisation du prix dérivée de la `PriceList` et validation explicite du
+  tenant de la cible ;
+- devise du montant obligatoirement identique à celle de la liste ;
+- devise de `PriceList` rendue immutable afin de préserver cet invariant pour
+  tous les prix existants ;
+- politique de montant décidée et appliquée : montant positif ou nul, jamais
+  négatif, sans calcul flottant ;
+- période inclusive normalisée en UTC avec invariant `validTo >= validFrom` ;
+- cycle de vie `ACTIVE ↔ INACTIVE → ARCHIVED`, archivage terminal et sélection
+  temporelle explicite ;
+- identité de la liste, du produit et du packaging immutable lors des mises à
+  jour ;
+- événements `ProductPriceCreated`, `ProductPriceUpdated`,
+  `ProductPriceActivated`, `ProductPriceDeactivated` et
+  `ProductPriceArchived` ;
+- tests du tenant, de la devise, du montant, de la période, de l'immutabilité,
+  des événements et du cycle de vie.
+
+La validation applicative/persistante que le packaging appartient réellement au
+produit sera branchée à l'étape suivante sans ouvrir Pricing sur l'interne de
+Catalog. La gestion transactionnelle des chevauchements sera également portée
+par la persistence et le futur resolver.
+
+### Validations
+
+```text
+PHPUnit ciblé Pricing domain : OK (14 tests, 63 assertions)
+PHPUnit complet : OK (393 tests, 1524 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(pricing): add product price aggregate
+```
+
+## Prochaine étape
+
+### Étape 2.6.5 — Persistence ProductPrice
+
 **Statut : À FAIRE**
 
-Introduire l'agrégat tenant-owned `ProductPrice`, ciblant un produit et son
-packaging dans une `PriceList`, avec montant exact, devise cohérente, période,
-cycle de vie et événements métier.
+Ajouter mapping, repository tenant-scoped, contraintes et indexes de
+résolution, cohérence produit/packaging, verrouillage optimiste, RLS et tests
+PostgreSQL.
 
 ---
 
