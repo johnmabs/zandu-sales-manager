@@ -4655,10 +4655,52 @@ feat(catalog): add exact packaging quantity conversion
 
 ### Étape 2.5.4 — Persistence ProductPackaging
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- mapping Doctrine et repository spécialisé tenant-scoped avec verrouillage
+  optimiste ;
+- décimaux persistés en `NUMERIC(30,12)` conformément à l'ADR-0014 ;
+- clés étrangères composites protégeant les références produit et unité contre
+  les associations cross-tenant ;
+- unicité du code par produit et index PostgreSQL partiel garantissant au plus un
+  packaging de base par produit ;
+- contraintes SQL sur facteur, précision, quantités, statut et audit ;
+- RLS activée et forcée pour `zandu_runtime` ;
+- repository branché comme implémentation réelle de `BasePackagingPresence`, ce
+  qui remplace l'adaptateur provisoire fail-closed et permet l'activation d'un
+  produit possédant un packaging de base valide ;
+- tests PostgreSQL du round-trip, du contrat de présence, de l'unicité base et
+  extension du fitness test RLS.
+
+### Validations
+
+```text
+PHPUnit ciblé persistence/RLS/activation : OK (20 tests, 117 assertions)
+PHPUnit complet : OK (371 tests, 1435 assertions)
+Migrations développement et test : appliquées
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): persist product packaging
+```
+
+## Prochaine étape
+
+### Étape 2.5.5 — Ajouter les barcodes
+
 **Statut : À FAIRE**
 
-Ajouter le mapping Doctrine, le repository spécialisé, les contraintes
-PostgreSQL, l'unicité du packaging de base, les index, le RLS et les tests réels.
+Introduire les codes-barres tenant-owned associés à un produit et à son
+packaging, avec normalisation, unicité et résolution non ambiguë.
 
 ---
 
