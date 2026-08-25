@@ -4441,10 +4441,50 @@ feat(catalog): add product profile update
 
 ### Étape 2.4.6 — Activate Product
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- commande d'intention `ActivateProduct` sans état cible fourni par le client ;
+- chargement tenant-safe du produit et de son unité de base dans une transaction
+  tenant ;
+- permission atomique `PRODUCT_ACTIVATE` contrôlée sur le scope organisation ;
+- statut opérationnel du tenant et sélectionnabilité de l'unité contrôlés avant
+  activation ;
+- contrat `BasePackagingPresence` imposant une vérification serveur du packaging
+  de base pour le produit et son unité ;
+- adaptateur provisoire `UnavailableBasePackagingPresence` strictement
+  fail-closed : aucune activation en production n'est possible avant le
+  branchement de la persistence `ProductPackaging` prévu en Epic 2.5 ;
+- première activation, audit, version et transition d'état appliqués par
+  l'agrégat seulement lorsque toutes les validations réussissent.
+
+### Validations
+
+```text
+PHPUnit ciblé Product/permissions : OK (12 tests, 77 assertions)
+PHPUnit complet : OK (351 tests, 1358 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product activation
+```
+
+## Prochaine étape
+
+### Étape 2.4.7 — Deactivate / Reactivate / Archive Product
+
 **Statut : À FAIRE**
 
-Ajouter la commande `ActivateProduct` et vérifier avant activation la cohérence
-du produit ainsi que la présence de son packaging de base.
+Ajouter trois commandes d'intention distinctes pour la disponibilité du produit,
+sans suppression métier et avec archivage terminal.
 
 ---
 
