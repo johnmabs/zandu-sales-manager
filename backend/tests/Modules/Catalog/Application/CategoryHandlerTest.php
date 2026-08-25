@@ -25,7 +25,10 @@ use Zandu\Modules\Catalog\Domain\Category\CategoryName;
 use Zandu\Modules\Catalog\Domain\Category\CategoryNotFound;
 use Zandu\Modules\Catalog\Domain\Category\CategoryRepository;
 use Zandu\Modules\Catalog\Domain\Category\CategoryStatus;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Context\ActorType;
 use Zandu\SharedKernel\Identity\ActorId;
@@ -50,12 +53,14 @@ final class CategoryHandlerTest extends TestCase
     private CategoryUseCaseRepository $categories;
     private CategoryTenantTransaction $transaction;
     private FrozenClock $clock;
+    private RecordingCategoryAuthorization $authorization;
 
     protected function setUp(): void
     {
         $this->categories = new CategoryUseCaseRepository();
         $this->transaction = new CategoryTenantTransaction();
         $this->clock = new FrozenClock(new DateTimeImmutable('2026-08-25T23:00:00Z'));
+        $this->authorization = new RecordingCategoryAuthorization();
     }
 
     public function testItCreatesARootCategoryInsideALockedTenantTransaction(): void
@@ -67,6 +72,7 @@ final class CategoryHandlerTest extends TestCase
         self::assertNull($category->parentCategoryId());
         self::assertSame(self::ORGANIZATION_ID, $this->transaction->lastOrganizationId?->toString());
         self::assertSame(self::ORGANIZATION_ID, $this->categories->lastLockedOrganizationId?->toString());
+        self::assertSame([PermissionCode::CategoryCreate], $this->authorization->permissions);
     }
 
     public function testItCreatesAChildOnlyFromAParentVisibleToTheTenant(): void
@@ -86,22 +92,29 @@ final class CategoryHandlerTest extends TestCase
         $category = $this->createHandler()(new CreateCategory('Boissons', null, $this->context()));
         $loader = new TenantCategoryLoader($this->categories);
 
-        $update = new UpdateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction);
+        $update = new UpdateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
         $category = $update(new UpdateCategory($category->id(), 'Boissons fraîches', $this->context()));
         self::assertSame('Boissons fraîches', $category->name()->value());
 
-        $deactivate = new DeactivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction);
+        $deactivate = new DeactivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
         $category = $deactivate(new DeactivateCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Inactive, $category->status());
 
-        $activate = new ActivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction);
+        $activate = new ActivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
         $category = $activate(new ActivateCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Active, $category->status());
 
-        $archive = new ArchiveCategoryHandler($loader, $this->categories, $this->clock, $this->transaction);
+        $archive = new ArchiveCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization);
         $category = $archive(new ArchiveCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Archived, $category->status());
         self::assertSame(5, $category->version());
+        self::assertSame([
+            PermissionCode::CategoryCreate,
+            PermissionCode::CategoryUpdate,
+            PermissionCode::CategoryUpdate,
+            PermissionCode::CategoryUpdate,
+            PermissionCode::CategoryArchive,
+        ], $this->authorization->permissions);
     }
 
     public function testMoveToRootAndToAnotherBranchAreExplicit(): void
@@ -117,6 +130,7 @@ final class CategoryHandlerTest extends TestCase
             $this->categories,
             $this->clock,
             $this->transaction,
+            $this->authorization,
         );
 
         $category = $handler(new MoveCategory($category->id(), null, $this->context()));
@@ -125,6 +139,7 @@ final class CategoryHandlerTest extends TestCase
         $category = $handler(new MoveCategory($category->id(), $secondParent->id(), $this->context()));
         self::assertTrue($category->parentCategoryId()?->equals($secondParent->id()));
         self::assertSame(self::ORGANIZATION_ID, $this->categories->lastLockedOrganizationId?->toString());
+        self::assertSame([PermissionCode::CategoryUpdate, PermissionCode::CategoryUpdate], $this->authorization->permissions);
     }
 
     public function testMoveRejectsDescendantAsParentUsingRepositoryAncestors(): void
@@ -138,6 +153,7 @@ final class CategoryHandlerTest extends TestCase
             $this->categories,
             $this->clock,
             $this->transaction,
+            $this->authorization,
         );
 
         $this->expectException(LogicException::class);
@@ -159,6 +175,7 @@ final class CategoryHandlerTest extends TestCase
             },
             $this->clock,
             $this->transaction,
+            $this->authorization,
         );
     }
 
@@ -200,6 +217,19 @@ final class CategoryHandlerTest extends TestCase
     private function actorId(): ActorId
     {
         return ActorId::fromString(self::ACTOR_ID, new SymfonyUuidFactory());
+    }
+}
+
+final class RecordingCategoryAuthorization implements AuthorizationService
+{
+    /** @var list<PermissionCode> */
+    public array $permissions = [];
+
+    public function authorize(ActorContext $actorContext, PermissionCode $permission, ResourceScope $resourceScope): void
+    {
+        $this->permissions[] = $permission;
+        TestCase::assertTrue($actorContext->organizationId()->equals($resourceScope->organizationId));
+        TestCase::assertNull($resourceScope->storeId);
     }
 }
 

@@ -22,7 +22,10 @@ use Zandu\Modules\Catalog\Domain\UnitOfMeasureCodeAlreadyExists;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureNotFound;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureStatus;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Context\ActorType;
 use Zandu\SharedKernel\Decimal\RoundingMode;
@@ -46,12 +49,14 @@ final class UnitOfMeasureHandlerTest extends TestCase
     private UnitOfMeasureUseCaseRepository $units;
     private RecordingTenantTransaction $transaction;
     private FrozenClock $clock;
+    private RecordingUnitOfMeasureAuthorization $authorization;
 
     protected function setUp(): void
     {
         $this->units = new UnitOfMeasureUseCaseRepository();
         $this->transaction = new RecordingTenantTransaction();
         $this->clock = new FrozenClock(new DateTimeImmutable('2026-08-25T17:00:00Z'));
+        $this->authorization = new RecordingUnitOfMeasureAuthorization();
     }
 
     public function testItCreatesANormalizedTenantOwnedUnit(): void
@@ -71,6 +76,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
         self::assertSame(RoundingMode::HalfUp, $unit->roundingMode());
         self::assertSame(UnitOfMeasureStatus::Active, $unit->status());
         self::assertSame(self::ORGANIZATION_ID, $this->transaction->lastOrganizationId?->toString());
+        self::assertSame([PermissionCode::UnitOfMeasureCreate], $this->authorization->permissions);
     }
 
     public function testItRejectsADuplicateCodeWithinTheTenant(): void
@@ -108,7 +114,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
         ));
         $loader = new TenantUnitOfMeasureLoader($this->units);
 
-        $update = new UpdateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction);
+        $update = new UpdateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization);
         $unit = $update(new UpdateUnitOfMeasure(
             $unit->id(),
             'Kilogramme net',
@@ -121,14 +127,20 @@ final class UnitOfMeasureHandlerTest extends TestCase
         self::assertSame(4, $unit->precision()->value());
         self::assertSame(RoundingMode::HalfEven, $unit->roundingMode());
 
-        $deactivate = new DeactivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction);
+        $deactivate = new DeactivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization);
         $unit = $deactivate(new DeactivateUnitOfMeasure($unit->id(), $this->context()));
         self::assertSame(UnitOfMeasureStatus::Inactive, $unit->status());
 
-        $activate = new ActivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction);
+        $activate = new ActivateUnitOfMeasureHandler($loader, $this->units, $this->clock, $this->transaction, $this->authorization);
         $unit = $activate(new ActivateUnitOfMeasure($unit->id(), $this->context()));
         self::assertSame(UnitOfMeasureStatus::Active, $unit->status());
         self::assertSame(4, $unit->version());
+        self::assertSame([
+            PermissionCode::UnitOfMeasureCreate,
+            PermissionCode::UnitOfMeasureUpdate,
+            PermissionCode::UnitOfMeasureDeactivate,
+            PermissionCode::UnitOfMeasureActivate,
+        ], $this->authorization->permissions);
     }
 
     public function testLoaderCannotCrossTheActorTenantBoundary(): void
@@ -146,6 +158,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
             $this->units,
             $this->clock,
             $this->transaction,
+            $this->authorization,
         );
 
         $this->expectException(UnitOfMeasureNotFound::class);
@@ -167,6 +180,7 @@ final class UnitOfMeasureHandlerTest extends TestCase
             },
             $this->clock,
             $this->transaction,
+            $this->authorization,
         );
     }
 
@@ -181,6 +195,19 @@ final class UnitOfMeasureHandlerTest extends TestCase
             CorrelationId::fromString(self::CORRELATION_ID, $factory),
             new DateTimeImmutable('2026-08-25T16:00:00Z'),
         );
+    }
+}
+
+final class RecordingUnitOfMeasureAuthorization implements AuthorizationService
+{
+    /** @var list<PermissionCode> */
+    public array $permissions = [];
+
+    public function authorize(ActorContext $actorContext, PermissionCode $permission, ResourceScope $resourceScope): void
+    {
+        $this->permissions[] = $permission;
+        TestCase::assertTrue($actorContext->organizationId()->equals($resourceScope->organizationId));
+        TestCase::assertNull($resourceScope->storeId);
     }
 }
 

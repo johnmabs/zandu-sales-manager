@@ -7,6 +7,9 @@ namespace Zandu\Modules\Catalog\Application\DeactivateUnitOfMeasure;
 use Zandu\Modules\Catalog\Application\TenantUnitOfMeasureLoader;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasure;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\SharedKernel\Access\PermissionCode;
+use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -17,11 +20,15 @@ final readonly class DeactivateUnitOfMeasureHandler
         private UnitOfMeasureRepository $units,
         private Clock $clock,
         private TenantTransaction $transaction,
+        private AuthorizationService $authorization,
     ) {}
 
     public function __invoke(DeactivateUnitOfMeasure $command): UnitOfMeasure
     {
-        return $this->transaction->transactional($command->actorContext->organizationId(), function () use ($command): UnitOfMeasure {
+        $organizationId = $command->actorContext->organizationId();
+
+        return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): UnitOfMeasure {
+            $this->authorization->authorize($command->actorContext, PermissionCode::UnitOfMeasureDeactivate, ResourceScope::organization($organizationId));
             $unit = $this->loader->get($command->unitId, $command->actorContext);
             $unit->deactivate($command->actorContext->actorId(), $this->clock->now());
             $this->units->save($unit);
