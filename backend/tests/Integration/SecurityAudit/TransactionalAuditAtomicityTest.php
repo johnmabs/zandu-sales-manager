@@ -17,9 +17,14 @@ use Zandu\SharedKernel\Context\ActorType;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\Messaging\OutboxMessage;
+use Zandu\SharedKernel\Messaging\OutboxRepository;
 use Zandu\SharedKernel\SecurityAudit\ResourceReference;
 use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
 use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditEntry;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditRepository;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\Tests\Integration\PostgresTestCase;
 
 final class TransactionalAuditAtomicityTest extends PostgresTestCase
@@ -67,8 +72,23 @@ SQL, [self::ORGANIZATION_ID, self::ACTOR_ID, self::ACTOR_ID]);
         self::assertSame(1, $this->outboxCount());
     }
 
-    public function testBusinessMutationAuditAndOutboxRollbackTogether(): void
+    public function testFailureBeforeAuditPersistenceRollsBackAdministrativeMutation(): void
     {
+        $this->executeFailingUpdate($this->trail(new FailingSecurityAuditRepository()));
+
+        $this->assertNoPartialEffect();
+    }
+
+    public function testFailureBeforeOutboxPersistenceRollsBackMutationAndAudit(): void
+    {
+        $this->executeFailingUpdate($this->trail(outbox: new FailingOutboxRepository()));
+
+        $this->assertNoPartialEffect();
+    }
+
+    public function testFailureBeforeCommitRollsBackMutationAuditAndOutbox(): void
+    {
+        $failureCaught = false;
         try {
             $this->transaction()->transactional($this->organizationId(), function (): never {
                 $this->connection->executeStatement(
@@ -86,11 +106,11 @@ SQL, [self::ORGANIZATION_ID, self::ACTOR_ID, self::ACTOR_ID]);
                 throw new RuntimeException('Injected failure.');
             });
         } catch (RuntimeException) {
+            $failureCaught = true;
         }
 
-        self::assertSame('Before audit', $this->organizationName());
-        self::assertSame(0, $this->auditCount());
-        self::assertSame(0, $this->outboxCount());
+        self::assertTrue($failureCaught);
+        $this->assertNoPartialEffect();
     }
 
     private function transaction(): DoctrineTenantTransaction
@@ -98,13 +118,46 @@ SQL, [self::ORGANIZATION_ID, self::ACTOR_ID, self::ACTOR_ID]);
         return new DoctrineTenantTransaction($this->connection, 'zandu_runtime');
     }
 
-    private function trail(): TransactionalSecurityAuditTrail
-    {
+    private function trail(
+        ?SecurityAuditRepository $audits = null,
+        ?OutboxRepository $outbox = null,
+    ): TransactionalSecurityAuditTrail {
         return new TransactionalSecurityAuditTrail(
-            new DbalSecurityAuditRepository($this->connection),
-            new DbalOutboxRepository($this->connection),
+            $audits ?? new DbalSecurityAuditRepository($this->connection),
+            $outbox ?? new DbalOutboxRepository($this->connection),
             new SymfonyUuidV7Generator(),
         );
+    }
+
+    private function executeFailingUpdate(SecurityAuditTrail $trail): void
+    {
+        $failureCaught = false;
+        try {
+            $this->transaction()->transactional($this->organizationId(), function () use ($trail): void {
+                $this->connection->executeStatement(
+                    'UPDATE organization.organizations SET name = ? WHERE id = ?',
+                    ['Must rollback', self::ORGANIZATION_ID],
+                );
+                $trail->recordSuccess(
+                    $this->context(),
+                    SecurityAction::OrganizationUpdated,
+                    ResourceReference::for('organization', $this->organizationId()),
+                    SafeAuditMetadata::empty(),
+                    new DateTimeImmutable('2026-08-24T10:00:00+00:00'),
+                );
+            });
+        } catch (RuntimeException) {
+            $failureCaught = true;
+        }
+
+        self::assertTrue($failureCaught);
+    }
+
+    private function assertNoPartialEffect(): void
+    {
+        self::assertSame('Before audit', $this->organizationName());
+        self::assertSame(0, $this->auditCount());
+        self::assertSame(0, $this->outboxCount());
     }
 
     private function context(): ActorContext
@@ -145,5 +198,21 @@ SQL, [self::ORGANIZATION_ID, self::ACTOR_ID, self::ACTOR_ID]);
         $this->connection->executeStatement('DELETE FROM messaging.outbox_messages WHERE organization_id = ?', [self::ORGANIZATION_ID]);
         $this->connection->executeStatement('DELETE FROM security.security_audit_entries WHERE organization_id = ?', [self::ORGANIZATION_ID]);
         $this->connection->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::ORGANIZATION_ID]);
+    }
+}
+
+final class FailingSecurityAuditRepository implements SecurityAuditRepository
+{
+    public function append(SecurityAuditEntry $entry): never
+    {
+        throw new RuntimeException('Injected failure before audit persistence.');
+    }
+}
+
+final class FailingOutboxRepository implements OutboxRepository
+{
+    public function append(OutboxMessage $message): never
+    {
+        throw new RuntimeException('Injected failure before outbox persistence.');
     }
 }
