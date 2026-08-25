@@ -60,6 +60,10 @@ final class SystemRoleCatalogTest extends TestCase
         ], $roles[3]->permissions());
 
         foreach (array_slice($roles, 1) as $nonOwnerRole) {
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::UnitOfMeasureCreate));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::UnitOfMeasureUpdate));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::UnitOfMeasureActivate));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::UnitOfMeasureDeactivate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::CategoryCreate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::ProductUpdate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::PriceListUpdate));

@@ -29,6 +29,11 @@ enum PermissionCode: string
 
     case CatalogRead = 'CATALOG_READ';
 
+    case UnitOfMeasureCreate = 'UNIT_OF_MEASURE_CREATE';
+    case UnitOfMeasureUpdate = 'UNIT_OF_MEASURE_UPDATE';
+    case UnitOfMeasureActivate = 'UNIT_OF_MEASURE_ACTIVATE';
+    case UnitOfMeasureDeactivate = 'UNIT_OF_MEASURE_DEACTIVATE';
+
     case CategoryCreate = 'CATEGORY_CREATE';
     case CategoryUpdate = 'CATEGORY_UPDATE';
     case CategoryArchive = 'CATEGORY_ARCHIVE';
