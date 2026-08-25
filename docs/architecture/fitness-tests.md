@@ -401,14 +401,17 @@ Il ne peut pas dépendre directement de `Organization`, `IdentityAccess`,
 devront passer par `CatalogContract` lorsqu'un contrat public concret sera
 introduit.
 
-`Pricing` peut uniquement utiliser sa propre surface publique :
+`Pricing` peut utiliser les surfaces publiques :
 
 ```text
 PricingContract
+CatalogContract
 ```
 
-La structure est matérialisée dès l'Epic 2.6, sans autoriser d'accès direct à
-`Catalog` : les relations de prix utiliseront les identifiants partagés
+La dépendance vers `CatalogContract` est limitée au snapshot d'un packaging
+vendable nécessaire au contrat transactionnel préparé par l'Epic 2.6. Pricing
+n'accède jamais directement au Domain, à l'Infrastructure ou à la Presentation
+de Catalog. Les relations de prix utilisent les identifiants partagés
 `ProductId` et `ProductPackagingId`, conformément à l'ADR-0001.
 
 L'accès d'un module à son propre layer `Contract` permet à son implémentation

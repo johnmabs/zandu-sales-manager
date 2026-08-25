@@ -180,7 +180,10 @@ return static function (DeptracConfig $config): void {
                 ),
             Ruleset::forLayer($catalogContract),
             Ruleset::forLayer($pricing)
-                ->accesses($pricingContract),
+                ->accesses(
+                    $pricingContract,
+                    $catalogContract,
+                ),
             Ruleset::forLayer($pricingContract),
             Ruleset::forLayer($sales)
                 ->accesses(

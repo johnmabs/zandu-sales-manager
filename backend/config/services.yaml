@@ -125,6 +125,9 @@ services:
     Zandu\Modules\Catalog\Application\BarcodeResolver:
         alias: Zandu\Modules\Catalog\Application\RepositoryBarcodeResolver
 
+    Zandu\Modules\Catalog\Application\Contract\SaleablePackagingSnapshotProvider:
+        alias: Zandu\Modules\Catalog\Application\RepositorySaleablePackagingSnapshotProvider
+
     Zandu\Modules\Pricing\Domain\PriceList\PriceListRepository:
         alias: Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\DoctrinePriceListRepository
 
@@ -133,6 +136,9 @@ services:
 
     Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
         alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver
+
+    Zandu\Modules\Pricing\Application\Contract\PricingSnapshotResolver:
+        alias: Zandu\Modules\Pricing\Application\RepositoryPricingSnapshotResolver
 
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
