@@ -3874,6 +3874,56 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 
 ---
 
+# Lot 2 — Catalog & basic Pricing
+
+```text
+Epic 2.1   EN COURS  Catalog foundation
+Epic 2.2   À FAIRE   Unit of measure
+Epic 2.3   À FAIRE   Categories
+Epic 2.4   À FAIRE   Product lifecycle
+Epic 2.5   À FAIRE   Product packaging & barcode
+Epic 2.6   À FAIRE   Basic Pricing
+Epic 2.7   À FAIRE   Authorization, audit & integration
+Epic 2.8   À FAIRE   Catalog & Pricing API
+Epic 2.9   À FAIRE   Integration, PostgreSQL & tenant isolation tests
+Gate Lot 2 À FAIRE   Catalog & basic Pricing complet
+```
+
+## Étape 2.1.1 — Créer le module Catalog
+
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- bounded context `Catalog` matérialisé sous `backend/src/Modules/Catalog` ;
+- dossiers `Domain`, `Application/Contract`, `Infrastructure` et
+  `Presentation/Api` suivis par Git ;
+- aucun composant Inventory, Sales ou Cash Management introduit.
+
+### Validations
+
+```text
+Composer : valide
+Conteneur Symfony : valide
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit
+
+```text
+refactor(catalog): add bounded context structure
+```
+
+## Prochaine étape
+
+### Étape 2.1.2 — Ajouter le schéma PostgreSQL catalog
+
+**Statut : À FAIRE**
+
+Créer uniquement le schéma logique `catalog`, sans table métier anticipée.
+
+---
+
 # Discipline des commits
 
 Le Lot 0 suit une logique stricte de commits atomiques.
