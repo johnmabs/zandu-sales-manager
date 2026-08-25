@@ -115,6 +115,11 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             SecurityAction::OwnerAssigned => 'identity_access.owner_assigned.v1',
             SecurityAction::OwnerRemoved => 'identity_access.owner_removed.v1',
             SecurityAction::AuthorizationDenied => 'security.authorization_denied.v1',
+            SecurityAction::ProductActivated => 'catalog.product_activated.v1',
+            SecurityAction::ProductArchived => 'catalog.product_archived.v1',
+            SecurityAction::ProductPriceUpdated => 'pricing.product_price_updated.v1',
+            SecurityAction::PriceListActivated => 'pricing.price_list_activated.v1',
+            SecurityAction::CategoryArchived => 'catalog.category_archived.v1',
         };
     }
 }

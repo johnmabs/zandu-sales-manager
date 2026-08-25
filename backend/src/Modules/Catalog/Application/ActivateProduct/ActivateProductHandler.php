@@ -13,6 +13,10 @@ use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -27,6 +31,7 @@ final readonly class ActivateProductHandler
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(ActivateProduct $command): Product
@@ -44,12 +49,14 @@ final readonly class ActivateProductHandler
             $product = $this->loader->get($command->productId, $command->actorContext);
             $unit = $this->units->get($product->baseUnitId(), $command->actorContext);
             $unit->ensureSelectable();
+            $now = $this->clock->now();
             $product->activate(
                 $this->basePackagingPresence->exists($organizationId, $product->id(), $unit->id()),
                 $command->actorContext->actorId(),
-                $this->clock->now(),
+                $now,
             );
             $this->products->save($product);
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::ProductActivated, ResourceReference::for('product', $product->id()), SafeAuditMetadata::empty(), $now);
 
             return $product;
         });

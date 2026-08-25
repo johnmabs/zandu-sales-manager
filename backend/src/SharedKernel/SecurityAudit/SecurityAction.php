@@ -23,4 +23,9 @@ enum SecurityAction: string
     case OwnerAssigned = 'OWNER_ASSIGNED';
     case OwnerRemoved = 'OWNER_REMOVED';
     case AuthorizationDenied = 'AUTHORIZATION_DENIED';
+    case ProductActivated = 'PRODUCT_ACTIVATED';
+    case ProductArchived = 'PRODUCT_ARCHIVED';
+    case ProductPriceUpdated = 'PRODUCT_PRICE_UPDATED';
+    case PriceListActivated = 'PRICE_LIST_ACTIVATED';
+    case CategoryArchived = 'CATEGORY_ARCHIVED';
 }

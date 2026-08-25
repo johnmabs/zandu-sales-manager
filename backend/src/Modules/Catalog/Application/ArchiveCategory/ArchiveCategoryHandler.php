@@ -11,6 +11,10 @@ use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Access\ResourceScope;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -23,6 +27,7 @@ final readonly class ArchiveCategoryHandler
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $operationalGuard,
+        private SecurityAuditTrail $audit,
     ) {}
 
     public function __invoke(ArchiveCategory $command): Category
@@ -33,8 +38,10 @@ final readonly class ArchiveCategoryHandler
             $this->authorization->authorize($command->actorContext, PermissionCode::CategoryArchive, ResourceScope::organization($organizationId));
             $this->operationalGuard->assertTenant($command->actorContext);
             $category = $this->loader->get($command->categoryId, $command->actorContext);
-            $category->archive($command->actorContext->actorId(), $this->clock->now());
+            $now = $this->clock->now();
+            $category->archive($command->actorContext->actorId(), $now);
             $this->categories->save($category);
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::CategoryArchived, ResourceReference::for('category', $category->id()), SafeAuditMetadata::empty(), $now);
 
             return $category;
         });

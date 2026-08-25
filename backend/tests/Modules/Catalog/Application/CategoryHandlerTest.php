@@ -40,6 +40,10 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
@@ -58,6 +62,7 @@ final class CategoryHandlerTest extends TestCase
     private FrozenClock $clock;
     private RecordingCategoryAuthorization $authorization;
     private RecordingCategoryOperationalGuard $operationalGuard;
+    private RecordingCategorySecurityAuditTrail $audit;
 
     protected function setUp(): void
     {
@@ -66,6 +71,7 @@ final class CategoryHandlerTest extends TestCase
         $this->clock = new FrozenClock(new DateTimeImmutable('2026-08-25T23:00:00Z'));
         $this->authorization = new RecordingCategoryAuthorization();
         $this->operationalGuard = new RecordingCategoryOperationalGuard();
+        $this->audit = new RecordingCategorySecurityAuditTrail();
     }
 
     public function testItCreatesARootCategoryInsideALockedTenantTransaction(): void
@@ -110,10 +116,11 @@ final class CategoryHandlerTest extends TestCase
         $category = $activate(new ActivateCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Active, $category->status());
 
-        $archive = new ArchiveCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
+        $archive = new ArchiveCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard, $this->audit);
         $category = $archive(new ArchiveCategory($category->id(), $this->context()));
         self::assertSame(CategoryStatus::Archived, $category->status());
         self::assertSame(5, $category->version());
+        self::assertSame([[SecurityAction::CategoryArchived, 'CATEGORY', self::CATEGORY_ID]], $this->audit->records);
         self::assertSame([
             PermissionCode::CategoryCreate,
             PermissionCode::CategoryUpdate,
@@ -257,6 +264,22 @@ final class RecordingCategoryOperationalGuard implements OperationalGuard
     public function assertStore(ActorContext $actorContext, StoreId $storeId, OperationalMode $mode = OperationalMode::Standard): void
     {
         TestCase::fail('Category mutations must not use a store-scoped operational guard.');
+    }
+}
+
+final class RecordingCategorySecurityAuditTrail implements SecurityAuditTrail
+{
+    /** @var list<array{SecurityAction,string,string}> */
+    public array $records = [];
+
+    public function recordSuccess(ActorContext $actorContext, SecurityAction $action, ResourceReference $target, SafeAuditMetadata $metadata, DateTimeImmutable $occurredAt, ?OrganizationId $organizationId = null): void
+    {
+        $this->records[] = [$action, $target->type, $target->id];
+    }
+
+    public function recordDenied(ActorContext $actorContext, ResourceReference $target, string $reason, SafeAuditMetadata $metadata, DateTimeImmutable $occurredAt): void
+    {
+        TestCase::fail('Successful category mutations must not record a denied audit outcome.');
     }
 }
 

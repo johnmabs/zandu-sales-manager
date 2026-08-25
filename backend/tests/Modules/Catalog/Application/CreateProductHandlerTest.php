@@ -56,6 +56,10 @@ use Zandu\SharedKernel\Identity\TaxCategoryId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\SecurityAudit\ResourceReference;
+use Zandu\SharedKernel\SecurityAudit\SafeAuditMetadata;
+use Zandu\SharedKernel\SecurityAudit\SecurityAction;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
@@ -297,6 +301,7 @@ final class CreateProductHandlerTest extends TestCase
             PermissionCode::ProductActivate,
             self::isInstanceOf(ResourceScope::class),
         );
+        $audit = $this->auditExpecting(SecurityAction::ProductActivated, 'PRODUCT', self::PRODUCT_ID);
 
         $activated = $this->activateHandler(
             $products,
@@ -304,6 +309,7 @@ final class CreateProductHandlerTest extends TestCase
             $presence,
             $authorization,
             $this->createStub(OperationalGuard::class),
+            $audit,
         )(new ActivateProduct($product->id(), $context));
 
         self::assertSame(ProductStatus::Active, $activated->status());
@@ -355,7 +361,12 @@ final class CreateProductHandlerTest extends TestCase
         self::assertSame(ProductStatus::Active, $reactivated->status());
 
         $archiveAuthorization = $this->authorizationExpecting(PermissionCode::ProductArchive);
-        $archived = $this->archiveHandler($products, $archiveAuthorization, $guard)(
+        $archived = $this->archiveHandler(
+            $products,
+            $archiveAuthorization,
+            $guard,
+            $this->auditExpecting(SecurityAction::ProductArchived, 'PRODUCT', self::PRODUCT_ID),
+        )(
             new ArchiveProduct($product->id(), $context),
         );
         self::assertSame(ProductStatus::Archived, $archived->status());
@@ -431,6 +442,7 @@ final class CreateProductHandlerTest extends TestCase
         BasePackagingPresence $presence,
         AuthorizationService $authorization,
         OperationalGuard $guard,
+        ?SecurityAuditTrail $audit = null,
     ): ActivateProductHandler {
         return new ActivateProductHandler(
             new TenantProductLoader($products),
@@ -446,6 +458,7 @@ final class CreateProductHandlerTest extends TestCase
             },
             $authorization,
             $guard,
+            $audit ?? $this->createStub(SecurityAuditTrail::class),
         );
     }
 
@@ -483,6 +496,7 @@ final class CreateProductHandlerTest extends TestCase
         ProductRepository $products,
         AuthorizationService $authorization,
         OperationalGuard $guard,
+        ?SecurityAuditTrail $audit = null,
     ): ArchiveProductHandler {
         return new ArchiveProductHandler(
             new TenantProductLoader($products),
@@ -491,7 +505,22 @@ final class CreateProductHandlerTest extends TestCase
             $this->transaction(),
             $authorization,
             $guard,
+            $audit ?? $this->createStub(SecurityAuditTrail::class),
         );
+    }
+
+    private function auditExpecting(SecurityAction $action, string $type, string $id): SecurityAuditTrail
+    {
+        $audit = $this->createMock(SecurityAuditTrail::class);
+        $audit->expects(self::once())->method('recordSuccess')->with(
+            self::isInstanceOf(ActorContext::class),
+            $action,
+            self::callback(static fn(ResourceReference $target): bool => $type === $target->type && $id === $target->id),
+            self::isInstanceOf(SafeAuditMetadata::class),
+            self::isInstanceOf(DateTimeImmutable::class),
+        );
+
+        return $audit;
     }
 
     private function authorizationExpecting(PermissionCode $permission): AuthorizationService
