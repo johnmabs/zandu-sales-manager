@@ -82,6 +82,7 @@ WHERE (namespace.nspname, relation.relname) IN (
     ('organization', 'store_closures'),
     ('identity_access', 'organization_invitations'),
     ('identity_access', 'organization_memberships'),
+    ('catalog', 'categories'),
     ('catalog', 'units_of_measure'),
     ('security', 'security_audit_entries'),
     ('messaging', 'outbox_messages')
@@ -89,7 +90,7 @@ WHERE (namespace.nspname, relation.relname) IN (
 ORDER BY namespace.nspname, relation.relname
 SQL);
 
-        self::assertCount(8, $tables);
+        self::assertCount(9, $tables);
         foreach ($tables as $table) {
             self::assertTrue((bool) $table['relrowsecurity'], sprintf('%s.%s must enable RLS.', $table['schema_name'], $table['table_name']));
             self::assertTrue((bool) $table['relforcerowsecurity'], sprintf('%s.%s must force RLS.', $table['schema_name'], $table['table_name']));

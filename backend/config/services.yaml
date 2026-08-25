@@ -107,6 +107,9 @@ services:
     Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository:
         alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineUnitOfMeasureRepository
 
+    Zandu\Modules\Catalog\Domain\Category\CategoryRepository:
+        alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineCategoryRepository
+
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
             $pepper: '%kernel.secret%'
