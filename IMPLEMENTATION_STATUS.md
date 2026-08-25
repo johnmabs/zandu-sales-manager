@@ -5014,11 +5014,54 @@ feat(pricing): persist product prices
 
 ### Étape 2.6.6 — Price resolver de base
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- contrat public `ProductPriceResolver` exposé par `PricingContract`, sans
+  dépendance du futur module Sales vers le domaine interne Pricing ;
+- entrée explicitement tenant-scoped : organisation, produit, packaging et
+  instant métier ;
+- résultat immutable `ResolvedProductPrice` contenant `PriceListId`,
+  `ProductPriceId`, montant décimal exact, devise et version source ;
+- résolution limitée aux prix et listes `ACTIVE` dont les périodes inclusives
+  couvrent l'instant métier ;
+- sélection déterministe par priorité de liste décroissante, puis
+  `PriceListId` et `ProductPriceId` croissants comme départage stable ;
+- recherche Doctrine tenant-scoped exploitant l'index préparé à l'étape 2.6.5 ;
+- absence de prix représentée par `ProductPriceNotFound`, compatible avec le
+  contrat d'erreur `NOT_FOUND`, sans valeur zéro ni prix deviné ;
+- tests du résultat exact et versionné, de l'absence explicite et de la
+  sélection PostgreSQL par priorité.
+
+### Validations
+
+```text
+PHPUnit ciblé resolver/persistence : OK (6 tests, 16 assertions)
+PHPUnit complet : OK (399 tests, 1543 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(pricing): add basic product price resolution
+```
+
+## Prochaine étape
+
+### Étape 2.6.7 — Préparer les snapshots futurs
+
 **Statut : À FAIRE**
 
-Ajouter un resolver tenant-scoped et déterministe produisant le prix exact, sa
-liste, son identifiant et sa version à un instant métier, avec une absence de
-prix explicitement représentée par `ProductPriceNotFound`.
+Exposer, sans introduire le domaine Sales, un contrat de snapshot permettant de
+figer les identifiants produit/packaging/prix, le facteur de conditionnement, le
+montant, la devise et les versions sources nécessaires aux futures lignes de
+vente.
 
 ---
 
