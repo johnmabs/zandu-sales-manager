@@ -11,6 +11,7 @@ use Zandu\Modules\Pricing\Domain\PriceList\PriceList;
 #[ORM\Entity]
 #[ORM\Table(name: 'price_lists', schema: 'pricing')]
 #[ORM\UniqueConstraint(name: 'price_list_tenant_code_unique', columns: ['organization_id', 'code'])]
+#[ORM\UniqueConstraint(name: 'price_list_tenant_id_currency_unique', columns: ['organization_id', 'id', 'currency'])]
 final class PriceListRecord
 {
     private function __construct(

@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Zandu\Modules\Pricing\Infrastructure\Persistence\Orm;
+
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
+use Zandu\Modules\Pricing\Domain\ProductPrice\ProductPrice;
+use Zandu\Modules\Pricing\Domain\ProductPrice\ProductPriceNotFound;
+use Zandu\Modules\Pricing\Domain\ProductPrice\ProductPriceRepository;
+use Zandu\Modules\Pricing\Domain\ProductPrice\ProductPriceStatus;
+use Zandu\SharedKernel\Decimal\DecimalFactory;
+use Zandu\SharedKernel\Identity\ActorId;
+use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\PriceListId;
+use Zandu\SharedKernel\Identity\ProductId;
+use Zandu\SharedKernel\Identity\ProductPackagingId;
+use Zandu\SharedKernel\Identity\ProductPriceId;
+use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\Money\Money;
+
+final readonly class DoctrineProductPriceRepository implements ProductPriceRepository
+{
+    public function __construct(
+        private EntityManagerInterface $em,
+        private UuidFactory $uuids,
+        private DecimalFactory $decimals,
+    ) {}
+
+    public function save(ProductPrice $productPrice): void
+    {
+        $record = $this->em->find(ProductPriceRecord::class, $productPrice->id()->toString());
+        if ($record instanceof ProductPriceRecord) {
+            $expected = $productPrice->version() - 1;
+            if ($record->version() !== $expected) {
+                throw OptimisticLockException::lockFailedVersionMismatch($record, $expected, $record->version());
+            }
+            $record->synchronize($productPrice);
+        } else {
+            $this->em->persist(ProductPriceRecord::fromAggregate($productPrice));
+        }
+        $this->em->flush();
+    }
+
+    public function get(OrganizationId $organizationId, ProductPriceId $id): ProductPrice
+    {
+        return $this->find($organizationId, $id) ?? throw ProductPriceNotFound::withId($id);
+    }
+
+    public function find(OrganizationId $organizationId, ProductPriceId $id): ?ProductPrice
+    {
+        $value = $this->em->getRepository(ProductPriceRecord::class)->findOneBy([
+            'id' => $id->toString(),
+            'organizationId' => $organizationId->toString(),
+        ]);
+
+        if (!$value instanceof ProductPriceRecord) {
+            return null;
+        }
+
+        return ProductPrice::reconstitute(
+            ProductPriceId::fromString($value->id(), $this->uuids),
+            OrganizationId::fromString($value->organizationId(), $this->uuids),
+            PriceListId::fromString($value->priceListId(), $this->uuids),
+            ProductId::fromString($value->productId(), $this->uuids),
+            ProductPackagingId::fromString($value->packagingId(), $this->uuids),
+            Money::fromString($value->amount(), Currency::fromCode($value->currency()), $this->decimals),
+            ProductPriceStatus::from($value->status()),
+            $value->validFrom(),
+            $value->validTo(),
+            $value->createdAt(),
+            ActorId::fromString($value->createdBy(), $this->uuids),
+            $value->version(),
+        );
+    }
+}
