@@ -3879,7 +3879,7 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 ```text
 Epic 2.1   TERMINÉ   Catalog foundation
 Epic 2.2   TERMINÉ   Unit of measure
-Epic 2.3   EN COURS  Categories
+Epic 2.3   TERMINÉ   Categories
 Epic 2.4   À FAIRE   Product lifecycle
 Epic 2.5   À FAIRE   Product packaging & barcode
 Epic 2.6   À FAIRE   Basic Pricing
@@ -4187,11 +4187,59 @@ feat(catalog): persist categories
 
 ### Étape 2.3.3 — Use cases Category
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- commandes et handlers dédiés `CreateCategory`, `UpdateCategory`,
+  `MoveCategory`, `ActivateCategory`, `DeactivateCategory` et
+  `ArchiveCategory` ;
+- toutes les opérations exécutées dans une transaction tenant-scoped ;
+- chargement des catégories et parents limité au tenant de l'acteur ;
+- création et déplacement protégés par un verrou transactionnel PostgreSQL de
+  hiérarchie propre à l'organisation ;
+- reconstruction de la chaîne complète des ancêtres sous verrou avant chaque
+  déplacement ;
+- rejet d'un déplacement sous un descendant, y compris face aux mutations
+  concurrentes sérialisées ;
+- aucun changement générique de statut ni dépendance anticipée vers l'Epic 2.7.
+
+### Validations
+
+```text
+Verrou PostgreSQL : testé dans une transaction tenant réelle
+PHPUnit ciblé handlers/repository : OK (12 tests, 26 assertions)
+PHPUnit complet : OK (325 tests, 1251 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add category management
+```
+
+## Epic 2.3 — Résultat
+
+**Statut : TERMINÉ**
+
+Les catégories tenant-owned disposent d'un modèle hiérarchique, d'une
+persistence PostgreSQL/RLS et de six opérations métier dédiées. Les cycles sont
+interdits dans le domaine, détectés lors du parcours des données persistées et
+prévenus lors des déplacements concurrents par sérialisation tenant.
+
+## Prochaine étape
+
+### Étape 2.4.1 — Ajouter l'aggregate Product
+
 **Statut : À FAIRE**
 
-Implémenter les commandes dédiées de création, mise à jour, déplacement,
-activation, désactivation et archivage, avec construction robuste de la chaîne
-d'ancêtres lors d'un déplacement.
+Implémenter le cœur du catalogue pour un SKU vendable, ses statuts et ses
+invariants métier, sans anticiper sa persistence ni son API.
 
 ---
 
