@@ -32,6 +32,11 @@ final readonly class ConversionFactor
         return $this->value->equals($other->value);
     }
 
+    public function isOne(): bool
+    {
+        return 1 === preg_match('/^\+?0*1(?:\.0*)?$/', $this->value->toString());
+    }
+
     private static function assertMaximumScale(string $value): void
     {
         $fraction = strchr($value, '.');

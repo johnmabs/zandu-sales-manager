@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use LogicException;
+use Zandu\Modules\Catalog\Domain\Product\Product;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
@@ -21,6 +22,7 @@ final class ProductPackaging
         private readonly ProductPackagingId $id,
         private readonly OrganizationId $organizationId,
         private readonly ProductId $productId,
+        private readonly bool $base,
         private readonly ProductPackagingCode $code,
         private ProductPackagingName $name,
         private readonly UnitOfMeasureId $unitId,
@@ -49,10 +51,83 @@ final class ProductPackaging
         }
     }
 
-    public static function create(
+    public static function createAdditional(
         ProductPackagingId $id,
         OrganizationId $organizationId,
         ProductId $productId,
+        ProductPackagingCode $code,
+        ProductPackagingName $name,
+        UnitOfMeasureId $unitId,
+        ConversionFactor $conversionFactor,
+        ProductPackagingPrecision $precision,
+        Quantity $minimumQuantity,
+        Quantity $quantityIncrement,
+        bool $allowedForSale,
+        bool $allowedForPurchase,
+        ActorId $actorId,
+        DateTimeImmutable $occurredAt,
+    ): self {
+        return self::createPackaging(
+            $id,
+            $organizationId,
+            $productId,
+            false,
+            $code,
+            $name,
+            $unitId,
+            $conversionFactor,
+            $precision,
+            $minimumQuantity,
+            $quantityIncrement,
+            $allowedForSale,
+            $allowedForPurchase,
+            $actorId,
+            $occurredAt,
+        );
+    }
+
+    public static function createBase(
+        ProductPackagingId $id,
+        Product $product,
+        ProductPackagingCode $code,
+        ProductPackagingName $name,
+        ConversionFactor $conversionFactor,
+        ProductPackagingPrecision $precision,
+        Quantity $minimumQuantity,
+        Quantity $quantityIncrement,
+        bool $allowedForSale,
+        bool $allowedForPurchase,
+        ActorId $actorId,
+        DateTimeImmutable $occurredAt,
+    ): self {
+        if (!$conversionFactor->isOne()) {
+            throw new InvalidArgumentException('Base product packaging conversion factor must equal one.');
+        }
+
+        return self::createPackaging(
+            $id,
+            $product->organizationId(),
+            $product->id(),
+            true,
+            $code,
+            $name,
+            $product->baseUnitId(),
+            $conversionFactor,
+            $precision,
+            $minimumQuantity,
+            $quantityIncrement,
+            $allowedForSale,
+            $allowedForPurchase,
+            $actorId,
+            $occurredAt,
+        );
+    }
+
+    private static function createPackaging(
+        ProductPackagingId $id,
+        OrganizationId $organizationId,
+        ProductId $productId,
+        bool $base,
         ProductPackagingCode $code,
         ProductPackagingName $name,
         UnitOfMeasureId $unitId,
@@ -69,6 +144,7 @@ final class ProductPackaging
             $id,
             $organizationId,
             $productId,
+            $base,
             $code,
             $name,
             $unitId,
@@ -91,6 +167,7 @@ final class ProductPackaging
         ProductPackagingId $id,
         OrganizationId $organizationId,
         ProductId $productId,
+        bool $base,
         ProductPackagingCode $code,
         ProductPackagingName $name,
         UnitOfMeasureId $unitId,
@@ -107,7 +184,7 @@ final class ProductPackaging
         ?ActorId $updatedBy,
         int $version,
     ): self {
-        return new self($id, $organizationId, $productId, $code, $name, $unitId, $conversionFactor, $precision, $minimumQuantity, $quantityIncrement, $allowedForSale, $allowedForPurchase, $status, self::utc($createdAt), $createdBy, null !== $updatedAt ? self::utc($updatedAt) : null, $updatedBy, $version);
+        return new self($id, $organizationId, $productId, $base, $code, $name, $unitId, $conversionFactor, $precision, $minimumQuantity, $quantityIncrement, $allowedForSale, $allowedForPurchase, $status, self::utc($createdAt), $createdBy, null !== $updatedAt ? self::utc($updatedAt) : null, $updatedBy, $version);
     }
 
     public function updateCommercialSettings(
@@ -180,6 +257,11 @@ final class ProductPackaging
     public function productId(): ProductId
     {
         return $this->productId;
+    }
+
+    public function isBase(): bool
+    {
+        return $this->base;
     }
     public function code(): ProductPackagingCode
     {

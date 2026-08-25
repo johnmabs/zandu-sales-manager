@@ -9,6 +9,10 @@ use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\Catalog\Domain\Product\Product;
+use Zandu\Modules\Catalog\Domain\Product\ProductCode;
+use Zandu\Modules\Catalog\Domain\Product\ProductName;
+use Zandu\Modules\Catalog\Domain\Product\ProductType;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ConversionFactor;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackaging;
 use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingCode;
@@ -46,6 +50,7 @@ final class ProductPackagingTest extends TestCase
         self::assertSame(self::PACKAGING_ID, $packaging->id()->toString());
         self::assertSame(self::ORGANIZATION_ID, $packaging->organizationId()->toString());
         self::assertSame(self::PRODUCT_ID, $packaging->productId()->toString());
+        self::assertFalse($packaging->isBase());
         self::assertSame('CARTON-24', $packaging->code()->value());
         self::assertSame('Carton de 24', $packaging->name()->value());
         self::assertSame('24.000000000001', $packaging->conversionFactor()->toString());
@@ -145,6 +150,52 @@ final class ProductPackagingTest extends TestCase
         ProductPackagingPrecision::fromInt(13);
     }
 
+    public function testBasePackagingDerivesOwnershipAndUnitFromProduct(): void
+    {
+        $product = $this->product();
+        $packaging = ProductPackaging::createBase(
+            ProductPackagingId::fromString(self::PACKAGING_ID, new SymfonyUuidFactory()),
+            $product,
+            ProductPackagingCode::fromString('EA'),
+            ProductPackagingName::fromString('Article'),
+            new ConversionFactor($this->decimals->fromString('1.000')),
+            ProductPackagingPrecision::fromInt(2),
+            $this->quantity('0.25'),
+            $this->quantity('0.25'),
+            true,
+            true,
+            $this->actorId(),
+            new DateTimeImmutable('2026-08-25T17:00:00Z'),
+        );
+
+        self::assertTrue($packaging->isBase());
+        self::assertTrue($packaging->organizationId()->equals($product->organizationId()));
+        self::assertTrue($packaging->productId()->equals($product->id()));
+        self::assertTrue($packaging->unitId()->equals($product->baseUnitId()));
+        self::assertSame('1.000', $packaging->conversionFactor()->toString());
+    }
+
+    public function testBasePackagingRequiresAConversionFactorOfExactlyOne(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must equal one');
+
+        ProductPackaging::createBase(
+            ProductPackagingId::fromString(self::PACKAGING_ID, new SymfonyUuidFactory()),
+            $this->product(),
+            ProductPackagingCode::fromString('PACK-6'),
+            ProductPackagingName::fromString('Pack de 6'),
+            new ConversionFactor($this->decimals->fromString('6')),
+            ProductPackagingPrecision::fromInt(0),
+            $this->quantity('1'),
+            $this->quantity('1'),
+            true,
+            true,
+            $this->actorId(),
+            new DateTimeImmutable('2026-08-25T17:00:00Z'),
+        );
+    }
+
     private function packaging(
         string $minimumQuantity = '0.25',
         int $precision = 2,
@@ -153,7 +204,7 @@ final class ProductPackagingTest extends TestCase
     ): ProductPackaging {
         $factory = new SymfonyUuidFactory();
 
-        return ProductPackaging::create(
+        return ProductPackaging::createAdditional(
             ProductPackagingId::fromString(self::PACKAGING_ID, $factory),
             OrganizationId::fromString(self::ORGANIZATION_ID, $factory),
             ProductId::fromString(self::PRODUCT_ID, $factory),
@@ -174,6 +225,26 @@ final class ProductPackagingTest extends TestCase
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, $this->decimals);
+    }
+
+    private function product(): Product
+    {
+        $factory = new SymfonyUuidFactory();
+
+        return Product::createDraft(
+            ProductId::fromString(self::PRODUCT_ID, $factory),
+            OrganizationId::fromString(self::ORGANIZATION_ID, $factory),
+            ProductCode::fromString('SKU-001'),
+            ProductName::fromString('Café'),
+            null,
+            ProductType::Physical,
+            UnitOfMeasureId::fromString(self::UNIT_ID, $factory),
+            true,
+            null,
+            null,
+            $this->actorId(),
+            new DateTimeImmutable('2026-08-25T16:00:00Z'),
+        );
     }
 
     private function actorId(): ActorId
