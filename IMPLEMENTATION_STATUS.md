@@ -5310,15 +5310,69 @@ feat(audit): record catalog and pricing operations
 docs(architecture): align pricing module dependencies
 ```
 
+### Étape 2.7.6 — Outbox
+
+**Statut : TERMINÉE**
+
+Les cinq opérations Catalog/Pricing retenues comme événements d'intégration sont
+publiées par le `TransactionalSecurityAuditTrail` sous forme d'enveloppes
+versionnées :
+
+```text
+catalog.product_activated.v1
+catalog.product_archived.v1
+catalog.category_archived.v1
+pricing.price_list_activated.v1
+pricing.product_price_updated.v1
+```
+
+La mutation métier et l'appel d'audit vivent dans le même `TenantTransaction` ;
+l'audit et son message outbox utilisent la même connexion DBAL. Une erreur avant
+l'audit, pendant l'écriture outbox ou avant le commit annule donc mutation,
+audit et outbox ensemble.
+
+Les enveloppes propagent organizationId, correlationId et causationId. Elles
+référencent l'audit et la ressource sans sérialiser directement les agrégats ou
+leurs domain events internes, ce qui évite de dupliquer un second message pour
+la même opération sensible.
+
+### Validations
+
+```text
+PHPUnit ciblé outbox/atomicité/handlers : OK (24 tests, 224 assertions)
+PHPUnit complet : OK (403 tests, 1759 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(outbox): verify catalog pricing event envelopes
+```
+
+## Epic 2.7 — Authorization, audit & integration
+
+**Statut : TERMINÉ**
+
+La Definition of Done est satisfaite : permissions et rôles sont explicites,
+les mutations utilisent autorisation et guard opérationnel, les actions
+sensibles sont auditées, leur publication outbox est transactionnelle et les
+rollbacks sont testés.
+
 ## Prochaine étape
 
-### Étape 2.7.6 — Outbox
+### Étape 2.8.1 — API Categories
 
 **Statut : À FAIRE**
 
-Vérifier et tester que les domain events destinés à sortir de leur bounded
-context sont persistés dans l'outbox atomiquement avec la mutation métier et
-l'audit, avec correlationId et causationId propagés.
+Exposer les endpoints tenant-scoped de lecture, création, modification,
+déplacement, activation, désactivation et archivage des catégories via des DTO
+placés dans `Catalog/Presentation/Api`, sans exposer les agrégats ni les records
+Doctrine.
 
 ---
 
