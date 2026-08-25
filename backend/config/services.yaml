@@ -122,6 +122,9 @@ services:
     Zandu\Modules\Catalog\Domain\ProductBarcode\ProductBarcodeRepository:
         alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineProductBarcodeRepository
 
+    Zandu\Modules\Catalog\Application\BarcodeResolver:
+        alias: Zandu\Modules\Catalog\Application\RepositoryBarcodeResolver
+
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
             $pepper: '%kernel.secret%'
