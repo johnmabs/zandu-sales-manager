@@ -11,6 +11,7 @@ use Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackaging;
 #[ORM\Entity]
 #[ORM\Table(name: 'product_packagings', schema: 'catalog')]
 #[ORM\UniqueConstraint(name: 'product_packaging_code_unique', columns: ['organization_id', 'product_id', 'code'])]
+#[ORM\UniqueConstraint(name: 'product_packaging_tenant_product_id_unique', columns: ['organization_id', 'product_id', 'id'])]
 final class ProductPackagingRecord
 {
     private function __construct(
