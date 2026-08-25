@@ -4788,10 +4788,45 @@ résolution tenant-safe persistée sous PostgreSQL.
 
 ### Étape 2.6.1 — Créer le sous-domaine / module logique Pricing
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- bounded context autonome `Pricing` matérialisé sous `Modules/Pricing`, avec
+  les couches `Application`, `Domain`, `Infrastructure` et `Presentation/Api` ;
+- surface publique `Application/Contract` préparée sans contrat artificiel ni
+  dépendance cross-context prématurée ;
+- layers Deptrac `Pricing` et `PricingContract` ajoutés ;
+- seule la dépendance interne `Pricing → PricingContract` est autorisée ;
+- aucun accès direct de Pricing aux aggregates, repositories ou tables internes
+  de Catalog ; les futurs liens utiliseront les identifiants partagés ;
+- documentation des fitness tests alignée sur la frontière exécutable.
+
+### Validations
+
+```text
+PHPUnit complet : OK (376 tests, 1450 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+refactor(pricing): add basic pricing structure
+```
+
+## Prochaine étape
+
+### Étape 2.6.2 — Ajouter PriceList
+
 **Statut : À FAIRE**
 
-Définir la frontière logique de Pricing conformément aux décisions DDD du
-repository avant d'introduire le prix de vente de base d'un packaging.
+Introduire l'aggregate tenant-owned `PriceList`, ses statuts, son scope
+organisationnel, sa période de validité, sa priorité et ses événements métier.
 
 ---
 
