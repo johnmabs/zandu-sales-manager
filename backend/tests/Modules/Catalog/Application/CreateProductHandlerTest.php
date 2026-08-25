@@ -39,7 +39,6 @@ use Zandu\Modules\Catalog\Domain\UnitOfMeasureDimension;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureName;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasurePrecision;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
-use Zandu\Modules\Catalog\Infrastructure\Persistence\UnavailableBasePackagingPresence;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
@@ -319,7 +318,8 @@ final class CreateProductHandlerTest extends TestCase
         $products->method('get')->willReturn($product);
         $units = $this->createStub(UnitOfMeasureRepository::class);
         $units->method('get')->willReturn($this->unit());
-        $presence = new UnavailableBasePackagingPresence();
+        $presence = $this->createStub(BasePackagingPresence::class);
+        $presence->method('exists')->willReturn(false);
 
         self::assertFalse($presence->exists($this->organizationId(), $product->id(), $product->baseUnitId()));
         $this->expectException(LogicException::class);

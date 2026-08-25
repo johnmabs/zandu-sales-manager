@@ -114,7 +114,10 @@ services:
         alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineProductRepository
 
     Zandu\Modules\Catalog\Application\Contract\BasePackagingPresence:
-        alias: Zandu\Modules\Catalog\Infrastructure\Persistence\UnavailableBasePackagingPresence
+        alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineProductPackagingRepository
+
+    Zandu\Modules\Catalog\Domain\ProductPackaging\ProductPackagingRepository:
+        alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineProductPackagingRepository
 
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
