@@ -14,6 +14,7 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\Uuid;
+use Zandu\SharedKernel\Messaging\CausationId;
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Messaging\OutboxMessage;
 use Zandu\SharedKernel\Messaging\OutboxRepository;
@@ -57,6 +58,66 @@ final class TransactionalSecurityAuditTrailTest extends TestCase
         self::assertSame('organization.suspended.v1', $outbox->messages[0]->type);
         self::assertSame('ORGANIZATION_SUSPENDED', $outbox->messages[0]->payload['action']);
         self::assertSame($audits->entries[0]->id->toString(), $outbox->messages[0]->payload['auditEntryId']);
+    }
+
+    public function testItPublishesVersionedCatalogAndPricingEnvelopesWithTraceContext(): void
+    {
+        $audits = new InMemorySecurityAudits();
+        $outbox = new InMemoryOutbox();
+        $factory = new SymfonyUuidFactory();
+        $organizationId = OrganizationId::fromString('0198e451-147c-72d5-b75a-a936797ff9c8', $factory);
+        $correlationId = CorrelationId::fromString('0198e452-147c-72d5-b75a-a936797ff9c8', $factory);
+        $causationId = CausationId::fromString('0198e453-147c-72d5-b75a-a936797ff9c8', $factory);
+        $context = new ActorContext(
+            ActorId::fromString('0198e454-147c-72d5-b75a-a936797ff9c8', $factory),
+            $organizationId,
+            ActorType::User,
+            $correlationId,
+            new DateTimeImmutable('2026-08-25T09:00:00+00:00'),
+            causationId: $causationId,
+        );
+        $uuidValues = [
+            '0198e455-147c-72d5-b75a-a936797ff9c8',
+            '0198e456-147c-72d5-b75a-a936797ff9c8',
+            '0198e457-147c-72d5-b75a-a936797ff9c8',
+            '0198e458-147c-72d5-b75a-a936797ff9c8',
+            '0198e459-147c-72d5-b75a-a936797ff9c8',
+            '0198e45a-147c-72d5-b75a-a936797ff9c8',
+            '0198e45b-147c-72d5-b75a-a936797ff9c8',
+            '0198e45c-147c-72d5-b75a-a936797ff9c8',
+            '0198e45d-147c-72d5-b75a-a936797ff9c8',
+            '0198e45e-147c-72d5-b75a-a936797ff9c8',
+        ];
+        $trail = new TransactionalSecurityAuditTrail(
+            $audits,
+            $outbox,
+            new SequentialIdGenerator(array_map($factory->fromString(...), $uuidValues)),
+        );
+        $actions = [
+            [SecurityAction::ProductActivated, 'catalog.product_activated.v1', 'product'],
+            [SecurityAction::ProductArchived, 'catalog.product_archived.v1', 'product'],
+            [SecurityAction::CategoryArchived, 'catalog.category_archived.v1', 'category'],
+            [SecurityAction::PriceListActivated, 'pricing.price_list_activated.v1', 'price_list'],
+            [SecurityAction::ProductPriceUpdated, 'pricing.product_price_updated.v1', 'product_price'],
+        ];
+
+        foreach ($actions as [$action, , $targetType]) {
+            $trail->recordSuccess(
+                $context,
+                $action,
+                ResourceReference::for($targetType, $organizationId),
+                SafeAuditMetadata::empty(),
+                new DateTimeImmutable('2026-08-25T10:00:00+00:00'),
+            );
+        }
+
+        self::assertCount(5, $audits->entries);
+        self::assertSame(array_column($actions, 1), array_map(static fn(OutboxMessage $message): string => $message->type, $outbox->messages));
+        foreach ($outbox->messages as $message) {
+            self::assertTrue($message->organizationId->equals($organizationId));
+            self::assertSame($correlationId->toString(), $message->correlationId->toString());
+            self::assertSame($causationId->toString(), $message->causationId?->toString());
+        }
     }
 }
 
