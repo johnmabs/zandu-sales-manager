@@ -16,7 +16,7 @@ final class PermissionCodeTest extends TestCase
             'STORE_CREATE', 'STORE_READ', 'STORE_UPDATE', 'STORE_SUSPEND', 'STORE_CLOSE',
             'MEMBER_INVITE', 'MEMBER_READ', 'MEMBER_SUSPEND', 'MEMBER_REVOKE',
             'ROLE_READ', 'ROLE_ASSIGN', 'ROLE_REVOKE', 'SECURITY_AUDIT_READ',
-            'PRODUCT_CREATE',
+            'PRODUCT_CREATE', 'PRODUCT_UPDATE',
         ], array_column(PermissionCode::cases(), 'value'));
     }
 }

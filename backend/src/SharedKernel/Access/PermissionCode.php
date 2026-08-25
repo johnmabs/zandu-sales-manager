@@ -28,4 +28,5 @@ enum PermissionCode: string
     case SecurityAuditRead = 'SECURITY_AUDIT_READ';
 
     case ProductCreate = 'PRODUCT_CREATE';
+    case ProductUpdate = 'PRODUCT_UPDATE';
 }

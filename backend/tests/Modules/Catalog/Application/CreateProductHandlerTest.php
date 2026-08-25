@@ -10,15 +10,20 @@ use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Catalog\Application\CreateProduct\CreateProduct;
 use Zandu\Modules\Catalog\Application\CreateProduct\CreateProductHandler;
 use Zandu\Modules\Catalog\Application\TenantCategoryLoader;
+use Zandu\Modules\Catalog\Application\TenantProductLoader;
 use Zandu\Modules\Catalog\Application\TenantUnitOfMeasureLoader;
+use Zandu\Modules\Catalog\Application\UpdateProduct\UpdateProduct;
+use Zandu\Modules\Catalog\Application\UpdateProduct\UpdateProductHandler;
 use Zandu\Modules\Catalog\Domain\Category\Category;
 use Zandu\Modules\Catalog\Domain\Category\CategoryName;
 use Zandu\Modules\Catalog\Domain\Category\CategoryRepository;
 use Zandu\Modules\Catalog\Domain\Product\Product;
 use Zandu\Modules\Catalog\Domain\Product\ProductCode;
 use Zandu\Modules\Catalog\Domain\Product\ProductCodeAlreadyExists;
+use Zandu\Modules\Catalog\Domain\Product\ProductName;
 use Zandu\Modules\Catalog\Domain\Product\ProductRepository;
 use Zandu\Modules\Catalog\Domain\Product\ProductStatus;
+use Zandu\Modules\Catalog\Domain\Product\ProductType;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasure;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureCode;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureDimension;
@@ -176,6 +181,92 @@ final class CreateProductHandlerTest extends TestCase
         )($command);
     }
 
+    public function testItUpdatesOnlyTheDraftProductProfile(): void
+    {
+        $context = $this->context();
+        $product = $this->existingProduct();
+        $products = $this->createMock(ProductRepository::class);
+        $products->expects(self::once())->method('get')->willReturn($product);
+        $products->expects(self::once())->method('findByCode')->willReturn($product);
+        $products->expects(self::once())->method('save')->with($product);
+        $units = $this->createStub(UnitOfMeasureRepository::class);
+        $units->method('get')->willReturn($this->unit());
+        $categories = $this->createStub(CategoryRepository::class);
+        $categories->method('get')->willReturn($this->category());
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::once())->method('authorize')->with(
+            $context,
+            PermissionCode::ProductUpdate,
+            self::isInstanceOf(ResourceScope::class),
+        );
+        $guard = $this->createMock(OperationalGuard::class);
+        $guard->expects(self::once())->method('assertTenant')->with($context);
+
+        $updated = $this->updateHandler($products, $units, $categories, $authorization, $guard)(
+            $this->updateCommand($context),
+        );
+
+        self::assertSame('Café premium', $updated->name()->value());
+        self::assertSame('Nouvelle description', $updated->description());
+        self::assertSame(ProductStatus::Draft, $updated->status());
+        self::assertSame(2, $updated->version());
+    }
+
+    public function testUpdateRejectsACodeOwnedByAnotherProduct(): void
+    {
+        $product = $this->existingProduct();
+        $otherProduct = Product::createDraft(
+            ProductId::fromString('0198d2b6-147c-72d5-b75a-a936797ff9c8', new SymfonyUuidFactory()),
+            $this->organizationId(),
+            ProductCode::fromString('SKU-002'),
+            ProductName::fromString('Other'),
+            null,
+            ProductType::Physical,
+            $this->unit()->id(),
+            true,
+            null,
+            null,
+            $this->actorId(),
+            new DateTimeImmutable('2026-08-25T10:00:00Z'),
+        );
+        $products = $this->createStub(ProductRepository::class);
+        $products->method('get')->willReturn($product);
+        $products->method('findByCode')->willReturn($otherProduct);
+
+        $this->expectException(ProductCodeAlreadyExists::class);
+        $this->updateHandler(
+            $products,
+            $this->createStub(UnitOfMeasureRepository::class),
+            $this->createStub(CategoryRepository::class),
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+        )($this->updateCommand($this->context()));
+    }
+
+    public function testUpdateCannotChangeCodeAfterFirstActivation(): void
+    {
+        $product = $this->existingProduct();
+        $product->activate(true, $this->actorId(), new DateTimeImmutable('2026-08-25T10:30:00Z'));
+        $products = $this->createStub(ProductRepository::class);
+        $products->method('get')->willReturn($product);
+        $products->method('findByCode')->willReturn(null);
+        $units = $this->createStub(UnitOfMeasureRepository::class);
+        $units->method('get')->willReturn($this->unit());
+        $categories = $this->createStub(CategoryRepository::class);
+        $categories->method('get')->willReturn($this->category());
+        $command = $this->updateCommand($this->context(), 'SKU-002');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('code is immutable after first activation');
+        $this->updateHandler(
+            $products,
+            $units,
+            $categories,
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+        )($command);
+    }
+
     private function handler(
         ProductRepository $products,
         UnitOfMeasureRepository $units,
@@ -208,6 +299,30 @@ final class CreateProductHandlerTest extends TestCase
         );
     }
 
+    private function updateHandler(
+        ProductRepository $products,
+        UnitOfMeasureRepository $units,
+        CategoryRepository $categories,
+        AuthorizationService $authorization,
+        OperationalGuard $guard,
+    ): UpdateProductHandler {
+        return new UpdateProductHandler(
+            new TenantProductLoader($products),
+            $products,
+            new TenantUnitOfMeasureLoader($units),
+            new TenantCategoryLoader($categories),
+            new FrozenClock(new DateTimeImmutable('2026-08-25T13:00:00Z')),
+            new class implements TenantTransaction {
+                public function transactional(OrganizationId $organizationId, callable $operation): mixed
+                {
+                    return $operation();
+                }
+            },
+            $authorization,
+            $guard,
+        );
+    }
+
     private function command(ActorContext $context, string $type = 'PHYSICAL'): CreateProduct
     {
         $factory = new SymfonyUuidFactory();
@@ -225,15 +340,33 @@ final class CreateProductHandlerTest extends TestCase
         );
     }
 
+    private function updateCommand(ActorContext $context, string $code = 'SKU-001'): UpdateProduct
+    {
+        $factory = new SymfonyUuidFactory();
+
+        return new UpdateProduct(
+            ProductId::fromString(self::PRODUCT_ID, $factory),
+            $code,
+            ' Café premium ',
+            ' Nouvelle description ',
+            'PHYSICAL',
+            UnitOfMeasureId::fromString(self::UNIT_ID, $factory),
+            true,
+            CategoryId::fromString(self::CATEGORY_ID, $factory),
+            TaxCategoryId::fromString(self::TAX_CATEGORY_ID, $factory),
+            $context,
+        );
+    }
+
     private function existingProduct(): Product
     {
         return Product::createDraft(
             ProductId::fromString(self::PRODUCT_ID, new SymfonyUuidFactory()),
             $this->organizationId(),
             ProductCode::fromString('SKU-001'),
-            \Zandu\Modules\Catalog\Domain\Product\ProductName::fromString('Existing'),
+            ProductName::fromString('Existing'),
             null,
-            \Zandu\Modules\Catalog\Domain\Product\ProductType::Physical,
+            ProductType::Physical,
             $this->unit()->id(),
             true,
             null,
