@@ -36,6 +36,7 @@ Un ADR accepté n’est pas réécrit pour masquer l’historique d’une nouvel
 | [ADR-0016](0016-transactional-outbox-processing.md) | Traitement de la transactional outbox | ACCEPTED |
 | [ADR-0017](0017-postgresql-row-level-security.md) | Row Level Security pour l'isolation tenant | ACCEPTED |
 | [ADR-0018](0018-global-user-and-active-organization.md) | Identité globale et organisation active | ACCEPTED |
+| [ADR-0019](0019-tenant-owned-units-of-measure.md) | Unités de mesure propres au tenant | ACCEPTED |
 
 ## Décisions encore ouvertes ou proposées
 
