@@ -3713,11 +3713,49 @@ test(access): enforce last active owner invariant
 
 ### Étape 1.9.6 — Isolation tenant
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- parcours HTTP avec deux organisations, leurs owners, un magasin et une
+  invitation dans le tenant B ;
+- organisation B, magasin B et membership B masqués à l'owner A par
+  `404 NOT_FOUND` ;
+- annulation de l'invitation B par l'owner A également masquée par
+  `404 NOT_FOUND` ;
+- lookups applicatifs exercés avec l'identifiant du tenant actif et celui de la
+  ressource étrangère ;
+- vérification SQL directe sous le rôle restreint `zandu_runtime` et le contexte
+  du tenant A : aucune ligne B visible dans les tables organisations, magasins,
+  memberships et invitations.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (277 tests, 1067 assertions)
+Parcours isolation tenant ciblé : OK (1 test, 33 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(tenant): verify strict tenant isolation
+```
+
+## Prochaine étape
+
+### Étape 1.9.7 — Révocation immédiate
+
 **Statut : À FAIRE**
 
-Valider sur deux organisations que les ressources d'un tenant étranger sont
-masquées ou refusées selon le contrat de chaque endpoint, y compris au niveau
-PostgreSQL sous RLS.
+Vérifier qu'après suspension ou révocation d'un membership et incrément de son
+`authorizationVersion`, un access token déjà émis ne peut plus exécuter une
+opération sensible.
 
 ---
 
