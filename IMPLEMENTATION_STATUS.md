@@ -5264,16 +5264,61 @@ Composer audit : aucune vulnérabilité connue
 feat(catalog): enforce organization operational guard
 ```
 
+### Étape 2.7.5 — Security audit
+
+**Statut : TERMINÉE**
+
+Les cinq opérations sensibles exigées sont enregistrées via le
+`SecurityAuditTrail` transactionnel du Lot 1 :
+
+- `ProductActivated` et `ProductArchived` ;
+- `CategoryArchived` ;
+- `PriceListActivated` ;
+- `ProductPriceUpdated`.
+
+Les handlers Pricing manquants pour l'activation d'une liste et la mise à jour
+d'un prix ont été ajoutés. Ils appliquent autorisation, guard opérationnel,
+chargement tenant-scoped, mutation, persistence et audit dans une seule
+transaction tenant.
+
+Chaque audit transporte l'`ActorContext` complet — tenant, acteur,
+correlationId, causationId et session éventuels — ainsi qu'une référence stable
+de ressource et des métadonnées sûres vides. Les types d'événements d'intégration
+Catalog/Pricing correspondants sont explicitement mappés par l'audit
+transactionnel.
+
+Les frontières Deptrac autorisent Pricing à consommer uniquement les contrats
+publics d'IdentityAccess et Organization nécessaires à ces contrôles ; la
+documentation des fitness tests a été réalignée.
+
+### Validations
+
+```text
+PHPUnit ciblé audit Catalog/Pricing : OK (18 tests, 187 assertions)
+PHPUnit complet : OK (402 tests, 1742 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(audit): record catalog and pricing operations
+docs(architecture): align pricing module dependencies
+```
+
 ## Prochaine étape
 
-### Étape 2.7.5 — Security audit
+### Étape 2.7.6 — Outbox
 
 **Statut : À FAIRE**
 
-Auditer au minimum `ProductActivated`, `ProductArchived`,
-`ProductPriceUpdated`, `PriceListActivated` et `CategoryArchived` selon la
-politique du Lot 1, avec acteur, tenant, correlationId, ressource et résultat,
-sans donnée sensible.
+Vérifier et tester que les domain events destinés à sortir de leur bounded
+context sont persistés dans l'outbox atomiquement avec la mutation métier et
+l'audit, avec correlationId et causationId propagés.
 
 ---
 
