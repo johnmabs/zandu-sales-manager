@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Tests\Modules\Catalog\Domain;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Catalog\Domain\Product\Event\ProductActivated;
@@ -14,6 +15,8 @@ use Zandu\Modules\Catalog\Domain\Product\Event\ProductDeactivated;
 use Zandu\Modules\Catalog\Domain\Product\Event\ProductReactivated;
 use Zandu\Modules\Catalog\Domain\Product\Event\ProductUpdated;
 use Zandu\Modules\Catalog\Domain\Product\Product;
+use Zandu\Modules\Catalog\Domain\Product\ProductCode;
+use Zandu\Modules\Catalog\Domain\Product\ProductName;
 use Zandu\Modules\Catalog\Domain\Product\ProductStatus;
 use Zandu\Modules\Catalog\Domain\Product\ProductType;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
@@ -34,14 +37,45 @@ final class ProductTest extends TestCase
     private const TAX_CATEGORY_ID = '0198d2b5-147c-72d5-b75a-a936797ff9c8';
     private const ACTOR_ID = '0198c728-8f2d-7f43-92d8-3f0c75b80186';
 
+    public function testProductValueObjectsNormalizeWithoutRestrictingSkuAlphabet(): void
+    {
+        self::assertSame('CAFÉ/250.G', ProductCode::fromString(' café/250.g ')->value());
+        self::assertSame('Café moulu', ProductName::fromString(' Café   moulu ')->value());
+        self::assertTrue(ProductCode::fromString('sku-1')->equals(ProductCode::fromString(' SKU-1 ')));
+    }
+
+    public function testProductCodeRejectsEmptyOrOverlongValue(): void
+    {
+        try {
+            ProductCode::fromString('  ');
+            self::fail('An empty product code must be rejected.');
+        } catch (InvalidArgumentException) {
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+        ProductCode::fromString(str_repeat('A', 65));
+    }
+
+    public function testProductNameRejectsEmptyOrOverlongValue(): void
+    {
+        try {
+            ProductName::fromString('  ');
+            self::fail('An empty product name must be rejected.');
+        } catch (InvalidArgumentException) {
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+        ProductName::fromString(str_repeat('A', 161));
+    }
+
     public function testCreationProducesANormalizedTenantOwnedDraft(): void
     {
         $product = $this->product();
         $events = $product->releaseEvents();
 
         self::assertSame(self::ORGANIZATION_ID, $product->organizationId()->toString());
-        self::assertSame('SKU-001', $product->productCode());
-        self::assertSame('Café moulu', $product->name());
+        self::assertSame('SKU-001', $product->productCode()->value());
+        self::assertSame('Café moulu', $product->name()->value());
         self::assertSame('Paquet de 250 g', $product->description());
         self::assertSame(ProductStatus::Draft, $product->status());
         self::assertTrue($product->inventoryTracked());
@@ -64,8 +98,8 @@ final class ProductTest extends TestCase
         $product->releaseEvents();
 
         $product->updateProfile(
-            'sku-002',
-            'Café premium',
+            ProductCode::fromString('sku-002'),
+            ProductName::fromString('Café premium'),
             null,
             ProductType::Physical,
             $this->unitId(self::OTHER_UNIT_ID),
@@ -76,7 +110,7 @@ final class ProductTest extends TestCase
             new DateTimeImmutable('2026-08-26T00:00:00+01:00'),
         );
 
-        self::assertSame('SKU-002', $product->productCode());
+        self::assertSame('SKU-002', $product->productCode()->value());
         self::assertSame(self::OTHER_UNIT_ID, $product->baseUnitId()->toString());
         self::assertNull($product->description());
         self::assertSame('UTC', $product->updatedAt()?->getTimezone()->getName());
@@ -100,7 +134,7 @@ final class ProductTest extends TestCase
 
         $this->expectException(LogicException::class);
         $product->updateProfile(
-            'SKU-CHANGED',
+            ProductCode::fromString('SKU-CHANGED'),
             $product->name(),
             $product->description(),
             $product->type(),
@@ -158,7 +192,7 @@ final class ProductTest extends TestCase
 
         $product->archive($this->actorId(), $occurredAt);
         self::assertSame(ProductStatus::Archived, $product->status());
-        self::assertSame('Café moulu', $product->name());
+        self::assertSame('Café moulu', $product->name()->value());
         self::assertSame(5, $product->version());
         self::assertInstanceOf(ProductArchived::class, $product->releaseEvents()[0]);
 
@@ -173,8 +207,8 @@ final class ProductTest extends TestCase
         return Product::createDraft(
             ProductId::fromString(self::PRODUCT_ID, new SymfonyUuidFactory()),
             OrganizationId::fromString(self::ORGANIZATION_ID, new SymfonyUuidFactory()),
-            ' sku-001 ',
-            ' Café   moulu ',
+            ProductCode::fromString(' sku-001 '),
+            ProductName::fromString(' Café   moulu '),
             ' Paquet  de 250 g ',
             $type,
             $this->unitId(self::BASE_UNIT_ID),

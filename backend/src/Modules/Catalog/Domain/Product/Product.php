@@ -30,8 +30,8 @@ final class Product
     private function __construct(
         private readonly ProductId $id,
         private readonly OrganizationId $organizationId,
-        private string $productCode,
-        private string $name,
+        private ProductCode $productCode,
+        private ProductName $name,
         private ?string $description,
         private ProductStatus $status,
         private ProductType $type,
@@ -65,8 +65,8 @@ final class Product
     public static function createDraft(
         ProductId $id,
         OrganizationId $organizationId,
-        string $productCode,
-        string $name,
+        ProductCode $productCode,
+        ProductName $name,
         ?string $description,
         ProductType $type,
         UnitOfMeasureId $baseUnitId,
@@ -80,8 +80,8 @@ final class Product
         $product = new self(
             $id,
             $organizationId,
-            self::normalizeCode($productCode),
-            self::normalizeName($name),
+            $productCode,
+            $name,
             self::normalizeDescription($description),
             ProductStatus::Draft,
             $type,
@@ -105,8 +105,8 @@ final class Product
     public static function reconstitute(
         ProductId $id,
         OrganizationId $organizationId,
-        string $productCode,
-        string $name,
+        ProductCode $productCode,
+        ProductName $name,
         ?string $description,
         ProductStatus $status,
         ProductType $type,
@@ -125,8 +125,8 @@ final class Product
         return new self(
             $id,
             $organizationId,
-            self::normalizeCode($productCode),
-            self::normalizeName($name),
+            $productCode,
+            $name,
             self::normalizeDescription($description),
             $status,
             $type,
@@ -145,8 +145,8 @@ final class Product
     }
 
     public function updateProfile(
-        string $productCode,
-        string $name,
+        ProductCode $productCode,
+        ProductName $name,
         ?string $description,
         ProductType $type,
         UnitOfMeasureId $baseUnitId,
@@ -157,10 +157,8 @@ final class Product
         DateTimeImmutable $occurredAt,
     ): void {
         $this->requireNotArchived('An archived product cannot be updated.');
-        $productCode = self::normalizeCode($productCode);
-        $name = self::normalizeName($name);
         self::assertTypeAndInventoryTracking($type, $inventoryTracked);
-        if (null !== $this->activatedAt && $productCode !== $this->productCode) {
+        if (null !== $this->activatedAt && !$productCode->equals($this->productCode)) {
             throw new LogicException('Product code is immutable after first activation.');
         }
         if (null !== $this->activatedAt && !$baseUnitId->equals($this->baseUnitId)) {
@@ -238,11 +236,11 @@ final class Product
     {
         return $this->organizationId;
     }
-    public function productCode(): string
+    public function productCode(): ProductCode
     {
         return $this->productCode;
     }
-    public function name(): string
+    public function name(): ProductName
     {
         return $this->name;
     }
@@ -308,26 +306,6 @@ final class Product
         if (ProductType::Service === $type && $inventoryTracked) {
             throw new LogicException('A service product cannot be inventory tracked.');
         }
-    }
-
-    private static function normalizeCode(string $value): string
-    {
-        $normalized = strtoupper(trim($value));
-        if ('' === $normalized) {
-            throw new InvalidArgumentException('Product code cannot be empty.');
-        }
-
-        return $normalized;
-    }
-
-    private static function normalizeName(string $value): string
-    {
-        $normalized = preg_replace('/\s+/u', ' ', trim($value));
-        if (null === $normalized || '' === $normalized) {
-            throw new InvalidArgumentException('Product name cannot be empty.');
-        }
-
-        return $normalized;
     }
 
     private static function normalizeDescription(?string $value): ?string
