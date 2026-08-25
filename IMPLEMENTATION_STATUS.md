@@ -5186,15 +5186,58 @@ Composer audit : aucune vulnérabilité connue
 feat(access): grant catalog permissions to system roles
 ```
 
+### Étape 2.7.3 — Appliquer `AuthorizationService`
+
+**Statut : TERMINÉE**
+
+Tous les handlers de mutation Catalog actuellement disponibles appellent
+désormais `AuthorizationService.authorize(...)` dans leur transaction tenant,
+avec une portée organization et une permission correspondant au cas d'usage :
+
+- Category : create, update/move/activate/deactivate et archive ;
+- Product : create, update, activate/reactivate, deactivate et archive ;
+- UnitOfMeasure : create, update, activate et deactivate.
+
+L'inventaire a identifié que les mutations UnitOfMeasure ne disposaient d'aucune
+permission dédiée. Quatre permissions explicites ont donc été ajoutées afin de
+ne jamais détourner `CATALOG_READ` pour autoriser une écriture. Elles restent
+réservées à `ORGANIZATION_OWNER` via le catalogue des rôles système.
+
+Pricing n'expose pas encore de command handler : ses resolvers sont des contrats
+internes de lecture appelés par un cas d'usage consommateur, auquel appartiendra
+l'autorisation. Aucun contrôle direct de rôle n'a été introduit.
+
+Les tests vérifient les permissions exactes, la portée organization et le
+positionnement de l'autorisation dans la transaction tenant.
+
+### Validations
+
+```text
+PHPUnit ciblé Catalog : OK (21 tests, 156 assertions)
+PHPUnit complet : OK (400 tests, 1662 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commits
+
+```text
+feat(access): add unit of measure permissions
+feat(catalog): enforce catalog authorization
+```
+
 ## Prochaine étape
 
-### Étape 2.7.3 — Appliquer `AuthorizationService`
+### Étape 2.7.4 — Operational guard
 
 **Statut : À FAIRE**
 
-Faire appeler `AuthorizationService.authorize(...)` avec la permission adéquate
-par chaque handler Catalog/Pricing sensible, sans contrôle direct des rôles dans
-le code métier.
+Faire exiger une organization opérationnelle par toutes les mutations Catalog,
+via `OperationalGuard`, et conserver le guard de store pour les futurs cas
+d'usage qui cibleront explicitement un magasin.
 
 ---
 
