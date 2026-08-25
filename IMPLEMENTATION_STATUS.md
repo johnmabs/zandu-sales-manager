@@ -4145,10 +4145,53 @@ feat(catalog): add category aggregate
 
 ### Étape 2.3.2 — Persistence Category
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- mapping Doctrine et repository Category tenant-scoped ;
+- reconstruction de la chaîne d'ancêtres, du parent immédiat jusqu'à la
+  racine, avec détection défensive des cycles persistés ;
+- migration `Version20260825100000` appliquée en développement et en test ;
+- table `catalog.categories` protégée par RLS forcé pour `zandu_runtime` ;
+- clé étrangère composite garantissant que le parent appartient au même tenant ;
+- contraintes PostgreSQL sur l'auto-parentage, le nom, le statut, la cohérence
+  de l'audit et la version ;
+- index tenant et tenant/parent ;
+- verrouillage optimiste et rejet des agrégats périmés ;
+- test de couverture RLS global étendu aux catégories ;
+- tests PostgreSQL réels couvrant hiérarchie, ancêtres, cycle injecté,
+  isolation tenant, parent cross-tenant, lifecycle et concurrence optimiste.
+
+### Validations
+
+```text
+Migration dev/test : appliquée
+Mapping Doctrine : valide
+PHPUnit ciblé Category/RLS : OK (14 tests, 40 assertions)
+PHPUnit complet : OK (319 tests, 1234 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): persist categories
+```
+
+## Prochaine étape
+
+### Étape 2.3.3 — Use cases Category
+
 **Statut : À FAIRE**
 
-Ajouter le mapping Doctrine, le repository hiérarchique tenant-scoped, la
-migration PostgreSQL avec contraintes/RLS et les tests d'intégration réels.
+Implémenter les commandes dédiées de création, mise à jour, déplacement,
+activation, désactivation et archivage, avec construction robuste de la chaîne
+d'ancêtres lors d'un déplacement.
 
 ---
 
