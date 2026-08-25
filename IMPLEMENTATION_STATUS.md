@@ -3878,7 +3878,7 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 
 ```text
 Epic 2.1   TERMINÉ   Catalog foundation
-Epic 2.2   EN COURS  Unit of measure
+Epic 2.2   TERMINÉ   Unit of measure
 Epic 2.3   À FAIRE   Categories
 Epic 2.4   À FAIRE   Product lifecycle
 Epic 2.5   À FAIRE   Product packaging & barcode
@@ -4061,10 +4061,55 @@ feat(catalog): persist units of measure
 
 ### Étape 2.2.3 — Use cases UnitOfMeasure
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- commandes et handlers dédiés `CreateUnitOfMeasure`, `UpdateUnitOfMeasure`,
+  `ActivateUnitOfMeasure` et `DeactivateUnitOfMeasure` ;
+- toutes les opérations exécutées dans une transaction portant le tenant de
+  l'acteur ;
+- chargement tenant-scoped empêchant l'accès cross-tenant ;
+- normalisation des attributs primitifs et conversion explicite des modes
+  d'arrondi ;
+- détection métier d'un code déjà utilisé dans l'organisation ;
+- aucun PATCH générique du statut ni dépendance anticipée vers les permissions
+  et l'audit de l'Epic 2.7.
+
+### Validations
+
+```text
+PHPUnit ciblé : OK (5 tests, 15 assertions)
+PHPUnit complet : OK (303 tests, 1192 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add unit of measure management
+```
+
+## Epic 2.2 — Résultat
+
+**Statut : TERMINÉ**
+
+Le modèle d'unité de mesure tenant-owned, sa persistence PostgreSQL/RLS et ses
+quatre opérations métier dédiées sont disponibles. La précision est bornée,
+l'arrondi est explicite et une unité inactive ne peut pas être sélectionnée.
+
+## Prochaine étape
+
+### Étape 2.3.1 — Ajouter l'aggregate Category
+
 **Statut : À FAIRE**
 
-Implémenter les commandes dédiées de création, mise à jour, activation et
-désactivation sans introduire de PATCH métier générique du statut.
+Implémenter le modèle hiérarchique tenant-owned de catégorie conformément au
+planning, sans anticiper sa persistence ni son API.
 
 ---
 
