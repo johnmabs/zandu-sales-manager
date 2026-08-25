@@ -3918,9 +3918,38 @@ refactor(catalog): add bounded context structure
 
 ### Étape 2.1.2 — Ajouter le schéma PostgreSQL catalog
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- migration réversible `Version20260825060000` créant le schéma logique
+  `catalog` ;
+- aucune table Catalog, Inventory, Cash Management ou Sales créée par
+  anticipation ;
+- migration appliquée sur les bases de développement et de test.
+
+### Validations
+
+```text
+Schéma catalog : présent
+Tables dans catalog : 0
+PHPUnit Docker : OK (282 tests, 1138 assertions)
+```
+
+### Commit
+
+```text
+feat(database): add catalog schema
+```
+
+## Prochaine étape
+
+### Étape 2.1.3 — Étendre les architecture fitness tests
+
 **Statut : À FAIRE**
 
-Créer uniquement le schéma logique `catalog`, sans table métier anticipée.
+Ajouter Catalog aux frontières de modules et interdire ses dépendances directes
+vers les domaines Organization, IdentityAccess et les modules des lots futurs.
 
 ---
 
