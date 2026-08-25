@@ -5229,15 +5229,51 @@ feat(access): add unit of measure permissions
 feat(catalog): enforce catalog authorization
 ```
 
+### Étape 2.7.4 — Operational guard
+
+**Statut : TERMINÉE**
+
+Toutes les mutations Catalog exigent désormais une organization opérationnelle
+via `OperationalGuard.assertTenant(...)`, dans la même transaction tenant que
+l'autorisation et la mutation :
+
+- les handlers Product étaient déjà protégés ;
+- les handlers Category et UnitOfMeasure ont été complétés ;
+- aucune mutation actuelle ne cible un store, donc aucun guard store artificiel
+  n'a été introduit.
+
+Les tests vérifient un contrôle tenant en mode `Standard` pour chaque mutation
+et échouent si un handler Category/UnitOfMeasure tente d'utiliser une portée
+store.
+
+### Validations
+
+```text
+PHPUnit ciblé Catalog : OK (21 tests, 182 assertions)
+PHPUnit complet : OK (400 tests, 1688 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): enforce organization operational guard
+```
+
 ## Prochaine étape
 
-### Étape 2.7.4 — Operational guard
+### Étape 2.7.5 — Security audit
 
 **Statut : À FAIRE**
 
-Faire exiger une organization opérationnelle par toutes les mutations Catalog,
-via `OperationalGuard`, et conserver le guard de store pour les futurs cas
-d'usage qui cibleront explicitement un magasin.
+Auditer au minimum `ProductActivated`, `ProductArchived`,
+`ProductPriceUpdated`, `PriceListActivated` et `CategoryArchived` selon la
+politique du Lot 1, avec acteur, tenant, correlationId, ressource et résultat,
+sans donnée sensible.
 
 ---
 
