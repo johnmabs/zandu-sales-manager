@@ -4697,10 +4697,55 @@ feat(catalog): persist product packaging
 
 ### Étape 2.5.5 — Ajouter les barcodes
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- agrégat tenant-owned `ProductBarcode` rattaché à son produit et à son
+  packaging, avec ownership dérivé du packaging à la création ;
+- value object `Barcode` conservant la valeur textuelle et ses zéros initiaux,
+  sans aucune interprétation numérique ;
+- normalisation dédiée à la comparaison et unicité PostgreSQL de
+  `(organization_id, normalized_barcode)` ;
+- retrait historique terminal via le statut `REMOVED`, avec acteur, date,
+  version optimiste et événements `ProductBarcodeAdded` /
+  `ProductBarcodeRemoved` ;
+- mapping Doctrine et repository tenant-scoped permettant la recherche par
+  barcode normalisé ;
+- clés étrangères composites garantissant que produit, packaging et barcode
+  appartiennent au même tenant et que le packaging appartient au produit ;
+- migration appliquée en développement et en test, contraintes SQL, droits du
+  rôle runtime et RLS activée et forcée ;
+- tests du comportement domaine, de la normalisation et extension du fitness
+  test PostgreSQL RLS.
+
+### Validations
+
+```text
+PHPUnit complet : OK (373 tests, 1445 assertions)
+Migrations développement et test : appliquées
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product barcodes
+```
+
+## Prochaine étape
+
+### Étape 2.5.6 — Barcode resolver
+
 **Statut : À FAIRE**
 
-Introduire les codes-barres tenant-owned associés à un produit et à son
-packaging, avec normalisation, unicité et résolution non ambiguë.
+Exposer le contrat applicatif tenant-scoped de résolution d'un barcode actif
+vers son produit et son packaging, avec un résultat non ambigu et les erreurs
+métier prévues par le planning.
 
 ---
 
