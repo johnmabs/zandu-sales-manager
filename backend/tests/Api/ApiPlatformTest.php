@@ -79,6 +79,27 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
     }
 
+    public function testCategoryManagementOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $paths = $openApi->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/categories')->getGet());
+        self::assertNotNull($paths->getPath('/api/categories')->getPost());
+        self::assertNotNull($paths->getPath('/api/categories/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/categories/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/categories/{id}/move')->getPost());
+        self::assertNotNull($paths->getPath('/api/categories/{id}/activate')->getPost());
+        self::assertNotNull($paths->getPath('/api/categories/{id}/deactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/categories/{id}/archive')->getPost());
+
+        $requestBody = $paths->getPath('/api/categories/{id}')->getPatch()?->getRequestBody();
+        self::assertNotNull($requestBody);
+        self::assertArrayHasKey('application/json', $requestBody->getContent());
+        self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
+    }
+
     public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void
     {
         self::bootKernel();

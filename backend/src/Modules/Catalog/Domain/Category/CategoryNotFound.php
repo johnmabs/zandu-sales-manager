@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Zandu\Modules\Catalog\Domain\Category;
 
 use RuntimeException;
+use Zandu\SharedKernel\Error\ResourceNotFound;
 use Zandu\SharedKernel\Identity\CategoryId;
 
-final class CategoryNotFound extends RuntimeException
+final class CategoryNotFound extends RuntimeException implements ResourceNotFound
 {
     public static function withId(CategoryId $id): self
     {
