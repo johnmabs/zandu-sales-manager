@@ -4281,11 +4281,48 @@ feat(catalog): add product aggregate lifecycle
 
 ### Étape 2.4.2 — Ajouter les value objects Product
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- `ProductCode` extrait avec trim, normalisation Unicode en majuscules,
+  obligation de présence et longueur maximale de 64 caractères ;
+- alphabet volontairement permissif pour accepter les conventions SKU métier
+  sans imposer une syntaxe absente du cadrage ;
+- égalité métier de `ProductCode` utilisée pour garantir son immutabilité après
+  activation ;
+- `ProductName` extrait avec normalisation des espaces, obligation de présence
+  et longueur maximale de 160 caractères ;
+- agrégat `Product` entièrement adapté aux deux value objects ;
+- aucune duplication résiduelle des règles code/nom dans l'agrégat et aucun
+  wrapper ajouté pour les propriétés sans invariant propre.
+
+### Validations
+
+```text
+PHPUnit ciblé Product : OK (10 tests, 35 assertions)
+PHPUnit complet : OK (335 tests, 1286 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product value objects
+```
+
+## Prochaine étape
+
+### Étape 2.4.3 — Persistence Product
+
 **Statut : À FAIRE**
 
-Extraire les invariants de normalisation et de validité dans `ProductCode` et
-`ProductName`, puis adapter l'agrégat et ses tests sans ajouter de wrapper sans
-valeur métier.
+Ajouter le mapping Doctrine, le repository spécialisé, la migration PostgreSQL
+avec unicité du code par tenant, RLS, version optimiste, index et tests réels.
 
 ---
 
