@@ -5056,12 +5056,64 @@ feat(pricing): add basic product price resolution
 
 ### Étape 2.6.7 — Préparer les snapshots futurs
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- contrat public Catalog `SaleablePackagingSnapshotProvider` exposant seulement
+  produit, packaging, facteur de conversion exact et version source ;
+- implémentation Catalog tenant-scoped vérifiant l'appartenance au produit et
+  le caractère vendable du packaging avant de produire le snapshot ;
+- contrat public Pricing `PricingSnapshotResolver` consommable par le futur
+  module Sales sans dépendance vers les domaines Catalog ou Pricing ;
+- `PricingSnapshot` immutable regroupant `ProductId`, `ProductPackagingId`,
+  facteur de packaging, `PriceListId`, `ProductPriceId`, montant exact, devise
+  et versions des trois sources ;
+- composition applicative du snapshot à partir des contrats Catalog/Pricing et
+  du repository interne de listes de prix ;
+- dépendance `Pricing → CatalogContract` explicitement limitée et documentée
+  dans les fitness tests, sans accès direct au domaine Catalog ;
+- aucune classe `Sale`, `SaleLine` ou autre anticipation du Domain Sales ;
+- test vérifiant l'intégralité et l'exactitude du snapshot transactionnel futur.
+
+### Validations
+
+```text
+PHPUnit ciblé PricingSnapshot : OK (1 test, 10 assertions)
+PHPUnit complet : OK (400 tests, 1553 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(pricing): expose pricing snapshot contract
+```
+
+## Epic 2.6 — Basic Pricing
+
+**Statut : TERMINÉ**
+
+La Definition of Done est satisfaite : listes et prix tenant-owned persistés,
+montants exacts, devise cohérente, périodes non ambiguës, résolution
+déterministe, absence explicite et contrats de snapshot publics.
+
+La fiscalité reste dans le cas B du planning : aucune règle nationale n'est
+documentée à ce stade. `taxCategoryId?` demeure une référence optionnelle du
+produit et aucune résolution fiscale n'est inventée avant décision explicite.
+
+## Prochaine étape
+
+### Étape 2.7.1 — Étendre les permissions Catalog/Pricing
+
 **Statut : À FAIRE**
 
-Exposer, sans introduire le domaine Sales, un contrat de snapshot permettant de
-figer les identifiants produit/packaging/prix, le facteur de conditionnement, le
-montant, la devise et les versions sources nécessaires aux futures lignes de
-vente.
+Ajouter uniquement les permissions Catalog et Pricing réellement prévues par
+le Lot 2, sans introduire de permissions Stock, Sale, Cash ou Purchase.
 
 ---
 
