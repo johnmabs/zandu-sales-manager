@@ -9,6 +9,9 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 
 interface CategoryRepository
 {
+    /** Serialize hierarchy mutations for one organization inside the current transaction. */
+    public function lockHierarchy(OrganizationId $organizationId): void;
+
     public function save(Category $category): void;
 
     /** @throws CategoryNotFound */

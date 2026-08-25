@@ -99,6 +99,19 @@ final class DoctrineCategoryRepositoryTest extends KernelTestCase
         ));
     }
 
+    public function testHierarchyLockCanBeAcquiredInsideTenantTransaction(): void
+    {
+        $organizationId = $this->organizationId(self::ORGANIZATION_A);
+
+        $acquired = $this->transactions->transactional($organizationId, function () use ($organizationId): bool {
+            $this->repository->lockHierarchy($organizationId);
+
+            return true;
+        });
+
+        self::assertTrue($acquired);
+    }
+
     public function testLifecycleUpdateRoundTripsWithOptimisticVersion(): void
     {
         $category = $this->category(self::ROOT, self::ORGANIZATION_A, 'Boissons');

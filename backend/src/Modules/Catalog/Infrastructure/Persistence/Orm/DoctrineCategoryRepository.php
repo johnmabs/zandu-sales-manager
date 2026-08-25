@@ -24,6 +24,14 @@ final readonly class DoctrineCategoryRepository implements CategoryRepository
         private UuidFactory $uuidFactory,
     ) {}
 
+    public function lockHierarchy(OrganizationId $organizationId): void
+    {
+        $this->entityManager->getConnection()->fetchOne(
+            'SELECT pg_advisory_xact_lock(hashtextextended(?, 0))',
+            [$organizationId->toString()],
+        );
+    }
+
     public function save(Category $category): void
     {
         $record = $this->entityManager->find(CategoryRecord::class, $category->id()->toString());
