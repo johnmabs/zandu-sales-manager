@@ -3879,7 +3879,7 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 ```text
 Epic 2.1   TERMINÉ   Catalog foundation
 Epic 2.2   TERMINÉ   Unit of measure
-Epic 2.3   À FAIRE   Categories
+Epic 2.3   EN COURS  Categories
 Epic 2.4   À FAIRE   Product lifecycle
 Epic 2.5   À FAIRE   Product packaging & barcode
 Epic 2.6   À FAIRE   Basic Pricing
@@ -4106,10 +4106,49 @@ l'arrondi est explicite et une unité inactive ne peut pas être sélectionnée.
 
 ### Étape 2.3.1 — Ajouter l'aggregate Category
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- agrégat `Category` tenant-owned avec identité typée et tenant immuable ;
+- nom obligatoire et normalisé, parent optionnel et statuts `ACTIVE`,
+  `INACTIVE`, `ARCHIVED` ;
+- audit de création et de dernière modification avec dates normalisées en UTC ;
+- contrôle du tenant du parent, de l'auto-parentage et des cycles à partir de la
+  chaîne complète des ancêtres du parent ;
+- opérations explicites de mise à jour, déplacement, activation,
+  désactivation et archivage ;
+- archivage terminal : catégorie non sélectionnable mais toujours résolvable
+  pour l'historique ;
+- événements `CategoryCreated`, `CategoryUpdated`, `CategoryMoved`,
+  `CategoryActivated`, `CategoryDeactivated` et `CategoryArchived`.
+
+### Validations
+
+```text
+PHPUnit ciblé : OK (10 tests, 31 assertions)
+PHPUnit complet : OK (313 tests, 1223 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add category aggregate
+```
+
+## Prochaine étape
+
+### Étape 2.3.2 — Persistence Category
+
 **Statut : À FAIRE**
 
-Implémenter le modèle hiérarchique tenant-owned de catégorie conformément au
-planning, sans anticiper sa persistence ni son API.
+Ajouter le mapping Doctrine, le repository hiérarchique tenant-scoped, la
+migration PostgreSQL avec contraintes/RLS et les tests d'intégration réels.
 
 ---
 
