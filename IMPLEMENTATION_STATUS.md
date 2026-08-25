@@ -4401,11 +4401,50 @@ feat(catalog): add create product use case
 
 ### Étape 2.4.5 — Update Product
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- commande d'intention `UpdateProduct` limitée au profil métier et ne contenant
+  aucun champ de mutation générique du statut ;
+- `TenantProductLoader` garantissant le chargement du produit dans
+  l'organisation de l'`ActorContext` ;
+- permission atomique `PRODUCT_UPDATE` contrôlée sur le scope organisation ;
+- statut opérationnel du tenant contrôlé dans la transaction ;
+- contrôle d'unicité acceptant le code du produit courant mais refusant celui
+  détenu par un autre produit ;
+- unité de base et catégorie éventuelle rechargées dans le tenant courant et
+  obligatoirement sélectionnables ;
+- immutabilité du code et de l'unité de base après première activation déléguée
+  aux invariants de l'agrégat ;
+- audit de modification et version optimiste mis à jour par le domaine.
+
+### Validations
+
+```text
+PHPUnit ciblé Product/permissions : OK (10 tests, 60 assertions)
+PHPUnit complet : OK (349 tests, 1341 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product profile update
+```
+
+## Prochaine étape
+
+### Étape 2.4.6 — Activate Product
+
 **Statut : À FAIRE**
 
-Ajouter une commande d'intention `UpdateProduct` et son handler pour modifier
-uniquement le profil autorisé par l'état du produit, sans permettre une mutation
-générique de son statut.
+Ajouter la commande `ActivateProduct` et vérifier avant activation la cohérence
+du produit ainsi que la présence de son packaging de base.
 
 ---
 
