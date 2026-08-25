@@ -113,6 +113,9 @@ services:
     Zandu\Modules\Catalog\Domain\Product\ProductRepository:
         alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineProductRepository
 
+    Zandu\Modules\Catalog\Application\Contract\BasePackagingPresence:
+        alias: Zandu\Modules\Catalog\Infrastructure\Persistence\UnavailableBasePackagingPresence
+
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
             $pepper: '%kernel.secret%'

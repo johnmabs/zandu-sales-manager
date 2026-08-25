@@ -7,6 +7,9 @@ namespace Zandu\Tests\Modules\Catalog\Application;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\Catalog\Application\ActivateProduct\ActivateProduct;
+use Zandu\Modules\Catalog\Application\ActivateProduct\ActivateProductHandler;
+use Zandu\Modules\Catalog\Application\Contract\BasePackagingPresence;
 use Zandu\Modules\Catalog\Application\CreateProduct\CreateProduct;
 use Zandu\Modules\Catalog\Application\CreateProduct\CreateProductHandler;
 use Zandu\Modules\Catalog\Application\TenantCategoryLoader;
@@ -30,6 +33,7 @@ use Zandu\Modules\Catalog\Domain\UnitOfMeasureDimension;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureName;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasurePrecision;
 use Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository;
+use Zandu\Modules\Catalog\Infrastructure\Persistence\UnavailableBasePackagingPresence;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
@@ -267,6 +271,62 @@ final class CreateProductHandlerTest extends TestCase
         )($command);
     }
 
+    public function testItActivatesAConsistentProductWithABasePackaging(): void
+    {
+        $context = $this->context();
+        $product = $this->existingProduct();
+        $products = $this->createMock(ProductRepository::class);
+        $products->expects(self::once())->method('get')->willReturn($product);
+        $products->expects(self::once())->method('save')->with($product);
+        $units = $this->createMock(UnitOfMeasureRepository::class);
+        $units->expects(self::once())->method('get')->willReturn($this->unit());
+        $presence = $this->createMock(BasePackagingPresence::class);
+        $presence->expects(self::once())->method('exists')->with(
+            self::callback(fn(OrganizationId $id): bool => $id->equals($context->organizationId())),
+            self::callback(fn(ProductId $id): bool => $id->equals($product->id())),
+            self::callback(fn(UnitOfMeasureId $id): bool => $id->equals($product->baseUnitId())),
+        )->willReturn(true);
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::once())->method('authorize')->with(
+            $context,
+            PermissionCode::ProductActivate,
+            self::isInstanceOf(ResourceScope::class),
+        );
+
+        $activated = $this->activateHandler(
+            $products,
+            $units,
+            $presence,
+            $authorization,
+            $this->createStub(OperationalGuard::class),
+        )(new ActivateProduct($product->id(), $context));
+
+        self::assertSame(ProductStatus::Active, $activated->status());
+        self::assertSame(2, $activated->version());
+        self::assertNotNull($activated->activatedAt());
+    }
+
+    public function testActivationFailsClosedWithoutPersistedBasePackaging(): void
+    {
+        $product = $this->existingProduct();
+        $products = $this->createStub(ProductRepository::class);
+        $products->method('get')->willReturn($product);
+        $units = $this->createStub(UnitOfMeasureRepository::class);
+        $units->method('get')->willReturn($this->unit());
+        $presence = new UnavailableBasePackagingPresence();
+
+        self::assertFalse($presence->exists($this->organizationId(), $product->id(), $product->baseUnitId()));
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('base packaging is required');
+        $this->activateHandler(
+            $products,
+            $units,
+            $presence,
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+        )(new ActivateProduct($product->id(), $this->context()));
+    }
+
     private function handler(
         ProductRepository $products,
         UnitOfMeasureRepository $units,
@@ -312,6 +372,30 @@ final class CreateProductHandlerTest extends TestCase
             new TenantUnitOfMeasureLoader($units),
             new TenantCategoryLoader($categories),
             new FrozenClock(new DateTimeImmutable('2026-08-25T13:00:00Z')),
+            new class implements TenantTransaction {
+                public function transactional(OrganizationId $organizationId, callable $operation): mixed
+                {
+                    return $operation();
+                }
+            },
+            $authorization,
+            $guard,
+        );
+    }
+
+    private function activateHandler(
+        ProductRepository $products,
+        UnitOfMeasureRepository $units,
+        BasePackagingPresence $presence,
+        AuthorizationService $authorization,
+        OperationalGuard $guard,
+    ): ActivateProductHandler {
+        return new ActivateProductHandler(
+            new TenantProductLoader($products),
+            $products,
+            new TenantUnitOfMeasureLoader($units),
+            $presence,
+            new FrozenClock(new DateTimeImmutable('2026-08-25T14:00:00Z')),
             new class implements TenantTransaction {
                 public function transactional(OrganizationId $organizationId, callable $operation): mixed
                 {

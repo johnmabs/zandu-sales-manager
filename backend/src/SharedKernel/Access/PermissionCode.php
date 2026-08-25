@@ -29,4 +29,5 @@ enum PermissionCode: string
 
     case ProductCreate = 'PRODUCT_CREATE';
     case ProductUpdate = 'PRODUCT_UPDATE';
+    case ProductActivate = 'PRODUCT_ACTIVATE';
 }
