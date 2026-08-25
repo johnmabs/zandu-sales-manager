@@ -3880,8 +3880,8 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 Epic 2.1   TERMINÉ   Catalog foundation
 Epic 2.2   TERMINÉ   Unit of measure
 Epic 2.3   TERMINÉ   Categories
-Epic 2.4   EN COURS  Product lifecycle
-Epic 2.5   À FAIRE   Product packaging & barcode
+Epic 2.4   TERMINÉ   Product lifecycle
+Epic 2.5   EN COURS  Product packaging & barcode
 Epic 2.6   À FAIRE   Basic Pricing
 Epic 2.7   À FAIRE   Authorization, audit & integration
 Epic 2.8   À FAIRE   Catalog & Pricing API
@@ -4481,10 +4481,57 @@ feat(catalog): add product activation
 
 ### Étape 2.4.7 — Deactivate / Reactivate / Archive Product
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- commandes et handlers distincts `DeactivateProduct`, `ReactivateProduct` et
+  `ArchiveProduct` ;
+- permissions `PRODUCT_DEACTIVATE`, `PRODUCT_ACTIVATE` et `PRODUCT_ARCHIVE`
+  contrôlées selon l'intention ;
+- chargement tenant-safe, contrôle opérationnel et mutation exécutés dans la
+  même transaction tenant ;
+- transitions `ACTIVE → INACTIVE → ACTIVE → ARCHIVED` couvertes ;
+- archivage terminal garanti par l'agrégat, sans suppression métier ni commande
+  générique de changement de statut ;
+- audit acteur/temps, version optimiste et événements de domaine conservés pour
+  chaque transition.
+
+### Validations
+
+```text
+PHPUnit ciblé Product/permissions : OK (13 tests, 94 assertions)
+PHPUnit complet : OK (352 tests, 1375 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product availability lifecycle
+```
+
+## Epic 2.4 — Résultat
+
+**Statut : TERMINÉ**
+
+Le SKU autonome `Product` dispose désormais de ses invariants, value objects,
+événements, persistence PostgreSQL/RLS, verrouillage optimiste et use cases de
+création, mise à jour et cycle de disponibilité. L'activation est volontairement
+fail-closed jusqu'au branchement du packaging de base réel en Epic 2.5.
+
+## Prochaine étape
+
+### Étape 2.5.1 — Ajouter `ProductPackaging`
+
 **Statut : À FAIRE**
 
-Ajouter trois commandes d'intention distinctes pour la disponibilité du produit,
-sans suppression métier et avec archivage terminal.
+Introduire l'agrégat de conditionnement, ses value objects et ses invariants de
+conversion, précision, quantité minimale, incrément et disponibilité commerciale.
 
 ---
 
