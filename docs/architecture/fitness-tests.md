@@ -236,6 +236,7 @@ Les bounded contexts actuellement matérialisés sont :
 Sales
 Inventory
 CashManagement
+Catalog
 IdentityAccess
 Organization
 Operations
@@ -253,6 +254,7 @@ Les layers publics correspondants sont actuellement :
 SalesContract
 InventoryContract
 CashManagementContract
+CatalogContract
 IdentityAccessContract
 OrganizationContract
 ```
@@ -385,6 +387,17 @@ OrganizationContract
 IdentityAccessContract
 OrganizationContract
 ```
+
+`Catalog` peut uniquement utiliser sa propre surface publique :
+
+```text
+CatalogContract
+```
+
+Il ne peut pas dépendre directement de `Organization`, `IdentityAccess`,
+`Inventory`, `Sales` ou `CashManagement`. Les futurs consommateurs du catalogue
+devront passer par `CatalogContract` lorsqu'un contrat public concret sera
+introduit.
 
 L'accès d'un module à son propre layer `Contract` permet à son implémentation
 interne d'implémenter et de consommer ses contrats publics sans réintégrer ces

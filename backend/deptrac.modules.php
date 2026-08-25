@@ -9,6 +9,27 @@ use Deptrac\Deptrac\Contract\Config\Layer;
 use Deptrac\Deptrac\Contract\Config\Ruleset;
 
 return static function (DeptracConfig $config): void {
+    $catalogContract = Layer::withName('CatalogContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Catalog\\Application\\Contract\\.*',
+        ),
+    );
+
+    $catalog = Layer::withName('Catalog')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Catalog\\.*',
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Catalog\\Application\\Contract\\.*',
+                ),
+            ],
+        ),
+    );
+
     $salesContract = Layer::withName('SalesContract')->collectors(
         ClassLikeConfig::create(
             '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*',
@@ -113,6 +134,8 @@ return static function (DeptracConfig $config): void {
     $config
         ->paths('./src')
         ->layers(
+            $catalog,
+            $catalogContract,
             $sales,
             $salesContract,
             $inventory,
@@ -126,6 +149,9 @@ return static function (DeptracConfig $config): void {
             $organizationContract,
         )
         ->rulesets(
+            Ruleset::forLayer($catalog)
+                ->accesses($catalogContract),
+            Ruleset::forLayer($catalogContract),
             Ruleset::forLayer($sales)
                 ->accesses(
                     $inventoryContract,
