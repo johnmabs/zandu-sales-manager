@@ -104,6 +104,9 @@ services:
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
 
+    Zandu\Modules\Catalog\Domain\UnitOfMeasureRepository:
+        alias: Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\DoctrineUnitOfMeasureRepository
+
     Zandu\Modules\IdentityAccess\Infrastructure\Security\SecureInvitationTokenService:
         arguments:
             $pepper: '%kernel.secret%'
