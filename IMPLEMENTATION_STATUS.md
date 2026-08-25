@@ -4615,10 +4615,50 @@ feat(catalog): enforce base product packaging
 
 ### Étape 2.5.3 — Conversion de quantité
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- service de domaine pur `ProductPackagingQuantityConverter` calculant
+  `enteredQuantity × conversionFactor` uniquement avec les abstractions
+  décimales exactes ;
+- aucun arrondi appliqué, y compris pour la vérification de l'incrément ;
+- quantité entrée obligatoirement positive, supérieure ou égale au minimum et
+  multiple exact de `quantityIncrement` ;
+- précision de saisie vérifiée contre celle du packaging ;
+- précision du résultat vérifiée contre celle de l'unité de base, limitée à la
+  décision ADR de 12 décimales ;
+- erreur métier `IncompatiblePackagingQuantity` distinguant les principaux
+  motifs de rejet ;
+- couverture des entiers, décimaux, facteurs non entiers, précision maximale et
+  résidus incompatibles.
+
+### Validations
+
+```text
+PHPUnit ciblé ProductPackaging : OK (18 tests, 54 assertions)
+PHPUnit complet : OK (370 tests, 1429 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add exact packaging quantity conversion
+```
+
+## Prochaine étape
+
+### Étape 2.5.4 — Persistence ProductPackaging
+
 **Statut : À FAIRE**
 
-Introduire un service de conversion pure calculant exactement la quantité de
-base, sans arrondi silencieux et avec contrôle explicite de la précision.
+Ajouter le mapping Doctrine, le repository spécialisé, les contraintes
+PostgreSQL, l'unicité du packaging de base, les index, le RLS et les tests réels.
 
 ---
 
