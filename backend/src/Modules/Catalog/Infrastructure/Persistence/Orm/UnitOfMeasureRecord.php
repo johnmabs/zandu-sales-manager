@@ -10,6 +10,7 @@ use Zandu\Modules\Catalog\Domain\UnitOfMeasure;
 #[ORM\Entity]
 #[ORM\Table(name: 'units_of_measure', schema: 'catalog')]
 #[ORM\UniqueConstraint(name: 'unit_of_measure_code_tenant_unique', columns: ['organization_id', 'code'])]
+#[ORM\UniqueConstraint(name: 'unit_of_measure_tenant_id_unique', columns: ['organization_id', 'id'])]
 final class UnitOfMeasureRecord
 {
     private function __construct(
