@@ -4867,11 +4867,57 @@ feat(pricing): add price list aggregate
 
 ### Étape 2.6.3 — Persistence PriceList
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- schéma PostgreSQL dédié `pricing`, cohérent avec la frontière du bounded
+  context ;
+- mapping Doctrine `PriceListRecord` et enregistrement explicite du namespace
+  Pricing dans la configuration ORM ;
+- repository `PriceListRepository` tenant-scoped avec `get`, `find` et
+  `findByCode`, implémenté par Doctrine ;
+- verrouillage optimiste fondé sur la version de l'agrégat et `#[ORM\Version]` ;
+- unicité transactionnelle `(organization_id, code)` et index préparant la
+  résolution par statut et priorité ;
+- contraintes SQL sur la devise, le statut, le scope organisationnel, la
+  période, la priorité et la version ;
+- clé étrangère vers l'organisation, droits minimaux du rôle runtime et RLS
+  activée et forcée ;
+- migrations développement et test appliquées ;
+- tests PostgreSQL du round-trip et de la version, de l'unicité intra-tenant,
+  de la réutilisation du code inter-tenant et de l'absence de fuite ;
+- fitness test RLS étendu à `pricing.price_lists`.
+
+### Validations
+
+```text
+PHPUnit ciblé persistence/RLS : OK (11 tests, 48 assertions)
+PHPUnit complet : OK (385 tests, 1495 assertions)
+Migrations développement et test : appliquées
+Mapping Doctrine : valide
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(pricing): persist price lists
+```
+
+## Prochaine étape
+
+### Étape 2.6.4 — Ajouter ProductPrice
+
 **Statut : À FAIRE**
 
-Ajouter le mapping Doctrine, le repository tenant-scoped, la migration, les
-contraintes PostgreSQL, l'unicité du code par organisation, le verrouillage
-optimiste, la RLS et les tests d'intégration.
+Introduire l'agrégat tenant-owned `ProductPrice`, ciblant un produit et son
+packaging dans une `PriceList`, avec montant exact, devise cohérente, période,
+cycle de vie et événements métier.
 
 ---
 
