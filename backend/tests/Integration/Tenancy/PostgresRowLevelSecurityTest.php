@@ -69,6 +69,32 @@ final class PostgresRowLevelSecurityTest extends PostgresTestCase
         self::assertFalse($role['rolbypassrls'] ?? true);
     }
 
+    public function testEveryTenantOwnedTableForcesRowLevelSecurity(): void
+    {
+        $tables = $this->connection->fetchAllAssociative(<<<'SQL'
+SELECT namespace.nspname AS schema_name, relation.relname AS table_name,
+       relation.relrowsecurity, relation.relforcerowsecurity
+FROM pg_class relation
+JOIN pg_namespace namespace ON namespace.oid = relation.relnamespace
+WHERE (namespace.nspname, relation.relname) IN (
+    ('organization', 'organizations'),
+    ('organization', 'stores'),
+    ('organization', 'store_closures'),
+    ('identity_access', 'organization_invitations'),
+    ('identity_access', 'organization_memberships'),
+    ('security', 'security_audit_entries'),
+    ('messaging', 'outbox_messages')
+)
+ORDER BY namespace.nspname, relation.relname
+SQL);
+
+        self::assertCount(7, $tables);
+        foreach ($tables as $table) {
+            self::assertTrue((bool) $table['relrowsecurity'], sprintf('%s.%s must enable RLS.', $table['schema_name'], $table['table_name']));
+            self::assertTrue((bool) $table['relforcerowsecurity'], sprintf('%s.%s must force RLS.', $table['schema_name'], $table['table_name']));
+        }
+    }
+
     public function testMissingTenantContextIsFailClosed(): void
     {
         $this->connection->beginTransaction();
@@ -126,6 +152,27 @@ final class PostgresRowLevelSecurityTest extends PostgresTestCase
             self::assertSame('', $this->connection->fetchOne("SELECT current_setting('app.organization_id', true)"));
         } finally {
             $this->connection->rollBack();
+        }
+    }
+
+    public function testTenantContextIsIsolatedBetweenConnections(): void
+    {
+        $secondConnection = $this->secondConnection();
+        $this->connection->beginTransaction();
+        $secondConnection->beginTransaction();
+
+        try {
+            $this->connection->executeStatement('SET LOCAL ROLE zandu_runtime');
+            $this->connection->executeStatement("SELECT set_config('app.organization_id', ?, true)", [self::ORGANIZATION_A]);
+            $secondConnection->executeStatement('SET LOCAL ROLE zandu_runtime');
+
+            self::assertSame(self::ORGANIZATION_A, $this->connection->fetchOne("SELECT current_setting('app.organization_id')"));
+            self::assertNull($secondConnection->fetchOne("SELECT current_setting('app.organization_id', true)"));
+            self::assertSame(0, $secondConnection->fetchOne('SELECT COUNT(*) FROM organization.organizations'));
+        } finally {
+            $this->connection->rollBack();
+            $secondConnection->rollBack();
+            $secondConnection->close();
         }
     }
 
