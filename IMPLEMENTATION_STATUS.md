@@ -4823,10 +4823,55 @@ refactor(pricing): add basic pricing structure
 
 ### Étape 2.6.2 — Ajouter PriceList
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- agrégat tenant-owned `PriceList` avec tenant immutable, identifiant typé,
+  code, nom, devise, statut, scope, période, priorité et version ;
+- scope minimal strictement limité à `ORGANIZATION`, sans moteur multi-store
+  anticipé ;
+- value objects normalisés pour le code, le nom et la priorité entière
+  non négative ;
+- période inclusive normalisée en UTC avec invariant `validTo >= validFrom` ;
+- cycle de vie explicite `DRAFT → ACTIVE ↔ INACTIVE → ARCHIVED`, archivage
+  terminal et listes archivées non sélectionnables ;
+- sélection temporelle déterministe limitée aux listes actives dans leur fenêtre
+  de validité ;
+- événements `PriceListCreated`, `PriceListUpdated`, `PriceListActivated`,
+  `PriceListDeactivated` et `PriceListArchived` ;
+- tests du modèle, des invariants, des événements et du cycle de vie.
+
+L'unicité du code par organisation sera rendue transactionnellement sûre par
+la contrainte PostgreSQL de l'étape de persistence 2.6.3.
+
+### Validations
+
+```text
+PHPUnit ciblé PriceList : OK (6 tests, 34 assertions)
+PHPUnit complet : OK (382 tests, 1484 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(pricing): add price list aggregate
+```
+
+## Prochaine étape
+
+### Étape 2.6.3 — Persistence PriceList
+
 **Statut : À FAIRE**
 
-Introduire l'aggregate tenant-owned `PriceList`, ses statuts, son scope
-organisationnel, sa période de validité, sa priorité et ses événements métier.
+Ajouter le mapping Doctrine, le repository tenant-scoped, la migration, les
+contraintes PostgreSQL, l'unicité du code par organisation, le verrouillage
+optimiste, la RLS et les tests d'intégration.
 
 ---
 
