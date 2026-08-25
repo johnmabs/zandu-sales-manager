@@ -5110,10 +5110,51 @@ produit et aucune résolution fiscale n'est inventée avant décision explicite.
 
 ### Étape 2.7.1 — Étendre les permissions Catalog/Pricing
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- catalogue typé `PermissionCode` étendu avec `CATALOG_READ` ;
+- permissions de création, mise à jour et archivage des catégories ;
+- permissions produit complétées avec `PRODUCT_READ`, les permissions de
+  mutation déjà utilisées restant inchangées ;
+- permissions de création, lecture, mise à jour, activation et archivage des
+  listes de prix ;
+- permissions de création, lecture, mise à jour et archivage des prix produit ;
+- aucun code `STOCK_*`, `SALE_*`, `CASH_*` ou `PURCHASE_*` introduit avant les
+  lots correspondants ;
+- test exhaustif de l'ordre et du contenu du catalogue, complété par une
+  interdiction explicite des préfixes futurs ;
+- aucune attribution de rôle modifiée prématurément : cette politique appartient
+  à l'étape 2.7.2.
+
+### Validations
+
+```text
+PHPUnit ciblé permissions/rôles : OK (2 tests, 51 assertions)
+PHPUnit complet : OK (400 tests, 1588 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(access): add catalog and pricing permissions
+```
+
+## Prochaine étape
+
+### Étape 2.7.2 — Mettre à jour les rôles système
+
 **Statut : À FAIRE**
 
-Ajouter uniquement les permissions Catalog et Pricing réellement prévues par
-le Lot 2, sans introduire de permissions Stock, Sale, Cash ou Purchase.
+Attribuer les permissions Catalog/Pricing pertinentes aux rôles système selon
+le principe du moindre privilège, sans coder les décisions de rôle dans les
+bounded contexts Catalog ou Pricing.
 
 ---
 
