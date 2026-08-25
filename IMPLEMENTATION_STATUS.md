@@ -24,7 +24,7 @@ Epic 0.8   TERMINÉ   Operations & observability
 Gate Lot 0 TERMINÉ   Validation finale de l’architecture exécutable
 ```
 
-Le Lot 0 est clos. Le Lot 1 — Administration opérationnelle est en cours :
+Les Lots 0 et 1 sont clos :
 
 ```text
 Epic 1.1   TERMINÉ   Organization foundation
@@ -38,7 +38,7 @@ Epic 1.6   TERMINÉ   Authorization & operational guards
 Epic 1.7   TERMINÉ   Security audit & event integration
 Epic 1.8   TERMINÉ   Administration API
 Epic 1.9   TERMINÉ   Integration & tenant isolation tests
-Gate Lot 1 À FAIRE   Administration opérationnelle complète
+Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 ```
 
 ## Definition of Done globale
@@ -62,12 +62,15 @@ Gate Lot 1 À FAIRE   Administration opérationnelle complète
 [x] documentation finale du Lot 0 à jour
 [x] CI finale entièrement verte
 [x] Gate Lot 0 validé
+[x] administration opérationnelle validée
+[x] démonstration consolidée du Lot 1 validée
+[x] Gate Lot 1 validé
 ```
 
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0017
+- ADR techniques 0001–0018
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
 
@@ -3830,10 +3833,44 @@ métier-audit-outbox sont tous couverts sur PostgreSQL réel.
 
 ### Gate de sortie du Lot 1 — Administration opérationnelle complète
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
 
-Comparer l'état réel du dépôt à la gate documentaire du Lot 1, exécuter le
-scénario de démonstration consolidé et fermer ou documenter chaque écart restant.
+### Réalisé
+
+- les 39 critères de la gate documentaire ont été confrontés au code, aux
+  migrations, aux ADR et aux tests puis validés ;
+- la suite de démonstration consolidée couvre onboarding, multi-store,
+  invitations, scopes, dernier owner, révocation immédiate, isolation tenant et
+  atomicité audit/outbox ;
+- le RLS activé et forcé est vérifié explicitement sur les sept tables
+  tenant-owned du Lot 1 ;
+- deux connexions PostgreSQL simultanées prouvent que le contexte tenant reste
+  local à la transaction et à la connexion ;
+- l'image de staging immuable démarre avec ses secrets runtime ;
+- le cycle de sauvegarde/restauration PostgreSQL conserve les 17 schémas
+  attendus.
+
+### Validations finales
+
+```text
+PHPUnit Docker : OK (282 tests, 1138 assertions)
+Démonstration consolidée : OK (13 tests, 283 assertions)
+RLS ciblé : OK (8 tests, 27 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+Smoke test staging : OK
+Sauvegarde/restauration PostgreSQL : OK (17 schémas)
+```
+
+## Prochaine étape recommandée
+
+### Lot 2 — Catalog & basic Pricing
+
+Préparer le catalogue, les produits vendables et le pricing de base sans
+anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 
 ---
 

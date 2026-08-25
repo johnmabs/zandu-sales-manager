@@ -5,10 +5,9 @@ conçue pour administrer des organisations, leurs magasins, leurs membres et
 leurs droits d'accès.
 
 Le projet est actuellement en développement. Le **Lot 0 — Architecture
-exécutable** est terminé et le **Lot 1 — Administration opérationnelle** est en
-cours. Les Epics 1.1 à 1.8 sont terminés ; la prochaine étape porte sur les
-tests d'intégration et d'isolation tenant de l'Epic 1.9. L'état détaillé est disponible dans
-[`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
+exécutable** et le **Lot 1 — Administration opérationnelle** sont terminés. La
+prochaine étape recommandée est le **Lot 2 — Catalog & basic Pricing**. L'état
+détaillé est disponible dans [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## Stack technique
 
