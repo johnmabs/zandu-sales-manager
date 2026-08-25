@@ -390,22 +390,27 @@ IdentityAccessContract
 OrganizationContract
 ```
 
-`Catalog` peut uniquement utiliser sa propre surface publique :
+`Catalog` peut utiliser les surfaces publiques :
 
 ```text
 CatalogContract
+IdentityAccessContract
+OrganizationContract
 ```
 
-Il ne peut pas dépendre directement de `Organization`, `IdentityAccess`,
-`Inventory`, `Sales` ou `CashManagement`. Les futurs consommateurs du catalogue
-devront passer par `CatalogContract` lorsqu'un contrat public concret sera
-introduit.
+`IdentityAccessContract` fournit l'autorisation et `OrganizationContract` le
+guard opérationnel des mutations Catalog. Catalog ne peut pas dépendre
+directement de l'implémentation de `Organization` ou `IdentityAccess`, ni de
+`Inventory`, `Sales` ou `CashManagement`. Ses futurs consommateurs passent par
+`CatalogContract`.
 
 `Pricing` peut utiliser les surfaces publiques :
 
 ```text
 PricingContract
 CatalogContract
+IdentityAccessContract
+OrganizationContract
 ```
 
 La dépendance vers `CatalogContract` est limitée au snapshot d'un packaging
@@ -413,6 +418,9 @@ vendable nécessaire au contrat transactionnel préparé par l'Epic 2.6. Pricing
 n'accède jamais directement au Domain, à l'Infrastructure ou à la Presentation
 de Catalog. Les relations de prix utilisent les identifiants partagés
 `ProductId` et `ProductPackagingId`, conformément à l'ADR-0001.
+`IdentityAccessContract` et `OrganizationContract` permettent respectivement
+l'autorisation et le contrôle opérationnel des mutations Pricing, sans accès aux
+implémentations internes de ces bounded contexts.
 
 L'accès d'un module à son propre layer `Contract` permet à son implémentation
 interne d'implémenter et de consommer ses contrats publics sans réintégrer ces
