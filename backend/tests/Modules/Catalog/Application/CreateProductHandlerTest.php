@@ -9,9 +9,15 @@ use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Catalog\Application\ActivateProduct\ActivateProduct;
 use Zandu\Modules\Catalog\Application\ActivateProduct\ActivateProductHandler;
+use Zandu\Modules\Catalog\Application\ArchiveProduct\ArchiveProduct;
+use Zandu\Modules\Catalog\Application\ArchiveProduct\ArchiveProductHandler;
 use Zandu\Modules\Catalog\Application\Contract\BasePackagingPresence;
 use Zandu\Modules\Catalog\Application\CreateProduct\CreateProduct;
 use Zandu\Modules\Catalog\Application\CreateProduct\CreateProductHandler;
+use Zandu\Modules\Catalog\Application\DeactivateProduct\DeactivateProduct;
+use Zandu\Modules\Catalog\Application\DeactivateProduct\DeactivateProductHandler;
+use Zandu\Modules\Catalog\Application\ReactivateProduct\ReactivateProduct;
+use Zandu\Modules\Catalog\Application\ReactivateProduct\ReactivateProductHandler;
 use Zandu\Modules\Catalog\Application\TenantCategoryLoader;
 use Zandu\Modules\Catalog\Application\TenantProductLoader;
 use Zandu\Modules\Catalog\Application\TenantUnitOfMeasureLoader;
@@ -327,6 +333,42 @@ final class CreateProductHandlerTest extends TestCase
         )(new ActivateProduct($product->id(), $this->context()));
     }
 
+    public function testAvailabilityLifecycleUsesExplicitCommandsAndPermissions(): void
+    {
+        $context = $this->context();
+        $product = $this->existingProduct();
+        $product->activate(true, $this->actorId(), new DateTimeImmutable('2026-08-25T10:30:00Z'));
+        $products = $this->createStub(ProductRepository::class);
+        $products->method('get')->willReturn($product);
+        $guard = $this->createStub(OperationalGuard::class);
+
+        $deactivateAuthorization = $this->authorizationExpecting(PermissionCode::ProductDeactivate);
+        $deactivated = $this->deactivateHandler($products, $deactivateAuthorization, $guard)(
+            new DeactivateProduct($product->id(), $context),
+        );
+        self::assertSame(ProductStatus::Inactive, $deactivated->status());
+
+        $reactivateAuthorization = $this->authorizationExpecting(PermissionCode::ProductActivate);
+        $reactivated = $this->reactivateHandler($products, $reactivateAuthorization, $guard)(
+            new ReactivateProduct($product->id(), $context),
+        );
+        self::assertSame(ProductStatus::Active, $reactivated->status());
+
+        $archiveAuthorization = $this->authorizationExpecting(PermissionCode::ProductArchive);
+        $archived = $this->archiveHandler($products, $archiveAuthorization, $guard)(
+            new ArchiveProduct($product->id(), $context),
+        );
+        self::assertSame(ProductStatus::Archived, $archived->status());
+        self::assertSame(5, $archived->version());
+
+        $this->expectException(LogicException::class);
+        $this->reactivateHandler(
+            $products,
+            $this->createStub(AuthorizationService::class),
+            $guard,
+        )(new ReactivateProduct($product->id(), $context));
+    }
+
     private function handler(
         ProductRepository $products,
         UnitOfMeasureRepository $units,
@@ -405,6 +447,73 @@ final class CreateProductHandlerTest extends TestCase
             $authorization,
             $guard,
         );
+    }
+
+    private function deactivateHandler(
+        ProductRepository $products,
+        AuthorizationService $authorization,
+        OperationalGuard $guard,
+    ): DeactivateProductHandler {
+        return new DeactivateProductHandler(
+            new TenantProductLoader($products),
+            $products,
+            new FrozenClock(new DateTimeImmutable('2026-08-25T15:00:00Z')),
+            $this->transaction(),
+            $authorization,
+            $guard,
+        );
+    }
+
+    private function reactivateHandler(
+        ProductRepository $products,
+        AuthorizationService $authorization,
+        OperationalGuard $guard,
+    ): ReactivateProductHandler {
+        return new ReactivateProductHandler(
+            new TenantProductLoader($products),
+            $products,
+            new FrozenClock(new DateTimeImmutable('2026-08-25T16:00:00Z')),
+            $this->transaction(),
+            $authorization,
+            $guard,
+        );
+    }
+
+    private function archiveHandler(
+        ProductRepository $products,
+        AuthorizationService $authorization,
+        OperationalGuard $guard,
+    ): ArchiveProductHandler {
+        return new ArchiveProductHandler(
+            new TenantProductLoader($products),
+            $products,
+            new FrozenClock(new DateTimeImmutable('2026-08-25T17:00:00Z')),
+            $this->transaction(),
+            $authorization,
+            $guard,
+        );
+    }
+
+    private function authorizationExpecting(PermissionCode $permission): AuthorizationService
+    {
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::once())->method('authorize')->with(
+            self::isInstanceOf(ActorContext::class),
+            $permission,
+            self::isInstanceOf(ResourceScope::class),
+        );
+
+        return $authorization;
+    }
+
+    private function transaction(): TenantTransaction
+    {
+        return new class implements TenantTransaction {
+            public function transactional(OrganizationId $organizationId, callable $operation): mixed
+            {
+                return $operation();
+            }
+        };
     }
 
     private function command(ActorContext $context, string $type = 'PHYSICAL'): CreateProduct
