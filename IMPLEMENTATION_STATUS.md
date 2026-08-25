@@ -4359,11 +4359,53 @@ feat(catalog): persist product aggregate
 
 ### Étape 2.4.4 — Use case `CreateProduct`
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- commande `CreateProduct` ne recevant ni `organizationId` ni `actorId` en
+  entrée libre : les deux proviennent de l'`ActorContext` ;
+- handler entièrement exécuté dans la transaction tenant ;
+- permission atomique `PRODUCT_CREATE` ajoutée au catalogue et contrôlée sur le
+  scope organisation ;
+- statut opérationnel du tenant contrôlé avant toute création ;
+- unicité applicative du `ProductCode` complétant la contrainte PostgreSQL ;
+- unité de base et catégorie éventuelle chargées dans le tenant courant puis
+  refusées lorsqu'elles ne sont pas sélectionnables ;
+- produit systématiquement créé en `DRAFT` avec identifiant généré, audit acteur
+  et horodatage serveur ;
+- règle `SERVICE`/`inventoryTracked` conservée dans le domaine et couverte au
+  niveau du use case ;
+- dépendances Catalog vers IdentityAccess et Organization limitées à leurs
+  contrats applicatifs et explicitement vérifiées par Deptrac.
+
+### Validations
+
+```text
+PHPUnit ciblé CreateProduct/permissions : OK (7 tests, 45 assertions)
+PHPUnit complet : OK (346 tests, 1326 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add create product use case
+```
+
+## Prochaine étape
+
+### Étape 2.4.5 — Update Product
+
 **Statut : À FAIRE**
 
-Ajouter la commande et son handler avec contexte acteur, contrôles
-d'organisation opérationnelle, de permission et de références tenant-owned,
-puis créer le produit au statut `DRAFT`.
+Ajouter une commande d'intention `UpdateProduct` et son handler pour modifier
+uniquement le profil autorisé par l'état du produit, sans permettre une mutation
+générique de son statut.
 
 ---
 
