@@ -26,4 +26,6 @@ enum PermissionCode: string
     case RoleRevoke = 'ROLE_REVOKE';
 
     case SecurityAuditRead = 'SECURITY_AUDIT_READ';
+
+    case ProductCreate = 'PRODUCT_CREATE';
 }
