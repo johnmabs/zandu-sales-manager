@@ -237,6 +237,7 @@ Sales
 Inventory
 CashManagement
 Catalog
+Pricing
 IdentityAccess
 Organization
 Operations
@@ -255,6 +256,7 @@ SalesContract
 InventoryContract
 CashManagementContract
 CatalogContract
+PricingContract
 IdentityAccessContract
 OrganizationContract
 ```
@@ -398,6 +400,16 @@ Il ne peut pas dépendre directement de `Organization`, `IdentityAccess`,
 `Inventory`, `Sales` ou `CashManagement`. Les futurs consommateurs du catalogue
 devront passer par `CatalogContract` lorsqu'un contrat public concret sera
 introduit.
+
+`Pricing` peut uniquement utiliser sa propre surface publique :
+
+```text
+PricingContract
+```
+
+La structure est matérialisée dès l'Epic 2.6, sans autoriser d'accès direct à
+`Catalog` : les relations de prix utiliseront les identifiants partagés
+`ProductId` et `ProductPackagingId`, conformément à l'ADR-0001.
 
 L'accès d'un module à son propre layer `Contract` permet à son implémentation
 interne d'implémenter et de consommer ses contrats publics sans réintégrer ces

@@ -30,6 +30,27 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $pricingContract = Layer::withName('PricingContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Pricing\\Application\\Contract\\.*',
+        ),
+    );
+
+    $pricing = Layer::withName('Pricing')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Pricing\\.*',
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Pricing\\Application\\Contract\\.*',
+                ),
+            ],
+        ),
+    );
+
     $salesContract = Layer::withName('SalesContract')->collectors(
         ClassLikeConfig::create(
             '.*Zandu\\Modules\\Sales\\Application\\Contract\\.*',
@@ -136,6 +157,8 @@ return static function (DeptracConfig $config): void {
         ->layers(
             $catalog,
             $catalogContract,
+            $pricing,
+            $pricingContract,
             $sales,
             $salesContract,
             $inventory,
@@ -156,6 +179,9 @@ return static function (DeptracConfig $config): void {
                     $organizationContract,
                 ),
             Ruleset::forLayer($catalogContract),
+            Ruleset::forLayer($pricing)
+                ->accesses($pricingContract),
+            Ruleset::forLayer($pricingContract),
             Ruleset::forLayer($sales)
                 ->accesses(
                     $inventoryContract,
