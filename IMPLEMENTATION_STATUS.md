@@ -4528,10 +4528,55 @@ fail-closed jusqu'au branchement du packaging de base réel en Epic 2.5.
 
 ### Étape 2.5.1 — Ajouter `ProductPackaging`
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- agrégat tenant-owned `ProductPackaging` rattaché à un `Product` et identifié
+  par le nouveau type fort `ProductPackagingId` ;
+- value objects dédiés pour le code, le nom, le facteur de conversion et la
+  précision métier ;
+- décimaux exacts exclusivement fondés sur `Decimal` et `Quantity`, sans
+  `float`, conformément aux ADR-0008 et ADR-0014 ;
+- facteur de conversion strictement positif et limité à 12 décimales ;
+- quantités minimale et d'incrément strictement positives et compatibles avec
+  la précision du packaging ;
+- unité, facteur de conversion et précision immuables afin qu'un packaging
+  historique ne soit jamais réinterprété ;
+- réglages commerciaux modifiables avec audit et version optimiste ;
+- disponibilités vente/achat indépendantes et cycle
+  `ACTIVE → INACTIVE → ACTIVE → ARCHIVED` terminal ;
+- reconstruction complète prévue pour la future persistence Doctrine.
+
+La validation exacte de la quantité convertie appartient à l'étape 2.5.3, qui
+introduira le service de conversion pure prévu par le cadrage.
+
+### Validations
+
+```text
+PHPUnit ciblé ProductPackaging : OK (9 tests, 33 assertions)
+PHPUnit complet : OK (361 tests, 1408 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): add product packaging
+```
+
+## Prochaine étape
+
+### Étape 2.5.2 — Base packaging
+
 **Statut : À FAIRE**
 
-Introduire l'agrégat de conditionnement, ses value objects et ses invariants de
-conversion, précision, quantité minimale, incrément et disponibilité commerciale.
+Rendre le packaging de base explicite et garantir qu'il utilise l'unité de base
+du produit avec un facteur de conversion exactement égal à `1`.
 
 ---
 
