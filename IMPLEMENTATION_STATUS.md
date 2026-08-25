@@ -4573,10 +4573,52 @@ feat(catalog): add product packaging
 
 ### Étape 2.5.2 — Base packaging
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- rôle de packaging de base rendu explicite par `isBase`, sans inférence depuis
+  le code, le nom ou le facteur ;
+- factories distinctes `createBase` et `createAdditional` empêchant les appels
+  ambigus ;
+- organisation, produit et unité d'un packaging de base directement dérivés du
+  `Product`, rendant impossible une référence incohérente à la construction ;
+- facteur du packaging de base obligatoirement égal numériquement à `1`, quelle
+  que soit sa représentation décimale exacte (`1`, `1.0`, `1.000`, etc.) ;
+- rôle base, unité et facteur immuables après création ;
+- modèle de reconstruction étendu pour la future persistence.
+
+L'unicité globale « exactement un packaging de base par produit » nécessite une
+vue de l'ensemble des packagings : elle sera protégée par repository et index
+PostgreSQL partiel à l'étape 2.5.4. L'activation reste fail-closed tant que ce
+branchement persistant n'existe pas.
+
+### Validations
+
+```text
+PHPUnit ciblé ProductPackaging : OK (11 tests, 41 assertions)
+PHPUnit complet : OK (363 tests, 1416 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(catalog): enforce base product packaging
+```
+
+## Prochaine étape
+
+### Étape 2.5.3 — Conversion de quantité
+
 **Statut : À FAIRE**
 
-Rendre le packaging de base explicite et garantir qu'il utilise l'unité de base
-du produit avec un facteur de conversion exactement égal à `1`.
+Introduire un service de conversion pure calculant exactement la quantité de
+base, sans arrondi silencieux et avec contrôle explicite de la précision.
 
 ---
 
