@@ -37,7 +37,7 @@ Epic 1.5c  TERMINÉ   Authentication security hardening
 Epic 1.6   TERMINÉ   Authorization & operational guards
 Epic 1.7   TERMINÉ   Security audit & event integration
 Epic 1.8   TERMINÉ   Administration API
-Epic 1.9   EN COURS  Integration & tenant isolation tests
+Epic 1.9   TERMINÉ   Integration & tenant isolation tests
 Gate Lot 1 À FAIRE   Administration opérationnelle complète
 ```
 
@@ -3787,10 +3787,53 @@ test(auth): verify immediate membership revocation
 
 ### Étape 1.9.8 — Atomicité audit et outbox
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- cas nominal PostgreSQL confirmant le commit conjoint de la mutation métier,
+  de l'entrée d'audit et du message outbox ;
+- repository d'audit fautif injecté avant toute persistance d'audit ;
+- repository outbox fautif injecté après l'écriture de l'audit et avant celle
+  du message ;
+- exception injectée après les trois écritures et juste avant le commit ;
+- dans les trois scénarios d'échec, rollback confirmé sur l'état administratif,
+  l'audit et l'outbox, sans effet partiel.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (280 tests, 1120 assertions)
+Atomicité audit/outbox ciblée : OK (4 tests, 15 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(audit): verify administration transaction atomicity
+```
+
+## Epic 1.9 — Résultat
+
+**Statut : TERMINÉ**
+
+Les parcours heureux, erreurs significatives, scopes magasin, invariant du
+dernier owner, révocation immédiate, isolation tenant/RLS et atomicité
+métier-audit-outbox sont tous couverts sur PostgreSQL réel.
+
+## Prochaine étape
+
+### Gate de sortie du Lot 1 — Administration opérationnelle complète
+
 **Statut : À FAIRE**
 
-Injecter des échecs avant la persistance de l'audit, avant celle de l'outbox et
-avant le commit, puis vérifier qu'aucun effet administratif partiel ne subsiste.
+Comparer l'état réel du dépôt à la gate documentaire du Lot 1, exécuter le
+scénario de démonstration consolidé et fermer ou documenter chaque écart restant.
 
 ---
 
