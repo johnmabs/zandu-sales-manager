@@ -70,7 +70,7 @@ Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0018
+- ADR techniques 0001–0019
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
 
@@ -3878,7 +3878,7 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 
 ```text
 Epic 2.1   TERMINÉ   Catalog foundation
-Epic 2.2   À FAIRE   Unit of measure
+Epic 2.2   EN COURS  Unit of measure
 Epic 2.3   À FAIRE   Categories
 Epic 2.4   À FAIRE   Product lifecycle
 Epic 2.5   À FAIRE   Product packaging & barcode
@@ -3983,10 +3983,48 @@ architecturales exécutables sont disponibles sans logique des lots futurs.
 
 ### Étape 2.2.1 — Ajouter UnitOfMeasure
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- ADR-0019 adoptée : les unités du MVP sont exclusivement tenant-owned, sans
+  ligne globale ni modèle hybride implicite ;
+- agrégat `UnitOfMeasure` lié obligatoirement à une organisation ;
+- identité typée, code et nom normalisés, six dimensions et statuts
+  `ACTIVE` / `INACTIVE` ;
+- précision bornée de 0 à 12 et mode d'arrondi explicite selon les ADR-0008 et
+  ADR-0014 ;
+- cycle d'activation et de désactivation, protection contre la sélection d'une
+  unité inactive et version optimiste ;
+- événements `UnitOfMeasureCreated`, `UnitOfMeasureUpdated`,
+  `UnitOfMeasureActivated` et `UnitOfMeasureDeactivated`.
+
+### Validations
+
+```text
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+PHPUnit ciblé : OK (11 tests, 27 assertions)
+PHPUnit complet : OK (293 tests, 1165 assertions)
+```
+
+### Commits
+
+```text
+docs(architecture): decide tenant-owned units of measure
+feat(catalog): add unit of measure model
+```
+
+## Prochaine étape
+
+### Étape 2.2.2 — Persistence UnitOfMeasure
+
 **Statut : À FAIRE**
 
-Définir le modèle domaine des unités après validation de la décision concernant
-les unités système globales ou tenant-owned.
+Ajouter le mapping Doctrine, le repository, la migration tenant/RLS, les
+contraintes d'unicité par organisation, l'optimistic locking et les tests
+PostgreSQL réels.
 
 ---
 
