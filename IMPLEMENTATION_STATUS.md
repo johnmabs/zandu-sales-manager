@@ -3678,10 +3678,46 @@ test(access): verify store scoped authorization
 
 ### Étape 1.9.5 — Invariant du dernier owner
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- parcours HTTP avec un unique membership owner actif ;
+- suspension et révocation du dernier owner rejetées en
+  `422 DOMAIN_RULE_VIOLATION` ;
+- maintien du membership en statut `ACTIVE` vérifié dans PostgreSQL après
+  chaque tentative refusée ;
+- invitation et inscription d'un second `ORGANIZATION_OWNER` actif ;
+- révocation de ce second owner autorisée, avec conservation du premier owner
+  actif.
+
+### Validations
+
+```text
+PHPUnit Docker : OK (276 tests, 1034 assertions)
+Parcours invariant du dernier owner ciblé : OK (1 test, 27 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Conteneur Symfony et Composer : valides
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+test(access): enforce last active owner invariant
+```
+
+## Prochaine étape
+
+### Étape 1.9.6 — Isolation tenant
+
 **Statut : À FAIRE**
 
-Vérifier qu'un owner unique ne peut être ni suspendu ni révoqué, puis que la
-révocation redevient possible lorsqu'un second owner actif existe.
+Valider sur deux organisations que les ressources d'un tenant étranger sont
+masquées ou refusées selon le contrat de chaque endpoint, y compris au niveau
+PostgreSQL sous RLS.
 
 ---
 
