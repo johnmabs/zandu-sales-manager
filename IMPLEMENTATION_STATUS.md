@@ -3877,7 +3877,7 @@ anticiper les fondations Inventory, Cash ou Sales des lots suivants.
 # Lot 2 — Catalog & basic Pricing
 
 ```text
-Epic 2.1   EN COURS  Catalog foundation
+Epic 2.1   TERMINÉ   Catalog foundation
 Epic 2.2   À FAIRE   Unit of measure
 Epic 2.3   À FAIRE   Categories
 Epic 2.4   À FAIRE   Product lifecycle
@@ -3946,10 +3946,47 @@ feat(database): add catalog schema
 
 ### Étape 2.1.3 — Étendre les architecture fitness tests
 
+**Statut : TERMINÉE**
+
+### Réalisé
+
+- layers Deptrac `Catalog` et `CatalogContract` ajoutés ;
+- `Application/Contract` exclu des internals Catalog et exposé comme unique
+  surface publique ;
+- Catalog ne peut accéder qu'à son propre contrat public et n'obtient aucun
+  accès direct à Organization, IdentityAccess, Inventory, Sales ou
+  CashManagement ;
+- règles synchronisées dans `docs/architecture/fitness-tests.md`.
+
+### Validations
+
+```text
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+```
+
+### Commit
+
+```text
+test(architecture): protect catalog boundaries
+```
+
+## Epic 2.1 — Résultat
+
+**Statut : TERMINÉ**
+
+Le bounded context Catalog, son schéma PostgreSQL vide et ses frontières
+architecturales exécutables sont disponibles sans logique des lots futurs.
+
+## Prochaine étape
+
+### Étape 2.2.1 — Ajouter UnitOfMeasure
+
 **Statut : À FAIRE**
 
-Ajouter Catalog aux frontières de modules et interdire ses dépendances directes
-vers les domaines Organization, IdentityAccess et les modules des lots futurs.
+Définir le modèle domaine des unités après validation de la décision concernant
+les unités système globales ou tenant-owned.
 
 ---
 
