@@ -5443,11 +5443,31 @@ feat(api): expose product management
 
 ### Étape 2.8.3 — API ProductPackaging
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
-Exposer les endpoints tenant-scoped de lecture, création, modification,
-désactivation et archivage des packagings sous `/api/products/{productId}/packagings`,
-en préservant l'invariant historique de `conversionFactor`.
+La surface de lecture est exposée sous `/api/products/{productId}/packagings` :
+collection et item tenant-scoped, DTO/resource dédiés et query service protégé
+par `PRODUCT_READ`. Le repository trie les packagings par code et conserve la
+vérification organization.
+
+Les mutations (création, modification, désactivation et archivage) restent à
+implémenter avec leurs commandes applicatives et la préservation de l'invariant
+historique `conversionFactor`.
+
+### Validation intermédiaire
+
+```text
+PHPUnit OpenAPI : OK (12 tests, 74 assertions)
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation
+PHP-CS-Fixer : 0 fichier à corriger
+```
+
+### Commit
+
+```text
+feat(api): expose product packaging reads
+```
 
 ---
 
