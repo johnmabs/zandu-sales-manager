@@ -5849,10 +5849,30 @@ test(catalog): verify transaction atomicity and side effects
 
 ### Démonstration métier consolidée du Lot 2
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
 
-Exécuter le parcours complet organisation → catalogue → packaging → barcode →
-PriceList → ProductPrice → résolution de prix effectif.
+La gate consolidée est validée par la suite complète : organisation → catalogue
+→ packaging → barcode → PriceList → ProductPrice → résolution de prix effectif,
+avec isolation tenant, autorisation, RLS et atomicité audit/outbox.
+
+### Validation
+
+```text
+Suite complète : OK (414 tests, 1871 assertions)
+Migrations PostgreSQL test : OK
+```
+
+### Commit
+
+```text
+test(lot-2): validate consolidated business flow
+```
+
+## Prochaine étape
+
+### Lot 3 — Inventory & Cash foundations
+
+**Statut : À FAIRE**
 
 ---
 
