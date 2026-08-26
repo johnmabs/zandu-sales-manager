@@ -5503,12 +5503,13 @@ feat(api): expose barcode management and resolution
 
 La lecture tenant-scoped des listes de prix est exposée via `GET /api/price-lists`
 et `GET /api/price-lists/{id}`, avec tri par code et contrôle `PRICE_LIST_READ`.
-Les mutations et transitions de statut restent à implémenter.
+La création, la mise à jour et l'activation sont également exposées ; la
+désactivation et l'archivage restent à implémenter.
 
 ### Validation intermédiaire
 
 ```text
-PHPUnit OpenAPI : OK (14 tests, 83 assertions)
+PHPUnit OpenAPI : OK (14 tests, 86 assertions)
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation
 PHP-CS-Fixer : 0 fichier à corriger
@@ -5517,7 +5518,7 @@ PHP-CS-Fixer : 0 fichier à corriger
 ### Commit
 
 ```text
-feat(api): expose price list reads
+feat(api): expose price list management
 ```
 
 ---
