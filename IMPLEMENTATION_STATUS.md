@@ -6334,6 +6334,30 @@ feat(cash): add cash register aggregate
 
 ### Étape 3.7.2 — Persistence CashRegister
 
+**Statut : TERMINÉE**
+
+Le mapping `CashRegisterRecord` et `DoctrineCashRegisterRepository` assurent
+la persistence tenant/store-safe, la recherche par caisse/store et la
+concurrence optimiste.
+
+### Validation
+
+```text
+Mapping Doctrine : OK
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): persist cash registers
+```
+
+## Prochaine étape
+
+### Étape 3.7.3 — Use cases CashRegister
+
 **Statut : À FAIRE**
 
 ---
