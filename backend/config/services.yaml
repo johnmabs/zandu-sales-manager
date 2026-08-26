@@ -127,6 +127,8 @@ services:
 
     Zandu\Modules\Catalog\Application\Contract\SaleablePackagingSnapshotProvider:
         alias: Zandu\Modules\Catalog\Application\RepositorySaleablePackagingSnapshotProvider
+    Zandu\Modules\Catalog\Application\Contract\InventoryProductProvider:
+        alias: Zandu\Modules\Catalog\Application\RepositoryInventoryProductProvider
 
     Zandu\Modules\Pricing\Domain\PriceList\PriceListRepository:
         alias: Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\DoctrinePriceListRepository
