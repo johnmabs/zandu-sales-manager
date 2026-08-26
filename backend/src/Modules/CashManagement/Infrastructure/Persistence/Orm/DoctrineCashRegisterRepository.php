@@ -36,6 +36,6 @@ final readonly class DoctrineCashRegisterRepository implements CashRegisterRepos
         if (!$v instanceof CashRegisterRecord) {
             return null;
         }$f = $this->uuids;
-        return CashRegister::reconstitute(CashRegisterId::fromString($v->id(), $f), OrganizationId::fromString($v->organizationId(), $f), StoreId::fromString($v->storeId(), $f), $v->code(), $v->name(), CashRegisterStatus::from($v->status()), $v->createdAt(), ActorId::fromString($v->createdBy(), $f), $v->updatedAt(), null === $v->updatedBy() ? null : ActorId::fromString($v->updatedBy(),$f), $v->version());
+        return CashRegister::reconstitute(CashRegisterId::fromString($v->id(), $f), OrganizationId::fromString($v->organizationId(), $f), StoreId::fromString($v->storeId(), $f), $v->code(), $v->name(), CashRegisterStatus::from($v->status()), $v->createdAt(), ActorId::fromString($v->createdBy(), $f), $v->updatedAt(), null === $v->updatedBy() ? null : ActorId::fromString($v->updatedBy(), $f), $v->version());
     }
 }

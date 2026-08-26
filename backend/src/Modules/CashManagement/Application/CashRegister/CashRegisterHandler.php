@@ -36,7 +36,7 @@ final readonly class CashRegisterHandler
         return $this->transaction->transactional($c->actorContext->organizationId(), function () use ($c): CashRegister {
             $r = $this->registers->find($c->actorContext->organizationId(), $c->storeId, $c->id) ?? throw new LogicException('Cash register not found.');
             match ($c->action) {
-                'activate' => $r->activate(), 'deactivate' => $r->deactivate(), 'archive' => $r->archive(), default => throw new LogicException('Unknown cash register action.')
+                'activate' => $r->activate(), 'deactivate' => $r->deactivate(), 'archive' => $r->archive(), default => throw new LogicException('Unknown cash register action.'),
             };
             $this->registers->save($r);
             if ('archive' === $c->action) {

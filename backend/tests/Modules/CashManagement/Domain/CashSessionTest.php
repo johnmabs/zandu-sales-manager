@@ -36,6 +36,6 @@ final class CashSessionTest extends TestCase
         $actor = ActorId::fromString('0198d611-1111-7111-8111-111111111111', $f);
         $s->close($m('10'), $m('10'), $actor, new DateTimeImmutable());
         $this->expectException(\LogicException::class);
-        $s->close($m('10'),$m('10'),$actor,new DateTimeImmutable());
+        $s->close($m('10'), $m('10'), $actor, new DateTimeImmutable());
     }
 }

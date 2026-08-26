@@ -39,6 +39,6 @@ final readonly class DoctrineCashSessionRepository implements CashSessionReposit
             return null;
         }$f = $this->uuids;
         $money = fn(?string $a): ?Money => null === $a ? null : new Money($this->decimals->fromString($a), Currency::fromCode($v->currency()));
-        return CashSession::reconstitute(CashSessionId::fromString($v->id(), $f), OrganizationId::fromString($v->organizationId(), $f), StoreId::fromString($v->storeId(), $f), CashRegisterId::fromString($v->cashRegisterId(), $f), ActorId::fromString($v->cashierId(), $f), new Money($this->decimals->fromString($v->openingBalance()), Currency::fromCode($v->currency())), $v->openedAt(), CashSessionStatus::from($v->status()), $money($v->countedClosingBalance()), $money($v->expectedClosingBalance()), $money($v->discrepancy()), $v->closedAt(), null === $v->closedBy() ? null : ActorId::fromString($v->closedBy(),$f), $v->version());
+        return CashSession::reconstitute(CashSessionId::fromString($v->id(), $f), OrganizationId::fromString($v->organizationId(), $f), StoreId::fromString($v->storeId(), $f), CashRegisterId::fromString($v->cashRegisterId(), $f), ActorId::fromString($v->cashierId(), $f), new Money($this->decimals->fromString($v->openingBalance()), Currency::fromCode($v->currency())), $v->openedAt(), CashSessionStatus::from($v->status()), $money($v->countedClosingBalance()), $money($v->expectedClosingBalance()), $money($v->discrepancy()), $v->closedAt(), null === $v->closedBy() ? null : ActorId::fromString($v->closedBy(), $f), $v->version());
     }
 }

@@ -25,7 +25,7 @@ final readonly class CashMovementProcessor implements ProcessorInterface
         $session = CashSessionId::fromString((string) ($u['sessionId'] ?? throw new InvalidArgumentException('Session identifier is required.')), $this->uuids);
         $money = Money::fromString($d->amount, Currency::fromCode($d->currency), $this->decimals);
         $m = match ($o->getName()) {
-            'cash_in_record' => ($this->in)(new RecordCashIn($store, $session, $money, $d->reason, $a, $d->sourceReference)),'cash_out_record' => ($this->out)(new RecordCashOut($store, $session, $money, $d->reason, $a, $d->sourceReference)),'cash_withdrawal_record' => ($this->withdraw)(new WithdrawCash($store, $session, $money, $d->reason, $a, $d->sourceReference)),default => throw new InvalidArgumentException('Unsupported cash movement operation.')
+            'cash_in_record' => ($this->in)(new RecordCashIn($store, $session, $money, $d->reason, $a, $d->sourceReference)),'cash_out_record' => ($this->out)(new RecordCashOut($store, $session, $money, $d->reason, $a, $d->sourceReference)),'cash_withdrawal_record' => ($this->withdraw)(new WithdrawCash($store, $session, $money, $d->reason, $a, $d->sourceReference)),default => throw new InvalidArgumentException('Unsupported cash movement operation.'),
         };
         return new CashMovementResource($m->id()->toString(), $m->storeId()->toString(), $m->sessionId()->toString(), $m->type()->value, $m->amount()->amount()->toString(), $m->amount()->currency()->code(), $m->reason(), $m->sourceReference(), $m->occurredAt()->format(DATE_ATOM));
     }

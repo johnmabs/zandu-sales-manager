@@ -43,6 +43,6 @@ final readonly class StockProcessor implements ProcessorInterface
     {
         if (!is_string($value) || '' === $value) {
             throw new InvalidArgumentException('Stock identifiers are required.');
-        } return $type === StoreId::class ? StoreId::fromString($value,$this->uuids) : ProductId::fromString($value,$this->uuids);
+        } return $type === StoreId::class ? StoreId::fromString($value, $this->uuids) : ProductId::fromString($value, $this->uuids);
     }
 }

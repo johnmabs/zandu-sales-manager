@@ -53,6 +53,6 @@ final class ProductBarcodeTest extends TestCase
         $f = new SymfonyUuidFactory();
         $d = new BrickDecimalFactory();
         $a = ActorId::fromString('0198c728-8f2d-7f43-92d8-3f0c75b80186', $f);
-        return ProductPackaging::createAdditional(ProductPackagingId::fromString('0198d2e4-147c-72d5-b75a-a936797ff9c8', $f), OrganizationId::fromString('0198d2e1-b2a4-7b6e-8e0e-608484906502', $f), ProductId::fromString('0198d2e2-147c-72d5-b75a-a936797ff9c8', $f), ProductPackagingCode::fromString('EA'), ProductPackagingName::fromString('Article'), UnitOfMeasureId::fromString('0198d2e3-147c-72d5-b75a-a936797ff9c8', $f), new ConversionFactor($d->fromString('1')), ProductPackagingPrecision::fromInt(0), Quantity::fromString('1', $d), Quantity::fromString('1',$d), true, true, $a, new DateTimeImmutable('2026-08-25T09:00:00Z'));
+        return ProductPackaging::createAdditional(ProductPackagingId::fromString('0198d2e4-147c-72d5-b75a-a936797ff9c8', $f), OrganizationId::fromString('0198d2e1-b2a4-7b6e-8e0e-608484906502', $f), ProductId::fromString('0198d2e2-147c-72d5-b75a-a936797ff9c8', $f), ProductPackagingCode::fromString('EA'), ProductPackagingName::fromString('Article'), UnitOfMeasureId::fromString('0198d2e3-147c-72d5-b75a-a936797ff9c8', $f), new ConversionFactor($d->fromString('1')), ProductPackagingPrecision::fromInt(0), Quantity::fromString('1', $d), Quantity::fromString('1', $d), true, true, $a, new DateTimeImmutable('2026-08-25T09:00:00Z'));
     }
 }

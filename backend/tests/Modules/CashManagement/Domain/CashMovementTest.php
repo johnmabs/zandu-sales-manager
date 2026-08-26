@@ -36,6 +36,6 @@ final class CashMovementTest extends TestCase
     {
         $f = new SymfonyUuidFactory();
         $this->expectException(\InvalidArgumentException::class);
-        CashMovement::record(CashMovementId::fromString('0198d70b-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198d70c-1111-7111-8111-111111111111', $f), StoreId::fromString('0198d70d-1111-7111-8111-111111111111', $f), CashSessionId::fromString('0198d70e-1111-7111-8111-111111111111', $f), CashMovementType::CashIn, Money::fromString('0',Currency::fromCode('XAF'),new BrickDecimalFactory()), null, null, ActorId::fromString('0198d70f-1111-7111-8111-111111111111',$f), null, new DateTimeImmutable());
+        CashMovement::record(CashMovementId::fromString('0198d70b-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198d70c-1111-7111-8111-111111111111', $f), StoreId::fromString('0198d70d-1111-7111-8111-111111111111', $f), CashSessionId::fromString('0198d70e-1111-7111-8111-111111111111', $f), CashMovementType::CashIn, Money::fromString('0', Currency::fromCode('XAF'), new BrickDecimalFactory()), null, null, ActorId::fromString('0198d70f-1111-7111-8111-111111111111', $f), null, new DateTimeImmutable());
     }
 }
