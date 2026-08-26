@@ -7216,4 +7216,25 @@ test(cash): verify concurrent session guard
 
 ### Étape 3.14.7 — Tests CashMovement
 
+**Statut : TERMINÉE**
+
+Les tests couvrent les types `CASH_IN`, `CASH_OUT` et `CASH_WITHDRAWAL`, ainsi
+que le rejet d’un montant nul.
+
+### Validation
+
+```text
+CashMovementTest : OK (3 tests, 5 assertions)
+```
+
+### Commit
+
+```text
+test(cash): verify cash movements
+```
+
+## Prochaine étape
+
+### Étape 3.14.8 — Atomicité Cash
+
 **Statut : À FAIRE**
