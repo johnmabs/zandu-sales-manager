@@ -42,6 +42,11 @@ doctrine:
                 type: attribute
                 dir: "%kernel.project_dir%/src/Modules/Inventory/Infrastructure/Persistence/Orm"
                 prefix: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm
+            CashManagement:
+                is_bundle: false
+                type: attribute
+                dir: "%kernel.project_dir%/src/Modules/CashManagement/Infrastructure/Persistence/Orm"
+                prefix: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm
 
 when@test:
     doctrine:
