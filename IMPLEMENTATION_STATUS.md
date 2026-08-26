@@ -6566,7 +6566,23 @@ feat(cash): add record cash in use case
 
 ### Étape 3.9.3 — Persistence CashMovement
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
+
+Le ledger `CashMovement` est désormais persisté par Doctrine en append-only,
+avec lecture par session, montants décimaux exacts et devise conservée.
+
+### Validation
+
+```text
+Mapping Doctrine : OK
+Conteneur Symfony : OK
+```
+
+### Commit
+
+```text
+feat(cash): persist cash movements
+```
 
 ---
 
