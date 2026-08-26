@@ -58,6 +58,25 @@ final class StockTest extends TestCase
         self::assertSame('0', $stock->quantityOnHand()->toString());
     }
 
+    public function testSecondInitializationIsRejected(): void
+    {
+        $f = new SymfonyUuidFactory();
+        $stock = Stock::create(StockId::fromString('0198d310-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198d311-1111-7111-8111-111111111111', $f), StoreId::fromString('0198d312-1111-7111-8111-111111111111', $f), ProductId::fromString('0198d313-1111-7111-8111-111111111111', $f), new StockQuantity($this->quantity('0')));
+        $actor = ActorId::fromString('0198d314-1111-7111-8111-111111111111', $f);
+        $stock->initialize(new StockQuantity($this->quantity('1')), $actor, new DateTimeImmutable());
+        $this->expectException(LogicException::class);
+        $stock->initialize(new StockQuantity($this->quantity('2')), $actor, new DateTimeImmutable());
+    }
+
+    public function testDecreaseCannotProduceNegativeQuantity(): void
+    {
+        $f = new SymfonyUuidFactory();
+        $stock = Stock::create(StockId::fromString('0198d315-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198d316-1111-7111-8111-111111111111', $f), StoreId::fromString('0198d317-1111-7111-8111-111111111111', $f), ProductId::fromString('0198d318-1111-7111-8111-111111111111', $f), new StockQuantity($this->quantity('0')));
+        $stock->initialize(new StockQuantity($this->quantity('1')), ActorId::fromString('0198d319-1111-7111-8111-111111111111', $f), new DateTimeImmutable());
+        $this->expectException(LogicException::class);
+        $stock->decrease(new MovementQuantity($this->quantity('2')));
+    }
+
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, new BrickDecimalFactory());
