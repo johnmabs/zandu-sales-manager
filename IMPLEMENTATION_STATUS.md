@@ -5499,10 +5499,26 @@ feat(api): expose barcode management and resolution
 
 ### Étape 2.8.5 — API PriceList
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
-Exposer la gestion tenant-scoped des listes de prix et leurs transitions de
-statut, avant d'ajouter les prix unitaires par packaging.
+La lecture tenant-scoped des listes de prix est exposée via `GET /api/price-lists`
+et `GET /api/price-lists/{id}`, avec tri par code et contrôle `PRICE_LIST_READ`.
+Les mutations et transitions de statut restent à implémenter.
+
+### Validation intermédiaire
+
+```text
+PHPUnit OpenAPI : OK (14 tests, 83 assertions)
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation
+PHP-CS-Fixer : 0 fichier à corriger
+```
+
+### Commit
+
+```text
+feat(api): expose price list reads
+```
 
 ---
 
