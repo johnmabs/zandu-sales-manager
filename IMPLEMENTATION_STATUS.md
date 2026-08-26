@@ -6257,6 +6257,32 @@ feat(inventory): enforce stock operation idempotence
 
 ### Epic 3.6 — Cash Management foundation
 
+**Statut : EN COURS**
+
+### Étape 3.6.1 — Structure Cash Management
+
+**Statut : TERMINÉE**
+
+Le bounded context Cash Management dispose de sa frontière documentée et de
+son répertoire ORM enregistré dans Doctrine, sans logique Payment ou Sales.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+refactor(cash): prepare cash management bounded context
+```
+
+## Prochaine étape
+
+### Étape 3.6.2 — Schéma PostgreSQL Cash Management
+
 **Statut : À FAIRE**
 
 ---
