@@ -2,4 +2,15 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/ProductPackagingCommands.php';
+namespace Zandu\Modules\Catalog\Application;
+
+use Zandu\SharedKernel\Context\ActorContext;
+use Zandu\SharedKernel\Identity\ProductPackagingId;
+
+final readonly class ArchiveProductPackaging
+{
+    public function __construct(
+        public ProductPackagingId $packagingId,
+        public ActorContext $actorContext,
+    ) {}
+}
