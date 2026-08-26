@@ -159,6 +159,20 @@ SQL);
         self::assertStringContainsString('cash_register_id', $definition);
     }
 
+    public function testRuntimeRoleCanUseLotThreeSchemas(): void
+    {
+        foreach (['inventory', 'cash_management'] as $schema) {
+            $this->connection->beginTransaction();
+            try {
+                $this->connection->executeStatement('SET LOCAL ROLE zandu_runtime');
+                $this->connection->executeStatement(sprintf('SET LOCAL search_path TO %s', $schema));
+                self::assertNotFalse($this->connection->fetchOne('SELECT current_schema()'));
+            } finally {
+                $this->connection->rollBack();
+            }
+        }
+    }
+
     public function testTenantContextDoesNotLeakAfterCommit(): void
     {
         $this->transactions()->transactional(
