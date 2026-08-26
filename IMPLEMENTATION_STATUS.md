@@ -7449,3 +7449,31 @@ feat(sales): add sale aggregate lifecycle
 
 Implémenter `SaleLine` et les snapshots historiques (Epic 4.3), puis exposer le
 contrat applicatif Catalog nécessaire à la résolution d’un produit vendable.
+
+### Epic 4.3 — SaleLine & snapshots
+
+**Statut : EN COURS — modèle de snapshot et contrat Catalog terminés**
+
+`SaleLine` conserve désormais les identifiants produit/packaging, les libellés
+et codes, l’unité, les quantités saisies et de base, le facteur de conversion,
+les montants et les références de prix. Le contrat `SaleProductProvider` expose
+un descripteur applicatif sans dépendance vers `Catalog\Domain`.
+
+### Validation
+
+```text
+SaleTest : OK (3 tests, 4 assertions)
+PHPStan : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(sales): add sale line snapshots and catalog contract
+```
+
+## Prochaine étape
+
+Implémenter la résolution de prix déterministe de l’Epic 4.4 à partir du
+contrat produit vendable et des snapshots de ligne.
