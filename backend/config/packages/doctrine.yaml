@@ -37,7 +37,11 @@ doctrine:
                 is_bundle: false
                 dir: "%kernel.project_dir%/src/Modules/Pricing/Infrastructure/Persistence/Orm"
                 prefix: Zandu\Modules\Pricing\Infrastructure\Persistence\Orm
-                alias: Pricing
+            Inventory:
+                is_bundle: false
+                type: attribute
+                dir: "%kernel.project_dir%/src/Modules/Inventory/Infrastructure/Persistence/Orm"
+                prefix: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm
 
 when@test:
     doctrine:
