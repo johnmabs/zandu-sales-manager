@@ -6770,3 +6770,35 @@ feat(inventory): provide store closure stock blocker
 ### Étape 3.10.2 — Cash blocker provider
 
 **Statut : À FAIRE**
+
+---
+
+## État courant — Epic 3.11 Authorization, audit & permissions
+
+### Étape 3.11.1 — Permissions Inventory
+
+**Statut : TERMINÉE**
+
+Le catalogue partagé `PermissionCode` contient désormais uniquement les
+permissions Inventory prévues pour les capacités livrées :
+`INVENTORY_READ`, `INVENTORY_INITIALIZE`, `INVENTORY_ADJUST` et
+`STOCK_MOVEMENT_READ`. Les permissions Stock avancées restent absentes tant
+qu’elles ne sont pas utilisées.
+
+### Validation
+
+```text
+PermissionCodeTest : OK (1 test, 44 assertions)
+```
+
+### Commit
+
+```text
+feat(access): add inventory permissions
+```
+
+## Prochaine étape
+
+### Étape 3.11.2 — Permissions Cash
+
+**Statut : À FAIRE**
