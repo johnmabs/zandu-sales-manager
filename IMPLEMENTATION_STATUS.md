@@ -6998,4 +6998,28 @@ feat(api): expose cash register management
 
 ### Étape 3.13.4 — API CashSession
 
+**Statut : TERMINÉE**
+
+Le cycle de vie CashSession expose l’ouverture, la lecture et la fermeture
+avec des DTO Money (montant décimal et devise séparés). Les opérations
+réutilisent `CashSessionHandler` et restent intentionnelles.
+
+### Validation
+
+```text
+Symfony container : OK
+Routes CashSession : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(api): expose cash session lifecycle
+```
+
+## Prochaine étape
+
+### Étape 3.13.5 — API CashMovement
+
 **Statut : À FAIRE**
