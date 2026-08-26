@@ -8,7 +8,7 @@ use Zandu\Modules\Inventory\Domain\Stock\StockQuantity;
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 
-#[ORMEntity]
+#[ORM\Entity]
 #[ORM\Table(name: 'stock', schema: 'inventory')]
 #[ORM\UniqueConstraint(name: 'stock_identity_unique', columns: ['organization_id', 'store_id', 'product_id'])]
 final class StockRecord

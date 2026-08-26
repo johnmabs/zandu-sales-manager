@@ -13,6 +13,6 @@ final class StockRepositoryContractTest extends TestCase
     public function testContractExposesOnlyThePositionAndIdentityOperations(): void
     {
         $methods = array_map(static fn($method): string => $method->getName(), (new ReflectionClass(StockRepository::class))->getMethods());
-        self::assertSame(['save', 'get', 'find', 'getById'], $methods);
+        self::assertSame(['save', 'get', 'find', 'getById', 'findByStore', 'decreaseIfAvailable'], $methods);
     }
 }
