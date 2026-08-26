@@ -6015,6 +6015,30 @@ feat(inventory): add stock repository contract
 
 ### Étape 3.2.4 — Persistence Stock
 
+**Statut : TERMINÉE**
+
+Le mapping ORM et `DoctrineStockRepository` persistent l’aggregate avec
+précision décimale, unicité tenant/store/produit et version optimiste. Le
+contrat est enregistré dans le conteneur Symfony.
+
+### Validation
+
+```text
+Doctrine mapping : OK
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): persist stock aggregate
+```
+
+## Prochaine étape
+
+### Étape 3.3.1 — Aggregate StockMovement
+
 **Statut : À FAIRE**
 
 ---
