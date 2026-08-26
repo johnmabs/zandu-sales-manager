@@ -5524,7 +5524,7 @@ feat(api): complete price list management
 
 ### Étape 2.8.6 — API ProductPrice
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 Les lectures tenant-scoped sont exposées via `GET /api/product-prices` et
 `GET /api/product-prices/{id}`, avec contrôle `PRODUCT_PRICE_READ` et projection
@@ -6610,12 +6610,15 @@ feat(cash): add manual cash out
 
 Les commandes de mouvements acceptent désormais une référence de source
 optionnelle, alignée avec l’index unique PostgreSQL. Le branchement complet de
-la référence dans les handlers reste à finaliser.
+la référence est propagée par les trois handlers (`RecordCashIn`,
+`RecordCashOut`, `WithdrawCash`).
 
 ### Commit
 
 ```text
 feat(cash): prepare cash movement idempotency
+fix(cash): propagate movement source reference
+fix(cash): propagate source references on cash out
 ```
 
 `WithdrawCash` produit un mouvement `CASH_WITHDRAWAL` distinct de `CASH_OUT`,
