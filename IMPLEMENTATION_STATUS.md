@@ -6515,6 +6515,33 @@ CashSessionTest : OK (2 tests, 3 assertions)
 
 ### Epic 3.9 — CashMovement ledger
 
+**Statut : EN COURS**
+
+### Étape 3.9.1 — Aggregate CashMovement
+
+**Statut : TERMINÉE**
+
+`CashMovement` est immuable, limite les types du Lot 3 (`CASH_IN`, `CASH_OUT`,
+`CASH_WITHDRAWAL`) et impose un montant strictement positif, une devise portée
+par `Money` et une source optionnelle.
+
+### Validation
+
+```text
+CashMovementTest : OK (1 test, 2 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add immutable cash movement ledger
+```
+
+## Prochaine étape
+
+### Étape 3.9.2 — RecordCashIn
+
 **Statut : À FAIRE**
 
 ---
