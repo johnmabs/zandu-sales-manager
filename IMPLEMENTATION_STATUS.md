@@ -7629,6 +7629,30 @@ effets Inventory/Cash vérifiés, puis couvrir l’idempotence et la concurrence
 La protection de rejeu est désormais en place : une vente déjà `COMPLETED`
 sort sans réexécuter les effets externes.
 
+### Epic 4.9 — Idempotence & concurrency
+
+**Statut : EN COURS — clé d’idempotence introduite**
+
+`CompleteSale` accepte désormais une clé d’idempotence et consulte un store
+injectable avant d’exécuter les effets. La clé est marquée après finalisation ;
+les rejoués connus sont ignorés. L’implémentation mémoire sert de baseline de
+contrat, avant son remplacement par une persistance PostgreSQL atomique et les
+tests de concurrence réelle.
+
+### Validation
+
+```text
+SaleCompletionIdempotencyTest + CompleteSaleServiceTest : OK (2 tests, 4 assertions)
+PHPStan : OK
+PHP-CS-Fixer : OK
+```
+
+### Commit
+
+```text
+feat(sales): add complete sale idempotency key
+```
+
 ### Commit complémentaire
 
 ```text
