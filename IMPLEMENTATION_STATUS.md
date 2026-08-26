@@ -6921,15 +6921,16 @@ feat(inventory): expose sale stock consumption contract
 
 **Statut : EN COURS**
 
-### Étape 3.13.1 — API Stock (lecture)
+### Étape 3.13.1 — API Stock
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 Les endpoints `GET /api/stores/{storeId}/stocks` et
 `GET /api/stores/{storeId}/stocks/{productId}` sont exposés dans la
 présentation du module Inventory. La lecture passe par un service applicatif,
 respecte la permission `INVENTORY_READ` et conserve les quantités décimales
-en chaînes JSON.
+en chaînes JSON. Les POST `/initialize` et `/adjust` convertissent les DTO
+JSON en commandes applicatives dédiées.
 
 ### Validation
 
@@ -6943,8 +6944,11 @@ Deptrac layers/modules : 0 violation
 
 ```text
 feat(api): expose stock read operations
+feat(api): expose stock operations
 ```
 
 ## Prochaine étape
 
-Ajouter les opérations POST d’initialisation et d’ajustement du stock.
+### Étape 3.13.2 — API StockMovement
+
+**Statut : À FAIRE**
