@@ -5898,6 +5898,31 @@ refactor(inventory): prepare bounded context structure
 
 ### Étape 3.1.2 — Schéma PostgreSQL inventory
 
+**Statut : TERMINÉE**
+
+Les tables tenant-scoped `inventory.stock` et `inventory.stock_movement` sont
+créées avec intégrité référentielle, unicité par organisation/store/produit,
+quantités décimales, index et politiques RLS fail-closed. Les tables des
+transferts, inventaires et réservations restent volontairement hors périmètre.
+
+### Validation
+
+```text
+Migration PostgreSQL test : OK
+PostgresRowLevelSecurityTest : OK (9 tests, 46 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(database): add inventory stock tables
+```
+
+## Prochaine étape
+
+### Étape 3.1.3 — Contrat Catalog pour Inventory
+
 **Statut : À FAIRE**
 
 ---
