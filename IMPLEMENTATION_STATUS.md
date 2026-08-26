@@ -7536,3 +7536,32 @@ feat(payments): add cash sale payment
 Implémenter l’intégration Inventory de l’Epic 4.6 via
 `InventoryStockConsumer`, sans importer `StockRepository` ou
 `Inventory\Domain` depuis Sales.
+
+### Epic 4.6 — Inventory integration
+
+**Statut : EN COURS — orchestration par contrat terminée**
+
+`InventoryConsumptionService` consomme le stock uniquement via
+`InventoryStockConsumer` et `ConsumeStockForSale`. Les produits physiques
+suivis sont transmis avec leur `baseQuantity`; les produits non suivis et les
+services ne déclenchent aucun appel Inventory. Sales n’importe aucun
+repository ni aggregate du domaine Inventory.
+
+### Validation
+
+```text
+InventoryConsumptionServiceTest + SaleTest : OK (4 tests, 6 assertions)
+PHPStan : OK
+PHP-CS-Fixer : OK
+```
+
+### Commit
+
+```text
+feat(inventory): consume stock through sales contract
+```
+
+## Prochaine étape
+
+Implémenter l’Epic 4.7 — intégration Cash via `CashMovementRecorder`, avec
+session ouverte obligatoire et paiement SALE idempotent.
