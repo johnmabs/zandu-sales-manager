@@ -6215,6 +6215,26 @@ feat(inventory): enforce stock concurrency strategy
 
 ### Étape 3.5.2 — Tests PostgreSQL concurrents
 
+**Statut : TERMINÉE**
+
+Les tests du Spike E utilisent deux connexions PostgreSQL réelles et vérifient
+qu’une consommation concurrente incompatible est rejetée sans jamais produire
+de quantité négative.
+
+### Validation
+
+```text
+StockConcurrencyTest : OK (2 tests, 8 assertions)
+```
+
+### Commit
+
+Test déjà présent et validé dans le dépôt.
+
+## Prochaine étape
+
+### Étape 3.5.3 — Idempotence
+
 **Statut : À FAIRE**
 
 ---
