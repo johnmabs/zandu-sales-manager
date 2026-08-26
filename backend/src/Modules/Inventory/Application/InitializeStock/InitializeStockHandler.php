@@ -24,7 +24,7 @@ final readonly class InitializeStockHandler
             if (!$descriptor->inventoryTracked() || 'PHYSICAL' !== $descriptor->productType()) throw new LogicException('Product is not eligible for inventory.');
             if (null !== $this->stocks->find($organizationId,$command->storeId,$command->productId)) throw new LogicException('Stock is already initialized.');
             $stock=Stock::create(StockId::generate($this->ids),$organizationId,$command->storeId,$command->productId,$this->zero());
-            $now=$this->clock->now(); $stock->initialize($command->quantity,$command->actorContext->actorId(),$now); $this->stocks->save($stock);
+            $now=$this->clock->now(); $stock->initialize(new StockQuantity($command->quantity),$command->actorContext->actorId(),$now); $this->stocks->save($stock);
             $this->movements->append(StockMovement::record(StockMovementId::generate($this->ids),$organizationId,$command->storeId,$command->productId,$stock->id(),StockMovementType::InitialStock,new MovementQuantity($command->quantity->value()),$this->zero(),StockMovementSource::initialization(),null,$command->actorContext->actorId(),$now));
             $this->audit->recordSuccess($command->actorContext, SecurityAction::StockInitialized, ResourceReference::for('stock', $stock->id()), SafeAuditMetadata::empty(), $now);
             return $stock;
