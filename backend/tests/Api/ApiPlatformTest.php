@@ -221,4 +221,21 @@ final class ApiPlatformTest extends KernelTestCase
             self::assertSame([$code], $content['application/json']->getSchema()['properties']['code']['enum']);
         }
     }
+
+    public function testCatalogPricingOperationsExposeStandardErrorContract(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+        $operations = [
+            $paths->getPath('/api/products/{productId}/packagings/{packagingId}/effective-price')->getGet(),
+            $paths->getPath('/api/product-prices/{id}')->getPatch(),
+        ];
+        foreach ($operations as $operation) {
+            self::assertNotNull($operation);
+            foreach ([400 => 'VALIDATION_ERROR', 401 => 'UNAUTHENTICATED', 403 => 'FORBIDDEN', 404 => 'NOT_FOUND', 409 => 'CONFLICT', 422 => 'DOMAIN_RULE_VIOLATION'] as $status => $code) {
+                self::assertArrayHasKey((string) $status, $operation->getResponses());
+                self::assertSame([$code], $operation->getResponses()[(string) $status]->getContent()['application/json']->getSchema()['properties']['code']['enum']);
+            }
+        }
+    }
 }

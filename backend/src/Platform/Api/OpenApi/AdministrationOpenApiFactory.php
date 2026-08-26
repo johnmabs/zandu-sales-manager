@@ -41,7 +41,7 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
 
     private function isAdministrationPath(string $path): bool
     {
-        foreach (['/api/organizations', '/api/stores', '/api/member-invitations', '/api/invitations', '/api/members', '/api/roles'] as $prefix) {
+        foreach (['/api/organizations', '/api/stores', '/api/member-invitations', '/api/invitations', '/api/members', '/api/roles', '/api/products', '/api/categories', '/api/product-prices', '/api/price-lists', '/api/catalog'] as $prefix) {
             if (str_starts_with($path, $prefix)) {
                 return true;
             }
