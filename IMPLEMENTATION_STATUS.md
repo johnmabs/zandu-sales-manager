@@ -6283,6 +6283,30 @@ refactor(cash): prepare cash management bounded context
 
 ### Étape 3.6.2 — Schéma PostgreSQL Cash Management
 
+**Statut : TERMINÉE**
+
+Les tables `cash_register`, `cash_session` et `cash_movement` sont créées avec
+clés tenant/store, unicités métier, contrainte d’une seule session ouverte,
+idempotence des sources, index et RLS fail-closed. Les concepts Payment et
+Settlement restent hors périmètre.
+
+### Validation
+
+```text
+Migration PostgreSQL test : OK
+PostgresRowLevelSecurityTest : OK (9 tests, 52 assertions)
+```
+
+### Commit
+
+```text
+feat(database): add cash management tables
+```
+
+## Prochaine étape
+
+### Epic 3.7 — CashRegister
+
 **Statut : À FAIRE**
 
 ---
