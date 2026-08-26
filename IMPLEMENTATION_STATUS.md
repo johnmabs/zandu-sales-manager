@@ -7277,6 +7277,18 @@ PostgresRowLevelSecurityTest : OK (10 tests, 54 assertions)
 Ajouter des fixtures Stock/Cash appartenant à deux tenants et vérifier les
 lectures et écritures cross-tenant au niveau des repositories.
 
+Un test de contrat garantit désormais que les méthodes tenant-aware des
+repositories Inventory/Cash exigent explicitement un `OrganizationId`.
+
+### Validation complémentaire
+
+```text
+TenantAwareRepositoryContractTest : OK (5 tests, 13 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+Les scénarios d’accès avec fixtures PostgreSQL restent à compléter.
+
 La suite CI avait révélé un manque de privilège `USAGE` sur les schémas
 `inventory` et `cash_management`. Une migration dédiée corrige ce point ; le
 workflow multi-store repasse désormais avec 47 assertions.
