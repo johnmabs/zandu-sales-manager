@@ -7565,3 +7565,33 @@ feat(inventory): consume stock through sales contract
 
 Implémenter l’Epic 4.7 — intégration Cash via `CashMovementRecorder`, avec
 session ouverte obligatoire et paiement SALE idempotent.
+
+### Epic 4.7 — Cash integration
+
+**Statut : EN COURS — orchestration Cash par contrat terminée**
+
+`CashPaymentService` délègue l’enregistrement d’un paiement de vente à
+`CashMovementRecorder` avec le tenant, le Store, la session Cash, la vente,
+le montant et l’acteur. La devise de paiement est vérifiée contre celle de la
+vente ; l’idempotence est portée par le résultat du contrat
+`CashSalePaymentResult`. Sales ne manipule directement aucune session ou
+entité Cash.
+
+### Validation
+
+```text
+CashPaymentServiceTest : OK (1 test, 2 assertions)
+PHPStan : OK
+PHP-CS-Fixer : OK
+```
+
+### Commit
+
+```text
+feat(cash): record sale payment movement
+```
+
+## Prochaine étape
+
+Implémenter l’Epic 4.8 — workflow `CompleteSale` coordonnant vente, paiement,
+Inventory, Cash et Outbox dans une transaction locale atomique.
