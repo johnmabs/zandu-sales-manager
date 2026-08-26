@@ -6126,6 +6126,27 @@ feat(inventory): add initialize stock use case
 
 ### Étape 3.4.2 — Initialisation à zéro
 
+**Statut : TERMINÉE**
+
+La quantité initiale zéro est explicitement valide : elle représente un stock
+suivi mais actuellement épuisé, distinct d’une position non initialisée.
+
+### Validation
+
+```text
+StockTest : OK (3 tests, 5 assertions)
+```
+
+### Commit
+
+```text
+test(inventory): allow zero stock initialization
+```
+
+## Prochaine étape
+
+### Étape 3.4.3 — AdjustStock
+
 **Statut : À FAIRE**
 
 ---
