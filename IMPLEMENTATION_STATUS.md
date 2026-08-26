@@ -5443,31 +5443,43 @@ feat(api): expose product management
 
 ### Étape 2.8.3 — API ProductPackaging
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
-La surface de lecture est exposée sous `/api/products/{productId}/packagings` :
-collection et item tenant-scoped, DTO/resource dédiés et query service protégé
-par `PRODUCT_READ`. Le repository trie les packagings par code et conserve la
-vérification organization.
-
-Les mutations (création, modification, désactivation et archivage) restent à
-implémenter avec leurs commandes applicatives et la préservation de l'invariant
-historique `conversionFactor`.
+L'API ProductPackaging est complète sous `/api/products/{productId}/packagings` :
+lecture collection/item, création, mise à jour commerciale, désactivation et
+archivage. Les DTO et processeurs restent dans `Catalog/Presentation/Api`,
+avec autorisation tenant-scoped, transaction tenant et garde opérationnelle.
+Le facteur de conversion est volontairement immuable lors d'une mise à jour :
+un changement de facteur doit créer un nouveau packaging afin de préserver
+l'historique.
 
 ### Validation intermédiaire
 
 ```text
-PHPUnit OpenAPI : OK (12 tests, 74 assertions)
+PHPUnit OpenAPI : OK (12 tests, 78 assertions)
+PHPUnit complet : OK (407 tests, 1823 assertions)
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation
 PHP-CS-Fixer : 0 fichier à corriger
+Composer audit : aucune vulnérabilité connue
 ```
 
 ### Commit
 
 ```text
-feat(api): expose product packaging reads
+feat(api): expose product packaging management
 ```
+
+## Prochaine étape
+
+### Étape 2.8.4 — API Barcode
+
+**Statut : À FAIRE**
+
+Implémenter l'ajout et la suppression contrôlée des codes-barres d'un
+conditionnement, ainsi que la résolution globale d'un code-barres vers son
+produit et son packaging. La suppression physique devra être refusée dès
+qu'une utilisation historique l'interdit.
 
 ---
 
