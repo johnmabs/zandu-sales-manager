@@ -5992,6 +5992,29 @@ feat(inventory): add stock quantity value objects
 
 ### Étape 3.2.3 — StockRepository
 
+**Statut : TERMINÉE**
+
+Le domaine expose `StockRepository` avec `save`, recherche par position tenant
+(organisation/store/produit) et lecture par identifiant. L’exception
+`StockNotFound` fournit les deux formes de lookup sans repository générique.
+
+### Validation
+
+```text
+StockRepositoryContractTest : OK (1 test, 1 assertion)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): add stock repository contract
+```
+
+## Prochaine étape
+
+### Étape 3.2.4 — Persistence Stock
+
 **Statut : À FAIRE**
 
 ---
