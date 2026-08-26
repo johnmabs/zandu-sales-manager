@@ -6,6 +6,7 @@ namespace Zandu\Tests\Modules\Catalog\Application;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Zandu\Modules\Catalog\Application\RepositoryBarcodeResolver;
 use Zandu\Modules\Catalog\Domain\ProductBarcode\Barcode;
 use Zandu\Modules\Catalog\Domain\ProductBarcode\ProductBarcode;
@@ -117,5 +118,16 @@ final class InMemoryProductBarcodeRepository implements ProductBarcodeRepository
         }
 
         return null;
+    }
+
+    public function get(OrganizationId $organizationId, ProductBarcodeId $id): ProductBarcode
+    {
+        foreach ($this->barcodes as $candidate) {
+            if ($candidate->organizationId()->equals($organizationId) && $candidate->id()->equals($id)) {
+                return $candidate;
+            }
+        }
+
+        throw new RuntimeException('Barcode not found.');
     }
 }

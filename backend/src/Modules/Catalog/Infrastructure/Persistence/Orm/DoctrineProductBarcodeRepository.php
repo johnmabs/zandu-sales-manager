@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Zandu\Modules\Catalog\Domain\ProductBarcode\Barcode;
 use Zandu\Modules\Catalog\Domain\ProductBarcode\ProductBarcode;
+use Zandu\Modules\Catalog\Domain\ProductBarcode\ProductBarcodeNotFound;
 use Zandu\Modules\Catalog\Domain\ProductBarcode\ProductBarcodeRepository;
 use Zandu\Modules\Catalog\Domain\ProductBarcode\ProductBarcodeStatus;
 use Zandu\SharedKernel\Identity\ActorId;
@@ -37,6 +38,18 @@ final readonly class DoctrineProductBarcodeRepository implements ProductBarcodeR
         $r = $this->em->getRepository(ProductBarcodeRecord::class)->findOneBy(['organizationId' => $organizationId->toString(),'normalizedBarcode' => $barcode->normalized()]);
         if (!$r instanceof ProductBarcodeRecord) {
             return null;
-        } return ProductBarcode::reconstitute(ProductBarcodeId::fromString($r->id(), $this->uuids), OrganizationId::fromString($r->organizationId(), $this->uuids), ProductId::fromString($r->productId(), $this->uuids), ProductPackagingId::fromString($r->packagingId(), $this->uuids), Barcode::fromString($r->rawBarcode()), ProductBarcodeStatus::from($r->status()), $r->createdAt(), ActorId::fromString($r->createdBy(), $this->uuids), $r->removedAt(), null !== $r->removedBy() ? ActorId::fromString($r->removedBy(), $this->uuids) : null, $r->version());
+        } return $this->toAggregate($r);
+    }
+    public function get(OrganizationId $organizationId, ProductBarcodeId $id): ProductBarcode
+    {
+        $r = $this->em->getRepository(ProductBarcodeRecord::class)->findOneBy(['id' => $id->toString(), 'organizationId' => $organizationId->toString()]);
+        if (!$r instanceof ProductBarcodeRecord) {
+            throw ProductBarcodeNotFound::withId($id);
+        }
+        return $this->toAggregate($r);
+    }
+    private function toAggregate(ProductBarcodeRecord $r): ProductBarcode
+    {
+        return ProductBarcode::reconstitute(ProductBarcodeId::fromString($r->id(), $this->uuids), OrganizationId::fromString($r->organizationId(), $this->uuids), ProductId::fromString($r->productId(), $this->uuids), ProductPackagingId::fromString($r->packagingId(), $this->uuids), Barcode::fromString($r->rawBarcode()), ProductBarcodeStatus::from($r->status()), $r->createdAt(), ActorId::fromString($r->createdBy(), $this->uuids), $r->removedAt(), null !== $r->removedBy() ? ActorId::fromString($r->removedBy(), $this->uuids) : null, $r->version());
     }
 }
