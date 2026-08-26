@@ -6951,4 +6951,26 @@ feat(api): expose stock operations
 
 ### Étape 3.13.2 — API StockMovement
 
+**Statut : TERMINÉE**
+
+Les historiques immuables sont accessibles par store et par produit via les
+deux endpoints GET dédiés. Aucun endpoint PATCH ou DELETE n’est exposé.
+
+### Validation
+
+```text
+Routes StockMovement : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(api): expose stock movement history
+```
+
+## Prochaine étape
+
+### Étape 3.13.3 — API CashRegister
+
 **Statut : À FAIRE**
