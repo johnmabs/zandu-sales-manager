@@ -6880,3 +6880,43 @@ feat(access): grant inventory and cash permissions
 ### Étape 3.11.4 — Audit sensible
 
 **Statut : À FAIRE**
+
+---
+
+## État courant — Epic 3.12 Application Contracts pour Lot 4
+
+### Étapes 3.12.1 et 3.12.2 — Contrats Inventory/Cash
+
+**Statut : TERMINÉES**
+
+Les contrats synchrones `InventoryStockConsumer` et `CashMovementRecorder`
+sont disponibles avec leurs commandes d’entrée et résultats idempotents
+versionnés (`CONTRACT_VERSION = 1`). Aucune classe Sales, transaction
+distribuée ou dépendance vers les agrégats d’un autre module n’a été ajoutée.
+
+### Étape 3.12.3 — Contract tests
+
+**Statut : TERMINÉE**
+
+Les tests vérifient la surface des interfaces, la version contractuelle et le
+marquage explicite des résultats rejoués.
+
+### Validation
+
+```text
+Contract tests : OK (2 tests, 10 assertions)
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): expose sale stock consumption contract
+```
+
+## Prochaine étape
+
+### Epic 3.13 — Inventory & Cash API
+
+**Statut : À FAIRE**
