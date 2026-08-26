@@ -1,0 +1,6 @@
+<?php
+declare(strict_types=1);
+namespace Zandu\Modules\CashManagement\Presentation\Api;
+use ApiPlatform\Metadata\Operation;use ApiPlatform\State\ProviderInterface;use InvalidArgumentException;use Zandu\Modules\CashManagement\Application\CashMovementQueryService;use Zandu\SharedKernel\Context\CurrentActorProvider;use Zandu\SharedKernel\Identity\{CashSessionId,StoreId,UuidFactory};use Zandu\SharedKernel\Tenancy\TenantTransaction;
+/** @implements ProviderInterface<CashMovementResource> */
+final readonly class CashMovementProvider implements ProviderInterface{public function __construct(private CurrentActorProvider $actors,private UuidFactory $uuids,private TenantTransaction $transaction,private CashMovementQueryService $queries){}public function provide(Operation $o,array $u=[],array $c=[]):array{$a=$this->actors->resolve();$id=CashSessionId::fromString((string)($u['sessionId']??throw new InvalidArgumentException('Session identifier is required.')),$this->uuids);$store=StoreId::fromString((string)($u['storeId']??throw new InvalidArgumentException('Store identifier is required.')),$this->uuids);return $this->transaction->transactional($a->organizationId(),function()use($a,$id,$store):array{return array_map(static fn(array $v):CashMovementResource=>new CashMovementResource(...array_values($v)),$this->queries->list($a,$store,$id));});}}
