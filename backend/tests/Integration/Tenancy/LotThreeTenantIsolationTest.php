@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZanduTests\Integration\Tenancy;
+namespace Zandu\Tests\Integration\Tenancy;
 
 use RuntimeException;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
