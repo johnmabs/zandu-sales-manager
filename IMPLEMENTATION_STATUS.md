@@ -7625,3 +7625,12 @@ feat(sales): add complete sale transaction workflow
 Ajouter le chemin nominal de `CompleteSale` avec ligne, paiement confirmé et
 effets Inventory/Cash vérifiés, puis couvrir l’idempotence et la concurrence
 (Epic 4.9).
+
+La protection de rejeu est désormais en place : une vente déjà `COMPLETED`
+sort sans réexécuter les effets externes.
+
+### Commit complémentaire
+
+```text
+feat(sales): make complete sale replay safe
+```
