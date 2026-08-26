@@ -6775,11 +6775,12 @@ feat(inventory): provide store closure stock blocker
 
 ## État courant — Étape 3.11.4 Audit sensible
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
-Les actions d’audit `STOCK_INITIALIZED` et `STOCK_ADJUSTED` sont enregistrées
-par les handlers Inventory via `SecurityAuditTrail`. Les actions Cash restent
-à brancher avant de clore l’étape.
+Les handlers Inventory et Cash enregistrent les opérations sensibles via
+`SecurityAuditTrail`, avec des actions distinctes du ledger métier :
+initialisation et ajustement de stock, archivage de caisse, ouverture et
+fermeture de session, encaissement, sortie et retrait.
 
 ### Validation
 
@@ -6792,13 +6793,16 @@ Deptrac layers/modules : 0 violation
 
 ```text
 feat(audit): record inventory operations
+feat(audit): record cash operations
 ```
 
 ## Prochaine étape
 
-Brancher les audits `CASH_REGISTER_ARCHIVED`, `CASH_SESSION_OPENED`,
-`CASH_SESSION_CLOSED`, `CASH_IN_RECORDED`, `CASH_OUT_RECORDED` et
-`CASH_WITHDRAWAL_RECORDED`.
+## Prochaine étape
+
+### Epic 3.12 — Application Contracts pour Lot 4
+
+**Statut : À FAIRE**
 
 ---
 
