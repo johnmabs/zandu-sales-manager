@@ -5969,6 +5969,29 @@ feat(inventory): add stock aggregate
 
 ### Étape 3.2.2 — Value objects de quantité
 
+**Statut : TERMINÉE**
+
+`StockQuantity` garantit une quantité courante non négative et
+`MovementQuantity` garantit une variation strictement positive. L’aggregate
+`Stock` utilise désormais ces types dédiés pour ses opérations.
+
+### Validation
+
+```text
+StockTest : OK (2 tests, 3 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): add stock quantity value objects
+```
+
+## Prochaine étape
+
+### Étape 3.2.3 — StockRepository
+
 **Statut : À FAIRE**
 
 ---
