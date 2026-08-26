@@ -1,0 +1,10 @@
+<?php
+declare(strict_types=1);
+namespace Zandu\Modules\CashManagement\Domain\CashMovement;
+use DateTimeImmutable;use InvalidArgumentException;use LogicException;use Zandu\Modules\CashManagement\Domain\CashSession\CashSessionStatus;use Zandu\SharedKernel\Identity\{ActorId,CashMovementId,CashSessionId,OrganizationId,StoreId};use Zandu\SharedKernel\Money\Money;
+final readonly class CashMovement
+{
+ private function __construct(private CashMovementId $id,private OrganizationId $organizationId,private StoreId $storeId,private CashSessionId $sessionId,private CashMovementType $type,private Money $amount,private ?string $sourceReference,private ?string $reason,private ActorId $performedBy,private ?ActorId $approvedBy,private DateTimeImmutable $occurredAt){if($amount->amount()->isNegative()||$amount->amount()->isZero())throw new InvalidArgumentException('Cash movement amount must be positive.');}
+ public static function record(CashMovementId $id,OrganizationId $organizationId,StoreId $storeId,CashSessionId $sessionId,CashMovementType $type,Money $amount,?string $sourceReference,?string $reason,ActorId $performedBy,?ActorId $approvedBy,DateTimeImmutable $occurredAt):self{return new self($id,$organizationId,$storeId,$sessionId,$type,$amount,$sourceReference,$reason,$performedBy,$approvedBy,$occurredAt);}
+ public function id():CashMovementId{return $this->id;}public function organizationId():OrganizationId{return $this->organizationId;}public function storeId():StoreId{return $this->storeId;}public function sessionId():CashSessionId{return $this->sessionId;}public function type():CashMovementType{return $this->type;}public function amount():Money{return $this->amount;}public function sourceReference():?string{return $this->sourceReference;}public function reason():?string{return $this->reason;}public function performedBy():ActorId{return $this->performedBy;}public function approvedBy():?ActorId{return $this->approvedBy;}public function occurredAt():DateTimeImmutable{return $this->occurredAt;}
+}
