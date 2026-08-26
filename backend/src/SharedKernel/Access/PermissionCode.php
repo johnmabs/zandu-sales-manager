@@ -72,4 +72,11 @@ enum PermissionCode: string
     case CashInRecord = 'CASH_IN_RECORD';
     case CashOutRecord = 'CASH_OUT_RECORD';
     case CashWithdrawalRecord = 'CASH_WITHDRAWAL_RECORD';
+
+    case SaleCreate = 'SALE_CREATE';
+    case SaleRead = 'SALE_READ';
+    case SaleUpdateDraft = 'SALE_UPDATE_DRAFT';
+    case SaleCancelDraft = 'SALE_CANCEL_DRAFT';
+    case SaleComplete = 'SALE_COMPLETE';
+    case SalePriceOverride = 'SALE_PRICE_OVERRIDE';
 }

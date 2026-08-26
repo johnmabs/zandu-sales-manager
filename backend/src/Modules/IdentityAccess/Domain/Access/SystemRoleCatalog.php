@@ -52,6 +52,11 @@ final readonly class SystemRoleCatalog
                     PermissionCode::CashRegisterManage,
                     PermissionCode::CashSessionRead,
                     PermissionCode::CashMovementRead,
+                    PermissionCode::SaleCreate,
+                    PermissionCode::SaleRead,
+                    PermissionCode::SaleUpdateDraft,
+                    PermissionCode::SaleCancelDraft,
+                    PermissionCode::SaleComplete,
                 ],
             ),
             Role::system(
@@ -70,6 +75,11 @@ final readonly class SystemRoleCatalog
                     PermissionCode::CashMovementRead,
                     PermissionCode::CashInRecord,
                     PermissionCode::CashOutRecord,
+                    PermissionCode::SaleCreate,
+                    PermissionCode::SaleRead,
+                    PermissionCode::SaleUpdateDraft,
+                    PermissionCode::SaleCancelDraft,
+                    PermissionCode::SaleComplete,
                 ],
             ),
             Role::system(
@@ -88,6 +98,7 @@ final readonly class SystemRoleCatalog
                     PermissionCode::CashRegisterRead,
                     PermissionCode::CashSessionRead,
                     PermissionCode::CashMovementRead,
+                    PermissionCode::SaleRead,
                 ],
             ),
         ];
