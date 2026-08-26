@@ -5669,6 +5669,28 @@ test(catalog): cover category hierarchy
 
 ### Étape 2.9.4 — Tests PostgreSQL ProductCode
 
+**Statut : TERMINÉE**
+
+Les tests d'intégration PostgreSQL couvrent le round-trip Doctrine, la mise à
+jour avec version optimiste, l'unicité du code dans un tenant et sa réutilisation
+dans un autre tenant, ainsi que l'isolation RLS et les références cross-tenant.
+
+### Validation
+
+```text
+DoctrineProductRepositoryTest : OK (6 tests, 9 assertions)
+```
+
+### Commit
+
+```text
+test(catalog): verify product code PostgreSQL constraints
+```
+
+## Prochaine étape
+
+### Étape 2.9.5 — Tests Barcode
+
 **Statut : À FAIRE**
 
 ---
