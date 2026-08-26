@@ -7289,6 +7289,22 @@ Deptrac layers/modules : 0 violation
 
 Les scénarios d’accès avec fixtures PostgreSQL restent à compléter.
 
+Un test de non-régression vérifie désormais que `zandu_runtime` peut utiliser
+les schémas `inventory` et `cash_management` après application de la
+migration de privilèges.
+
+### Validation complémentaire
+
+```text
+PostgresRowLevelSecurityTest : OK (11 tests, 56 assertions)
+```
+
+### Commit
+
+```text
+test(tenant): verify lot three schema grants
+```
+
 La suite CI avait révélé un manque de privilège `USAGE` sur les schémas
 `inventory` et `cash_management`. Une migration dédiée corrige ce point ; le
 workflow multi-store repasse désormais avec 47 assertions.
