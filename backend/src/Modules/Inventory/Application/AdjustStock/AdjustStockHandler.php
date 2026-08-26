@@ -4,6 +4,7 @@ namespace Zandu\Modules\Inventory\Application\AdjustStock;
 use InvalidArgumentException;
 use LogicException;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockRepository};
+use Zandu\Modules\Organization\Application\Contract\{OperationalGuard,OperationalMode};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementId,StockMovementRepository,StockMovementSource,StockMovementType};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{IdGenerator};
@@ -11,13 +12,13 @@ use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 final readonly class AdjustStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard) {}
     public function __invoke(AdjustStock $command): void
     {
         if ('' === trim($command->reason)) throw new InvalidArgumentException('Adjustment reason is required.');
         $organizationId=$command->actorContext->organizationId();
         $this->transaction->transactional($organizationId, function() use($command,$organizationId): void {
-            $stock=$this->stocks->get($organizationId,$command->storeId,$command->productId);
+            $stock=$this->stocks->get($organizationId,$command->storeId,$command->productId); $this->operationalGuard->assertStore($command->actorContext,$command->storeId,OperationalMode::Standard);
             if (!$stock->initialized()) throw new LogicException('Stock must be initialized before adjustment.');
             if ($command->delta->isZero()) throw new InvalidArgumentException('Adjustment delta cannot be zero.');
             $quantity=new MovementQuantity($command->delta->isNegative() ? new \Zandu\SharedKernel\Quantity\Quantity($this->decimals->fromString(ltrim($command->delta->toString(), '-'))) : $command->delta);

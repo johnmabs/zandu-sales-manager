@@ -6,6 +6,7 @@ use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
 use Zandu\Modules\Catalog\Application\Contract\InventoryProductProvider;
+use Zandu\Modules\Organization\Application\Contract\{OperationalGuard,OperationalMode};
 use Zandu\Modules\Inventory\Domain\Stock\{Stock,StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementId,StockMovementRepository,StockMovementSource,StockMovementType};
 use Zandu\SharedKernel\Identity\{IdGenerator,StockId};
@@ -13,12 +14,12 @@ use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
 final readonly class InitializeStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryProductProvider $products, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryProductProvider $products, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard) {}
     public function __invoke(InitializeStock $command): Stock
     {
         $organizationId=$command->actorContext->organizationId();
         return $this->transaction->transactional($organizationId, function() use($command,$organizationId): Stock {
-            $descriptor=$this->products->provide($organizationId,$command->productId);
+            $descriptor=$this->products->provide($organizationId,$command->productId); $this->operationalGuard->assertStore($command->actorContext,$command->storeId,OperationalMode::Standard);
             if (!$descriptor->inventoryTracked() || 'PHYSICAL' !== $descriptor->productType()) throw new LogicException('Product is not eligible for inventory.');
             if (null !== $this->stocks->find($organizationId,$command->storeId,$command->productId)) throw new LogicException('Stock is already initialized.');
             $stock=Stock::create(StockId::generate($this->ids),$organizationId,$command->storeId,$command->productId,$this->zero());
