@@ -6039,6 +6039,46 @@ feat(inventory): persist stock aggregate
 
 ### Étape 3.3.1 — Aggregate StockMovement
 
+**Statut : TERMINÉE**
+
+`StockMovement` est immuable, limite les types du Lot 3, dérive la direction
+depuis le type et calcule le résultat à partir de la quantité précédente. La
+source distingue initialisation et ajustement manuel.
+
+### Validation
+
+```text
+StockMovementTest : OK (1 test, 1 assertion)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): add stock movement aggregate
+```
+
+## Prochaine étape
+
+### Étape 3.3.2 — StockMovementSource
+
+**Statut : TERMINÉE**
+
+`StockMovementSource` fournit les sources `INITIALIZATION` et
+`MANUAL_ADJUSTMENT`, avec une référence optionnelle pour les ajustements.
+
+### Commit
+
+Inclus dans :
+
+```text
+feat(inventory): add stock movement aggregate
+```
+
+## Prochaine étape
+
+### Étape 3.3.3 — Persistence append-only
+
 **Statut : À FAIRE**
 
 ---
