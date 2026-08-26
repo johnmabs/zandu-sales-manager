@@ -6432,6 +6432,29 @@ feat(cash): persist cash sessions
 
 ### Étape 3.8.3 — Ouverture et fermeture de session
 
+**Statut : TERMINÉE**
+
+Les use cases d’ouverture et de fermeture contrôlent la caisse active,
+l’unicité d’une session ouverte et la fermeture terminale dans des
+transactions tenant-scoped.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add cash session lifecycle
+```
+
+## Prochaine étape
+
+### Étape 3.8.4 — Calcul du montant attendu
+
 **Statut : À FAIRE**
 
 ---
