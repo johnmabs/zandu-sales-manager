@@ -6147,6 +6147,29 @@ test(inventory): allow zero stock initialization
 
 ### Étape 3.4.3 — AdjustStock
 
+**Statut : TERMINÉE**
+
+Le cas d’usage `AdjustStock` impose une raison, interdit le delta nul,
+détermine le type depuis le signe, refuse un stock non initialisé ou négatif
+et append le mouvement correspondant dans la même transaction.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): add stock adjustment use case
+```
+
+## Prochaine étape
+
+### Étape 3.4.4 — Contrat de lecture de disponibilité
+
 **Statut : À FAIRE**
 
 ---
