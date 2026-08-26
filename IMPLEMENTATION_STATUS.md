@@ -5524,10 +5524,26 @@ feat(api): complete price list management
 
 ### Étape 2.8.6 — API ProductPrice
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
 
-Exposer les prix par packaging et PriceList, avec validation de devise, montant,
-unicité de la cible et transitions opérationnelles.
+Les lectures tenant-scoped sont exposées via `GET /api/product-prices` et
+`GET /api/product-prices/{id}`, avec contrôle `PRODUCT_PRICE_READ` et projection
+des montants/devise, périodes et cibles. Les mutations restent à implémenter.
+
+### Validation intermédiaire
+
+```text
+PHPUnit OpenAPI : OK (15 tests, 90 assertions)
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation
+PHP-CS-Fixer : 0 fichier à corriger
+```
+
+### Commit
+
+```text
+feat(api): expose product price reads
+```
 ```
 
 ---
