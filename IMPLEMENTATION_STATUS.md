@@ -6381,6 +6381,33 @@ feat(cash): add cash register management
 
 ### Epic 3.8 — CashSession lifecycle
 
+**Statut : EN COURS**
+
+### Étape 3.8.1 — Aggregate CashSession
+
+**Statut : TERMINÉE**
+
+`CashSession` couvre l’ouverture et la fermeture terminale, le solde initial
+non négatif, les soldes attendu/compté et le calcul de l’écart dans la devise
+de la session.
+
+### Validation
+
+```text
+CashSessionTest : OK (1 test, 2 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add cash session aggregate
+```
+
+## Prochaine étape
+
+### Étape 3.8.2 — Persistence CashSession
+
 **Statut : À FAIRE**
 
 ---
