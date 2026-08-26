@@ -6773,6 +6773,35 @@ feat(inventory): provide store closure stock blocker
 
 ---
 
+## État courant — Étape 3.11.4 Audit sensible
+
+**Statut : EN COURS**
+
+Les actions d’audit `STOCK_INITIALIZED` et `STOCK_ADJUSTED` sont enregistrées
+par les handlers Inventory via `SecurityAuditTrail`. Les actions Cash restent
+à brancher avant de clore l’étape.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(audit): record inventory operations
+```
+
+## Prochaine étape
+
+Brancher les audits `CASH_REGISTER_ARCHIVED`, `CASH_SESSION_OPENED`,
+`CASH_SESSION_CLOSED`, `CASH_IN_RECORDED`, `CASH_OUT_RECORDED` et
+`CASH_WITHDRAWAL_RECORDED`.
+
+---
+
 ## État courant — Epic 3.11 Authorization, audit & permissions
 
 ### Étape 3.11.1 — Permissions Inventory
