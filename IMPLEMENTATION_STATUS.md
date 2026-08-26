@@ -6723,16 +6723,22 @@ feat(cash): provide store closure cash blocker
 
 ### Étape 3.10.3 — Store suspendu
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
 
-Les opérations `InitializeStock` et `AdjustStock` refusent désormais les
-stores suspendus via `OperationalGuard` en mode standard. `OpenCashSession`
-reste à aligner dans le prochain incrément.
+Les opérations `InitializeStock`, `AdjustStock` et `OpenCashSession` refusent
+désormais les stores suspendus via `OperationalGuard` en mode standard.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
 
 ### Commit
 
 ```text
-feat(inventory): enforce suspended store guard
+feat(cash): enforce suspended store guard
 ```
 
 ## Epic 3.10 — StoreClosure integration
