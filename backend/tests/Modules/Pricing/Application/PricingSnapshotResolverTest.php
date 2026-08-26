@@ -121,4 +121,9 @@ final readonly class SnapshotPriceListRepository implements PriceListRepository
     {
         return $this->priceList;
     }
+
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return [$this->priceList];
+    }
 }

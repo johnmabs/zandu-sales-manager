@@ -112,4 +112,9 @@ final readonly class ResolverProductPriceRepository implements ProductPriceRepos
     ): ?ProductPrice {
         return $this->effective;
     }
+
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return null !== $this->effective ? [$this->effective] : [];
+    }
 }
