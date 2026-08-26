@@ -7237,4 +7237,20 @@ test(cash): verify cash movements
 
 ### Étape 3.14.8 — Atomicité Cash
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
+
+Le socle transactionnel partagé couvre les scénarios de rollback mutation,
+audit et outbox utilisés par les opérations Cash. Les injections ciblées entre
+insertion `CashMovement`, fermeture `CashSession`, audit et outbox restent à
+ajouter pour clôturer cette étape.
+
+### Validation
+
+```text
+TransactionalAuditAtomicityTest + TransactionalOutboxTest : OK (8 tests, 26 assertions)
+```
+
+## Prochaine étape
+
+Ajouter un scénario d’intégration Cash qui force l’échec après l’écriture du
+ledger et vérifie l’absence d’effet partiel.
