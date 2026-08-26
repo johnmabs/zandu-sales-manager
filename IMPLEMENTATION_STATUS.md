@@ -6973,4 +6973,29 @@ feat(api): expose stock movement history
 
 ### Étape 3.13.3 — API CashRegister
 
+**Statut : TERMINÉE**
+
+Les endpoints de lecture, création, mise à jour et transitions explicites
+`activate`, `deactivate` et `archive` sont exposés dans le module
+CashManagement. Les transitions restent intentionnelles et aucun CRUD
+générique de ledger n’est ajouté.
+
+### Validation
+
+```text
+Symfony container : OK
+Routes CashRegister : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(api): expose cash register management
+```
+
+## Prochaine étape
+
+### Étape 3.13.4 — API CashSession
+
 **Statut : À FAIRE**
