@@ -6584,6 +6584,26 @@ Conteneur Symfony : OK
 feat(cash): persist cash movements
 ```
 
+### Étape 3.9.3 — RecordCashOut
+
+**Statut : TERMINÉE**
+
+Le cas d’usage `RecordCashOut` applique les mêmes contrôles que l’entrée
+manuelle et produit un mouvement typé `CASH_OUT` uniquement pour une session
+ouverte.
+
+### Commit
+
+```text
+feat(cash): add manual cash out
+```
+
+## Prochaine étape
+
+### Étape 3.9.4 — CashWithdrawal
+
+**Statut : À FAIRE**
+
 ---
 
 # Discipline des commits
