@@ -7194,4 +7194,26 @@ test(cash): cover cash session invariants
 
 ### Étape 3.14.6 — Concurrence OpenCashSession
 
+**Statut : TERMINÉE**
+
+Le test PostgreSQL vérifie la présence de l’index unique partiel
+`cash_session_one_open_idx` sur `(organization_id, cash_register_id)` pour le
+seul statut `OPEN`, garantissant une seule session ouverte par caisse.
+
+### Validation
+
+```text
+PostgresRowLevelSecurityTest : OK (10 tests, 54 assertions)
+```
+
+### Commit
+
+```text
+test(cash): verify concurrent session guard
+```
+
+## Prochaine étape
+
+### Étape 3.14.7 — Tests CashMovement
+
 **Statut : À FAIRE**
