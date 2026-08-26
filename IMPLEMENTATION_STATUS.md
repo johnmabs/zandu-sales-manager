@@ -5647,6 +5647,28 @@ test(catalog): cover packaging quantity conversion
 
 ### Étape 2.9.3 — Tests Category hierarchy
 
+**Statut : TERMINÉE**
+
+La hiérarchie est couverte par des tests de création avec parent tenant-safe,
+déplacement, prévention des cycles et cycle de vie (activation, désactivation,
+archivage).
+
+### Validation
+
+```text
+CategoryTest + CategoryHandlerTest : OK (15 tests, 87 assertions)
+```
+
+### Commit
+
+```text
+test(catalog): cover category hierarchy
+```
+
+## Prochaine étape
+
+### Étape 2.9.4 — Tests PostgreSQL ProductCode
+
 **Statut : À FAIRE**
 
 ---
