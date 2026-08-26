@@ -7421,3 +7421,31 @@ feat(database): add sales persistence foundation
 
 Implémenter l’agrégat `Sale` et son cycle de vie DRAFT → COMPLETED/CANCELLED
 (Epic 4.2), avec ses tests de domaine.
+
+### Epic 4.2 — Sale aggregate & lifecycle
+
+**Statut : EN COURS — cycle de vie fondamental terminé**
+
+L’agrégat `Sale` est disponible avec les statuts `DRAFT`, `AWAITING_PAYMENT`,
+`COMPLETED` et `CANCELLED`. Les invariants de vente vide, d’édition après
+finalisation et d’annulation d’une vente finalisée sont couverts par les tests
+de domaine.
+
+### Validation
+
+```text
+SaleTest : OK (3 tests, 4 assertions)
+PHPStan : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(sales): add sale aggregate lifecycle
+```
+
+## Prochaine étape
+
+Implémenter `SaleLine` et les snapshots historiques (Epic 4.3), puis exposer le
+contrat applicatif Catalog nécessaire à la résolution d’un produit vendable.
