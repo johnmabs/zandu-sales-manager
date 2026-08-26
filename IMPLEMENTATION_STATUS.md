@@ -5735,6 +5735,29 @@ test(pricing): cover price list and product price invariants
 
 ### Étape 2.9.7 — Tenant isolation applicative
 
+**Statut : TERMINÉE**
+
+Les tests d'intégration démontrent l'absence de fuite entre tenants pour les
+repositories Catalog/Pricing, les références cross-tenant et les transactions
+tenant. Les cas Product, Category, Packaging, PriceList et ProductPrice sont
+couverts, ainsi que les protections RLS existantes.
+
+### Validation
+
+```text
+Tests Integration Catalog/Pricing/Tenancy : OK (34 tests, 94 assertions)
+```
+
+### Commit
+
+```text
+test(tenant): enforce catalog tenant isolation
+```
+
+## Prochaine étape
+
+### Étape 2.9.8 — PostgreSQL RLS
+
 **Statut : À FAIRE**
 
 ---
