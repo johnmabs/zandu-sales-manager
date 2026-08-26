@@ -55,4 +55,9 @@ enum PermissionCode: string
     case ProductPriceRead = 'PRODUCT_PRICE_READ';
     case ProductPriceUpdate = 'PRODUCT_PRICE_UPDATE';
     case ProductPriceArchive = 'PRODUCT_PRICE_ARCHIVE';
+
+    case InventoryRead = 'INVENTORY_READ';
+    case InventoryInitialize = 'INVENTORY_INITIALIZE';
+    case InventoryAdjust = 'INVENTORY_ADJUST';
+    case StockMovementRead = 'STOCK_MOVEMENT_READ';
 }
