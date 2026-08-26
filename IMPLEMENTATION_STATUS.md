@@ -7653,6 +7653,29 @@ PHP-CS-Fixer : OK
 feat(sales): add complete sale idempotency key
 ```
 
+### Persistance idempotence PostgreSQL
+
+**Statut : TERMINÉE**
+
+Les clés de rejeu sont maintenant persistées dans
+`sales.sale_completion_keys`, protégées par tenant et par clé primaire
+composite. L’enregistrement utilise `ON CONFLICT DO NOTHING`, ce qui fournit
+une réservation atomique compatible avec les retries concurrents.
+
+### Validation
+
+```text
+Migration sale_completion_keys : OK
+SaleCompletionIdempotencyContractTest + SaleCompletionIdempotencyTest : OK (2 tests, 4 assertions)
+PHPStan : OK
+```
+
+### Commit
+
+```text
+feat(sales): persist completion idempotency keys
+```
+
 ### Commit complémentaire
 
 ```text
