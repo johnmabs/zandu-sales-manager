@@ -7276,3 +7276,13 @@ PostgresRowLevelSecurityTest : OK (10 tests, 54 assertions)
 
 Ajouter des fixtures Stock/Cash appartenant à deux tenants et vérifier les
 lectures et écritures cross-tenant au niveau des repositories.
+
+La suite CI avait révélé un manque de privilège `USAGE` sur les schémas
+`inventory` et `cash_management`. Une migration dédiée corrige ce point ; le
+workflow multi-store repasse désormais avec 47 assertions.
+
+### Commit
+
+```text
+fix(integration): grant runtime schema access
+```
