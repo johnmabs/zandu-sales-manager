@@ -6919,4 +6919,32 @@ feat(inventory): expose sale stock consumption contract
 
 ### Epic 3.13 — Inventory & Cash API
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
+
+### Étape 3.13.1 — API Stock (lecture)
+
+**Statut : EN COURS**
+
+Les endpoints `GET /api/stores/{storeId}/stocks` et
+`GET /api/stores/{storeId}/stocks/{productId}` sont exposés dans la
+présentation du module Inventory. La lecture passe par un service applicatif,
+respecte la permission `INVENTORY_READ` et conserve les quantités décimales
+en chaînes JSON.
+
+### Validation
+
+```text
+Symfony container : OK
+Routes API Stock : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(api): expose stock read operations
+```
+
+## Prochaine étape
+
+Ajouter les opérations POST d’initialisation et d’ajustement du stock.
