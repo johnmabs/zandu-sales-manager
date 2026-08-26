@@ -148,6 +148,17 @@ SQL);
         );
     }
 
+    public function testCashSessionHasDatabaseGuardForSingleOpenSessionPerRegister(): void
+    {
+        $definition = (string) $this->connection->fetchOne(<<<'SQL'
+SELECT indexdef FROM pg_indexes
+WHERE schemaname = 'cash_management' AND indexname = 'cash_session_one_open_idx'
+SQL);
+
+        self::assertMatchesRegularExpression("/WHERE .*status.*'OPEN'/", $definition);
+        self::assertStringContainsString('cash_register_id', $definition);
+    }
+
     public function testTenantContextDoesNotLeakAfterCommit(): void
     {
         $this->transactions()->transactional(
