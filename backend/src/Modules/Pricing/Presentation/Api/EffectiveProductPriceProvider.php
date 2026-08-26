@@ -25,9 +25,11 @@ final readonly class EffectiveProductPriceProvider implements ProviderInterface
         $when = is_string($at) ? new DateTimeImmutable($at) : new DateTimeImmutable();
         $r = $this->tx->transactional($a->organizationId(), fn() => $this->resolver->resolve($a->organizationId(), $product, $pack, $when));
         return new EffectiveProductPriceResource($r->priceListId()->toString(), $r->productPriceId()->toString(), $r->amount()->toString(), $r->currency()->code(), $r->sourceVersion());
-    } private function value(array $v, string $k): string
+    }
+    /** @param array<string,mixed> $v */
+    private function value(array $v, string $k): string
     {
         $x = $v[$k] ?? null;
-        return is_string($x) ? $x : throw new InvalidArgumentException(sprintf('%s is required.',$k));
+        return is_string($x) ? $x : throw new InvalidArgumentException(sprintf('%s is required.', $k));
     }
 }

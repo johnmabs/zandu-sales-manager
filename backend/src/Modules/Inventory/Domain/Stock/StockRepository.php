@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Zandu\Modules\Inventory\Domain\Stock;
 
 use Zandu\Modules\Inventory\Domain\Stock\MovementQuantity;
-
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\StockId;

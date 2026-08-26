@@ -1,12 +1,75 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm;
-use DateTimeImmutable;use Doctrine\ORM\Mapping as ORM;use Zandu\Modules\CashManagement\Domain\CashSession\CashSession;use Zandu\SharedKernel\Money\Money;
-#[ORM\Entity] #[ORM\Table(name:'cash_session',schema:'cash_management')]
+
+use DateTimeImmutable;
+use Doctrine\ORM\Mapping as ORM;
+use Zandu\Modules\CashManagement\Domain\CashSession\CashSession;
+use Zandu\SharedKernel\Money\Money;
+
+#[ORM\Entity] #[ORM\Table(name: 'cash_session', schema: 'cash_management')]
 final class CashSessionRecord
 {
- private function __construct(#[ORM\Id] #[ORM\Column(type:'guid')] private string $id,#[ORM\Column(type:'guid')] private string $organizationId,#[ORM\Column(type:'guid')] private string $storeId,#[ORM\Column(type:'guid')] private string $cashRegisterId,#[ORM\Column(type:'guid')] private string $cashierId,#[ORM\Column(length:3)] private string $currency,#[ORM\Column(type:'decimal',precision:30,scale:12)] private string $openingBalance,#[ORM\Column(type:'datetimetz_immutable')] private DateTimeImmutable $openedAt,#[ORM\Column(length:16)] private string $status,#[ORM\Column(type:'decimal',precision:30,scale:12,nullable:true)] private ?string $countedClosingBalance,#[ORM\Column(type:'decimal',precision:30,scale:12,nullable:true)] private ?string $expectedClosingBalance,#[ORM\Column(type:'decimal',precision:30,scale:12,nullable:true)] private ?string $discrepancy,#[ORM\Column(type:'datetimetz_immutable',nullable:true)] private ?DateTimeImmutable $closedAt,#[ORM\Column(type:'guid',nullable:true)] private ?string $closedBy,#[ORM\Version] #[ORM\Column(type:'integer')] private int $version){}
- public static function fromAggregate(CashSession $s):self{return new self($s->id()->toString(),$s->organizationId()->toString(),$s->storeId()->toString(),$s->cashRegisterId()->toString(),$s->cashierId()->toString(),$s->openingBalance()->currency()->code(),$s->openingBalance()->amount()->toString(),$s->openedAt(),$s->status()->value,$s->countedClosingBalance()?->amount()->toString(),$s->expectedClosingBalance()?->amount()->toString(),$s->discrepancy()?->amount()->toString(),$s->closedAt(),$s->closedBy()?->toString(),$s->version());}
- public function synchronize(CashSession $s):void{$this->status=$s->status()->value;$this->countedClosingBalance=$s->countedClosingBalance()?->amount()->toString();$this->expectedClosingBalance=$s->expectedClosingBalance()?->amount()->toString();$this->discrepancy=$s->discrepancy()?->amount()->toString();$this->closedAt=$s->closedAt();$this->closedBy=$s->closedBy()?->toString();}
- public function id():string{return $this->id;}public function organizationId():string{return $this->organizationId;}public function storeId():string{return $this->storeId;}public function cashRegisterId():string{return $this->cashRegisterId;}public function cashierId():string{return $this->cashierId;}public function currency():string{return $this->currency;}public function openingBalance():string{return $this->openingBalance;}public function openedAt():DateTimeImmutable{return $this->openedAt;}public function status():string{return $this->status;}public function countedClosingBalance():?string{return $this->countedClosingBalance;}public function expectedClosingBalance():?string{return $this->expectedClosingBalance;}public function discrepancy():?string{return $this->discrepancy;}public function closedAt():?DateTimeImmutable{return $this->closedAt;}public function closedBy():?string{return $this->closedBy;}public function version():int{return $this->version;}
+    private function __construct(#[ORM\Id] #[ORM\Column(type: 'guid')] private string $id, #[ORM\Column(type: 'guid')] private string $organizationId, #[ORM\Column(type: 'guid')] private string $storeId, #[ORM\Column(type: 'guid')] private string $cashRegisterId, #[ORM\Column(type: 'guid')] private string $cashierId, #[ORM\Column(length: 3)] private string $currency, #[ORM\Column(type: 'decimal', precision: 30, scale: 12)] private string $openingBalance, #[ORM\Column(type: 'datetimetz_immutable')] private DateTimeImmutable $openedAt, #[ORM\Column(length: 16)] private string $status, #[ORM\Column(type: 'decimal', precision: 30, scale: 12, nullable: true)] private ?string $countedClosingBalance, #[ORM\Column(type: 'decimal', precision: 30, scale: 12, nullable: true)] private ?string $expectedClosingBalance, #[ORM\Column(type: 'decimal', precision: 30, scale: 12, nullable: true)] private ?string $discrepancy, #[ORM\Column(type: 'datetimetz_immutable', nullable: true)] private ?DateTimeImmutable $closedAt, #[ORM\Column(type: 'guid', nullable: true)] private ?string $closedBy, #[ORM\Version] #[ORM\Column(type: 'integer')] private int $version) {}
+    public static function fromAggregate(CashSession $s): self
+    {
+        return new self($s->id()->toString(), $s->organizationId()->toString(), $s->storeId()->toString(), $s->cashRegisterId()->toString(), $s->cashierId()->toString(), $s->openingBalance()->currency()->code(), $s->openingBalance()->amount()->toString(), $s->openedAt(), $s->status()->value, $s->countedClosingBalance()?->amount()->toString(), $s->expectedClosingBalance()?->amount()->toString(), $s->discrepancy()?->amount()->toString(), $s->closedAt(), $s->closedBy()?->toString(), $s->version());
+    }
+    public function synchronize(CashSession $s): void
+    {
+        $this->status = $s->status()->value;
+        $this->countedClosingBalance = $s->countedClosingBalance()?->amount()->toString();
+        $this->expectedClosingBalance = $s->expectedClosingBalance()?->amount()->toString();
+        $this->discrepancy = $s->discrepancy()?->amount()->toString();
+        $this->closedAt = $s->closedAt();
+        $this->closedBy = $s->closedBy()?->toString();
+    }
+    public function id(): string
+    {
+        return $this->id;
+    }public function organizationId(): string
+    {
+        return $this->organizationId;
+    }public function storeId(): string
+    {
+        return $this->storeId;
+    }public function cashRegisterId(): string
+    {
+        return $this->cashRegisterId;
+    }public function cashierId(): string
+    {
+        return $this->cashierId;
+    }public function currency(): string
+    {
+        return $this->currency;
+    }public function openingBalance(): string
+    {
+        return $this->openingBalance;
+    }public function openedAt(): DateTimeImmutable
+    {
+        return $this->openedAt;
+    }public function status(): string
+    {
+        return $this->status;
+    }public function countedClosingBalance(): ?string
+    {
+        return $this->countedClosingBalance;
+    }public function expectedClosingBalance(): ?string
+    {
+        return $this->expectedClosingBalance;
+    }public function discrepancy(): ?string
+    {
+        return $this->discrepancy;
+    }public function closedAt(): ?DateTimeImmutable
+    {
+        return $this->closedAt;
+    }public function closedBy(): ?string
+    {
+        return $this->closedBy;
+    }public function version(): int
+    {
+        return $this->version;
+    }
 }

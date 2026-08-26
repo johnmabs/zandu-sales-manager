@@ -92,15 +92,42 @@ final class Stock
         ++$this->version;
     }
 
-    public function id(): StockId { return $this->id; }
-    public function organizationId(): OrganizationId { return $this->organizationId; }
-    public function storeId(): StoreId { return $this->storeId; }
-    public function productId(): ProductId { return $this->productId; }
-    public function quantityOnHand(): StockQuantity { return $this->quantityOnHand; }
-    public function initialized(): bool { return $this->initialized; }
-    public function initializedAt(): ?DateTimeImmutable { return $this->initializedAt; }
-    public function initializedBy(): ?ActorId { return $this->initializedBy; }
-    public function version(): int { return $this->version; }
+    public function id(): StockId
+    {
+        return $this->id;
+    }
+    public function organizationId(): OrganizationId
+    {
+        return $this->organizationId;
+    }
+    public function storeId(): StoreId
+    {
+        return $this->storeId;
+    }
+    public function productId(): ProductId
+    {
+        return $this->productId;
+    }
+    public function quantityOnHand(): StockQuantity
+    {
+        return $this->quantityOnHand;
+    }
+    public function initialized(): bool
+    {
+        return $this->initialized;
+    }
+    public function initializedAt(): ?DateTimeImmutable
+    {
+        return $this->initializedAt;
+    }
+    public function initializedBy(): ?ActorId
+    {
+        return $this->initializedBy;
+    }
+    public function version(): int
+    {
+        return $this->version;
+    }
 
     private function requireInitialized(): void
     {

@@ -17,9 +17,24 @@ final readonly class InventoryProductDescriptor
         private int $quantityPrecision,
     ) {}
 
-    public function productId(): ProductId { return $this->productId; }
-    public function inventoryTracked(): bool { return $this->inventoryTracked; }
-    public function productType(): string { return $this->productType; }
-    public function baseUnitId(): UnitOfMeasureId { return $this->baseUnitId; }
-    public function quantityPrecision(): int { return $this->quantityPrecision; }
+    public function productId(): ProductId
+    {
+        return $this->productId;
+    }
+    public function inventoryTracked(): bool
+    {
+        return $this->inventoryTracked;
+    }
+    public function productType(): string
+    {
+        return $this->productType;
+    }
+    public function baseUnitId(): UnitOfMeasureId
+    {
+        return $this->baseUnitId;
+    }
+    public function quantityPrecision(): int
+    {
+        return $this->quantityPrecision;
+    }
 }

@@ -1,12 +1,44 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm;
-use Doctrine\ORM\{EntityManagerInterface,OptimisticLockException};use Zandu\Modules\CashManagement\Domain\CashSession\{CashSession,CashSessionRepository,CashSessionStatus};use Zandu\SharedKernel\Decimal\DecimalFactory;use Zandu\SharedKernel\Identity\{ActorId,CashRegisterId,CashSessionId,OrganizationId,StoreId,UuidFactory};use Zandu\SharedKernel\Money\{Currency,Money};
+
+use Doctrine\ORM\{EntityManagerInterface,OptimisticLockException};
+use Zandu\Modules\CashManagement\Domain\CashSession\{CashSession,CashSessionRepository,CashSessionStatus};
+use Zandu\SharedKernel\Decimal\DecimalFactory;
+use Zandu\SharedKernel\Identity\{ActorId,CashRegisterId,CashSessionId,OrganizationId,StoreId,UuidFactory};
+use Zandu\SharedKernel\Money\{Currency,Money};
+
 final readonly class DoctrineCashSessionRepository implements CashSessionRepository
 {
- public function __construct(private EntityManagerInterface $em,private UuidFactory $uuids,private DecimalFactory $decimals){}
- public function save(CashSession $s):void{$r=$this->em->find(CashSessionRecord::class,$s->id()->toString());if($r instanceof CashSessionRecord){$expected=$s->version()-1;if($r->version()!==$expected)throw OptimisticLockException::lockFailedVersionMismatch($r,$expected,$r->version());$r->synchronize($s);}else $this->em->persist(CashSessionRecord::fromAggregate($s));$this->em->flush();}
- public function find(OrganizationId $o,StoreId $store,CashSessionId $id):?CashSession{return $this->aggregate($this->em->getRepository(CashSessionRecord::class)->findOneBy(['organizationId'=>$o->toString(),'storeId'=>$store->toString(),'id'=>$id->toString()]));}
- public function findOpen(OrganizationId $o,CashRegisterId $register):?CashSession{return $this->aggregate($this->em->getRepository(CashSessionRecord::class)->findOneBy(['organizationId'=>$o->toString(),'cashRegisterId'=>$register->toString(),'status'=>'OPEN']));}
- private function aggregate(mixed $v):?CashSession{if(!$v instanceof CashSessionRecord)return null;$f=$this->uuids;$money=fn(?string $a):?Money=>null===$a?null:new Money($this->decimals->fromString($a),Currency::fromCode($v->currency()));return CashSession::reconstitute(CashSessionId::fromString($v->id(),$f),OrganizationId::fromString($v->organizationId(),$f),StoreId::fromString($v->storeId(),$f),CashRegisterId::fromString($v->cashRegisterId(),$f),ActorId::fromString($v->cashierId(),$f),new Money($this->decimals->fromString($v->openingBalance()),Currency::fromCode($v->currency())),$v->openedAt(),CashSessionStatus::from($v->status()),$money($v->countedClosingBalance()),$money($v->expectedClosingBalance()),$money($v->discrepancy()),$v->closedAt(),null===$v->closedBy()?null:ActorId::fromString($v->closedBy(),$f),$v->version());}
+    public function __construct(private EntityManagerInterface $em, private UuidFactory $uuids, private DecimalFactory $decimals) {}
+    public function save(CashSession $s): void
+    {
+        $r = $this->em->find(CashSessionRecord::class, $s->id()->toString());
+        if ($r instanceof CashSessionRecord) {
+            $expected = $s->version() - 1;
+            if ($r->version() !== $expected) {
+                throw OptimisticLockException::lockFailedVersionMismatch($r, $expected, $r->version());
+            }$r->synchronize($s);
+        } else {
+            $this->em->persist(CashSessionRecord::fromAggregate($s));
+        }$this->em->flush();
+    }
+    public function find(OrganizationId $o, StoreId $store, CashSessionId $id): ?CashSession
+    {
+        return $this->aggregate($this->em->getRepository(CashSessionRecord::class)->findOneBy(['organizationId' => $o->toString(),'storeId' => $store->toString(),'id' => $id->toString()]));
+    }
+    public function findOpen(OrganizationId $o, CashRegisterId $register): ?CashSession
+    {
+        return $this->aggregate($this->em->getRepository(CashSessionRecord::class)->findOneBy(['organizationId' => $o->toString(),'cashRegisterId' => $register->toString(),'status' => 'OPEN']));
+    }
+    private function aggregate(mixed $v): ?CashSession
+    {
+        if (!$v instanceof CashSessionRecord) {
+            return null;
+        }$f = $this->uuids;
+        $money = fn(?string $a): ?Money => null === $a ? null : new Money($this->decimals->fromString($a), Currency::fromCode($v->currency()));
+        return CashSession::reconstitute(CashSessionId::fromString($v->id(), $f), OrganizationId::fromString($v->organizationId(), $f), StoreId::fromString($v->storeId(), $f), CashRegisterId::fromString($v->cashRegisterId(), $f), ActorId::fromString($v->cashierId(), $f), new Money($this->decimals->fromString($v->openingBalance()), Currency::fromCode($v->currency())), $v->openedAt(), CashSessionStatus::from($v->status()), $money($v->countedClosingBalance()), $money($v->expectedClosingBalance()), $money($v->discrepancy()), $v->closedAt(), null === $v->closedBy() ? null : ActorId::fromString($v->closedBy(),$f), $v->version());
+    }
 }

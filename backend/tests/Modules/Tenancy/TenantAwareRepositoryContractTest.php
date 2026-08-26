@@ -1,8 +1,11 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Zandu\Tests\Modules\Tenancy;
-use PHPUnit\Framework\TestCase;
+
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Zandu\Modules\CashManagement\Domain\CashMovement\CashMovementRepository;
 use Zandu\Modules\CashManagement\Domain\CashRegister\CashRegisterRepository;
@@ -10,6 +13,7 @@ use Zandu\Modules\CashManagement\Domain\CashSession\CashSessionRepository;
 use Zandu\Modules\Inventory\Domain\Stock\StockRepository;
 use Zandu\Modules\Inventory\Domain\StockMovement\StockMovementRepository;
 use Zandu\SharedKernel\Identity\OrganizationId;
+
 final class TenantAwareRepositoryContractTest extends TestCase
 {
     #[DataProvider('repositoryProvider')]

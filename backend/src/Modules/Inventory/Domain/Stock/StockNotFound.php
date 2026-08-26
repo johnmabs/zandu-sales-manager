@@ -6,9 +6,9 @@ namespace Zandu\Modules\Inventory\Domain\Stock;
 
 use RuntimeException;
 use Zandu\SharedKernel\Error\ResourceNotFound;
+use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\StockId;
 use Zandu\SharedKernel\Identity\StoreId;
-use Zandu\SharedKernel\Identity\ProductId;
 
 final class StockNotFound extends RuntimeException implements ResourceNotFound
 {

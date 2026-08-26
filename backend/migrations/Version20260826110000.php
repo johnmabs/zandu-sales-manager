@@ -1,11 +1,18 @@
 <?php
+
 declare(strict_types=1);
+
 namespace DoctrineMigrations;
+
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
+
 final class Version20260826110000 extends AbstractMigration
 {
-    public function getDescription(): string { return 'Create tenant-scoped cash management foundations'; }
+    public function getDescription(): string
+    {
+        return 'Create tenant-scoped cash management foundations';
+    }
     public function up(Schema $schema): void
     {
         $this->addSql("CREATE TABLE cash_management.cash_register (id UUID PRIMARY KEY, organization_id UUID NOT NULL, store_id UUID NOT NULL, code VARCHAR(32) NOT NULL, name VARCHAR(160) NOT NULL, status VARCHAR(16) NOT NULL, created_at TIMESTAMPTZ NOT NULL, created_by UUID NOT NULL, updated_at TIMESTAMPTZ NULL, updated_by UUID NULL, version INT NOT NULL DEFAULT 1, CONSTRAINT cash_register_tenant_id_unique UNIQUE (organization_id, id), CONSTRAINT cash_register_tenant_unique UNIQUE (organization_id, store_id, code), CONSTRAINT cash_register_org_fk FOREIGN KEY (organization_id) REFERENCES organization.organizations(id), CONSTRAINT cash_register_store_fk FOREIGN KEY (organization_id, store_id) REFERENCES organization.stores(organization_id,id), CONSTRAINT cash_register_status_check CHECK (status IN ('ACTIVE','INACTIVE','ARCHIVED')), CONSTRAINT cash_register_version_check CHECK (version > 0))");
@@ -16,10 +23,19 @@ final class Version20260826110000 extends AbstractMigration
         $this->addSql("CREATE TABLE cash_management.cash_movement (id UUID PRIMARY KEY, organization_id UUID NOT NULL, store_id UUID NOT NULL, cash_session_id UUID NOT NULL, type VARCHAR(32) NOT NULL, amount NUMERIC(30,12) NOT NULL, currency VARCHAR(3) NOT NULL, source_type VARCHAR(32) NOT NULL, source_reference_id UUID NULL, reason VARCHAR(500) NULL, occurred_at TIMESTAMPTZ NOT NULL, performed_by UUID NULL, CONSTRAINT cash_movement_session_fk FOREIGN KEY (organization_id, cash_session_id) REFERENCES cash_management.cash_session(organization_id,id), CONSTRAINT cash_movement_amount_check CHECK (amount > 0))");
         $this->addSql('CREATE UNIQUE INDEX cash_movement_source_idempotency_idx ON cash_management.cash_movement (organization_id, source_type, source_reference_id) WHERE source_reference_id IS NOT NULL');
         $this->addSql('CREATE INDEX cash_movement_session_time_idx ON cash_management.cash_movement (organization_id, cash_session_id, occurred_at)');
-        foreach (['cash_management.cash_register','cash_management.cash_session','cash_management.cash_movement'] as $table) { $this->addSql(sprintf('GRANT SELECT, INSERT, UPDATE, DELETE ON %s TO zandu_runtime',$table)); $this->addSql(sprintf('ALTER TABLE %s ENABLE ROW LEVEL SECURITY',$table)); $this->addSql(sprintf('ALTER TABLE %s FORCE ROW LEVEL SECURITY',$table)); }
+        foreach (['cash_management.cash_register','cash_management.cash_session','cash_management.cash_movement'] as $table) {
+            $this->addSql(sprintf('GRANT SELECT, INSERT, UPDATE, DELETE ON %s TO zandu_runtime', $table));
+            $this->addSql(sprintf('ALTER TABLE %s ENABLE ROW LEVEL SECURITY', $table));
+            $this->addSql(sprintf('ALTER TABLE %s FORCE ROW LEVEL SECURITY', $table));
+        }
         $this->addSql("CREATE POLICY cash_register_tenant_isolation ON cash_management.cash_register FOR ALL TO zandu_runtime USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid) WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)");
         $this->addSql("CREATE POLICY cash_session_tenant_isolation ON cash_management.cash_session FOR ALL TO zandu_runtime USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid) WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)");
         $this->addSql("CREATE POLICY cash_movement_tenant_isolation ON cash_management.cash_movement FOR ALL TO zandu_runtime USING (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid) WITH CHECK (organization_id = NULLIF(current_setting('app.organization_id', true), '')::uuid)");
     }
-    public function down(Schema $schema): void { $this->addSql('DROP TABLE cash_management.cash_movement'); $this->addSql('DROP TABLE cash_management.cash_session'); $this->addSql('DROP TABLE cash_management.cash_register'); }
+    public function down(Schema $schema): void
+    {
+        $this->addSql('DROP TABLE cash_management.cash_movement');
+        $this->addSql('DROP TABLE cash_management.cash_session');
+        $this->addSql('DROP TABLE cash_management.cash_register');
+    }
 }

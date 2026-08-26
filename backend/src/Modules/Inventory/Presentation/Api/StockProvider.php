@@ -37,6 +37,7 @@ final readonly class StockProvider implements ProviderInterface
         });
     }
 
+    /** @param array<string,mixed> $stock */
     private function resource(array $stock): StockResource
     {
         return new StockResource($stock['id'], $stock['organizationId'], $stock['storeId'], $stock['productId'], $stock['quantityOnHand'], $stock['initialized'], $stock['version']);
@@ -44,13 +45,17 @@ final readonly class StockProvider implements ProviderInterface
 
     private function parseStore(mixed $value): StoreId
     {
-        if (!is_string($value) || '' === trim($value)) throw new InvalidArgumentException('Store identifier is required.');
+        if (!is_string($value) || '' === trim($value)) {
+            throw new InvalidArgumentException('Store identifier is required.');
+        }
         return StoreId::fromString($value, $this->uuids);
     }
 
     private function parseProduct(mixed $value): ProductId
     {
-        if (!is_string($value) || '' === trim($value)) throw new InvalidArgumentException('Product identifier is required.');
+        if (!is_string($value) || '' === trim($value)) {
+            throw new InvalidArgumentException('Product identifier is required.');
+        }
         return ProductId::fromString($value, $this->uuids);
     }
 }

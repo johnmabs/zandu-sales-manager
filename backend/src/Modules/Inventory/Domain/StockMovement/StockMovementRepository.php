@@ -1,7 +1,11 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Zandu\Modules\Inventory\Domain\StockMovement;
+
 use Zandu\SharedKernel\Identity\{OrganizationId,StockId,StoreId};
+
 interface StockMovementRepository
 {
     public function append(StockMovement $movement): void;

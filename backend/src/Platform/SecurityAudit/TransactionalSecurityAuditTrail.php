@@ -120,6 +120,14 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             SecurityAction::ProductPriceUpdated => 'pricing.product_price_updated.v1',
             SecurityAction::PriceListActivated => 'pricing.price_list_activated.v1',
             SecurityAction::CategoryArchived => 'catalog.category_archived.v1',
+            SecurityAction::StockInitialized => 'inventory.stock_initialized.v1',
+            SecurityAction::StockAdjusted => 'inventory.stock_adjusted.v1',
+            SecurityAction::CashRegisterArchived => 'cash.cash_register_archived.v1',
+            SecurityAction::CashSessionOpened => 'cash.cash_session_opened.v1',
+            SecurityAction::CashSessionClosed => 'cash.cash_session_closed.v1',
+            SecurityAction::CashInRecorded => 'cash.cash_in_recorded.v1',
+            SecurityAction::CashOutRecorded => 'cash.cash_out_recorded.v1',
+            SecurityAction::CashWithdrawalRecorded => 'cash.cash_withdrawal_recorded.v1',
         };
     }
 }
