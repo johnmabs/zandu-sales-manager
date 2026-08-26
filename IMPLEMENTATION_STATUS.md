@@ -7168,3 +7168,30 @@ StockConcurrencyTest : OK (2 tests, 8 assertions)
 
 La couverture sur les tables métier `inventory.stock` doit encore remplacer
 le schéma de spike avant de clore l’étape 3.14.4.
+
+---
+
+### Étape 3.14.5 — Tests Domain CashSession
+
+**Statut : TERMINÉE**
+
+Le cycle ouverture/fermeture, le calcul du solde attendu, les écarts et le
+rejet d’une seconde fermeture sont couverts au niveau domaine.
+
+### Validation
+
+```text
+CashSessionTest : OK (3 tests, 4 assertions)
+```
+
+### Commit
+
+```text
+test(cash): cover cash session invariants
+```
+
+## Prochaine étape
+
+### Étape 3.14.6 — Concurrence OpenCashSession
+
+**Statut : À FAIRE**
