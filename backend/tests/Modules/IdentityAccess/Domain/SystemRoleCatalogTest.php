@@ -44,12 +44,25 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::ProductRead,
             PermissionCode::PriceListRead,
             PermissionCode::ProductPriceRead,
+            PermissionCode::InventoryRead,
+            PermissionCode::InventoryAdjust,
+            PermissionCode::StockMovementRead,
+            PermissionCode::CashRegisterRead,
+            PermissionCode::CashRegisterManage,
+            PermissionCode::CashSessionRead,
+            PermissionCode::CashMovementRead,
         ], $roles[1]->permissions());
         self::assertSame([
             PermissionCode::StoreRead,
             PermissionCode::CatalogRead,
             PermissionCode::ProductRead,
             PermissionCode::ProductPriceRead,
+            PermissionCode::InventoryRead,
+            PermissionCode::CashSessionOpen,
+            PermissionCode::CashSessionClose,
+            PermissionCode::CashMovementRead,
+            PermissionCode::CashInRecord,
+            PermissionCode::CashOutRecord,
         ], $roles[2]->permissions());
         self::assertSame([
             PermissionCode::OrganizationRead,
@@ -57,6 +70,11 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::SecurityAuditRead,
             PermissionCode::PriceListRead,
             PermissionCode::ProductPriceRead,
+            PermissionCode::InventoryRead,
+            PermissionCode::StockMovementRead,
+            PermissionCode::CashRegisterRead,
+            PermissionCode::CashSessionRead,
+            PermissionCode::CashMovementRead,
         ], $roles[3]->permissions());
 
         foreach (array_slice($roles, 1) as $nonOwnerRole) {
