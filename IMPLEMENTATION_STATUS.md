@@ -7345,3 +7345,13 @@ PostgresRowLevelSecurityTest : OK (10 tests, 54 assertions)
 
 Ajouter les scénarios repository cross-tenant avec fixtures métier Inventory et
 Cash, puis clôturer l’Epic 3.14.
+
+### Validation globale actualisée
+
+```text
+make test : OK (438 tests, 1949 assertions)
+make architecture : OK (0 violation layers/modules)
+```
+
+Le repository est prêt pour le lot suivant ; les fixtures cross-tenant
+spécifiques restent une amélioration de couverture à planifier.
