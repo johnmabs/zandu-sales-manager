@@ -15,4 +15,7 @@ interface ProductPackagingRepository
     public function find(OrganizationId $organizationId, ProductPackagingId $id): ?ProductPackaging;
     public function findByCode(OrganizationId $organizationId, ProductId $productId, ProductPackagingCode $code): ?ProductPackaging;
     public function findBase(OrganizationId $organizationId, ProductId $productId): ?ProductPackaging;
+
+    /** @return list<ProductPackaging> */
+    public function findAll(OrganizationId $organizationId, ProductId $productId): array;
 }

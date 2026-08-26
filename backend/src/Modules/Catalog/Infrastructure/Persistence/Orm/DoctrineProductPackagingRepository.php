@@ -63,6 +63,16 @@ final readonly class DoctrineProductPackagingRepository implements ProductPackag
         return $this->aggregate($this->em->getRepository(ProductPackagingRecord::class)->findOneBy(['organizationId' => $organizationId->toString(), 'productId' => $productId->toString(), 'base' => true]));
     }
 
+    public function findAll(OrganizationId $organizationId, ProductId $productId): array
+    {
+        $records = $this->em->getRepository(ProductPackagingRecord::class)->findBy(
+            ['organizationId' => $organizationId->toString(), 'productId' => $productId->toString()],
+            ['code' => 'ASC'],
+        );
+
+        return array_values(array_filter(array_map(fn(ProductPackagingRecord $record): ?ProductPackaging => $this->aggregate($record), $records)));
+    }
+
     public function exists(OrganizationId $organizationId, ProductId $productId, UnitOfMeasureId $baseUnitId): bool
     {
         $base = $this->findBase($organizationId, $productId);
