@@ -7093,4 +7093,29 @@ docs(api): document inventory and cash endpoints
 
 ### Epic 3.14 — Integration, PostgreSQL & RLS tests
 
+**Statut : EN COURS**
+
+### Étape 3.14.1 — Tests Domain Stock
+
+**Statut : TERMINÉE**
+
+Les invariants d’initialisation, de réinitialisation et de quantité négative
+sont couverts, y compris l’initialisation explicite à zéro.
+
+### Validation
+
+```text
+StockTest : OK (5 tests, 7 assertions)
+```
+
+### Commit
+
+```text
+test(inventory): cover stock invariants
+```
+
+## Prochaine étape
+
+### Étape 3.14.2 — Tests ledger StockMovement
+
 **Statut : À FAIRE**
