@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+namespace Zandu\Modules\CashManagement\Application;
+use Zandu\Modules\CashManagement\Domain\CashRegister\CashRegisterRepository;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\SharedKernel\Access\{PermissionCode,ResourceScope};use Zandu\SharedKernel\Context\ActorContext;use Zandu\SharedKernel\Identity\{CashRegisterId,StoreId};
+final readonly class CashRegisterQueryService{public function __construct(private CashRegisterRepository $registers,private AuthorizationService $authorization){}public function list(ActorContext $a,StoreId $s):array{$this->authorization->authorize($a,PermissionCode::CashRegisterRead,ResourceScope::store($a->organizationId(),$s));return array_map($this->view(...),$this->registers->findAll($a->organizationId(),$s));}public function get(ActorContext $a,StoreId $s,CashRegisterId $id):array{$this->authorization->authorize($a,PermissionCode::CashRegisterRead,ResourceScope::store($a->organizationId(),$s));$r=$this->registers->find($a->organizationId(),$s,$id)??throw new \LogicException('Cash register not found.');return $this->view($r);}private function view(\Zandu\Modules\CashManagement\Domain\CashRegister\CashRegister $r):array{return ['id'=>$r->id()->toString(),'organizationId'=>$r->organizationId()->toString(),'storeId'=>$r->storeId()->toString(),'code'=>$r->code(),'name'=>$r->name(),'status'=>$r->status()->value,'version'=>$r->version()];}}
