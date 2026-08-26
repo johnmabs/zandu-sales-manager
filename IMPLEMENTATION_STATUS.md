@@ -5758,6 +5758,29 @@ test(tenant): enforce catalog tenant isolation
 
 ### Étape 2.9.8 — PostgreSQL RLS
 
+**Statut : TERMINÉE**
+
+Les tables tenant-owned du Lot 2 activent et forcent RLS. Un test vérifie
+désormais qu'une politique explicite basée sur `app.organization_id` existe
+pour chacune des 14 tables, en plus des contrôles de rôle runtime, contexte
+absent, isolation de connexions et nettoyage après commit/rollback.
+
+### Validation
+
+```text
+PostgresRowLevelSecurityTest : OK (9 tests, 42 assertions)
+```
+
+### Commit
+
+```text
+test(tenant): verify PostgreSQL RLS policies
+```
+
+## Prochaine étape
+
+### Étape 2.9.9 — Authorization tests
+
 **Statut : À FAIRE**
 
 ---
