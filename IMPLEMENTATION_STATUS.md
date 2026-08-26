@@ -5528,12 +5528,14 @@ feat(api): complete price list management
 
 Les lectures tenant-scoped sont exposées via `GET /api/product-prices` et
 `GET /api/product-prices/{id}`, avec contrôle `PRODUCT_PRICE_READ` et projection
-des montants/devise, périodes et cibles. Les mutations restent à implémenter.
+des montants/devise, périodes et cibles. La mise à jour est maintenant exposée
+via `PATCH /api/product-prices/{id}` ; la création et les transitions de statut
+restent à implémenter.
 
 ### Validation intermédiaire
 
 ```text
-PHPUnit OpenAPI : OK (15 tests, 90 assertions)
+PHPUnit OpenAPI : OK (15 tests, 91 assertions)
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation
 PHP-CS-Fixer : 0 fichier à corriger
@@ -5542,7 +5544,7 @@ PHP-CS-Fixer : 0 fichier à corriger
 ### Commit
 
 ```text
-feat(api): expose product price reads
+feat(api): expose product price update
 ```
 ```
 
