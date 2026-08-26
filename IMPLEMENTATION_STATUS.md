@@ -6477,6 +6477,28 @@ feat(cash): calculate expected cash balance
 
 ### Étape 3.8.5 — CloseCashSession
 
+**Statut : TERMINÉE**
+
+`CloseCashSession` accepte uniquement le montant compté ; le montant attendu
+est calculé côté application avant la fermeture, puis l’écart est enregistré
+par l’aggregate.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+```
+
+### Commit
+
+```text
+feat(cash): finalize close cash session use case
+```
+
+## Prochaine étape
+
+### Étape 3.8.6 — Gestion des écarts
+
 **Statut : À FAIRE**
 
 ---
