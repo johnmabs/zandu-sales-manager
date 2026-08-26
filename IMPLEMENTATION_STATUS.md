@@ -5781,6 +5781,29 @@ test(tenant): verify PostgreSQL RLS policies
 
 ### Étape 2.9.9 — Authorization tests
 
+**Statut : TERMINÉE**
+
+Les tests couvrent les permissions d'administration Catalog/Pricing pour le
+propriétaire, le refus des mutations pour un Store Manager, les scopes magasin,
+l'expiration d'affectation, les versions d'autorisation obsolètes et les
+scopes cross-tenant.
+
+### Validation
+
+```text
+EffectiveAuthorizationServiceTest : OK (7 tests, 9 assertions)
+```
+
+### Commit
+
+```text
+test(auth): cover catalog pricing authorization matrix
+```
+
+## Prochaine étape
+
+### Étape 2.9.10 — API contract tests
+
 **Statut : À FAIRE**
 
 ---
