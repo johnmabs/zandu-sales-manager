@@ -5804,6 +5804,28 @@ test(auth): cover catalog pricing authorization matrix
 
 ### Étape 2.9.10 — API contract tests
 
+**Statut : TERMINÉE**
+
+La suite HTTP/API couvre la génération OpenAPI, les routes Catalog/Pricing,
+les payloads et le contrat d'erreurs standardisé, ainsi que les workflows
+d'isolation et d'autorisation exposés par l'API.
+
+### Validation
+
+```text
+Suite tests/Api : OK (29 tests, 485 assertions)
+```
+
+### Commit
+
+```text
+test(api): cover catalog pricing contract workflows
+```
+
+## Prochaine étape
+
+### Étape 2.9.11 — Atomicité métier, audit et outbox
+
 **Statut : À FAIRE**
 
 ---
