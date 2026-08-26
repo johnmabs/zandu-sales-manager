@@ -7595,3 +7595,33 @@ feat(cash): record sale payment movement
 
 Implémenter l’Epic 4.8 — workflow `CompleteSale` coordonnant vente, paiement,
 Inventory, Cash et Outbox dans une transaction locale atomique.
+
+### Epic 4.8 — CompleteSale
+
+**Statut : EN COURS — orchestration transactionnelle initiale terminée**
+
+Le cas d’usage `CompleteSale` coordonne la consommation Inventory, le
+paiement, l’écriture Cash et la finalisation de la vente dans une
+`TenantTransaction`. Les dépendances externes sont exprimées par des contrats
+applicatifs (`InventoryStockConsumer`, `CashMovementRecorder` et
+`PaymentRecorder`). Un échec de paiement laisse la vente dans l’état `DRAFT`.
+
+### Validation
+
+```text
+CompleteSaleServiceTest : OK (1 test, 1 assertion)
+PHPStan : OK
+PHP-CS-Fixer : OK
+```
+
+### Commit
+
+```text
+feat(sales): add complete sale transaction workflow
+```
+
+## Prochaine étape
+
+Ajouter le chemin nominal de `CompleteSale` avec ligne, paiement confirmé et
+effets Inventory/Cash vérifiés, puis couvrir l’idempotence et la concurrence
+(Epic 4.9).
