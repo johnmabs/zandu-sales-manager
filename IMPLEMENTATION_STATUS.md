@@ -5403,17 +5403,51 @@ Composer audit : aucune vulnérabilité connue
 feat(api): expose category management
 ```
 
+### Étape 2.8.2 — API Products
+
+**Statut : TERMINÉE**
+
+Les huit endpoints Products sont exposés dans
+`Catalog/Presentation/Api` : lectures collection/item, création, modification,
+activation, désactivation, réactivation et archivage. Les agrégats et records
+Doctrine restent derrière des vues applicatives et des factories de ressources.
+
+La collection accepte les filtres planifiés `status`, `type`, `categoryId`,
+`productCode` et `search`. Le repository applique le scope organization et un
+tri déterministe par code ; la recherche porte uniquement sur code et nom.
+Les lectures exigent `PRODUCT_READ`, tandis que les mutations réutilisent les
+handlers tenant-safe des étapes précédentes.
+
+`ProductNotFound` est alignée sur `ResourceNotFound` pour préserver le contrat
+HTTP `404 NOT_FOUND` lors d'une lecture hors tenant.
+
+### Validations
+
+```text
+PHPUnit ciblé OpenAPI Products : OK (11 tests, 72 assertions)
+PHPUnit complet : OK (406 tests, 1817 assertions)
+Composer et conteneur Symfony : valides
+PHP-CS-Fixer : 0 fichier à corriger
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation, 0 warning, 0 erreur
+Composer audit : aucune vulnérabilité connue
+```
+
+### Commit
+
+```text
+feat(api): expose product management
+```
+
 ## Prochaine étape
 
-### Étape 2.8.2 — API Products
+### Étape 2.8.3 — API ProductPackaging
 
 **Statut : À FAIRE**
 
 Exposer les endpoints tenant-scoped de lecture, création, modification,
-activation, désactivation, réactivation et archivage des produits, avec les
-filtres collection utiles `status`, `type`, `categoryId`, `productCode` et
-`search`, via des DTO dans `Catalog/Presentation/Api`, sans ajouter de filtre
-non indexé arbitraire.
+désactivation et archivage des packagings sous `/api/products/{productId}/packagings`,
+en préservant l'invariant historique de `conversionFactor`.
 
 ---
 
