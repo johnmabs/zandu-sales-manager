@@ -6602,7 +6602,29 @@ feat(cash): add manual cash out
 
 ### Étape 3.9.4 — CashWithdrawal
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
+
+`WithdrawCash` produit un mouvement `CASH_WITHDRAWAL` distinct de `CASH_OUT`,
+avec session ouverte et raison obligatoire.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add cash withdrawal
+```
+
+## Prochaine étape
+
+### Étape 3.9.5 — Persistence append-only CashMovement
+
+**Statut : DÉJÀ TERMINÉE**
 
 ---
 
