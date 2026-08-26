@@ -60,6 +60,23 @@ final class EffectiveAuthorizationServiceTest extends TestCase
         self::addToAssertionCount(1);
     }
 
+    public function testOrganizationOwnerReceivesCatalogAndPricingAdministrationPermissions(): void
+    {
+        $service = $this->service($this->assignment(0, AccessScope::organization($this->organizationId)));
+
+        $service->authorize($this->context(), PermissionCode::ProductUpdate, ResourceScope::organization($this->organizationId));
+        $service->authorize($this->context(), PermissionCode::ProductPriceCreate, ResourceScope::organization($this->organizationId));
+        self::addToAssertionCount(2);
+    }
+
+    public function testStoreManagerCannotMutateCatalogOrPricing(): void
+    {
+        $service = $this->service($this->assignment(1, AccessScope::organization($this->organizationId)));
+
+        $this->expectException(AuthorizationDenied::class);
+        $service->authorize($this->context(), PermissionCode::ProductUpdate, ResourceScope::organization($this->organizationId));
+    }
+
     public function testSelectedStoreScopeAllowsOnlyItsStore(): void
     {
         $scope = AccessScope::selectedStores($this->organizationId, [new ScopedStore($this->storeA, $this->organizationId)]);
