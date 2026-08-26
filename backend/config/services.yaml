@@ -143,6 +143,8 @@ services:
         alias: Zandu\Modules\Inventory\Application\RepositoryStockAvailabilityProvider
     Zandu\Modules\CashManagement\Domain\CashRegister\CashRegisterRepository:
         alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashRegisterRepository
+    Zandu\Modules\CashManagement\Domain\CashSession\CashSessionRepository:
+        alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashSessionRepository
 
     Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
         alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver
