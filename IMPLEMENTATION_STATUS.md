@@ -5826,7 +5826,33 @@ test(api): cover catalog pricing contract workflows
 
 ### Étape 2.9.11 — Atomicité métier, audit et outbox
 
+**Statut : TERMINÉE**
+
+Les scénarios d'échec avant audit, avant outbox et avant commit vérifient le
+rollback complet de la mutation métier, de l'audit et de l'outbox. Les tests
+couvrent également les retries, le claim concurrent `SKIP LOCKED`, le dead
+lettering et l'idempotence consommateur.
+
+### Validation
+
+```text
+Tests atomicité/audit/outbox : OK (17 tests, 118 assertions)
+```
+
+### Commit
+
+```text
+test(catalog): verify transaction atomicity and side effects
+```
+
+## Prochaine étape
+
+### Démonstration métier consolidée du Lot 2
+
 **Statut : À FAIRE**
+
+Exécuter le parcours complet organisation → catalogue → packaging → barcode →
+PriceList → ProductPrice → résolution de prix effectif.
 
 ---
 
