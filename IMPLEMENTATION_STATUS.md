@@ -7286,3 +7286,12 @@ workflow multi-store repasse désormais avec 47 assertions.
 ```text
 fix(integration): grant runtime schema access
 ```
+
+### Validation globale
+
+```text
+make test : OK (432 tests, 1934 assertions)
+```
+
+La CI est verte après la migration de privilèges ; l’isolation métier avec
+fixtures dédiées Stock/Cash reste la prochaine couverture ciblée.
