@@ -87,7 +87,7 @@ services:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreRepository
 
     Zandu\Modules\Organization\Application\Contract\StoreClosureBlockerProvider:
-        alias: Zandu\Modules\Organization\Application\Contract\NoStoreClosureBlockers
+        alias: Zandu\Modules\Inventory\Application\InventoryStoreClosureBlockerProvider
 
     Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy:
         alias: Zandu\Modules\Organization\Application\CreatorMemberInvitationPolicy

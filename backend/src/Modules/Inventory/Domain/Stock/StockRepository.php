@@ -22,6 +22,8 @@ interface StockRepository
 
     /** @throws StockNotFound */
     public function getById(OrganizationId $organizationId, StockId $stockId): Stock;
+    /** @return list<Stock> */
+    public function findByStore(OrganizationId $organizationId, StoreId $storeId): array;
 
     public function decreaseIfAvailable(OrganizationId $organizationId, StockId $stockId, MovementQuantity $quantity, int $expectedVersion): bool;
 }
