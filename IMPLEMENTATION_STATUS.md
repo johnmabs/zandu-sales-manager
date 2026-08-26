@@ -6725,6 +6725,16 @@ feat(cash): provide store closure cash blocker
 
 **Statut : À FAIRE**
 
+Les opérations `InitializeStock` et `AdjustStock` refusent désormais les
+stores suspendus via `OperationalGuard` en mode standard. `OpenCashSession`
+reste à aligner dans le prochain incrément.
+
+### Commit
+
+```text
+feat(inventory): enforce suspended store guard
+```
+
 ## Epic 3.10 — StoreClosure integration
 
 **Statut : EN COURS**
