@@ -7,13 +7,14 @@ namespace Zandu\Tests\Modules\Sales\Domain;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
-use Zandu\Modules\Sales\Domain\{Sale,SaleStatus};
+use Zandu\Modules\Sales\Domain\{Sale,SaleLine,SaleStatus};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Context\{ActorContext,ActorType};
-use Zandu\SharedKernel\Identity\{ActorId,SaleId,StoreId};
+use Zandu\SharedKernel\Identity\{ActorId,ProductId,ProductPackagingId,SaleId,SaleLineId,StoreId,UnitOfMeasureId};
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Money\{Currency,Money};
+use Zandu\SharedKernel\Quantity\Quantity;
 
 final class SaleTest extends TestCase
 {
@@ -27,17 +28,17 @@ final class SaleTest extends TestCase
     public function testSaleCanBeCompletedOnceLineExistsAndCannotBeEdited(): void
     {
         $sale = $this->sale();
-        $sale->addLine();
+        $sale->addLine($this->line($sale));
         $sale->complete($this->actor(), new DateTimeImmutable());
         self::assertSame(SaleStatus::Completed, $sale->status());
         $this->expectException(LogicException::class);
-        $sale->addLine();
+        $sale->addLine($this->line($sale));
     }
 
     public function testCompletedSaleCannotBeCancelled(): void
     {
         $sale = $this->sale();
-        $sale->addLine();
+        $sale->addLine($this->line($sale));
         $sale->complete($this->actor(), new DateTimeImmutable());
         $this->expectException(LogicException::class);
         $sale->cancel($this->actor(), new DateTimeImmutable());
@@ -53,5 +54,13 @@ final class SaleTest extends TestCase
     {
         $f = new SymfonyUuidFactory();
         return new ActorContext(ActorId::fromString('0198ea04-1111-7111-8111-111111111111', $f), \Zandu\SharedKernel\Identity\OrganizationId::fromString('0198ea02-1111-7111-8111-111111111111', $f), ActorType::User, CorrelationId::fromString('0198ea05-1111-7111-8111-111111111111', $f), new DateTimeImmutable());
+    }
+
+    private function line(Sale $sale): SaleLine
+    {
+        $f = new SymfonyUuidFactory();
+        $q = Quantity::fromString('1', new BrickDecimalFactory());
+        $m = Money::fromString('10', Currency::fromCode('XAF'), new BrickDecimalFactory());
+        return new SaleLine(SaleLineId::fromString('0198ea06-1111-7111-8111-111111111111', $f), $sale->id(), ProductId::fromString('0198ea07-1111-7111-8111-111111111111', $f), ProductPackagingId::fromString('0198ea08-1111-7111-8111-111111111111', $f), 'SKU', 'Product', 'UNIT', 'Unit', UnitOfMeasureId::fromString('0198ea09-1111-7111-8111-111111111111', $f), $q, $q, $q, $m, null, null, Money::fromString('0', Currency::fromCode('XAF'), new BrickDecimalFactory()), $m, $m, $m, $m);
     }
 }

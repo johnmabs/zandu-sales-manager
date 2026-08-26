@@ -29,7 +29,8 @@ final class Sale
         private ?ActorContext $cancelledBy = null,
         private ?DateTimeImmutable $cancelledAt = null,
         private int $version = 1,
-        private int $lineCount = 0,
+        /** @var list<SaleLine> */
+        private array $lines = [],
     ) {}
 
     public static function create(SaleId $id, string $organizationId, StoreId $storeId, string $currency, Money $zero, ActorContext $actor, DateTimeImmutable $at): self
@@ -37,17 +38,20 @@ final class Sale
         return new self($id, $organizationId, $storeId, SaleStatus::Draft, $currency, $zero, $zero, $zero, $zero, $actor, $at);
     }
 
-    public function addLine(): void
+    public function addLine(SaleLine $line): void
     {
         $this->ensureEditable();
-        ++$this->lineCount;
+        if (!$line->saleId()->equals($this->id)) {
+            throw new LogicException('Sale line belongs to another sale.');
+        }
+        $this->lines[] = $line;
         ++$this->version;
     }
 
     public function complete(ActorContext $actor, DateTimeImmutable $at): void
     {
         $this->ensureEditable();
-        if (0 === $this->lineCount) {
+        if ([] === $this->lines) {
             throw new LogicException('A sale must contain at least one line.');
         }
         $this->status = SaleStatus::Completed;
@@ -116,7 +120,11 @@ final class Sale
     }
     public function lineCount(): int
     {
-        return $this->lineCount;
+        return count($this->lines);
+    }
+    /** @return list<SaleLine> */ public function lines(): array
+    {
+        return $this->lines;
     }
     public function createdBy(): ActorContext
     {
