@@ -74,6 +74,36 @@ final readonly class DoctrineProductRepository implements ProductRepository
         return $record instanceof ProductRecord ? $this->toAggregate($record) : null;
     }
 
+    public function findAll(
+        OrganizationId $organizationId,
+        ?ProductStatus $status = null,
+        ?ProductType $type = null,
+        ?CategoryId $categoryId = null,
+        ?ProductCode $productCode = null,
+        ?string $search = null,
+    ): array {
+        $criteria = ['organizationId' => $organizationId->toString()];
+        if (null !== $status) {
+            $criteria['status'] = $status->value;
+        }
+        if (null !== $type) {
+            $criteria['type'] = $type->value;
+        }
+        if (null !== $categoryId) {
+            $criteria['categoryId'] = $categoryId->toString();
+        }
+        if (null !== $productCode) {
+            $criteria['productCode'] = $productCode->value();
+        }
+        $records = $this->entityManager->getRepository(ProductRecord::class)->findBy($criteria, ['productCode' => 'ASC']);
+        if (null !== $search) {
+            $needle = mb_strtolower(trim($search));
+            $records = array_filter($records, static fn(ProductRecord $record): bool => str_contains(mb_strtolower($record->name()), $needle) || str_contains(mb_strtolower($record->productCode()), $needle));
+        }
+
+        return array_values(array_map(fn(ProductRecord $record): Product => $this->toAggregate($record), $records));
+    }
+
     private function toAggregate(ProductRecord $record): Product
     {
         return Product::reconstitute(

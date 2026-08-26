@@ -100,6 +100,21 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
     }
 
+    public function testProductManagementOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/products')->getGet());
+        self::assertNotNull($paths->getPath('/api/products')->getPost());
+        self::assertNotNull($paths->getPath('/api/products/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/products/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/products/{id}/activate')->getPost());
+        self::assertNotNull($paths->getPath('/api/products/{id}/deactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/products/{id}/reactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/products/{id}/archive')->getPost());
+    }
+
     public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void
     {
         self::bootKernel();
