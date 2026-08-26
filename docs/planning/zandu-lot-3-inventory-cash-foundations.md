@@ -2430,12 +2430,12 @@ Endpoints :
 ```text
 GET    /api/stores/{storeId}/cash-registers
 POST   /api/stores/{storeId}/cash-registers
-GET    /api/cash-registers/{id}
-PATCH  /api/cash-registers/{id}
+GET    /api/stores/{storeId}/cash-registers/{id}
+PATCH  /api/stores/{storeId}/cash-registers/{id}
 
-POST   /api/cash-registers/{id}/activate
-POST   /api/cash-registers/{id}/deactivate
-POST   /api/cash-registers/{id}/archive
+POST   /api/stores/{storeId}/cash-registers/{id}/activate
+POST   /api/stores/{storeId}/cash-registers/{id}/deactivate
+POST   /api/stores/{storeId}/cash-registers/{id}/archive
 ```
 
 ### Commit proposé
@@ -2451,7 +2451,7 @@ feat(api): expose cash register management
 Endpoints :
 
 ```text
-POST /api/cash-registers/{id}/sessions/open
+POST /api/stores/{storeId}/cash-registers/{cashRegisterId}/sessions/open
 
 GET  /api/cash-sessions/{id}
 GET  /api/stores/{storeId}/cash-sessions
