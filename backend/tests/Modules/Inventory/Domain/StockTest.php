@@ -49,6 +49,15 @@ final class StockTest extends TestCase
         self::assertSame(4, $stock->version());
     }
 
+    public function testZeroIsAValidExplicitInitialization(): void
+    {
+        $f = new SymfonyUuidFactory();
+        $stock = Stock::create(StockId::fromString('0198d30b-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198d30c-1111-7111-8111-111111111111', $f), StoreId::fromString('0198d30d-1111-7111-8111-111111111111', $f), ProductId::fromString('0198d30e-1111-7111-8111-111111111111', $f), new StockQuantity($this->quantity('0')));
+        $stock->initialize(new StockQuantity($this->quantity('0')), ActorId::fromString('0198d30f-1111-7111-8111-111111111111', $f), new DateTimeImmutable('2026-08-26T10:00:00Z'));
+        self::assertTrue($stock->initialized());
+        self::assertSame('0', $stock->quantityOnHand()->toString());
+    }
+
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, new BrickDecimalFactory());
