@@ -6604,6 +6604,20 @@ feat(cash): add manual cash out
 
 **Statut : TERMINÉE**
 
+### Étape 3.9.6 — Idempotence CashMovement
+
+**Statut : EN COURS**
+
+Les commandes de mouvements acceptent désormais une référence de source
+optionnelle, alignée avec l’index unique PostgreSQL. Le branchement complet de
+la référence dans les handlers reste à finaliser.
+
+### Commit
+
+```text
+feat(cash): prepare cash movement idempotency
+```
+
 `WithdrawCash` produit un mouvement `CASH_WITHDRAWAL` distinct de `CASH_OUT`,
 avec session ouverte et raison obligatoire.
 
