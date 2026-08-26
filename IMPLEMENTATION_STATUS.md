@@ -6455,6 +6455,28 @@ feat(cash): add cash session lifecycle
 
 ### Étape 3.8.4 — Calcul du montant attendu
 
+**Statut : TERMINÉE**
+
+`CashSession::calculateExpectedBalance()` calcule le montant attendu comme la
+somme du solde d’ouverture et du net des mouvements validés, sans stocker de
+second solde mutable.
+
+### Validation
+
+```text
+CashSessionTest : OK (2 tests, 3 assertions)
+```
+
+### Commit
+
+```text
+feat(cash): calculate expected cash balance
+```
+
+## Prochaine étape
+
+### Étape 3.8.5 — CloseCashSession
+
 **Statut : À FAIRE**
 
 ---
