@@ -6801,4 +6801,26 @@ feat(access): add inventory permissions
 
 ### Étape 3.11.2 — Permissions Cash
 
+**Statut : TERMINÉE**
+
+Le catalogue partagé `PermissionCode` contient les permissions Cash
+Management prévues : registre, sessions et mouvements (lecture, ouverture,
+fermeture, encaissement, sortie et retrait), sans synonymes supplémentaires.
+
+### Validation
+
+```text
+PermissionCodeTest : OK (1 test, 55 assertions)
+```
+
+### Commit
+
+```text
+feat(access): add cash management permissions
+```
+
+## Prochaine étape
+
+### Étape 3.11.3 — Rôles système
+
 **Statut : À FAIRE**
