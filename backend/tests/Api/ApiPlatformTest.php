@@ -154,6 +154,7 @@ final class ApiPlatformTest extends KernelTestCase
         self::bootKernel();
         $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
         self::assertNotNull($paths->getPath('/api/product-prices')->getGet());
+        self::assertNotNull($paths->getPath('/api/product-prices')->getPost());
         self::assertNotNull($paths->getPath('/api/product-prices/{id}')->getGet());
         self::assertNotNull($paths->getPath('/api/product-prices/{id}')->getPatch());
     }
