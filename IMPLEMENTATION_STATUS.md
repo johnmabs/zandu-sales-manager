@@ -6699,6 +6699,32 @@ Pour chaque étape :
 
 Ce fichier doit refléter **l’état réel du repository** et non l’état prévu du backlog.
 
+### Étape 3.10.2 — Cash blocker provider
+
+**Statut : TERMINÉE**
+
+Cash Management fournit `OPEN_CASH_SESSION` lorsqu’une session ouverte existe
+sur l’une des caisses du store.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): provide store closure cash blocker
+```
+
+## Prochaine étape
+
+### Étape 3.10.3 — Store suspendu
+
+**Statut : À FAIRE**
+
 ## Epic 3.10 — StoreClosure integration
 
 **Statut : EN COURS**
