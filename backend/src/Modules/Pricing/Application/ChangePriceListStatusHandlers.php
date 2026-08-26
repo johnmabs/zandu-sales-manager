@@ -47,3 +47,35 @@ final readonly class UpdatePriceListHandler
         });
     }
 }
+final readonly class DeactivatePriceListHandler
+{
+    public function __construct(private PriceListRepository $lists, private Clock $clock, private TenantTransaction $tx, private AuthorizationService $auth, private OperationalGuard $guard) {}
+    public function __invoke(DeactivatePriceList $c): PriceList
+    {
+        $o = $c->actorContext->organizationId();
+        return $this->tx->transactional($o, function () use ($c, $o): PriceList {
+            $this->auth->authorize($c->actorContext, PermissionCode::PriceListUpdate, ResourceScope::organization($o));
+            $this->guard->assertTenant($c->actorContext);
+            $p = $this->lists->get($o, $c->priceListId);
+            $p->deactivate($c->actorContext->actorId(), $this->clock->now());
+            $this->lists->save($p);
+            return $p;
+        });
+    }
+}
+final readonly class ArchivePriceListHandler
+{
+    public function __construct(private PriceListRepository $lists, private Clock $clock, private TenantTransaction $tx, private AuthorizationService $auth, private OperationalGuard $guard) {}
+    public function __invoke(ArchivePriceList $c): PriceList
+    {
+        $o = $c->actorContext->organizationId();
+        return $this->tx->transactional($o, function () use ($c, $o): PriceList {
+            $this->auth->authorize($c->actorContext, PermissionCode::PriceListArchive, ResourceScope::organization($o));
+            $this->guard->assertTenant($c->actorContext);
+            $p = $this->lists->get($o, $c->priceListId);
+            $p->archive($c->actorContext->actorId(), $this->clock->now());
+            $this->lists->save($p);
+            return $p;
+        });
+    }
+}
