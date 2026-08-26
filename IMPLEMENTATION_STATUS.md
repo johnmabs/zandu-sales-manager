@@ -6499,6 +6499,22 @@ feat(cash): finalize close cash session use case
 
 ### Étape 3.8.6 — Gestion des écarts
 
+**Statut : TERMINÉE**
+
+La fermeture calcule et conserve `discrepancy` dans la devise de la session.
+Aucun mouvement correctif automatique n’est créé ; l’écart reste visible et
+auditable.
+
+### Validation
+
+```text
+CashSessionTest : OK (2 tests, 3 assertions)
+```
+
+## Prochaine étape
+
+### Epic 3.9 — CashMovement ledger
+
 **Statut : À FAIRE**
 
 ---
