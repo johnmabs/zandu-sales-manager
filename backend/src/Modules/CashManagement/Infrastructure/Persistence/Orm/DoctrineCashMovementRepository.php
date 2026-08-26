@@ -1,9 +1,5 @@
 <?php
 declare(strict_types=1);
 namespace Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm;
-use LogicException;use Zandu\Modules\CashManagement\Domain\CashMovement\{CashMovement,CashMovementRepository};use Zandu\SharedKernel\Identity\{CashSessionId,OrganizationId};
-final class DoctrineCashMovementRepository implements CashMovementRepository
-{
- public function append(CashMovement $movement):void{throw new LogicException('Cash movement persistence is implemented in the next increment.');}
- public function findBySession(OrganizationId $organizationId,CashSessionId $sessionId):array{return [];}
-}
+use Doctrine\ORM\EntityManagerInterface;use Zandu\Modules\CashManagement\Domain\CashMovement\{CashMovement,CashMovementRepository,CashMovementType};use Zandu\SharedKernel\Decimal\DecimalFactory;use Zandu\SharedKernel\Identity\{ActorId,CashMovementId,CashSessionId,OrganizationId,StoreId,UuidFactory};use Zandu\SharedKernel\Money\{Currency,Money};
+final readonly class DoctrineCashMovementRepository implements CashMovementRepository{public function __construct(private EntityManagerInterface $em,private UuidFactory $uuids,private DecimalFactory $decimals){}public function append(CashMovement $m):void{$this->em->persist(CashMovementRecord::fromAggregate($m));$this->em->flush();}public function findBySession(OrganizationId $o,CashSessionId $s):array{return array_map(fn($r)=>$this->aggregate($r),$this->em->getRepository(CashMovementRecord::class)->findBy(['organizationId'=>$o->toString(),'cashSessionId'=>$s->toString()],['occurredAt'=>'ASC']));}private function aggregate(CashMovementRecord $r):CashMovement{$f=$this->uuids;$m=Money::fromString($r->amount(),Currency::fromCode($r->currency()),$this->decimals);return CashMovement::record(CashMovementId::fromString($r->id(),$f),OrganizationId::fromString($r->organizationId(),$f),StoreId::fromString($r->storeId(),$f),CashSessionId::fromString($r->cashSessionId(),$f),CashMovementType::from($r->type()),$m,$r->sourceReferenceId(),$r->reason(),ActorId::fromString($r->performedBy(),$f),null,$r->occurredAt());}}
