@@ -7375,7 +7375,13 @@ make architecture : OK (0 violation layers/modules)
 composer audit --locked : OK (aucune vulnérabilité)
 ```
 
-Le contrôle PHP-CS-Fixer et PHPStan restent rouges sur la dette technique
-préexistante du Lot 3 (84 fichiers non formatés et 22 diagnostics PHPStan).
-Ils constituent le dernier travail de qualité avant de déclarer le gate CI
-du Lot 3 entièrement vert.
+Les contrôles de qualité sont désormais verts : le formatage de l’ensemble du
+backend a été normalisé et les diagnostics PHPStan corrigés, notamment les
+types d’itérables des providers/query services, la reconstruction des sources
+de mouvements et la couverture exhaustive des actions d’audit Cash/Inventory.
+
+```text
+make quality : OK (PHP-CS-Fixer, PHPStan)
+```
+
+Le gate Lot 3 est donc validé sur les contrôles automatisés disponibles.
