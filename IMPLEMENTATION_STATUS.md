@@ -7022,4 +7022,28 @@ feat(api): expose cash session lifecycle
 
 ### Étape 3.13.5 — API CashMovement
 
+**Statut : TERMINÉE**
+
+Les mouvements sont consultables par session et enregistrés via trois
+opérations intentionnelles : `cash-in`, `cash-out` et `withdrawals`. Aucun
+endpoint générique de création, PATCH ou DELETE n’est exposé.
+
+### Validation
+
+```text
+Symfony container : OK
+Routes CashMovement : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(api): expose cash movement operations
+```
+
+## Prochaine étape
+
+### Étape 3.13.6 — Contrat d’erreurs API
+
 **Statut : À FAIRE**
