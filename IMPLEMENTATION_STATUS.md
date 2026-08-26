@@ -5691,6 +5691,28 @@ test(catalog): verify product code PostgreSQL constraints
 
 ### Étape 2.9.5 — Tests Barcode
 
+**Statut : TERMINÉE**
+
+Les tests couvrent la conservation du barcode comme chaîne, la normalisation
+pour comparaison, l'appartenance au packaging, la suppression terminale et la
+résolution tenant-safe (barcode actif, autre tenant et barcode supprimé).
+
+### Validation
+
+```text
+ProductBarcodeTest + BarcodeResolverTest : OK (5 tests, 13 assertions)
+```
+
+### Commit
+
+```text
+test(catalog): cover barcode invariants and resolution
+```
+
+## Prochaine étape
+
+### Étape 2.9.6 — Tests Pricing
+
 **Statut : À FAIRE**
 
 ---
