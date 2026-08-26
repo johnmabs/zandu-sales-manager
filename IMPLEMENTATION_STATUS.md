@@ -7355,3 +7355,27 @@ make architecture : OK (0 violation layers/modules)
 
 Le repository est prêt pour le lot suivant ; les fixtures cross-tenant
 spécifiques restent une amélioration de couverture à planifier.
+
+### Clôture complémentaire Epic 3.14
+
+**Étapes 3.14.8 et 3.14.9 : TERMINÉES**
+
+Des tests PostgreSQL dédiés couvrent désormais les lignes réelles du Lot 3 :
+
+- une caisse du tenant B est invisible depuis le contexte du tenant A ;
+- une session Cash du tenant courant reste lisible ;
+- une écriture `CashMovement` suivie d’une exception est annulée avec toute
+  la transaction.
+
+### Validation du gate
+
+```text
+make test : OK (440 tests, 1952 assertions)
+make architecture : OK (0 violation layers/modules)
+composer audit --locked : OK (aucune vulnérabilité)
+```
+
+Le contrôle PHP-CS-Fixer et PHPStan restent rouges sur la dette technique
+préexistante du Lot 3 (84 fichiers non formatés et 22 diagnostics PHPStan).
+Ils constituent le dernier travail de qualité avant de déclarer le gate CI
+du Lot 3 entièrement vert.
