@@ -5453,11 +5453,11 @@ Le facteur de conversion est volontairement immuable lors d'une mise à jour :
 un changement de facteur doit créer un nouveau packaging afin de préserver
 l'historique.
 
-### Validation intermédiaire
+### Validation
 
 ```text
-PHPUnit OpenAPI : OK (12 tests, 78 assertions)
-PHPUnit complet : OK (407 tests, 1823 assertions)
+PHPUnit OpenAPI : OK (13 tests, 81 assertions)
+PHPUnit complet : OK (408 tests, 1826 assertions)
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation
 PHP-CS-Fixer : 0 fichier à corriger
@@ -5470,16 +5470,39 @@ Composer audit : aucune vulnérabilité connue
 feat(api): expose product packaging management
 ```
 
+### Étape 2.8.4 — API Barcode
+
+**Statut : TERMINÉE**
+
+L'API expose l'ajout et la suppression intentionnelle des codes-barres d'un
+conditionnement, ainsi que leur résolution tenant-safe vers le produit et le
+packaging. Les zéros initiaux sont conservés et l'unicité est garantie par
+tenant sur le barcode normalisé ; la suppression est une inactivation métier.
+
+### Validation
+
+```text
+PHPUnit OpenAPI : OK (13 tests, 81 assertions)
+PHPUnit complet : OK (408 tests, 1826 assertions)
+PHPStan niveau 6 : 0 erreur
+Deptrac layers/modules : 0 violation
+PHP-CS-Fixer : 0 fichier à corriger
+```
+
+### Commit
+
+```text
+feat(api): expose barcode management and resolution
+```
+
 ## Prochaine étape
 
-### Étape 2.8.4 — API Barcode
+### Étape 2.8.5 — API PriceList
 
 **Statut : À FAIRE**
 
-Implémenter l'ajout et la suppression contrôlée des codes-barres d'un
-conditionnement, ainsi que la résolution globale d'un code-barres vers son
-produit et son packaging. La suppression physique devra être refusée dès
-qu'une utilisation historique l'interdit.
+Exposer la gestion tenant-scoped des listes de prix et leurs transitions de
+statut, avant d'ajouter les prix unitaires par packaging.
 
 ---
 
