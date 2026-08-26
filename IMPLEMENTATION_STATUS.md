@@ -6192,6 +6192,29 @@ feat(inventory): expose stock availability contract
 
 ### Étape 3.5.1 — Concurrence Stock
 
+**Statut : TERMINÉE**
+
+La décision ADR-0015 est appliquée : les diminutions simples disposent d’un
+`UPDATE` DBAL conditionnel vérifiant simultanément la version et la quantité
+disponible ; les workflows d’aggregate conservent l’optimistic locking.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): enforce stock concurrency strategy
+```
+
+## Prochaine étape
+
+### Étape 3.5.2 — Tests PostgreSQL concurrents
+
 **Statut : À FAIRE**
 
 ---
