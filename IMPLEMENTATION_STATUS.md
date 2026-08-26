@@ -6408,6 +6408,30 @@ feat(cash): add cash session aggregate
 
 ### Étape 3.8.2 — Persistence CashSession
 
+**Statut : TERMINÉE**
+
+Le mapping et le repository Doctrine persistent les soldes monétaires exacts,
+la devise, le statut de session, les métadonnées de fermeture et la version
+optimiste. La recherche d’une session ouverte est tenant/register-safe.
+
+### Validation
+
+```text
+Mapping Doctrine : OK
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): persist cash sessions
+```
+
+## Prochaine étape
+
+### Étape 3.8.3 — Ouverture et fermeture de session
+
 **Statut : À FAIRE**
 
 ---
