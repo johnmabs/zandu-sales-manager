@@ -137,6 +137,8 @@ services:
         alias: Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\DoctrineProductPriceRepository
     Zandu\Modules\Inventory\Domain\Stock\StockRepository:
         alias: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\DoctrineStockRepository
+    Zandu\Modules\Inventory\Domain\StockMovement\StockMovementRepository:
+        alias: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\DoctrineStockMovementRepository
 
     Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
         alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver
