@@ -6823,4 +6823,27 @@ feat(access): add cash management permissions
 
 ### Étape 3.11.3 — Rôles système
 
+**Statut : TERMINÉE**
+
+Les rôles système ont été étendus sans introduire de dépendance de rôle dans
+les Domain métier : le propriétaire conserve toutes les permissions, tandis
+que manager, caissier et comptable reçoivent uniquement les capacités
+Inventory/Cash correspondant à leur politique opérationnelle.
+
+### Validation
+
+```text
+SystemRoleCatalogTest : OK (1 test, 38 assertions)
+```
+
+### Commit
+
+```text
+feat(access): grant inventory and cash permissions
+```
+
+## Prochaine étape
+
+### Étape 3.11.4 — Audit sensible
+
 **Statut : À FAIRE**
