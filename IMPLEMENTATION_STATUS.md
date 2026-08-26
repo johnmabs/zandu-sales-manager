@@ -5923,6 +5923,29 @@ feat(database): add inventory stock tables
 
 ### Étape 3.1.3 — Contrat Catalog pour Inventory
 
+**Statut : TERMINÉE**
+
+Catalog expose `InventoryProductProvider` et `InventoryProductDescriptor`.
+Le contrat fournit l’identité produit, le type, le suivi d’inventaire, l’unité
+de base et la précision de quantité, sans exposer l’aggregate Product.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(catalog): expose inventory product contract
+```
+
+## Prochaine étape
+
+### Étape 3.2.1 — Aggregate Stock
+
 **Statut : À FAIRE**
 
 ---
