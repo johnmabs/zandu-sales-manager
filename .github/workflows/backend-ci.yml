@@ -75,7 +75,7 @@ jobs:
         run: make security
 
       - name: Validate immutable production image
-        run: make staging-test
+        run: make staging-image-test
 
       - name: Verify PostgreSQL backup and restore
         run: make backup-restore-test
