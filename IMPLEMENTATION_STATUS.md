@@ -7385,3 +7385,39 @@ make quality : OK (PHP-CS-Fixer, PHPStan)
 ```
 
 Le gate Lot 3 est donc validé sur les contrôles automatisés disponibles.
+
+---
+
+## Lot 4 — Sales & CompleteSale cash
+
+### Epic 4.1 — Sales foundation
+
+**Statut : EN COURS — fondation persistence terminée**
+
+Le module `Sales` conserve ses frontières propres et ne dépend d’aucun
+aggregate Domain Inventory, Cash ou Catalog. La migration
+`Version20260826130000` crée `sales.sale` et `sales.sale_line` avec :
+
+- clés tenant-scoped et relation composite vers `organization.stores` ;
+- statuts et contraintes d’agrégats financiers non négatifs ;
+- index tenant/store/status et business date ;
+- versionnement optimiste ;
+- RLS `FORCE ROW LEVEL SECURITY` et privilèges `zandu_runtime`.
+
+### Validation
+
+```text
+Migration Sales : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(database): add sales persistence foundation
+```
+
+## Prochaine étape
+
+Implémenter l’agrégat `Sale` et son cycle de vie DRAFT → COMPLETED/CANCELLED
+(Epic 4.2), avec ses tests de domaine.
