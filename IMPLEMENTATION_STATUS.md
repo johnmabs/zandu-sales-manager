@@ -6542,6 +6542,30 @@ feat(cash): add immutable cash movement ledger
 
 ### Étape 3.9.2 — RecordCashIn
 
+**Statut : EN COURS**
+
+La commande et le handler `RecordCashIn` sont en place avec les contrôles de
+session ouverte, de raison obligatoire et de transaction tenant-scoped. Le
+repository Doctrine est encore un adaptateur temporaire ; la persistence
+réelle du ledger sera finalisée à l’étape suivante.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add record cash in use case
+```
+
+## Prochaine étape
+
+### Étape 3.9.3 — Persistence CashMovement
+
 **Statut : À FAIRE**
 
 ---
