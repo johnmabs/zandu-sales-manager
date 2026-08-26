@@ -6235,6 +6235,28 @@ Test déjà présent et validé dans le dépôt.
 
 ### Étape 3.5.3 — Idempotence
 
+**Statut : TERMINÉE**
+
+Un index unique PostgreSQL empêche la duplication d’un mouvement portant la
+même source, référence, organisation et produit. Cette contrainte constitue
+la garantie de base pour les retries des commandes d’inventaire.
+
+### Validation
+
+```text
+Migration PostgreSQL test : OK
+```
+
+### Commit
+
+```text
+feat(inventory): enforce stock operation idempotence
+```
+
+## Prochaine étape
+
+### Epic 3.6 — Cash Management foundation
+
 **Statut : À FAIRE**
 
 ---
