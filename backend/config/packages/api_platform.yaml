@@ -5,6 +5,14 @@ api_platform:
         paths:
             - '%kernel.project_dir%/src/Modules/Organization/Presentation/Api'
             - '%kernel.project_dir%/src/Modules/IdentityAccess/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Catalog/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Pricing/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Inventory/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/CashManagement/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Catalog/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Pricing/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Inventory/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/CashManagement/Presentation/Api'
     formats:
         jsonld: ['application/ld+json']
         json: ['application/json']
