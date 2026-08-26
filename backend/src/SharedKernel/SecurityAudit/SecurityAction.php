@@ -28,4 +28,12 @@ enum SecurityAction: string
     case ProductPriceUpdated = 'PRODUCT_PRICE_UPDATED';
     case PriceListActivated = 'PRICE_LIST_ACTIVATED';
     case CategoryArchived = 'CATEGORY_ARCHIVED';
+    case StockInitialized = 'STOCK_INITIALIZED';
+    case StockAdjusted = 'STOCK_ADJUSTED';
+    case CashRegisterArchived = 'CASH_REGISTER_ARCHIVED';
+    case CashSessionOpened = 'CASH_SESSION_OPENED';
+    case CashSessionClosed = 'CASH_SESSION_CLOSED';
+    case CashInRecorded = 'CASH_IN_RECORDED';
+    case CashOutRecorded = 'CASH_OUT_RECORDED';
+    case CashWithdrawalRecorded = 'CASH_WITHDRAWAL_RECORDED';
 }

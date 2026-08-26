@@ -10,9 +10,10 @@ use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{IdGenerator};
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\SharedKernel\Time\Clock;
+use Zandu\SharedKernel\SecurityAudit\{ResourceReference,SafeAuditMetadata,SecurityAction,SecurityAuditTrail};
 final readonly class AdjustStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private SecurityAuditTrail $audit) {}
     public function __invoke(AdjustStock $command): void
     {
         if ('' === trim($command->reason)) throw new InvalidArgumentException('Adjustment reason is required.');
@@ -25,6 +26,7 @@ final readonly class AdjustStockHandler
             $type=$command->delta->isNegative()?StockMovementType::AdjustmentOut:StockMovementType::AdjustmentIn;
             $previous=$stock->quantityOnHand(); $command->delta->isNegative()?$stock->decrease($quantity):$stock->increase($quantity); $now=$this->clock->now(); $this->stocks->save($stock);
             $this->movements->append(StockMovement::record(StockMovementId::generate($this->ids),$organizationId,$command->storeId,$command->productId,$stock->id(),$type,$quantity,$previous,StockMovementSource::manualAdjustment(),$command->reason,$command->actorContext->actorId(),$now));
+            $this->audit->recordSuccess($command->actorContext, SecurityAction::StockAdjusted, ResourceReference::for('stock', $stock->id()), SafeAuditMetadata::empty(), $now);
         });
     }
 }
