@@ -6103,6 +6103,29 @@ feat(inventory): persist stock movements append-only
 
 ### Étape 3.4.1 — Stock initialization
 
+**Statut : TERMINÉE**
+
+Le cas d’usage `InitializeStock` vérifie l’éligibilité Catalog, empêche la
+seconde initialisation et persiste atomiquement la position ainsi que le
+mouvement `INITIAL_STOCK`.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): add initialize stock use case
+```
+
+## Prochaine étape
+
+### Étape 3.4.2 — Initialisation à zéro
+
 **Statut : À FAIRE**
 
 ---
