@@ -23,10 +23,13 @@ final class PermissionCodeTest extends TestCase
             'PRICE_LIST_CREATE', 'PRICE_LIST_READ', 'PRICE_LIST_UPDATE', 'PRICE_LIST_ACTIVATE', 'PRICE_LIST_ARCHIVE',
             'PRODUCT_PRICE_CREATE', 'PRODUCT_PRICE_READ', 'PRODUCT_PRICE_UPDATE', 'PRODUCT_PRICE_ARCHIVE',
             'INVENTORY_READ', 'INVENTORY_INITIALIZE', 'INVENTORY_ADJUST', 'STOCK_MOVEMENT_READ',
+            'CASH_REGISTER_CREATE', 'CASH_REGISTER_READ', 'CASH_REGISTER_UPDATE', 'CASH_REGISTER_MANAGE',
+            'CASH_SESSION_OPEN', 'CASH_SESSION_READ', 'CASH_SESSION_CLOSE', 'CASH_MOVEMENT_READ',
+            'CASH_IN_RECORD', 'CASH_OUT_RECORD', 'CASH_WITHDRAWAL_RECORD',
         ], array_column(PermissionCode::cases(), 'value'));
 
         foreach (PermissionCode::cases() as $permission) {
-            self::assertDoesNotMatchRegularExpression('/^(SALE|CASH|PURCHASE)_/', $permission->value);
+            self::assertDoesNotMatchRegularExpression('/^(SALE|PURCHASE)_/', $permission->value);
         }
     }
 }

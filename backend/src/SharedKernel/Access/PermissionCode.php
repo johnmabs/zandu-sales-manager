@@ -60,4 +60,16 @@ enum PermissionCode: string
     case InventoryInitialize = 'INVENTORY_INITIALIZE';
     case InventoryAdjust = 'INVENTORY_ADJUST';
     case StockMovementRead = 'STOCK_MOVEMENT_READ';
+
+    case CashRegisterCreate = 'CASH_REGISTER_CREATE';
+    case CashRegisterRead = 'CASH_REGISTER_READ';
+    case CashRegisterUpdate = 'CASH_REGISTER_UPDATE';
+    case CashRegisterManage = 'CASH_REGISTER_MANAGE';
+    case CashSessionOpen = 'CASH_SESSION_OPEN';
+    case CashSessionRead = 'CASH_SESSION_READ';
+    case CashSessionClose = 'CASH_SESSION_CLOSE';
+    case CashMovementRead = 'CASH_MOVEMENT_READ';
+    case CashInRecord = 'CASH_IN_RECORD';
+    case CashOutRecord = 'CASH_OUT_RECORD';
+    case CashWithdrawalRecord = 'CASH_WITHDRAWAL_RECORD';
 }
