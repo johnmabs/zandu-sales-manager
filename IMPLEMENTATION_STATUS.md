@@ -5551,10 +5551,24 @@ feat(api): complete product price management
 
 ### Étape 2.8.7 — API ProductPrice effective resolution
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
 
-Ajouter une lecture métier permettant de résoudre le prix actif d'un produit et
-d'un conditionnement à une date donnée, avec priorité des PriceList.
+La résolution est exposée via `GET /api/products/{productId}/packagings/{packagingId}/effective-price`.
+Elle utilise la date métier optionnelle `at`, reste tenant-scoped et applique la
+priorité des PriceList actives.
+
+### Validation
+
+```text
+PHPUnit OpenAPI : OK (15 tests, 96 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+```
+
+### Commit
+
+```text
+feat(api): expose effective product price resolution
+```
 ```
 ```
 
