@@ -6698,3 +6698,33 @@ Pour chaque étape :
 5. ajouter l’étape suivante sans la marquer comme terminée avant validation.
 
 Ce fichier doit refléter **l’état réel du repository** et non l’état prévu du backlog.
+
+## Epic 3.10 — StoreClosure integration
+
+**Statut : EN COURS**
+
+### Étape 3.10.1 — Inventory blocker provider
+
+**Statut : TERMINÉE**
+
+Inventory fournit `STOCK_REMAINING` lorsqu’un stock positif existe dans le
+store demandé, via le contrat Organization de fermeture.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): provide store closure stock blocker
+```
+
+## Prochaine étape
+
+### Étape 3.10.2 — Cash blocker provider
+
+**Statut : À FAIRE**
