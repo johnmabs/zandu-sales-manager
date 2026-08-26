@@ -7477,3 +7477,32 @@ feat(sales): add sale line snapshots and catalog contract
 
 Implémenter la résolution de prix déterministe de l’Epic 4.4 à partir du
 contrat produit vendable et des snapshots de ligne.
+
+### Epic 4.4 — Sale pricing
+
+**Statut : EN COURS — calcul et contrôle de version terminés**
+
+Le `SalePricingCalculator` effectue la multiplication exacte quantité × prix
+unitaire avec `Money` et `Decimal`, sans conversion flottante. Le
+`SalePricingService` délègue la résolution au contrat `PricingSnapshotResolver`
+et rejette explicitement un `sourceVersion` obsolète avec
+`SALE_PRICING_CHANGED`.
+
+### Validation
+
+```text
+SalePricingCalculatorTest : OK (1 test, 2 assertions)
+PHPStan : OK
+PHP-CS-Fixer : OK
+```
+
+### Commit
+
+```text
+feat(sales): add deterministic sale pricing
+```
+
+## Prochaine étape
+
+Implémenter l’Epic 4.5 — paiement minimal `CASH`, distinct de
+`CashMovement`, avec statut `CONFIRMED` et purpose `SALE`.
