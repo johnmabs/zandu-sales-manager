@@ -59,6 +59,10 @@ final readonly class DoctrinePriceListRepository implements PriceListRepository
             'code' => $code->value(),
         ]));
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_values(array_filter(array_map(fn(mixed $record): ?PriceList => $this->aggregate($record), $this->em->getRepository(PriceListRecord::class)->findBy(['organizationId' => $organizationId->toString()], ['code' => 'ASC']))));
+    }
 
     private function aggregate(mixed $value): ?PriceList
     {

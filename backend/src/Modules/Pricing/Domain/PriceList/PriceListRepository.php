@@ -17,4 +17,6 @@ interface PriceListRepository
     public function find(OrganizationId $organizationId, PriceListId $id): ?PriceList;
 
     public function findByCode(OrganizationId $organizationId, PriceListCode $code): ?PriceList;
+    /** @return list<PriceList> */
+    public function findAll(OrganizationId $organizationId): array;
 }
