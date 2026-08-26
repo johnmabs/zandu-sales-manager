@@ -149,6 +149,14 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/price-lists/{id}/archive')->getPost());
     }
 
+    public function testProductPriceReadOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+        self::assertNotNull($paths->getPath('/api/product-prices')->getGet());
+        self::assertNotNull($paths->getPath('/api/product-prices/{id}')->getGet());
+    }
+
     public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void
     {
         self::bootKernel();

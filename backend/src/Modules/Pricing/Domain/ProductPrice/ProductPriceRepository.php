@@ -25,4 +25,6 @@ interface ProductPriceRepository
         ProductPackagingId $packagingId,
         DateTimeImmutable $businessInstant,
     ): ?ProductPrice;
+    /** @return list<ProductPrice> */
+    public function findAll(OrganizationId $organizationId): array;
 }

@@ -99,6 +99,11 @@ final readonly class DoctrineProductPriceRepository implements ProductPriceRepos
         return $this->aggregate($query);
     }
 
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_values(array_filter(array_map(fn(mixed $record): ?ProductPrice => $this->aggregate($record), $this->em->getRepository(ProductPriceRecord::class)->findBy(['organizationId' => $organizationId->toString()], ['id' => 'ASC']))));
+    }
+
     private function aggregate(mixed $value): ?ProductPrice
     {
         if (!$value instanceof ProductPriceRecord) {
