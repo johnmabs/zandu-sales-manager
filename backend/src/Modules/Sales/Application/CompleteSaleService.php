@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace Zandu\Modules\Sales\Application;
 
 use Zandu\Modules\Sales\Application\Contract\PaymentRecorder;
+use Zandu\Modules\Sales\Application\Contract\SaleCompletionIdempotency;
 use Zandu\Modules\Sales\Domain\SaleStatus;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 
 final readonly class CompleteSaleService
 {
-    public function __construct(private TenantTransaction $transaction, private InventoryConsumptionService $inventory, private CashPaymentService $cash, private PaymentRecorder $payments) {}
+    public function __construct(private TenantTransaction $transaction, private InventoryConsumptionService $inventory, private CashPaymentService $cash, private PaymentRecorder $payments, private ?SaleCompletionIdempotency $idempotency = null) {}
 
     public function __invoke(CompleteSale $command): void
     {
-        if (SaleStatus::Completed === $command->sale->status()) {
+        if (SaleStatus::Completed === $command->sale->status() || ('' !== $command->idempotencyKey && null !== $this->idempotency && $this->idempotency->wasCompleted($command->sale->id(), $command->idempotencyKey))) {
             return;
         }
         $this->transaction->transactional($command->actor->organizationId(), function () use ($command): void {
@@ -22,6 +23,9 @@ final readonly class CompleteSaleService
             $this->payments->recordCashSale($command->actor->organizationId(), $command->sale->id(), $command->amount, $command->actor->actorId());
             $this->cash->record($command->sale, $command->cashSessionId, $command->amount);
             $command->sale->complete($command->actor, $command->at);
+            if ('' !== $command->idempotencyKey && null !== $this->idempotency) {
+                $this->idempotency->markCompleted($command->sale->id(), $command->idempotencyKey);
+            }
         });
     }
 }
