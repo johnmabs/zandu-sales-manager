@@ -5872,6 +5872,32 @@ test(lot-2): validate consolidated business flow
 
 ### Lot 3 — Inventory & Cash foundations
 
+**Statut : EN COURS**
+
+### Étape 3.1.1 — Structure Inventory
+
+**Statut : TERMINÉE**
+
+Le bounded context Inventory est préparé avec une frontière explicite et sans
+dépendance de son futur domaine vers Catalog, Organization ou les frameworks.
+
+### Validation
+
+```text
+Deptrac layers/modules : 0 violation
+```
+
+### Commits
+
+```text
+docs(planning): add lot 3 inventory cash foundations
+refactor(inventory): prepare bounded context structure
+```
+
+## Prochaine étape
+
+### Étape 3.1.2 — Schéma PostgreSQL inventory
+
 **Statut : À FAIRE**
 
 ---
