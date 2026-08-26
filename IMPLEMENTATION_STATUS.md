@@ -5570,6 +5570,30 @@ PHP-CS-Fixer : 0 fichier à corriger
 feat(api): expose effective product price resolution
 ```
 ```
+
+## Prochaine étape
+
+### Étape 2.8.8 — Contrat d'erreurs et OpenAPI Catalog/Pricing
+
+**Statut : TERMINÉE**
+
+Le contrat d'erreurs standardisé est maintenant appliqué aux endpoints
+Catalog/Pricing, incluant les routes produits, conditionnements, barcodes,
+PriceList et ProductPrice. Les tests vérifient les six statuts et codes
+documentés (`400`, `401`, `403`, `404`, `409`, `422`).
+
+### Validation
+
+```text
+PHPUnit OpenAPI : OK (16 tests, 122 assertions)
+PHP-CS-Fixer : 0 fichier à corriger
+```
+
+### Commit
+
+```text
+test(api): cover catalog pricing error contract
+```
 ```
 
 ---
