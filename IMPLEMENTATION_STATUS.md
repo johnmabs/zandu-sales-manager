@@ -6170,6 +6170,28 @@ feat(inventory): add stock adjustment use case
 
 ### Étape 3.4.4 — Contrat de lecture de disponibilité
 
+**Statut : TERMINÉE**
+
+Le contrat `StockAvailabilityProvider` expose uniquement le produit, la
+quantité disponible, la version du stock et l’état d’initialisation. Une
+position absente est représentée par une quantité zéro non initialisée.
+
+### Validation
+
+```text
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): expose stock availability contract
+```
+
+## Prochaine étape
+
+### Étape 3.5.1 — Concurrence Stock
+
 **Statut : À FAIRE**
 
 ---
