@@ -6307,6 +6307,33 @@ feat(database): add cash management tables
 
 ### Epic 3.7 — CashRegister
 
+**Statut : EN COURS**
+
+### Étape 3.7.1 — Aggregate CashRegister
+
+**Statut : TERMINÉE**
+
+L’aggregate `CashRegister` garantit l’appartenance immutable à l’organisation
+et au store, valide code/nom, gère les statuts actifs/inactifs/archivés et
+interdit la modification d’une caisse archivée.
+
+### Validation
+
+```text
+CashRegisterTest : OK (1 test, 2 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add cash register aggregate
+```
+
+## Prochaine étape
+
+### Étape 3.7.2 — Persistence CashRegister
+
 **Statut : À FAIRE**
 
 ---
