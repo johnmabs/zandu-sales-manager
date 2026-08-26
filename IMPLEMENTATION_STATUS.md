@@ -7506,3 +7506,33 @@ feat(sales): add deterministic sale pricing
 
 Implémenter l’Epic 4.5 — paiement minimal `CASH`, distinct de
 `CashMovement`, avec statut `CONFIRMED` et purpose `SALE`.
+
+### Epic 4.5 — Minimal Payment CASH
+
+**Statut : EN COURS — paiement CASH fondamental terminé**
+
+Le bounded context `Payments` expose un agrégat `Payment` limité au MVP :
+`purpose=SALE`, `method=CASH`, montants strictement positifs et confirmation
+unique. Les paiements confirmés ne sont pas réécrits. La migration crée la
+table tenant-scoped `payments.payment`, son index d’idempotence par vente,
+ses contraintes métier et sa politique RLS.
+
+### Validation
+
+```text
+PaymentTest : OK (1 test, 2 assertions)
+Migration Payments : OK
+PHPStan : OK
+```
+
+### Commit
+
+```text
+feat(payments): add cash sale payment
+```
+
+## Prochaine étape
+
+Implémenter l’intégration Inventory de l’Epic 4.6 via
+`InventoryStockConsumer`, sans importer `StockRepository` ou
+`Inventory\Domain` depuis Sales.
