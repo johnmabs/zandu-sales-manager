@@ -5713,6 +5713,28 @@ test(catalog): cover barcode invariants and resolution
 
 ### Étape 2.9.6 — Tests Pricing
 
+**Statut : TERMINÉE**
+
+Les tests couvrent les invariants PriceList et ProductPrice, devise et montant,
+périodes de validité, ownership tenant, transitions de statut, version
+optimiste, sélection par priorité et résolution effective déterministe.
+
+### Validation
+
+```text
+Tests Pricing domaine/application/intégration : OK (26 tests, 140 assertions)
+```
+
+### Commit
+
+```text
+test(pricing): cover price list and product price invariants
+```
+
+## Prochaine étape
+
+### Étape 2.9.7 — Tenant isolation applicative
+
 **Statut : À FAIRE**
 
 ---
