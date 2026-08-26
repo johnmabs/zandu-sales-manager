@@ -5946,6 +5946,29 @@ feat(catalog): expose inventory product contract
 
 ### Étape 3.2.1 — Aggregate Stock
 
+**Statut : TERMINÉE**
+
+L’aggregate `Stock` garantit l’identité tenant/store/produit, l’initialisation
+explicite, la quantité non négative, les opérations d’augmentation/diminution
+et la version optimiste locale. Les identifiants d’appartenance sont immuables.
+
+### Validation
+
+```text
+StockTest : OK (2 tests, 3 assertions)
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): add stock aggregate
+```
+
+## Prochaine étape
+
+### Étape 3.2.2 — Value objects de quantité
+
 **Statut : À FAIRE**
 
 ---
