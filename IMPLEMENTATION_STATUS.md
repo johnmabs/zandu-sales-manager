@@ -6079,6 +6079,30 @@ feat(inventory): add stock movement aggregate
 
 ### Étape 3.3.3 — Persistence append-only
 
+**Statut : TERMINÉE**
+
+Les mouvements sont persistés par `DoctrineStockMovementRepository` via une
+opération `append` uniquement. La lecture est dédiée par position de stock ;
+aucune méthode métier d’update ou de suppression n’est exposée.
+
+### Validation
+
+```text
+Mapping Doctrine : OK
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(inventory): persist stock movements append-only
+```
+
+## Prochaine étape
+
+### Étape 3.4.1 — Stock initialization
+
 **Statut : À FAIRE**
 
 ---
