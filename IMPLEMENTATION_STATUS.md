@@ -5625,6 +5625,28 @@ test(catalog): cover product invariants
 
 ### Étape 2.9.2 — Tests UnitOfMeasure & conversion
 
+**Statut : TERMINÉE**
+
+Les tests couvrent les précisions, facteurs exacts (entiers et décimaux),
+quantités minimales et incréments, conversions sans arrondi silencieux et les
+cas incompatibles avec les précisions packaging/base.
+
+### Validation
+
+```text
+UnitOfMeasureTest + ProductPackagingTest : OK (29 tests, 81 assertions)
+```
+
+### Commit
+
+```text
+test(catalog): cover packaging quantity conversion
+```
+
+## Prochaine étape
+
+### Étape 2.9.3 — Tests Category hierarchy
+
 **Statut : À FAIRE**
 
 ---
