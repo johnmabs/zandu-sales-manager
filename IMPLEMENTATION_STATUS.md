@@ -7046,4 +7046,27 @@ feat(api): expose cash movement operations
 
 ### Étape 3.13.6 — Contrat d’erreurs API
 
+**Statut : TERMINÉE**
+
+Le contrat d’erreurs Inventory/Cash est documenté dans
+`docs/api/inventory-cash-errors.md`. Les chemins API correspondants sont
+désormais couverts par le décorateur OpenAPI avec les réponses 400, 401, 403,
+404, 409 et 422.
+
+### Validation
+
+```text
+Tests Platform/API : OK (20 tests, 55 assertions)
+```
+
+### Commit
+
+```text
+docs(api): document inventory and cash errors
+```
+
+## Prochaine étape
+
+### Étape 3.13.7 — OpenAPI Inventory/Cash
+
 **Statut : À FAIRE**
