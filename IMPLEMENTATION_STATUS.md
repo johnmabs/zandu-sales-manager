@@ -6358,6 +6358,29 @@ feat(cash): persist cash registers
 
 ### Étape 3.7.3 — Use cases CashRegister
 
+**Statut : TERMINÉE**
+
+Les opérations de création, mise à jour et changement de statut sont
+regroupées dans `CashRegisterHandler`, avec transactions tenant-scoped et
+interdiction métier des modifications d’une caisse archivée.
+
+### Validation
+
+```text
+Conteneur Symfony : OK
+Deptrac layers/modules : 0 violation
+```
+
+### Commit
+
+```text
+feat(cash): add cash register management
+```
+
+## Prochaine étape
+
+### Epic 3.8 — CashSession lifecycle
+
 **Statut : À FAIRE**
 
 ---
