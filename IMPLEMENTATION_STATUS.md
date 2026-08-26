@@ -7295,3 +7295,25 @@ make test : OK (432 tests, 1934 assertions)
 
 La CI est verte après la migration de privilèges ; l’isolation métier avec
 fixtures dédiées Stock/Cash reste la prochaine couverture ciblée.
+
+---
+
+### Étape 3.14.10 — RLS
+
+**Statut : TERMINÉE**
+
+Les 19 tables tenant-owned disposent de RLS et `FORCE ROW LEVEL SECURITY`,
+avec des politiques explicites basées sur `app.organization_id`. Les tests
+vérifient l’absence de contexte, l’isolation inter-connexions et le rejet des
+écritures cross-tenant.
+
+### Validation
+
+```text
+PostgresRowLevelSecurityTest : OK (10 tests, 54 assertions)
+```
+
+## Prochaine étape
+
+Ajouter les scénarios repository cross-tenant avec fixtures métier Inventory et
+Cash, puis clôturer l’Epic 3.14.
