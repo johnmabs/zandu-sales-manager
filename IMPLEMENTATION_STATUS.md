@@ -7254,3 +7254,25 @@ TransactionalAuditAtomicityTest + TransactionalOutboxTest : OK (8 tests, 26 asse
 
 Ajouter un scénario d’intégration Cash qui force l’échec après l’écriture du
 ledger et vérifie l’absence d’effet partiel.
+
+---
+
+### Étape 3.14.9 — Isolation tenant
+
+**Statut : EN COURS**
+
+Le socle RLS vérifie l’absence de contexte, l’isolation entre deux
+connexions, le rejet des écritures cross-tenant et l’absence de fuite après
+commit ou rollback. Les scénarios avec fixtures métier `inventory` et
+`cash_management` doivent encore être ajoutés pour clore cette étape.
+
+### Validation
+
+```text
+PostgresRowLevelSecurityTest : OK (10 tests, 54 assertions)
+```
+
+## Prochaine étape
+
+Ajouter des fixtures Stock/Cash appartenant à deux tenants et vérifier les
+lectures et écritures cross-tenant au niveau des repositories.
