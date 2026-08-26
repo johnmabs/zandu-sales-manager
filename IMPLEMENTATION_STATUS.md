@@ -7681,3 +7681,32 @@ feat(sales): persist completion idempotency keys
 ```text
 feat(sales): make complete sale replay safe
 ```
+
+### Epic 4.10 — Authorization & audit
+
+**Statut : EN COURS — permissions Sales ajoutées**
+
+Le catalogue partagé contient désormais `SALE_CREATE`, `SALE_READ`,
+`SALE_UPDATE_DRAFT`, `SALE_CANCEL_DRAFT`, `SALE_COMPLETE` et
+`SALE_PRICE_OVERRIDE`. Les rôles Store Manager et Cashier reçoivent les
+capacités opérationnelles Sales ; Accountant reçoit la lecture seule ; le
+propriétaire conserve l’ensemble du catalogue.
+
+### Validation
+
+```text
+SystemRoleCatalogTest : OK (1 test, 38 assertions)
+PHPStan : OK
+PHP-CS-Fixer : OK
+```
+
+### Commit
+
+```text
+feat(access): add sales permissions and role grants
+```
+
+## Prochaine étape
+
+Appliquer ces permissions et les guards opérationnels dans les handlers Sales,
+puis publier les événements et audits de finalisation.
