@@ -13,7 +13,6 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\StockId;
 use Zandu\SharedKernel\Identity\StoreId;
-use Zandu\SharedKernel\Quantity\Quantity;
 
 final class Stock
 {
@@ -22,7 +21,7 @@ final class Stock
         private readonly OrganizationId $organizationId,
         private readonly StoreId $storeId,
         private readonly ProductId $productId,
-        private Quantity $quantityOnHand,
+        private StockQuantity $quantityOnHand,
         private bool $initialized,
         private ?DateTimeImmutable $initializedAt,
         private ?ActorId $initializedBy,
@@ -45,7 +44,7 @@ final class Stock
         OrganizationId $organizationId,
         StoreId $storeId,
         ProductId $productId,
-        Quantity $quantityOnHand,
+        StockQuantity $quantityOnHand,
     ): self {
         return new self($id, $organizationId, $storeId, $productId, $quantityOnHand, false, null, null, 1);
     }
@@ -55,7 +54,7 @@ final class Stock
         OrganizationId $organizationId,
         StoreId $storeId,
         ProductId $productId,
-        Quantity $quantityOnHand,
+        StockQuantity $quantityOnHand,
         bool $initialized,
         ?DateTimeImmutable $initializedAt,
         ?ActorId $initializedBy,
@@ -64,7 +63,7 @@ final class Stock
         return new self($id, $organizationId, $storeId, $productId, $quantityOnHand, $initialized, $initializedAt, $initializedBy, $version);
     }
 
-    public function initialize(Quantity $quantity, ActorId $actorId, DateTimeImmutable $occurredAt): void
+    public function initialize(StockQuantity $quantity, ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
         if ($this->initialized) {
             throw new LogicException('Stock is already initialized.');
@@ -77,18 +76,16 @@ final class Stock
         ++$this->version;
     }
 
-    public function increase(Quantity $quantity): void
+    public function increase(MovementQuantity $quantity): void
     {
         $this->requireInitialized();
-        self::assertPositive($quantity);
         $this->quantityOnHand = $this->quantityOnHand->add($quantity);
         ++$this->version;
     }
 
-    public function decrease(Quantity $quantity): void
+    public function decrease(MovementQuantity $quantity): void
     {
         $this->requireInitialized();
-        self::assertPositive($quantity);
         $result = $this->quantityOnHand->subtract($quantity);
         self::assertQuantity($result);
         $this->quantityOnHand = $result;
@@ -99,7 +96,7 @@ final class Stock
     public function organizationId(): OrganizationId { return $this->organizationId; }
     public function storeId(): StoreId { return $this->storeId; }
     public function productId(): ProductId { return $this->productId; }
-    public function quantityOnHand(): Quantity { return $this->quantityOnHand; }
+    public function quantityOnHand(): StockQuantity { return $this->quantityOnHand; }
     public function initialized(): bool { return $this->initialized; }
     public function initializedAt(): ?DateTimeImmutable { return $this->initializedAt; }
     public function initializedBy(): ?ActorId { return $this->initializedBy; }
@@ -112,19 +109,7 @@ final class Stock
         }
     }
 
-    private static function assertPositive(Quantity $quantity): void
-    {
-        if ($quantity->isNegative() || $quantity->isZero()) {
-            throw new InvalidArgumentException('Stock operation quantity must be positive.');
-        }
-    }
-
-    private static function assertQuantity(Quantity $quantity): void
-    {
-        if ($quantity->isNegative()) {
-            throw new InvalidArgumentException('Stock quantity cannot be negative.');
-        }
-    }
+    private static function assertQuantity(StockQuantity $quantity): void {}
 
     private static function utc(DateTimeImmutable $dateTime): DateTimeImmutable
     {
