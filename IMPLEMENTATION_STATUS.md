@@ -7156,3 +7156,15 @@ TransactionalAuditAtomicityTest : OK (4 tests, 15 assertions)
 
 Ajouter les doubles de repository Stock et les injections d’échec entre la
 mise à jour du stock et l’insertion du mouvement.
+
+Le scénario de concurrence PostgreSQL existant reste vert et couvre le
+verrouillage optimiste ainsi que la prévention d’un stock négatif.
+
+### Validation complémentaire
+
+```text
+StockConcurrencyTest : OK (2 tests, 8 assertions)
+```
+
+La couverture sur les tables métier `inventory.stock` doit encore remplacer
+le schéma de spike avant de clore l’étape 3.14.4.
