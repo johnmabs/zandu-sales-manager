@@ -5598,6 +5598,37 @@ test(api): cover catalog pricing error contract
 
 ---
 
+## Prochaine étape
+
+### Étape 2.9.1 — Tests Domain Product
+
+**Statut : TERMINÉE**
+
+Les invariants Product sont couverts sans infrastructure : création en draft,
+activation conditionnée par le packaging de base, interdiction des services
+stockés, immutabilité du code et de l'unité après activation, cycle de vie
+complet et archivage terminal.
+
+### Validation
+
+```text
+ProductTest : OK
+```
+
+### Commit
+
+```text
+test(catalog): cover product invariants
+```
+
+## Prochaine étape
+
+### Étape 2.9.2 — Tests UnitOfMeasure & conversion
+
+**Statut : À FAIRE**
+
+---
+
 # Discipline des commits
 
 Le Lot 0 suit une logique stricte de commits atomiques.
