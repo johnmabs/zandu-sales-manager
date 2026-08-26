@@ -7069,4 +7069,28 @@ docs(api): document inventory and cash errors
 
 ### Étape 3.13.7 — OpenAPI Inventory/Cash
 
+**Statut : TERMINÉE**
+
+La découverte API Platform inclut désormais les namespaces Catalog, Pricing,
+Inventory et CashManagement. Le périmètre, les formats Decimal/Money, les
+scopes tenant/store, l’idempotence et l’immutabilité des ledgers sont
+documentés dans `docs/api/inventory-cash-openapi.md`.
+
+### Validation
+
+```text
+Symfony container : OK
+Export OpenAPI : OK (routes Stock/Cash présentes)
+```
+
+### Commit
+
+```text
+docs(api): document inventory and cash endpoints
+```
+
+## Prochaine étape
+
+### Epic 3.14 — Integration, PostgreSQL & RLS tests
+
 **Statut : À FAIRE**
