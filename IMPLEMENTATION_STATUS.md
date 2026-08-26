@@ -7118,4 +7118,26 @@ test(inventory): cover stock invariants
 
 ### Étape 3.14.2 — Tests ledger StockMovement
 
+**Statut : TERMINÉE**
+
+Les tests vérifient l’explication complète d’un ajustement sortant
+(`previous = 10`, `quantity = 3`, `resulting = 7`, type
+`ADJUSTMENT_OUT`) ainsi que l’immutabilité de l’aggregate.
+
+### Validation
+
+```text
+StockMovementTest : OK (2 tests, 7 assertions)
+```
+
+### Commit
+
+```text
+test(inventory): verify stock movement ledger
+```
+
+## Prochaine étape
+
+### Étape 3.14.3 — Atomicité Stock
+
 **Statut : À FAIRE**
