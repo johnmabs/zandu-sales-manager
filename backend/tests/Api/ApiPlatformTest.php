@@ -120,7 +120,11 @@ final class ApiPlatformTest extends KernelTestCase
         self::bootKernel();
         $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
         self::assertNotNull($paths->getPath('/api/products/{productId}/packagings')->getGet());
+        self::assertNotNull($paths->getPath('/api/products/{productId}/packagings')->getPost());
         self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{id}/deactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{id}/archive')->getPost());
     }
 
     public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void

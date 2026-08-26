@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Zandu\Modules\Catalog\Domain\ProductPackaging;
 
 use RuntimeException;
+use Zandu\SharedKernel\Error\ResourceNotFound;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
 
-final class ProductPackagingNotFound extends RuntimeException
+final class ProductPackagingNotFound extends RuntimeException implements ResourceNotFound
 {
     public static function withId(ProductPackagingId $id): self
     {
