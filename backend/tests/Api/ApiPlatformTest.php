@@ -160,6 +160,7 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/product-prices/{id}/archive')->getPost());
         self::assertNotNull($paths->getPath('/api/product-prices/{id}')->getGet());
         self::assertNotNull($paths->getPath('/api/product-prices/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{packagingId}/effective-price')->getGet());
     }
 
     public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void

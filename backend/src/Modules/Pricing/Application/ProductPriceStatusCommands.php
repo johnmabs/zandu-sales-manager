@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace Zandu\Modules\Pricing\Application;
+
 final class ProductPriceStatusCommands {}
 
 use Zandu\SharedKernel\Context\ActorContext;
