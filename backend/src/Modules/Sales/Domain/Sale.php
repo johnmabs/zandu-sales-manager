@@ -7,14 +7,14 @@ namespace Zandu\Modules\Sales\Domain;
 use DateTimeImmutable;
 use LogicException;
 use Zandu\SharedKernel\Context\ActorContext;
-use Zandu\SharedKernel\Identity\{SaleId,StoreId};
+use Zandu\SharedKernel\Identity\{OrganizationId,SaleId,StoreId};
 use Zandu\SharedKernel\Money\Money;
 
 final class Sale
 {
     private function __construct(
         private readonly SaleId $id,
-        private readonly string $organizationId,
+        private readonly OrganizationId $organizationId,
         private readonly StoreId $storeId,
         private SaleStatus $status,
         private readonly string $currency,
@@ -33,7 +33,7 @@ final class Sale
         private array $lines = [],
     ) {}
 
-    public static function create(SaleId $id, string $organizationId, StoreId $storeId, string $currency, Money $zero, ActorContext $actor, DateTimeImmutable $at): self
+    public static function create(SaleId $id, OrganizationId $organizationId, StoreId $storeId, string $currency, Money $zero, ActorContext $actor, DateTimeImmutable $at): self
     {
         return new self($id, $organizationId, $storeId, SaleStatus::Draft, $currency, $zero, $zero, $zero, $zero, $actor, $at);
     }
@@ -82,7 +82,7 @@ final class Sale
     {
         return $this->id;
     }
-    public function organizationId(): string
+    public function organizationId(): OrganizationId
     {
         return $this->organizationId;
     }

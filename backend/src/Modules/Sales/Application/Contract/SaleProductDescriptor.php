@@ -19,5 +19,7 @@ final readonly class SaleProductDescriptor
         public UnitOfMeasureId $unitId,
         public Quantity $conversionFactor,
         public int $sourceVersion,
+        public bool $inventoryTracked = false,
+        public string $productType = 'SERVICE',
     ) {}
 }

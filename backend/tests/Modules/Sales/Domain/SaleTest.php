@@ -11,7 +11,7 @@ use Zandu\Modules\Sales\Domain\{Sale,SaleLine,SaleStatus};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Context\{ActorContext,ActorType};
-use Zandu\SharedKernel\Identity\{ActorId,ProductId,ProductPackagingId,SaleId,SaleLineId,StoreId,UnitOfMeasureId};
+use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,ProductId,ProductPackagingId,SaleId,SaleLineId,StoreId,UnitOfMeasureId};
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Money\{Currency,Money};
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -47,7 +47,7 @@ final class SaleTest extends TestCase
     private function sale(): Sale
     {
         $f = new SymfonyUuidFactory();
-        return Sale::create(SaleId::fromString('0198ea01-1111-7111-8111-111111111111', $f), '0198ea02-1111-7111-8111-111111111111', StoreId::fromString('0198ea03-1111-7111-8111-111111111111', $f), 'XAF', Money::fromString('0', Currency::fromCode('XAF'), new BrickDecimalFactory()), $this->actor(), new DateTimeImmutable());
+        return Sale::create(SaleId::fromString('0198ea01-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198ea02-1111-7111-8111-111111111111', $f), StoreId::fromString('0198ea03-1111-7111-8111-111111111111', $f), 'XAF', Money::fromString('0', Currency::fromCode('XAF'), new BrickDecimalFactory()), $this->actor(), new DateTimeImmutable());
     }
 
     private function actor(): ActorContext
