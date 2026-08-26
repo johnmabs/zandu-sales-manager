@@ -89,13 +89,15 @@ WHERE (namespace.nspname, relation.relname) IN (
     ('catalog', 'units_of_measure'),
     ('pricing', 'price_lists'),
     ('pricing', 'product_prices'),
+    ('inventory', 'stock'),
+    ('inventory', 'stock_movement'),
     ('security', 'security_audit_entries'),
     ('messaging', 'outbox_messages')
 )
 ORDER BY namespace.nspname, relation.relname
 SQL);
 
-        self::assertCount(14, $tables);
+        self::assertCount(16, $tables);
         foreach ($tables as $table) {
             self::assertTrue((bool) $table['relrowsecurity'], sprintf('%s.%s must enable RLS.', $table['schema_name'], $table['table_name']));
             self::assertTrue((bool) $table['relforcerowsecurity'], sprintf('%s.%s must force RLS.', $table['schema_name'], $table['table_name']));
@@ -111,12 +113,13 @@ WHERE (schemaname, tablename) IN (
     ('identity_access', 'organization_invitations'), ('identity_access', 'organization_memberships'),
     ('catalog', 'categories'), ('catalog', 'products'), ('catalog', 'product_packagings'),
     ('catalog', 'product_barcodes'), ('catalog', 'units_of_measure'), ('pricing', 'price_lists'),
-    ('pricing', 'product_prices'), ('security', 'security_audit_entries'), ('messaging', 'outbox_messages')
+    ('pricing', 'product_prices'), ('inventory', 'stock'), ('inventory', 'stock_movement'),
+    ('security', 'security_audit_entries'), ('messaging', 'outbox_messages')
 )
 AND (qual LIKE '%app.organization_id%' OR with_check LIKE '%app.organization_id%')
 SQL);
 
-        self::assertSame(14, $count);
+        self::assertSame(16, $count);
     }
 
     public function testMissingTenantContextIsFailClosed(): void
