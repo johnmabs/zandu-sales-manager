@@ -102,6 +102,23 @@ SQL);
         }
     }
 
+    public function testEveryTenantOwnedTableHasAnExplicitTenantPolicy(): void
+    {
+        $count = (int) $this->connection->fetchOne(<<<'SQL'
+SELECT COUNT(DISTINCT schemaname || '.' || tablename) FROM pg_policies
+WHERE (schemaname, tablename) IN (
+    ('organization', 'organizations'), ('organization', 'stores'), ('organization', 'store_closures'),
+    ('identity_access', 'organization_invitations'), ('identity_access', 'organization_memberships'),
+    ('catalog', 'categories'), ('catalog', 'products'), ('catalog', 'product_packagings'),
+    ('catalog', 'product_barcodes'), ('catalog', 'units_of_measure'), ('pricing', 'price_lists'),
+    ('pricing', 'product_prices'), ('security', 'security_audit_entries'), ('messaging', 'outbox_messages')
+)
+AND (qual LIKE '%app.organization_id%' OR with_check LIKE '%app.organization_id%')
+SQL);
+
+        self::assertSame(14, $count);
+    }
+
     public function testMissingTenantContextIsFailClosed(): void
     {
         $this->connection->beginTransaction();
