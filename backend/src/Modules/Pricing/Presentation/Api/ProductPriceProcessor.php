@@ -22,7 +22,7 @@ final readonly class ProductPriceProcessor implements ProcessorInterface
     {
         $i = $data instanceof ProductPriceUpdateInput ? $data : throw new InvalidArgumentException('Product price input is required.');
         $id = ProductPriceId::fromString(is_string($uriVariables['id'] ?? null) ? $uriVariables['id'] : throw new InvalidArgumentException('Product price identifier is required.'), $this->uuids);
-        $result = ($this->update)(new UpdateProductPrice($id, Money::fromString($i->amount, Currency::fromCode('USD'), $this->decimals), null === $i->validFrom ? null : new DateTimeImmutable($i->validFrom), null === $i->validTo ? null : new DateTimeImmutable($i->validTo), $this->actors->resolve()));
+        $result = ($this->update)(new UpdateProductPrice($id, Money::fromString($i->amount, Currency::fromCode($i->currency), $this->decimals), null === $i->validFrom ? null : new DateTimeImmutable($i->validFrom), null === $i->validTo ? null : new DateTimeImmutable($i->validTo), $this->actors->resolve()));
         return new ProductPriceResource($result->id()->toString(), $result->organizationId()->toString(), $result->priceListId()->toString(), $result->productId()->toString(), $result->packagingId()->toString(), $result->amount()->amount()->toString(), $result->amount()->currency()->code(), $result->status()->value, $result->validFrom()?->format(DATE_ATOM), $result->validTo()?->format(DATE_ATOM), $result->createdAt()->format(DATE_ATOM), $result->version());
     }
 }
