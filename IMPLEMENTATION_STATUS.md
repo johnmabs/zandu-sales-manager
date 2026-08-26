@@ -7140,4 +7140,19 @@ test(inventory): verify stock movement ledger
 
 ### Étape 3.14.3 — Atomicité Stock
 
-**Statut : À FAIRE**
+**Statut : EN COURS**
+
+Le socle PostgreSQL d’atomicité mutation/audit/outbox est couvert par le test
+transactionnel existant. Les scénarios d’injection spécifiques à l’écriture
+Stock puis StockMovement restent à ajouter avant clôture.
+
+### Validation
+
+```text
+TransactionalAuditAtomicityTest : OK (4 tests, 15 assertions)
+```
+
+## Prochaine étape
+
+Ajouter les doubles de repository Stock et les injections d’échec entre la
+mise à jour du stock et l’insertion du mouvement.
