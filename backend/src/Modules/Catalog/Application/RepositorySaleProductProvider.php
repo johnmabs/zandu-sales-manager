@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Catalog\Application;
 
-use Zandu\Modules\Catalog\Domain\Product\ProductRepository;
+use LogicException;
+use Zandu\Modules\Catalog\Application\Contract\{SaleProductDescriptor,SaleProductProvider,SaleProductUnavailable};
+use Zandu\Modules\Catalog\Domain\Product\{ProductNotFound,ProductRepository};
 use Zandu\Modules\Catalog\Domain\ProductPackaging\{ProductPackagingNotFound,ProductPackagingRepository};
-use Zandu\Modules\Catalog\Application\Contract\{SaleProductDescriptor,SaleProductProvider};
 use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,ProductPackagingId};
 use Zandu\SharedKernel\Quantity\Quantity;
 
@@ -16,13 +17,21 @@ final readonly class RepositorySaleProductProvider implements SaleProductProvide
 
     public function provide(OrganizationId $organizationId, ProductId $productId, ProductPackagingId $productPackagingId): SaleProductDescriptor
     {
-        $product = $this->products->get($organizationId, $productId);
-        $product->ensureCommerciallyAvailable();
-        $packaging = $this->packagings->get($organizationId, $productPackagingId);
-        if (!$packaging->productId()->equals($productId)) {
-            throw ProductPackagingNotFound::withId($productPackagingId);
+        try {
+            $product = $this->products->get($organizationId, $productId);
+            $product->ensureCommerciallyAvailable();
+        } catch (ProductNotFound|LogicException) {
+            throw SaleProductUnavailable::product();
         }
-        $packaging->ensureAvailableForSale();
+        try {
+            $packaging = $this->packagings->get($organizationId, $productPackagingId);
+            $packaging->ensureAvailableForSale();
+        } catch (ProductPackagingNotFound|LogicException) {
+            throw SaleProductUnavailable::packaging();
+        }
+        if (!$packaging->productId()->equals($productId)) {
+            throw SaleProductUnavailable::packaging();
+        }
 
         return new SaleProductDescriptor(
             $product->id(),

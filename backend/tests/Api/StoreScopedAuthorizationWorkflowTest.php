@@ -173,6 +173,10 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
         $client->request('GET', '/api/sales/' . $sale['id'], server: $this->headers($cashierToken));
         self::assertResponseIsSuccessful();
 
+        $client->request('GET', '/api/sales/' . $sale['id'] . '/receipt', server: $this->headers($cashierToken));
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('SALE_NOT_COMPLETED', $this->payload($client)['code']);
+
         $client->request('POST', '/api/sales/' . $sale['id'] . '/cancel', server: $this->headers($cashierToken));
         self::assertResponseIsSuccessful();
         self::assertSame('CANCELLED', $this->payload($client)['status']);
