@@ -7,10 +7,10 @@ namespace Zandu\Tests\Modules\Inventory\Domain;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
-use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementId,StockMovementSource,StockMovementType};
+use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementSource,StockMovementType};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
-use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,StockId,StoreId};
+use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,StockId,StockMovementId,StoreId};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final class StockMovementTest extends TestCase

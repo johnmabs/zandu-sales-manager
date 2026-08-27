@@ -7,8 +7,8 @@ namespace Zandu\Modules\Inventory\Application;
 use LogicException;
 use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale, InventoryStockConsumer, StockConsumptionResult};
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, StockRepository};
-use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementId, StockMovementRepository, StockMovementSource, StockMovementType};
-use Zandu\SharedKernel\Identity\IdGenerator;
+use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementSource, StockMovementType};
+use Zandu\SharedKernel\Identity\{IdGenerator, StockMovementId};
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\SharedKernel\Time\Clock;
 

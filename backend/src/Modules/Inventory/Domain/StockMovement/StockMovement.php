@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use LogicException;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
-use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,ProductId,StockId,StoreId};
+use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,ProductId,StockId,StockMovementId,StoreId};
 
 final readonly class StockMovement
 {
