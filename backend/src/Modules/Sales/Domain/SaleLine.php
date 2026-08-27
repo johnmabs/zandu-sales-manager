@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Sales\Domain;
 
+use LogicException;
+use Zandu\SharedKernel\Decimal\RoundingMode;
 use Zandu\SharedKernel\Identity\{ProductId,ProductPackagingId,SaleId,SaleLineId,UnitOfMeasureId};
 use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -33,7 +35,26 @@ final readonly class SaleLine
         private Money $total,
         /** @var array<string,int|string> */
         private array $sourceVersions = [],
-    ) {}
+    ) {
+        if ($enteredQuantity->isZero() || $enteredQuantity->isNegative()) {
+            throw new LogicException('Sale line quantity must be greater than zero.');
+        }
+        if ($conversionFactorSnapshot->isZero() || $conversionFactorSnapshot->isNegative()) {
+            throw new LogicException('Sale line conversion factor must be greater than zero.');
+        }
+        $expectedBaseQuantity = $enteredQuantity->multiply($conversionFactorSnapshot->value(), 12, RoundingMode::HalfUp);
+        if (!$expectedBaseQuantity->equals($baseQuantity)) {
+            throw new LogicException('Sale line base quantity does not match its conversion snapshot.');
+        }
+        foreach ([$unitPrice, $discountAmount, $taxableAmount, $taxAmount, $subtotal, $total] as $money) {
+            if ($money->amount()->isNegative()) {
+                throw new LogicException('Sale line monetary amounts cannot be negative.');
+            }
+            if (!$money->currency()->equals($unitPrice->currency())) {
+                throw new LogicException('Sale line monetary amounts must use one currency.');
+            }
+        }
+    }
 
     public function id(): SaleLineId
     {

@@ -100,6 +100,8 @@ services:
 
     Zandu\Modules\Organization\Application\Contract\OperationalGuard:
         alias: Zandu\Modules\Organization\Application\TenantOperationalGuard
+    Zandu\Modules\Organization\Application\Contract\StoreBusinessContextProvider:
+        alias: Zandu\Modules\Organization\Application\RepositoryStoreBusinessContextProvider
 
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
@@ -129,6 +131,13 @@ services:
         alias: Zandu\Modules\Catalog\Application\RepositorySaleablePackagingSnapshotProvider
     Zandu\Modules\Catalog\Application\Contract\InventoryProductProvider:
         alias: Zandu\Modules\Catalog\Application\RepositoryInventoryProductProvider
+    Zandu\Modules\Catalog\Application\Contract\SaleProductProvider:
+        alias: Zandu\Modules\Catalog\Application\RepositorySaleProductProvider
+    Zandu\Modules\Sales\Application\Contract\SaleTaxPolicy:
+        alias: Zandu\Modules\Sales\Application\ConfiguredSaleTaxPolicy
+    Zandu\Modules\Sales\Application\ConfiguredSaleTaxPolicy:
+        arguments:
+            $policy: '%env(string:SALE_TAX_POLICY)%'
 
     Zandu\Modules\Pricing\Domain\PriceList\PriceListRepository:
         alias: Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\DoctrinePriceListRepository
@@ -141,12 +150,24 @@ services:
         alias: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\DoctrineStockMovementRepository
     Zandu\Modules\Inventory\Application\Contract\StockAvailabilityProvider:
         alias: Zandu\Modules\Inventory\Application\RepositoryStockAvailabilityProvider
+    Zandu\Modules\Inventory\Application\Contract\InventoryStockConsumer:
+        alias: Zandu\Modules\Inventory\Application\RepositoryInventoryStockConsumer
     Zandu\Modules\CashManagement\Domain\CashRegister\CashRegisterRepository:
         alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashRegisterRepository
     Zandu\Modules\CashManagement\Domain\CashSession\CashSessionRepository:
         alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashSessionRepository
     Zandu\Modules\CashManagement\Domain\CashMovement\CashMovementRepository:
         alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashMovementRepository
+    Zandu\Modules\CashManagement\Application\Contract\CashMovementRecorder:
+        alias: Zandu\Modules\CashManagement\Application\SalePaymentCashMovementRecorder
+    Zandu\Modules\Sales\Application\Contract\PaymentRecorder:
+        alias: Zandu\Modules\Payments\Application\CashSalePaymentRecorder
+    Zandu\Modules\Payments\Domain\PaymentRepository:
+        alias: Zandu\Modules\Payments\Infrastructure\Persistence\DbalPaymentRepository
+    Zandu\Modules\Sales\Domain\SaleRepository:
+        alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleRepository
+    Zandu\Modules\Sales\Application\Contract\SaleCompletionIdempotency:
+        alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleCompletionIdempotency
 
     Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
         alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver

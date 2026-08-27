@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zandu\Modules\Sales\Application\Contract;
+namespace Zandu\Modules\Catalog\Application\Contract;
 
 use Zandu\SharedKernel\Identity\{ProductId,ProductPackagingId,UnitOfMeasureId};
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -21,5 +21,8 @@ final readonly class SaleProductDescriptor
         public int $sourceVersion,
         public bool $inventoryTracked = false,
         public string $productType = 'SERVICE',
+        public ?Quantity $minimumQuantity = null,
+        public ?Quantity $quantityIncrement = null,
+        public int $quantityPrecision = 12,
     ) {}
 }

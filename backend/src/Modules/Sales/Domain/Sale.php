@@ -7,7 +7,7 @@ namespace Zandu\Modules\Sales\Domain;
 use DateTimeImmutable;
 use LogicException;
 use Zandu\SharedKernel\Context\ActorContext;
-use Zandu\SharedKernel\Identity\{OrganizationId,SaleId,StoreId};
+use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,SaleId,SaleLineId,StoreId};
 use Zandu\SharedKernel\Money\Money;
 
 final class Sale
@@ -22,11 +22,12 @@ final class Sale
         private Money $discountTotal,
         private Money $taxTotal,
         private Money $total,
-        private readonly ActorContext $createdBy,
+        private ?string $businessDate,
+        private readonly ActorId $createdBy,
         private readonly DateTimeImmutable $createdAt,
-        private ?ActorContext $completedBy = null,
+        private ?ActorId $completedBy = null,
         private ?DateTimeImmutable $completedAt = null,
-        private ?ActorContext $cancelledBy = null,
+        private ?ActorId $cancelledBy = null,
         private ?DateTimeImmutable $cancelledAt = null,
         private int $version = 1,
         /** @var list<SaleLine> */
@@ -35,7 +36,19 @@ final class Sale
 
     public static function create(SaleId $id, OrganizationId $organizationId, StoreId $storeId, string $currency, Money $zero, ActorContext $actor, DateTimeImmutable $at): self
     {
-        return new self($id, $organizationId, $storeId, SaleStatus::Draft, $currency, $zero, $zero, $zero, $zero, $actor, $at);
+        if (!$actor->organizationId()->equals($organizationId)) {
+            throw new LogicException('Actor organization does not match sale organization.');
+        }
+        if ($zero->currency()->code() !== $currency || !$zero->amount()->isZero()) {
+            throw new LogicException('Sale must be initialized with zero money in its currency.');
+        }
+        return new self($id, $organizationId, $storeId, SaleStatus::Draft, $currency, $zero, $zero, $zero, $zero, null, $actor->actorId(), $at);
+    }
+
+    /** @param list<SaleLine> $lines */
+    public static function reconstitute(SaleId $id, OrganizationId $organizationId, StoreId $storeId, SaleStatus $status, string $currency, Money $subtotal, Money $discountTotal, Money $taxTotal, Money $total, ?string $businessDate, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $completedBy, ?DateTimeImmutable $completedAt, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version, array $lines): self
+    {
+        return new self($id, $organizationId, $storeId, $status, $currency, $subtotal, $discountTotal, $taxTotal, $total, $businessDate, $createdBy, $createdAt, $completedBy, $completedAt, $cancelledBy, $cancelledAt, $version, $lines);
     }
 
     public function addLine(SaleLine $line): void
@@ -45,17 +58,86 @@ final class Sale
             throw new LogicException('Sale line belongs to another sale.');
         }
         $this->lines[] = $line;
+        $this->addLineTotals($line);
         ++$this->version;
     }
 
-    public function complete(ActorContext $actor, DateTimeImmutable $at): void
+    public function replaceLine(SaleLine $replacement): void
+    {
+        $this->ensureEditable();
+        foreach ($this->lines as $index => $line) {
+            if ($line->id()->equals($replacement->id())) {
+                if (!$replacement->saleId()->equals($this->id)) {
+                    throw new LogicException('Sale line belongs to another sale.');
+                }
+                $this->subtractLineTotals($line);
+                $this->lines[$index] = $replacement;
+                $this->addLineTotals($replacement);
+                ++$this->version;
+
+                return;
+            }
+        }
+        throw new LogicException('Sale line not found.');
+    }
+
+    public function removeLine(SaleLineId $lineId): void
+    {
+        $this->ensureEditable();
+        foreach ($this->lines as $index => $line) {
+            if ($line->id()->equals($lineId)) {
+                $this->subtractLineTotals($line);
+                array_splice($this->lines, $index, 1);
+                ++$this->version;
+
+                return;
+            }
+        }
+        throw new LogicException('Sale line not found.');
+    }
+
+    public function line(SaleLineId $lineId): SaleLine
+    {
+        foreach ($this->lines as $line) {
+            if ($line->id()->equals($lineId)) {
+                return $line;
+            }
+        }
+        throw new LogicException('Sale line not found.');
+    }
+
+    private function addLineTotals(SaleLine $line): void
+    {
+        $this->subtotal = $this->subtotal->add($line->subtotal());
+        $this->discountTotal = $this->discountTotal->add($line->discountAmount());
+        $this->taxTotal = $this->taxTotal->add($line->taxAmount());
+        $this->total = $this->total->add($line->total());
+    }
+
+    private function subtractLineTotals(SaleLine $line): void
+    {
+        $this->subtotal = $this->subtotal->subtract($line->subtotal());
+        $this->discountTotal = $this->discountTotal->subtract($line->discountAmount());
+        $this->taxTotal = $this->taxTotal->subtract($line->taxAmount());
+        $this->total = $this->total->subtract($line->total());
+    }
+
+    public function complete(ActorContext $actor, DateTimeImmutable $at, string $businessDate): void
     {
         $this->ensureEditable();
         if ([] === $this->lines) {
-            throw new LogicException('A sale must contain at least one line.');
+            throw SalesRuleViolation::with('SALE_EMPTY', 'A sale must contain at least one line.');
+        }
+        if (!$actor->organizationId()->equals($this->organizationId)) {
+            throw new LogicException('Actor organization does not match sale organization.');
+        }
+        $parsedBusinessDate = DateTimeImmutable::createFromFormat('!Y-m-d', $businessDate);
+        if (false === $parsedBusinessDate || $parsedBusinessDate->format('Y-m-d') !== $businessDate) {
+            throw new LogicException('Business date must use the Y-m-d format.');
         }
         $this->status = SaleStatus::Completed;
-        $this->completedBy = $actor;
+        $this->businessDate = $businessDate;
+        $this->completedBy = $actor->actorId();
         $this->completedAt = $at;
         ++$this->version;
     }
@@ -63,10 +145,13 @@ final class Sale
     public function cancel(ActorContext $actor, DateTimeImmutable $at): void
     {
         if (SaleStatus::Draft !== $this->status && SaleStatus::AwaitingPayment !== $this->status) {
-            throw new LogicException('Only an open sale can be cancelled.');
+            throw SalesRuleViolation::with(SaleStatus::Completed === $this->status ? 'SALE_ALREADY_COMPLETED' : 'SALE_CANCELLED', 'Only an open sale can be cancelled.');
+        }
+        if (!$actor->organizationId()->equals($this->organizationId)) {
+            throw new LogicException('Actor organization does not match sale organization.');
         }
         $this->status = SaleStatus::Cancelled;
-        $this->cancelledBy = $actor;
+        $this->cancelledBy = $actor->actorId();
         $this->cancelledAt = $at;
         ++$this->version;
     }
@@ -74,7 +159,7 @@ final class Sale
     private function ensureEditable(): void
     {
         if (SaleStatus::Draft !== $this->status && SaleStatus::AwaitingPayment !== $this->status) {
-            throw new LogicException('The sale is not editable.');
+            throw SalesRuleViolation::with('SALE_NOT_EDITABLE', 'The sale is not editable.');
         }
     }
 
@@ -114,6 +199,10 @@ final class Sale
     {
         return $this->total;
     }
+    public function businessDate(): ?string
+    {
+        return $this->businessDate;
+    }
     public function version(): int
     {
         return $this->version;
@@ -126,7 +215,7 @@ final class Sale
     {
         return $this->lines;
     }
-    public function createdBy(): ActorContext
+    public function createdBy(): ActorId
     {
         return $this->createdBy;
     }
@@ -134,7 +223,7 @@ final class Sale
     {
         return $this->createdAt;
     }
-    public function completedBy(): ?ActorContext
+    public function completedBy(): ?ActorId
     {
         return $this->completedBy;
     }
@@ -142,7 +231,7 @@ final class Sale
     {
         return $this->completedAt;
     }
-    public function cancelledBy(): ?ActorContext
+    public function cancelledBy(): ?ActorId
     {
         return $this->cancelledBy;
     }

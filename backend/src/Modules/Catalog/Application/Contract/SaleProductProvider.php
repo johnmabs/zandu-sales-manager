@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Zandu\Modules\Sales\Application\Contract;
+namespace Zandu\Modules\Catalog\Application\Contract;
 
 use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,ProductPackagingId};
 
