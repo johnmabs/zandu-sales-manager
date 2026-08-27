@@ -15,6 +15,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
+use Zandu\SharedKernel\Error\CodedDomainException;
 use Zandu\SharedKernel\Error\ResourceConflict;
 use Zandu\SharedKernel\Error\ResourceNotFound;
 use Zandu\SharedKernel\Messaging\CorrelationId;
@@ -49,6 +50,11 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
     private function map(\Throwable $exception): ?array
     {
         return match (true) {
+            $exception instanceof CodedDomainException => [
+                'code' => $exception->errorCode(),
+                'message' => $exception->publicMessage(),
+                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
             $exception instanceof AuthenticationException => [
                 'code' => 'UNAUTHENTICATED',
                 'message' => 'Authentication is required.',
