@@ -1,6 +1,9 @@
 api_platform:
     title: Zandu Sales Manager API
     version: 0.1.0
+    enable_swagger_ui: false
+    enable_re_doc: false
+    enable_scalar: false
     mapping:
         paths:
             - '%kernel.project_dir%/src/Modules/Organization/Presentation/Api'

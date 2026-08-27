@@ -85,7 +85,8 @@ docker compose run --rm -p 8080:8080 backend \
 
 Les URLs utiles sont alors :
 
-- API et documentation : <http://localhost:8080/api/docs> ;
+- Swagger UI : <http://localhost:8080/api/docs> ;
+- ReDoc : <http://localhost:8080/api/docs?ui=re_doc> ;
 - disponibilité applicative : <http://localhost:8080/health/live> ;
 - disponibilité de PostgreSQL : <http://localhost:8080/health/ready> ;
 - métriques : <http://localhost:8080/metrics>.
@@ -234,8 +235,9 @@ Les opérations d'administration documentent et renvoient un format JSON stable 
 
 Les messages internes des exceptions ne sont pas exposés. Une ressource d'un
 autre tenant produit volontairement `404 NOT_FOUND` afin de ne pas révéler son
-existence. Le détail interactif du contrat est disponible dans Swagger UI sur
-<http://localhost:8080/api/docs>.
+existence. En développement, le contrat interactif est disponible dans
+[Swagger UI](http://localhost:8080/api/docs) et dans
+[ReDoc](http://localhost:8080/api/docs?ui=re_doc).
 
 Les opérations Store suivantes sont également exposées :
 
