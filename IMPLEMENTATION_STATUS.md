@@ -55,7 +55,9 @@ Le Lot 5 est en cours :
 Phase 0     TERMINÉ   ADR Costing et Refund, planning aligné
 Epic 5.1    TERMINÉ   Inventory Costing foundation
 Epic 5.4    TERMINÉ   Moving weighted average calculator
-Epic 5.2    PROCHAINE StockValuation aggregate
+Epic 5.2    TERMINÉ   StockValuation aggregate — domaine
+Epic 5.3    TERMINÉ   StockValuationMovement ledger — domaine
+Persistence PROCHAINE PostgreSQL, contraintes et RLS Costing
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -64,7 +66,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827092000 appliquée en dernier
-Tests                 470 tests, 2 147 assertions
+Tests                 484 tests, 2 198 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7865,7 +7867,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — Phase 0 terminée.**
+**État courant : EN COURS — fondations domaine Costing terminées.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -7935,8 +7937,61 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.2 — StockValuation aggregate
+
+**Statut : TERMINÉ pour le modèle de domaine — persistence à faire.**
+
+- identité `StockValuationId` partageable par les contrats applicatifs ;
+- ownership immuable Organization, Store, Product et Stock ;
+- quantité, valeur totale, devise et version protégées par l’agrégat ;
+- initialisation positive au coût d’ouverture exact ou initialisation nulle
+  avec valeur strictement nulle ;
+- entrées et sorties déléguées au calculateur de coût moyen ;
+- version incrémentée uniquement après une mutation réussie ;
+- échec de quantité ou de devise sans mutation partielle.
+
+Commit :
+
+```text
+ab5af7a feat(costing): add stock valuation aggregate
+```
+
+### Epic 5.3 — StockValuationMovement ledger
+
+**Statut : TERMINÉ pour le modèle de domaine — persistence à faire.**
+
+- `StockMovementId` déplacé dans le SharedKernel afin d’être référencé sans
+  dépendance au domaine Inventory ;
+- ledger `readonly` sans mutation ni suppression métier ;
+- types `OPENING`, `INITIAL_STOCK`, `ADJUSTMENT_IN`, `ADJUSTMENT_OUT`, `SALE`
+  et `SALE_RETURN` ;
+- cohérence direction/valeurs/devise/source vérifiée à la création ;
+- lien `StockMovementId` obligatoire sauf pour le bootstrap historique
+  `OPENING`, qui ne crée pas de faux mouvement physique ;
+- identité, ownership, coûts précédents/résultants, source, corrélation et
+  horodatage UTC conservés.
+
+Commits :
+
+```text
+16efe46 refactor(inventory): share stock movement identity
+622f8d9 feat(costing): add valuation movement ledger
+```
+
+Validation consolidée :
+
+```text
+StockValuationTest : OK (8 tests, 32 assertions)
+StockValuationMovementTest : OK (6 tests, 19 assertions)
+Suite PHPUnit complète : OK (484 tests, 2 198 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’agrégat `StockValuation` autour du calculateur, avec identité,
-tenant, Store, Product, Stock, devise, version et invariant strict
-`quantityOnHand = 0 → totalValue = 0`.
+Ajouter les repositories et la migration PostgreSQL de `StockValuation` et
+`StockValuationMovement`, avec unicité par Stock, unicité du lien physique,
+contraintes décimales, optimistic locking et politiques RLS tenant-scoped.
