@@ -177,6 +177,21 @@ Doctrine ne sont jamais exposés directement. Les lectures restent
 tenant-scoped et les commandes sensibles appliquent autorisation, garde
 opérationnelle, audit et outbox dans la transaction locale.
 
+### État du parcours Sales
+
+Le parcours M2 est exposé de bout en bout : création d'une vente `DRAFT`, ajout,
+modification et retrait de lignes snapshotées, annulation, lecture, finalisation
+cash idempotente et reçu historique. `CompleteSale` coordonne Sale, Payment
+CASH, Inventory, CashMovement, audit et outbox dans une transaction
+tenant-scoped ; il verrouille la vente, revalide Pricing, contrôle le scope
+Store, calcule la date métier et retourne la monnaie à rendre.
+
+La politique fiscale du pilote est explicitement `NO_TAX` selon
+[l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario
+HTTP PostgreSQL vérifie le parcours complet et son rejeu sans effet dupliqué.
+Le détail du Gate M2 et des preuves est maintenu dans
+[le planning du Lot 4](docs/planning/zandu-lot-4-sales-complete-sale-cash.md).
+
 ### Contrat d'erreurs
 
 Les opérations d'administration documentent et renvoient un format JSON stable :

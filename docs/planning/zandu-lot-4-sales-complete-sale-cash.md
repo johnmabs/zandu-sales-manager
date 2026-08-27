@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 4 : Sales & CompleteSale cash
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation  
+**Statut :** Terminé — Gate M2 validé le 27 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---
@@ -53,6 +53,21 @@ Offline
 ```
 
 Le Lot 4 est terminé uniquement lorsque son gate de sortie est satisfait.
+
+## État réel au 27 août 2026
+
+Le parcours Sales est opérationnel de bout en bout : cycle `DRAFT`, édition des
+lignes, snapshots Catalog/Pricing/fiscaux, annulation, finalisation cash,
+paiement confirmé, consommation Inventory, mouvement Cash, reçu et événements
+outbox. `CompleteSale` verrouille la vente, revalide Pricing, applique les
+permissions et guards Store, calcule `BusinessDate`, supporte le montant remis
+et retourne la monnaie à rendre.
+
+La politique fiscale du pilote est explicitement `NO_TAX` dans l'ADR-0020. Les
+tests PostgreSQL couvrent le workflow HTTP M2, le rejeu idempotent sans effet
+dupliqué, les verrous concurrents, la persistance des snapshots et les RLS
+Sales/Payment. Le Gate M2 est validé par la CI complète documentée dans
+`IMPLEMENTATION_STATUS.md`.
 
 ---
 
@@ -1424,120 +1439,120 @@ test(access): verify cash sales permissions and scopes
 Le Lot 4 est `DONE` uniquement lorsque :
 
 ```text
-[ ] Sales bounded context opérationnel
-[ ] architecture boundaries protégées
+[x] Sales bounded context opérationnel
+[x] architecture boundaries protégées
 
-[ ] Sale aggregate opérationnel
-[ ] lifecycle Sale testé
-[ ] DRAFT disponible
-[ ] COMPLETED non éditable
-[ ] CANCELLED non finalisable
-[ ] aucune suppression de vente finalisée
+[x] Sale aggregate opérationnel
+[x] lifecycle Sale testé
+[x] DRAFT disponible
+[x] COMPLETED non éditable
+[x] CANCELLED non finalisable
+[x] aucune suppression de vente finalisée
 
-[ ] SaleLine opérationnelle
-[ ] packaging snapshot conservé
-[ ] conversionFactor snapshot conservé
-[ ] baseQuantity conservée
-[ ] prix snapshoté
-[ ] tax snapshot selon politique
-[ ] historique indépendant du catalogue courant
+[x] SaleLine opérationnelle
+[x] packaging snapshot conservé
+[x] conversionFactor snapshot conservé
+[x] baseQuantity conservée
+[x] prix snapshoté
+[x] tax snapshot selon politique
+[x] historique indépendant du catalogue courant
 
-[ ] SalePricingCalculator déterministe
-[ ] Money exact
-[ ] Quantity exacte
-[ ] aucun repricing silencieux
-[ ] ProductPriceNotFound géré
-[ ] SalePricingChanged géré
+[x] SalePricingCalculator déterministe
+[x] Money exact
+[x] Quantity exacte
+[x] aucun repricing silencieux
+[x] ProductPriceNotFound géré
+[x] SalePricingChanged géré
 
-[ ] fiscalité pilote explicitement décidée
+[x] fiscalité pilote explicitement décidée
 
-[ ] Payment CASH minimal opérationnel
-[ ] purpose SALE
-[ ] status CONFIRMED
-[ ] Payment distinct de CashMovement
+[x] Payment CASH minimal opérationnel
+[x] purpose SALE
+[x] status CONFIRMED
+[x] Payment distinct de CashMovement
 
-[ ] Inventory Application Contract utilisé
-[ ] aucun StockRepository importé dans Sales
-[ ] tracked product consomme Stock
-[ ] untracked product ne touche pas Stock
-[ ] Service ne touche pas Stock
-[ ] StockMovement SALE créé
-[ ] stock négatif impossible
-[ ] effet Inventory idempotent
+[x] Inventory Application Contract utilisé
+[x] aucun StockRepository importé dans Sales
+[x] tracked product consomme Stock
+[x] untracked product ne touche pas Stock
+[x] Service ne touche pas Stock
+[x] StockMovement SALE créé
+[x] stock négatif impossible
+[x] effet Inventory idempotent
 
-[ ] Cash Application Contract utilisé
-[ ] aucune mutation directe CashSession depuis Sales
-[ ] CashSession OPEN obligatoire
-[ ] CashMovement SALE_PAYMENT créé
-[ ] expected cash mis à jour
-[ ] effet Cash idempotent
+[x] Cash Application Contract utilisé
+[x] aucune mutation directe CashSession depuis Sales
+[x] CashSession OPEN obligatoire
+[x] CashMovement SALE_PAYMENT créé
+[x] expected cash mis à jour
+[x] effet Cash idempotent
 
-[ ] CompleteSale cash opérationnel
-[ ] coordinated local transaction
-[ ] Sale + Payment + Inventory + Cash + Outbox atomiques
-[ ] rollback Inventory failure
-[ ] rollback Cash failure
-[ ] rollback Outbox failure
-[ ] failure matrix verte
+[x] CompleteSale cash opérationnel
+[x] coordinated local transaction
+[x] Sale + Payment + Inventory + Cash + Outbox atomiques
+[x] rollback Inventory failure
+[x] rollback Cash failure
+[x] rollback Outbox failure
+[x] failure matrix verte
 
-[ ] CompleteSale idempotent
-[ ] Idempotency-Key supportée
-[ ] retry après commit sûr
-[ ] double completion concurrente sûre
-[ ] stock concurrency PostgreSQL réelle
+[x] CompleteSale idempotent
+[x] Idempotency-Key supportée
+[x] retry après commit sûr
+[x] double completion concurrente sûre
+[x] stock concurrency PostgreSQL réelle
 
-[ ] BusinessDate calculée avec Store.timeZone
-[ ] timestamps UTC séparés
+[x] BusinessDate calculée avec Store.timeZone
+[x] timestamps UTC séparés
 
-[ ] permissions Sales disponibles
-[ ] Store scopes appliqués
-[ ] OrganizationOperationalGuard actif
-[ ] StoreOperationalGuard actif
+[x] permissions Sales disponibles
+[x] Store scopes appliqués
+[x] OrganizationOperationalGuard actif
+[x] StoreOperationalGuard actif
 
-[ ] API CreateSale
-[ ] API ReadSale
-[ ] API SaleLines
-[ ] API CancelSale
-[ ] API CompleteSale cash
-[ ] API Receipt
-[ ] OpenAPI à jour
-[ ] contrat d’erreurs stable
+[x] API CreateSale
+[x] API ReadSale
+[x] API SaleLines
+[x] API CancelSale
+[x] API CompleteSale cash
+[x] API Receipt
+[x] OpenAPI à jour
+[x] contrat d’erreurs stable
 
-[ ] RLS Sales actif
-[ ] RLS Payment actif
-[ ] cross-tenant NOT_FOUND
+[x] RLS Sales actif
+[x] RLS Payment actif
+[x] cross-tenant NOT_FOUND
 
-[ ] domain tests verts
-[ ] persistence tests verts
-[ ] API contract tests verts
-[ ] integration tests verts
-[ ] rollback tests verts
-[ ] concurrency tests verts
-[ ] idempotence tests verts
-[ ] tenant isolation tests verts
-[ ] RLS tests verts
-[ ] architecture fitness tests verts
-[ ] PHPStan vert
-[ ] PHP-CS-Fixer vert
-[ ] Composer audit vert
-[ ] CI verte
+[x] domain tests verts
+[x] persistence tests verts
+[x] API contract tests verts
+[x] integration tests verts
+[x] rollback tests verts
+[x] concurrency tests verts
+[x] idempotence tests verts
+[x] tenant isolation tests verts
+[x] RLS tests verts
+[x] architecture fitness tests verts
+[x] PHPStan vert
+[x] PHP-CS-Fixer vert
+[x] Composer audit vert
+[x] CI verte
 
-[ ] démonstration M2 réussie
+[x] démonstration M2 réussie
 
-[ ] aucun ReturnSale
-[ ] aucun RefundSale
-[ ] aucun Customer Credit
-[ ] aucun payment provider
-[ ] aucun StockReservation
-[ ] aucun Inventory Costing
-[ ] aucun Purchasing
-[ ] aucun StockTransfer
-[ ] aucun StockCount
-[ ] aucun Reporting avancé
-[ ] aucun Offline
+[x] aucun ReturnSale
+[x] aucun RefundSale
+[x] aucun Customer Credit
+[x] aucun payment provider
+[x] aucun StockReservation
+[x] aucun Inventory Costing
+[x] aucun Purchasing
+[x] aucun StockTransfer
+[x] aucun StockCount
+[x] aucun Reporting avancé
+[x] aucun Offline
 
-[ ] IMPLEMENTATION_STATUS.md mis à jour
-[ ] ADR mis à jour si décision DÉCIDÉ modifiée
+[x] IMPLEMENTATION_STATUS.md mis à jour
+[x] ADR mis à jour si décision DÉCIDÉ modifiée
 ```
 
 ---

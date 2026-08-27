@@ -70,7 +70,7 @@ Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0019
+- ADR techniques 0001–0020
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
 
@@ -7392,7 +7392,7 @@ Le gate Lot 3 est donc validé sur les contrôles automatisés disponibles.
 
 ### Epic 4.1 — Sales foundation
 
-**Statut : EN COURS — fondation persistence terminée**
+**Statut : TERMINÉ**
 
 Le module `Sales` conserve ses frontières propres et ne dépend d’aucun
 aggregate Domain Inventory, Cash ou Catalog. La migration
@@ -7424,7 +7424,7 @@ Implémenter l’agrégat `Sale` et son cycle de vie DRAFT → COMPLETED/CANCELL
 
 ### Epic 4.2 — Sale aggregate & lifecycle
 
-**Statut : EN COURS — cycle de vie fondamental terminé**
+**Statut : TERMINÉ**
 
 L’agrégat `Sale` est disponible avec les statuts `DRAFT`, `AWAITING_PAYMENT`,
 `COMPLETED` et `CANCELLED`. Les invariants de vente vide, d’édition après
@@ -7452,7 +7452,7 @@ contrat applicatif Catalog nécessaire à la résolution d’un produit vendable
 
 ### Epic 4.3 — SaleLine & snapshots
 
-**Statut : EN COURS — modèle de snapshot et contrat Catalog terminés**
+**Statut : TERMINÉ**
 
 `SaleLine` conserve désormais les identifiants produit/packaging, les libellés
 et codes, l’unité, les quantités saisies et de base, le facteur de conversion,
@@ -7480,7 +7480,7 @@ contrat produit vendable et des snapshots de ligne.
 
 ### Epic 4.4 — Sale pricing
 
-**Statut : EN COURS — calcul et contrôle de version terminés**
+**Statut : TERMINÉ**
 
 Le `SalePricingCalculator` effectue la multiplication exacte quantité × prix
 unitaire avec `Money` et `Decimal`, sans conversion flottante. Le
@@ -7509,7 +7509,7 @@ Implémenter l’Epic 4.5 — paiement minimal `CASH`, distinct de
 
 ### Epic 4.5 — Minimal Payment CASH
 
-**Statut : EN COURS — paiement CASH fondamental terminé**
+**Statut : TERMINÉ**
 
 Le bounded context `Payments` expose un agrégat `Payment` limité au MVP :
 `purpose=SALE`, `method=CASH`, montants strictement positifs et confirmation
@@ -7539,7 +7539,7 @@ Implémenter l’intégration Inventory de l’Epic 4.6 via
 
 ### Epic 4.6 — Inventory integration
 
-**Statut : EN COURS — orchestration par contrat terminée**
+**Statut : TERMINÉ**
 
 `InventoryConsumptionService` consomme le stock uniquement via
 `InventoryStockConsumer` et `ConsumeStockForSale`. Les produits physiques
@@ -7568,7 +7568,7 @@ session ouverte obligatoire et paiement SALE idempotent.
 
 ### Epic 4.7 — Cash integration
 
-**Statut : EN COURS — orchestration Cash par contrat terminée**
+**Statut : TERMINÉ**
 
 `CashPaymentService` délègue l’enregistrement d’un paiement de vente à
 `CashMovementRecorder` avec le tenant, le Store, la session Cash, la vente,
@@ -7598,7 +7598,7 @@ Inventory, Cash et Outbox dans une transaction locale atomique.
 
 ### Epic 4.8 — CompleteSale
 
-**Statut : EN COURS — orchestration transactionnelle initiale terminée**
+**Statut : TERMINÉ**
 
 Le cas d’usage `CompleteSale` coordonne la consommation Inventory, le
 paiement, l’écriture Cash et la finalisation de la vente dans une
@@ -7631,7 +7631,7 @@ sort sans réexécuter les effets externes.
 
 ### Epic 4.9 — Idempotence & concurrency
 
-**Statut : EN COURS — clé d’idempotence introduite**
+**Statut : TERMINÉ**
 
 `CompleteSale` accepte désormais une clé d’idempotence et consulte un store
 injectable avant d’exécuter les effets. La clé est marquée après finalisation ;
@@ -7684,7 +7684,7 @@ feat(sales): make complete sale replay safe
 
 ### Epic 4.10 — Authorization & audit
 
-**Statut : EN COURS — permissions Sales ajoutées**
+**Statut : TERMINÉ**
 
 Le catalogue partagé contient désormais `SALE_CREATE`, `SALE_READ`,
 `SALE_UPDATE_DRAFT`, `SALE_CANCEL_DRAFT`, `SALE_COMPLETE` et
@@ -7710,3 +7710,71 @@ feat(access): add sales permissions and role grants
 
 Appliquer ces permissions et les guards opérationnels dans les handlers Sales,
 puis publier les événements et audits de finalisation.
+
+## Revue corrective consolidée — 27 août 2026
+
+**Statut : TERMINÉ — Gate M2 validé**
+
+La revue globale a corrigé, dans l’ordre de risque, les incohérences suivantes :
+
+- toutes les mutations Inventory/Cash contrôlent désormais permission, tenant,
+  scope Store et mode opérationnel ;
+- la clôture d’une session calcule le solde attendu avec les mouvements réels et
+  les lectures de mouvements exigent le Store, sans fuite cross-store ;
+- les routes imbriquées API Platform utilisent explicitement leurs variables
+  d’URI et les commandes Cash ont été séparées en fichiers PSR-4 ;
+- les écritures SALE sont implémentées dans Payment, StockMovement et
+  CashMovement avec contraintes d’unicité et adaptateurs persistants ;
+- `CompleteSale` recharge et verrouille la vente persistée, refuse un montant
+  différent du total, résout les produits suivis côté serveur et revendique la
+  clé d’idempotence atomiquement avec une empreinte du payload ;
+- la finalisation applique `SALE_COMPLETE`, le scope Store et le guard standard,
+  calcule `business_date` depuis `Store.timeZone`, puis persiste audit et événements
+  outbox dans la transaction locale ;
+- Payments et les contrats inter-modules sont couverts par Deptrac. L’analyse
+  modulaire passe de 3 221 dépendances non classées à 10, sans violation.
+
+### Migrations ajoutées
+
+```text
+Version20260827090000 — cohérence Store Cash par clés composites
+Version20260827091000 — mouvements SALE Inventory/Cash
+Version20260827092000 — empreinte des payloads d’idempotence CompleteSale
+```
+
+### Validation consolidée
+
+```text
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation
+Deptrac modules : 0 violation, 10 uncovered
+StoreScopedAuthorizationWorkflowTest : OK (2 tests, 72 assertions)
+Suite PHPUnit complète : OK (460 tests, 2 115 assertions)
+```
+
+La suite complète a également révélé puis fait corriger un chargement PSR-4
+aléatoire des commandes Cash. La relance complète après séparation des classes
+en fichiers dédiés est verte.
+
+### Clôture du Gate M2
+
+Les écarts identifiés par la revue sont fermés :
+
+- Create/Read/Cancel et l’édition des lignes Draft sont disponibles avec
+  permissions et scopes Store ;
+- l’API expose CompleteSale, Receipt et un contrat OpenAPI vérifié ;
+- Pricing est revalidé avant finalisation et les changements silencieux sont
+  refusés ;
+- l’ADR-0020 décide explicitement la politique pilote `NO_TAX`, snapshotée sur
+  chaque ligne ;
+- `tenderedAmount` est contrôlé et `changeAmount` est retourné sans gonfler le
+  Payment ni le CashMovement ;
+- un scénario HTTP PostgreSQL couvre la vente cash complète et son rejeu avec
+  un seul Payment, StockMovement et CashMovement ;
+- deux connexions PostgreSQL prouvent la sérialisation pessimiste de
+  CompleteSale ; les tests RLS isolent Sale, SaleLine et Payment.
+
+La stratégie de commits atomiques a été restaurée : invariants Cash,
+consommation Inventory, Payment, cycle Draft, CompleteSale, API, RLS,
+concurrence, OpenAPI et documentation sont séparés dans l’historique.
