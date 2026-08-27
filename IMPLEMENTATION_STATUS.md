@@ -41,6 +41,28 @@ Epic 1.9   TERMINÉ   Integration & tenant isolation tests
 Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 ```
 
+Les Lots 2, 3 et 4 sont également clos :
+
+```text
+Gate Lot 2 TERMINÉ   Catalogue et tarification de base opérationnels
+Gate Lot 3 TERMINÉ   Inventory et Cash foundations opérationnels
+Gate Lot 4 TERMINÉ   M2 — première vente cash de bout en bout
+```
+
+État consolidé au 27 août 2026 :
+
+```text
+Branche              main
+Migrations           Version20260827092000 appliquée en dernier
+Tests                 460 tests, 2 115 assertions
+PHPStan               OK
+PHP-CS-Fixer          OK
+Deptrac layers        0 violation, 10 dépendances non classées
+Deptrac modules       0 violation, 10 dépendances non classées
+Composer audit        aucune vulnérabilité connue
+Worktree              propre après clôture documentaire
+```
+
 ## Definition of Done globale
 
 ```text
@@ -65,6 +87,12 @@ Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 [x] administration opérationnelle validée
 [x] démonstration consolidée du Lot 1 validée
 [x] Gate Lot 1 validé
+[x] catalogue et Pricing de base validés
+[x] Gate Lot 2 validé
+[x] Inventory et Cash foundations validés
+[x] Gate Lot 3 validé
+[x] première vente cash M2 validée
+[x] Gate Lot 4 validé
 ```
 
 ## Références
@@ -73,6 +101,9 @@ Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 - ADR techniques 0001–0020
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
+- `zandu-lot-2-catalog-basic-pricing.md`
+- `zandu-lot-3-inventory-cash-foundations.md`
+- `zandu-lot-4-sales-complete-sale-cash.md`
 
 ---
 
@@ -7390,6 +7421,25 @@ Le gate Lot 3 est donc validé sur les contrôles automatisés disponibles.
 
 ## Lot 4 — Sales & CompleteSale cash
 
+**État courant autoritatif : TERMINÉ — Gate M2 validé le 27 août 2026.**
+
+Les sous-sections suivantes constituent le journal chronologique de
+l'implémentation. Leurs blocs « Prochaine étape » décrivent l'étape qui suivait
+au moment de leur rédaction ; ils sont désormais tous réalisés et sont
+supplantés par la synthèse de clôture en fin de section.
+
+Le périmètre livré comprend :
+
+- cycle `DRAFT` complet et annulation sans suppression métier de la vente ;
+- snapshots produit, packaging, conversion, prix et politique fiscale ;
+- politique pilote `NO_TAX` décidée dans l'ADR-0020 ;
+- Payment CASH confirmé, Inventory et CashMovement distincts et idempotents ;
+- `CompleteSale` transactionnel avec verrou pessimiste, revalidation Pricing,
+  `BusinessDate`, montant remis et monnaie rendue ;
+- API Create/Read/Lines/Cancel/Complete/Receipt et contrat OpenAPI ;
+- permissions et scopes Store, RLS Sales/Payment, concurrence PostgreSQL et
+  scénario HTTP M2 avec rejeu idempotent.
+
 ### Epic 4.1 — Sales foundation
 
 **Statut : TERMINÉ**
@@ -7749,8 +7799,10 @@ PHP-CS-Fixer : OK
 PHPStan : OK
 Deptrac layers : 0 violation
 Deptrac modules : 0 violation, 10 uncovered
-StoreScopedAuthorizationWorkflowTest : OK (2 tests, 72 assertions)
+StoreScopedAuthorizationWorkflowTest : OK (4 tests, 135 assertions)
 Suite PHPUnit complète : OK (460 tests, 2 115 assertions)
+Composer validate : OK
+Composer audit --locked : aucune vulnérabilité
 ```
 
 La suite complète a également révélé puis fait corriger un chargement PSR-4
@@ -7778,3 +7830,22 @@ Les écarts identifiés par la revue sont fermés :
 La stratégie de commits atomiques a été restaurée : invariants Cash,
 consommation Inventory, Payment, cycle Draft, CompleteSale, API, RLS,
 concurrence, OpenAPI et documentation sont séparés dans l’historique.
+
+### Commits de clôture du Lot 4
+
+```text
+9681767 fix(cash): enforce ledger and session invariants
+6cf293a feat(inventory): consume stock idempotently for sales
+f4e76b5 feat(payments): record confirmed cash sale payments
+1e67b8d feat(sales): implement draft sale lifecycle
+1d11cc7 feat(sales): complete cash sales atomically
+869ba98 feat(api): expose cash sales workflow and receipt
+fa08a8b test(tenant): verify sales and payment rls
+26468c0 test(architecture): enforce sales module boundaries
+0b25d95 test(sales): verify complete cash sale workflow
+930c21f fix(api): stabilize sales errors and receipt lifecycle
+371cb62 test(sales): serialize concurrent sale completion
+87cce49 test(api): document cash sales operations
+b82fab8 refactor(sales): keep presentation behind application views
+5d92d9c docs(status): close lot four cash sales gate
+```
