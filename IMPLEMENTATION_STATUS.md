@@ -49,6 +49,14 @@ Gate Lot 3 TERMINÉ   Inventory et Cash foundations opérationnels
 Gate Lot 4 TERMINÉ   M2 — première vente cash de bout en bout
 ```
 
+Le Lot 5 est en cours :
+
+```text
+Phase 0     TERMINÉ   ADR Costing et Refund, planning aligné
+Epic 5.1    À FAIRE   Inventory Costing foundation
+Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
+```
+
 État consolidé au 27 août 2026 :
 
 ```text
@@ -98,12 +106,13 @@ Worktree              propre après clôture documentaire
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0020
+- ADR techniques 0001–0022
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
 - `zandu-lot-2-catalog-basic-pricing.md`
 - `zandu-lot-3-inventory-cash-foundations.md`
 - `zandu-lot-4-sales-complete-sale-cash.md`
+- `zandu-lot-5-inventory-costing-returns.md`
 
 ---
 
@@ -7849,3 +7858,38 @@ fa08a8b test(tenant): verify sales and payment rls
 b82fab8 refactor(sales): keep presentation behind application views
 5d92d9c docs(status): close lot four cash sales gate
 ```
+
+---
+
+## Lot 5 — Inventory Costing & Returns
+
+**État courant : EN COURS — Phase 0 terminée.**
+
+### Phase 0 — Décisions et alignement documentaire
+
+Réalisé :
+
+- l’ADR-0021 retient un coût d’ouverture explicite et interdit toute
+  reconstruction du coût historique depuis le prix de vente ;
+- toute variation physique post-activation doit être valorisée dans la même
+  transaction, y compris `INITIAL_STOCK` et les ajustements ;
+- l’ADR-0022 place `PaymentRefund` dans Payments, impose un `ReturnSale`
+  terminé et retient `POST /api/payments/{paymentId}/refunds` ;
+- le planning distingue les commandes transactionnelles Return et Refund et
+  aligne la numérotation de ses epics ;
+- le README annonce le démarrage du Lot 5 et référence son backlog.
+
+Commits :
+
+```text
+5d9ff2c docs(adr): define inventory costing activation policy
+64ad279 docs(adr): define cash refund ownership
+ba87583 docs(planning): align lot five implementation order
+45c34b9 docs(readme): announce lot five implementation
+```
+
+### Prochaine étape
+
+Créer le bounded context `InventoryCosting`, ajouter ses frontières Deptrac et
+poser les premiers contrats applicatifs sans dépendance de domaine entre
+Inventory, Sales, Payments et InventoryCosting.
