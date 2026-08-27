@@ -53,7 +53,9 @@ Le Lot 5 est en cours :
 
 ```text
 Phase 0     TERMINÉ   ADR Costing et Refund, planning aligné
-Epic 5.1    À FAIRE   Inventory Costing foundation
+Epic 5.1    TERMINÉ   Inventory Costing foundation
+Epic 5.4    TERMINÉ   Moving weighted average calculator
+Epic 5.2    PROCHAINE StockValuation aggregate
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -62,7 +64,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827092000 appliquée en dernier
-Tests                 460 tests, 2 115 assertions
+Tests                 470 tests, 2 147 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7888,8 +7890,53 @@ ba87583 docs(planning): align lot five implementation order
 45c34b9 docs(readme): announce lot five implementation
 ```
 
+### Epic 5.1 — Inventory Costing foundation
+
+**Statut : TERMINÉ**
+
+- le namespace `Modules/InventoryCosting` est matérialisé par une erreur de
+  domaine à code stable ;
+- Deptrac distingue `InventoryCosting` de son `Application/Contract` ;
+- Sales et Inventory peuvent consommer uniquement le contrat Costing ;
+- InventoryCosting ne peut dépendre ni du domaine Sales ni de sa persistence ;
+- les analyses de couches et de modules restent à zéro violation.
+
+Commit :
+
+```text
+7791f62 refactor(costing): add inventory costing bounded context
+```
+
+### Epic 5.4 — Moving weighted average
+
+**Statut : TERMINÉ**
+
+- calculs d’entrée et de sortie séparés et typés ;
+- quantité, valeur du mouvement, valeur totale et coût moyen retournés ;
+- coûts unitaires calculés à 12 décimales et valeurs à 6 décimales ;
+- aucune utilisation de `float` ;
+- sortie finale absorbant exactement le résidu ;
+- quantités fractionnaires, arrondis, sur-sortie et états incohérents testés.
+
+Commit :
+
+```text
+f7d91ea feat(costing): add moving weighted average calculator
+```
+
+Validations après ces deux commits :
+
+```text
+PHPUnit ciblé Calculator : OK (9 tests, 28 assertions)
+Suite PHPUnit complète : OK (470 tests, 2 147 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Créer le bounded context `InventoryCosting`, ajouter ses frontières Deptrac et
-poser les premiers contrats applicatifs sans dépendance de domaine entre
-Inventory, Sales, Payments et InventoryCosting.
+Implémenter l’agrégat `StockValuation` autour du calculateur, avec identité,
+tenant, Store, Product, Stock, devise, version et invariant strict
+`quantityOnHand = 0 → totalValue = 0`.
