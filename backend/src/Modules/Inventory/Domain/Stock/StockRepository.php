@@ -20,6 +20,9 @@ interface StockRepository
     public function find(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): ?Stock;
 
     /** @throws StockNotFound */
+    public function getForUpdate(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): Stock;
+
+    /** @throws StockNotFound */
     public function getById(OrganizationId $organizationId, StockId $stockId): Stock;
     /** @return list<Stock> */
     public function findByStore(OrganizationId $organizationId, StoreId $storeId): array;

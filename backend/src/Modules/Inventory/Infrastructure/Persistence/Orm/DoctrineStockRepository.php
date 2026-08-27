@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Inventory\Infrastructure\Persistence\Orm;
 
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, Stock, StockNotFound, StockQuantity, StockRepository};
@@ -35,6 +36,23 @@ final readonly class DoctrineStockRepository implements StockRepository
     public function find(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): ?Stock
     {
         return $this->aggregate($this->em->getRepository(StockRecord::class)->findOneBy(['organizationId' => $organizationId->toString(),'storeId' => $storeId->toString(),'productId' => $productId->toString()]));
+    }
+    public function getForUpdate(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): Stock
+    {
+        $record = $this->em->createQueryBuilder()
+            ->select('stock')
+            ->from(StockRecord::class, 'stock')
+            ->where('stock.organizationId = :organizationId')
+            ->andWhere('stock.storeId = :storeId')
+            ->andWhere('stock.productId = :productId')
+            ->setParameter('organizationId', $organizationId->toString())
+            ->setParameter('storeId', $storeId->toString())
+            ->setParameter('productId', $productId->toString())
+            ->getQuery()
+            ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+            ->getOneOrNullResult();
+
+        return $this->aggregate($record) ?? throw StockNotFound::forPosition($storeId, $productId);
     }
     public function getById(OrganizationId $organizationId, StockId $stockId): Stock
     {
