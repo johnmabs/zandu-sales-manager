@@ -55,9 +55,10 @@ Le Lot 5 est en cours :
 Phase 0     TERMINÉ   ADR Costing et Refund, planning aligné
 Epic 5.1    TERMINÉ   Inventory Costing foundation
 Epic 5.4    TERMINÉ   Moving weighted average calculator
-Epic 5.2    TERMINÉ   StockValuation aggregate — domaine
-Epic 5.3    TERMINÉ   StockValuationMovement ledger — domaine
-Persistence PROCHAINE PostgreSQL, contraintes et RLS Costing
+Epic 5.2    TERMINÉ   StockValuation aggregate et persistence
+Epic 5.3    TERMINÉ   StockValuationMovement ledger et persistence
+Persistence TERMINÉ   PostgreSQL, contraintes, repositories et RLS Costing
+Epic 5.5    PROCHAINE Bootstrap explicite des valorisations
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -65,14 +66,15 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 
 ```text
 Branche              main
-Migrations           Version20260827092000 appliquée en dernier
-Tests                 484 tests, 2 198 assertions
+Migrations           Version20260827100000 appliquée en dernier
+Tests                 494 tests, 2 220 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
 Deptrac modules       0 violation, 10 dépendances non classées
 Composer audit        aucune vulnérabilité connue
-Worktree              propre après clôture documentaire
+Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
+Worktree              propre après mise à jour du statut
 ```
 
 ## Definition of Done globale
@@ -7867,7 +7869,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — fondations domaine Costing terminées.**
+**État courant : EN COURS — domaine et persistence Costing terminés.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -7939,7 +7941,7 @@ Deptrac modules : 0 violation, 10 uncovered
 
 ### Epic 5.2 — StockValuation aggregate
 
-**Statut : TERMINÉ pour le modèle de domaine — persistence à faire.**
+**Statut : TERMINÉ — modèle de domaine et persistence.**
 
 - identité `StockValuationId` partageable par les contrats applicatifs ;
 - ownership immuable Organization, Store, Product et Stock ;
@@ -7958,7 +7960,7 @@ ab5af7a feat(costing): add stock valuation aggregate
 
 ### Epic 5.3 — StockValuationMovement ledger
 
-**Statut : TERMINÉ pour le modèle de domaine — persistence à faire.**
+**Statut : TERMINÉ — modèle de domaine et persistence append-only.**
 
 - `StockMovementId` déplacé dans le SharedKernel afin d’être référencé sans
   dépendance au domaine Inventory ;
@@ -7990,8 +7992,50 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Persistence Costing — PostgreSQL, repositories et RLS
+
+**Statut : TERMINÉ**
+
+- contrats de repository distincts pour l’agrégat courant et le ledger ;
+- schéma PostgreSQL `inventory_costing` et migration appliquée aux bases de
+  test et de développement ;
+- décimaux persistés à 12 chiffres pour les quantités/coûts unitaires et à
+  6 chiffres pour les valeurs monétaires ;
+- unicité d’une valorisation par Stock et d’une valorisation par mouvement
+  physique ;
+- insertion `OPENING` idempotente, ledger append-only pour le rôle runtime et
+  verrouillage optimiste de l’agrégat ;
+- clés étrangères composites garantissant la cohérence Organization, Store,
+  Product et Stock ;
+- politiques RLS forcées et isolation inter-tenant prouvée en intégration ;
+- Swagger UI et ReDoc rendus via Twig uniquement en environnement `dev`, les
+  interfaces restant désactivées dans les autres environnements.
+
+Commits :
+
+```text
+2407908 feat(costing): define valuation repository contracts
+aa32717 feat(costing): persist valuation schema
+6ddffc4 feat(costing): persist valuation repositories
+7a1032c feat(dev): enable swagger and redoc interfaces
+```
+
+Validation consolidée :
+
+```text
+InventoryCostingPersistenceTest : OK (5 tests, 14 assertions)
+DevelopmentDocumentationUiTest : OK (3 tests, 6 assertions)
+Suite PHPUnit complète : OK (494 tests, 2 220 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+Conteneurs Symfony dev/test/prod : OK
+```
+
 ### Prochaine étape
 
-Ajouter les repositories et la migration PostgreSQL de `StockValuation` et
-`StockValuationMovement`, avec unicité par Stock, unicité du lien physique,
-contraintes décimales, optimistic locking et politiques RLS tenant-scoped.
+Implémenter l’Epic 5.5 `InitializeStockValuation` : permission dédiée, lecture
+du Stock tenant/store-scoped, coût d’ouverture explicite, raison obligatoire,
+création atomique de la valorisation et du mouvement `OPENING`, puis exposition
+API et tests d’idempotence/concurrence.
