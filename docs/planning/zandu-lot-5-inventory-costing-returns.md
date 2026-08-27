@@ -230,28 +230,32 @@ DELETE business ledger row
 
 ---
 
-# 5. Décision préalable — bootstrap du costing
+# 5. Décision de bootstrap du costing
 
 Le Lot 5 arrive après les premiers mouvements Inventory et les premières ventes.
 
-La baseline fixe le modèle de costing mais ne fixe pas entièrement la manière de valoriser les positions historiques déjà existantes lors de l’activation du costing.
+La politique est fixée par
+[l’ADR-0021](../architecture/adr/0021-inventory-costing-activation-policy.md).
+Une position historique positive exige un coût d’ouverture explicite ; une
+position nulle peut être activée avec une valeur totale nulle.
 
-Avant persistence finale, une décision explicite doit être enregistrée.
-
-Options à challenger :
+Les options suivantes sont rejetées :
 
 ```text
-A — coût d’ouverture explicite
 B — position UNVALUED
-C — reconstruction depuis sources fiables
+C — reconstruction opportuniste
 ```
 
-Ne jamais reconstruire un coût depuis le prix de vente.
+Après activation, chaque mouvement physique est valorisé dans sa transaction.
+`INITIAL_STOCK` et `ADJUSTMENT_IN` exigent un coût explicite,
+`ADJUSTMENT_OUT` et `SALE` utilisent le coût moyen courant, et `SALE_RETURN`
+restaure le coût original de la vente. Ne jamais reconstruire un coût depuis le
+prix de vente.
 
 Commit documentaire :
 
 ```text
-docs(adr): record inventory costing bootstrap policy
+docs(adr): define inventory costing activation policy
 ```
 
 ---
@@ -259,10 +263,14 @@ docs(adr): record inventory costing bootstrap policy
 # 6. Règle de commits
 
 ```text
+docs(adr): define inventory costing activation policy
+docs(adr): define cash refund ownership
 refactor(costing): add inventory costing bounded context
+feat(costing): add moving weighted average calculator
 feat(costing): add stock valuation aggregate
 feat(costing): add valuation movement ledger
-feat(costing): add moving weighted average calculator
+feat(costing): add valuation bootstrap
+feat(inventory): value initial stock and adjustments
 feat(sales): add sale line cost snapshot
 feat(costing): value sale stock consumption
 feat(sales): add return sale aggregate
@@ -282,17 +290,18 @@ test(returns): verify return transaction rollback
 Epic 5.1 — Inventory Costing foundation
 Epic 5.2 — StockValuation aggregate
 Epic 5.3 — StockValuationMovement ledger
-Epic 5.4 — Costing bootstrap
-Epic 5.5 — Sale costing integration
-Epic 5.6 — SaleLineCostSnapshot
-Epic 5.7 — ReturnSale foundation
-Epic 5.8 — Inventory restock integration
-Epic 5.9 — Return costing
-Epic 5.10 — Essential cash refund
-Epic 5.11 — Authorization, audit & events
-Epic 5.12 — Costing & Returns API
-Epic 5.13 — PostgreSQL / RLS / concurrency
-Epic 5.14 — Rollback & idempotence tests
+Epic 5.4 — Moving weighted average
+Epic 5.5 — Costing bootstrap
+Epic 5.6 — Sale costing integration
+Epic 5.7 — SaleLineCostSnapshot
+Epic 5.8 — CompleteSale costing atomicity
+Epic 5.9 — ReturnSale foundation
+Epic 5.10 — Inventory restock integration
+Epic 5.11 — Return costing
+Epic 5.12 — Return amount calculation
+Epic 5.13 — Essential cash refund
+Transverse — Authorization, audit, events et API
+Transverse — PostgreSQL, RLS, concurrence, rollback et idempotence
 Lot 5 Gate
 ```
 
@@ -454,7 +463,7 @@ feat(costing): add moving weighted average calculator
 
 # 12. Epic 5.5 — Costing bootstrap
 
-Si l’ADR retient un coût d’ouverture explicite :
+Conformément à l’ADR-0021 :
 
 ```text
 InitializeStockValuation
@@ -823,8 +832,10 @@ CASH
 Invariants :
 
 - paiement original confirmé ;
+- `ReturnSale` original terminé ;
 - montant > 0 ;
 - cumul remboursé <= montant confirmé ;
+- cumul remboursé <= montant remboursable du retour ;
 - même devise ;
 - idempotence ;
 - méthode originale privilégiée.
@@ -841,6 +852,9 @@ sur une `CashSession OPEN`.
 
 Un refund ne modifie jamais automatiquement Inventory.
 
+L’ownership et le workflow sont fixés par
+[l’ADR-0022](../architecture/adr/0022-cash-refund-ownership-and-workflow.md).
+
 Commits :
 
 ```text
@@ -850,9 +864,11 @@ feat(cash): record cash refund movement
 
 ---
 
-# 22. Orchestration Return + Refund
+# 22. Coordination Return + Refund
 
-Workflow possible :
+Le Lot 5 conserve deux commandes transactionnelles distinctes.
+
+Finalisation du retour :
 
 ```text
 BEGIN
@@ -867,17 +883,28 @@ if restock:
     restore original cost
     StockValuationMovement
 
-if cash refund requested:
-    create PaymentRefund
-    CashMovement REFUND
-
 complete ReturnSale
 Outbox
 
 COMMIT
 ```
 
-La coordination transactionnelle ne fusionne pas les modèles.
+Remboursement ultérieur :
+
+```text
+BEGIN
+
+validate completed ReturnSale through Sales contract
+lock original Payment and cumulative refunds
+create PaymentRefund
+append CashMovement REFUND
+append Audit and Outbox
+
+COMMIT
+```
+
+Un échec financier ne réouvre pas le retour. Le client peut rejouer
+explicitement le remboursement avec la même clé d’idempotence.
 
 ---
 
@@ -993,14 +1020,6 @@ Payload de ligne :
 
 # 28. API Cash Refund
 
-Selon ownership Payment :
-
-```text
-POST /api/returns/{returnId}/refund
-```
-
-ou :
-
 ```text
 POST /api/payments/{paymentId}/refunds
 ```
@@ -1009,6 +1028,7 @@ Payload :
 
 ```json
 {
+  "returnSaleId": "...",
   "cashSessionId": "...",
   "amount": {
     "amount": "5000",
@@ -1017,6 +1037,9 @@ Payload :
   "reason": "Returned goods"
 }
 ```
+
+Le header `Idempotency-Key` est obligatoire. Aucune route concurrente sous
+`/api/returns` n’est exposée dans le MVP.
 
 ---
 
@@ -1495,31 +1518,33 @@ StockValuationMovement
 Ordre recommandé :
 
 ```text
-1. décider costing bootstrap
-2. Inventory Costing foundation
-3. StockValuation
-4. StockValuationMovement
-5. MovingWeightedAverageCalculator
-6. bootstrap valuation
-7. enrichir CompleteSale
-8. SaleLineCostSnapshot
-9. ReturnSale
-10. Inventory SALE_RETURN
-11. restore original cost
-12. cash refund
-13. rollback/idempotence/concurrency
-14. API
-15. Gate
+1. décisions ADR-0021 et ADR-0022
+2. Inventory Costing foundation et boundaries
+3. MovingWeightedAverageCalculator
+4. StockValuation et StockValuationMovement
+5. persistence, RLS et bootstrap valuation
+6. valoriser INITIAL_STOCK et ADJUSTMENT_IN/OUT
+7. enrichir CompleteSale et SaleLineCostSnapshot
+8. ReturnSale et calcul des montants
+9. Inventory SALE_RETURN
+10. restaurer le coût original
+11. PaymentRefund et CashMovement REFUND
+12. permissions, audit, events et API
+13. rollback, idempotence, concurrence et tenant isolation
+14. Gate
 ```
 
 Premiers commits :
 
 ```text
-docs(adr): record inventory costing bootstrap policy
+docs(adr): define inventory costing activation policy
+docs(adr): define cash refund ownership
 refactor(costing): add inventory costing bounded context
+feat(costing): add moving weighted average calculator
 feat(costing): add stock valuation aggregate
 feat(costing): add valuation movement ledger
-feat(costing): add moving weighted average calculator
+feat(costing): add valuation bootstrap
+feat(inventory): value initial stock and adjustments
 feat(sales): add sale line cost snapshot
 feat(costing): value sale stock consumption
 feat(sales): add return sale aggregate
