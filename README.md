@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — bootstrap des valorisations opérationnel |
+| 5 | Inventory Costing et Returns | En cours — mouvements Inventory valorisés |
 
-Dernière validation consolidée le 27 août 2026 : **501 tests et 2 303
+Dernière validation consolidée le 27 août 2026 : **508 tests et 2 380
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -212,9 +212,38 @@ HTTP PostgreSQL vérifie le parcours complet et son rejeu sans effet dupliqué.
 Le détail du Gate M2 et des preuves est maintenu dans
 [le planning du Lot 4](docs/planning/zandu-lot-4-sales-complete-sale-cash.md).
 
-### Initialiser la valorisation d'un stock
+### Initialiser et ajuster un stock valorisé
 
-Le bootstrap Costing reprend sous verrou la quantité physique actuelle et crée
+Toute nouvelle position physique est valorisée dans la même transaction. Le
+stock initial et les ajustements positifs exigent un coût unitaire explicite :
+
+```bash
+curl --request POST \
+  http://localhost:8080/api/stores/<store-id>/stocks/<product-id>/initialize \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{"quantity":"10","unitCost":"4000"}'
+
+curl --request POST \
+  http://localhost:8080/api/stores/<store-id>/stocks/<product-id>/adjust \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{"delta":"5","unitCost":"6000","reason":"Restock"}'
+```
+
+Un ajustement négatif omet `unitCost` et sort au coût moyen courant :
+
+```json
+{"delta":"-2","reason":"Shrinkage"}
+```
+
+Le mouvement physique, la valorisation courante et son ledger sont atomiques :
+une règle Costing invalide annule également la variation de stock.
+
+### Reprendre la valorisation d'un stock historique
+
+Pour une position créée avant l'activation de Costing, le bootstrap reprend
+sous verrou la quantité physique actuelle et crée
 atomiquement la valorisation économique, son mouvement `OPENING`, l'audit et
 l'événement outbox. Un coût explicite et une justification sont obligatoires :
 

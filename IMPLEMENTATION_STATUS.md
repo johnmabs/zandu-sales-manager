@@ -59,7 +59,8 @@ Epic 5.2    TERMINÉ   StockValuation aggregate et persistence
 Epic 5.3    TERMINÉ   StockValuationMovement ledger et persistence
 Persistence TERMINÉ   PostgreSQL, contraintes, repositories et RLS Costing
 Epic 5.5    TERMINÉ   Bootstrap explicite des valorisations
-Inventory   PROCHAINE Valoriser INITIAL_STOCK et les ajustements
+Inventory   TERMINÉ   INITIAL_STOCK et ajustements valorisés atomiquement
+Epic 5.6    PROCHAINE Intégration de CompleteSale avec Costing
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -68,7 +69,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827100000 appliquée en dernier
-Tests                 501 tests, 2 303 assertions
+Tests                 508 tests, 2 380 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7870,7 +7871,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — bootstrap des valorisations opérationnel.**
+**État courant : EN COURS — mouvements Inventory valorisés atomiquement.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8078,10 +8079,51 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Valorisation des mouvements Inventory
+
+**Statut : TERMINÉ**
+
+- contrat applicatif Costing consommable par Inventory sans dépendance vers le
+  domaine ou la persistence Costing ;
+- `INITIAL_STOCK` crée la valorisation courante et un ledger lié au mouvement
+  physique avec un coût unitaire explicite ;
+- `ADJUSTMENT_IN` applique le coût entrant explicite et recalcule le coût moyen
+  pondéré ;
+- `ADJUSTMENT_OUT` interdit un coût fourni par le client et utilise le coût
+  moyen courant ;
+- contrôle avant mutation de l’égalité entre quantité physique précédente et
+  quantité valorisée, puis contrôle du résultat ;
+- Stock, StockMovement, StockValuation, ledger, audit et outbox participent à
+  la même transaction tenant-scoped ;
+- toute erreur Costing annule également le Stock et son mouvement physique ;
+- les DTO et le contrat OpenAPI documentent `unitCost` sur l’initialisation et
+  l’ajustement ;
+- le bootstrap `OPENING` reste réservé à la reprise des stocks historiques
+  existant avant l’activation de Costing.
+
+Commits :
+
+```text
+dbefedc feat(costing): value inventory movements
+a18c876 feat(inventory): value stock initialization and adjustments
+```
+
+Validation consolidée :
+
+```text
+RepositoryInventoryMovementValuerTest : OK (5 tests, 26 assertions)
+Workflow HTTP opérationnel : OK (1 test, 50 assertions)
+Suite PHPUnit complète : OK (508 tests, 2 380 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter la prochaine tranche de l’ordre recommandé : valoriser dans la même
-transaction les mouvements `INITIAL_STOCK`, `ADJUSTMENT_IN` et
-`ADJUSTMENT_OUT`, exiger le coût explicite des entrées, utiliser le coût moyen
-courant pour les sorties et annuler aussi le mouvement physique si la
-valorisation échoue. L’Epic 5.6 d’intégration des ventes viendra ensuite.
+Implémenter l’Epic 5.6 : enrichir `CompleteSale` pour valoriser chaque
+`StockMovement SALE` au coût moyen courant dans sa transaction existante. La
+tranche doit préparer le `SaleLineCostSnapshot`, empêcher tout écart entre
+stock physique et valorisé et conserver l’idempotence/concurrence déjà prouvée
+du workflow M2. L’Epic 5.7 persistera ensuite le snapshot de coût par ligne.
