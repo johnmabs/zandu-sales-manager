@@ -238,4 +238,19 @@ final class ApiPlatformTest extends KernelTestCase
             }
         }
     }
+
+    public function testCashSalesOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/sales')->getPost());
+        self::assertNotNull($paths->getPath('/api/sales/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/sales/{id}/lines')->getPost());
+        self::assertNotNull($paths->getPath('/api/sales/{id}/lines/{lineId}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/sales/{id}/lines/{lineId}')->getDelete());
+        self::assertNotNull($paths->getPath('/api/sales/{id}/cancel')->getPost());
+        self::assertNotNull($paths->getPath('/api/sales/{id}/complete')->getPost());
+        self::assertNotNull($paths->getPath('/api/sales/{id}/receipt')->getGet());
+    }
 }
