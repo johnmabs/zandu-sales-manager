@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — mouvements Inventory valorisés |
+| 5 | Inventory Costing et Returns | En cours — ventes valorisées au coût moyen |
 
-Dernière validation consolidée le 27 août 2026 : **508 tests et 2 380
+Dernière validation consolidée le 27 août 2026 : **511 tests et 2 424
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -202,9 +202,12 @@ opérationnelle, audit et outbox dans la transaction locale.
 Le parcours M2 est exposé de bout en bout : création d'une vente `DRAFT`, ajout,
 modification et retrait de lignes snapshotées, annulation, lecture, finalisation
 cash idempotente et reçu historique. `CompleteSale` coordonne Sale, Payment
-CASH, Inventory, CashMovement, audit et outbox dans une transaction
-tenant-scoped ; il verrouille la vente, revalide Pricing, contrôle le scope
-Store, calcule la date métier et retourne la monnaie à rendre.
+CASH, Inventory, Inventory Costing, CashMovement, audit et outbox dans une
+transaction tenant-scoped ; il verrouille la vente, revalide Pricing, contrôle
+le scope Store, calcule la date métier et retourne la monnaie à rendre. Chaque
+sortie `SALE` diminue la valorisation au coût moyen courant et crée un ledger
+lié au mouvement physique. Une valorisation absente ou incohérente annule toute
+la finalisation.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario

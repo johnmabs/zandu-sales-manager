@@ -60,7 +60,8 @@ Epic 5.3    TERMINÉ   StockValuationMovement ledger et persistence
 Persistence TERMINÉ   PostgreSQL, contraintes, repositories et RLS Costing
 Epic 5.5    TERMINÉ   Bootstrap explicite des valorisations
 Inventory   TERMINÉ   INITIAL_STOCK et ajustements valorisés atomiquement
-Epic 5.6    PROCHAINE Intégration de CompleteSale avec Costing
+Epic 5.6    TERMINÉ   CompleteSale valorise les sorties SALE
+Epic 5.7    PROCHAINE SaleLineCostSnapshot immutable
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -69,7 +70,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827100000 appliquée en dernier
-Tests                 508 tests, 2 380 assertions
+Tests                 511 tests, 2 424 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7871,7 +7872,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — mouvements Inventory valorisés atomiquement.**
+**État courant : EN COURS — sorties de vente valorisées au coût moyen.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8120,10 +8121,47 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.6 — Intégration vente / costing
+
+**Statut : TERMINÉ**
+
+- le contrat de consommation Inventory passe le contexte acteur/corrélation et
+  est versionné en v2 ;
+- après l’insertion idempotente du `StockMovement SALE` et la diminution
+  physique, Inventory demande sa valorisation dans la transaction
+  `CompleteSale` existante ;
+- Costing verrouille la valorisation, vérifie la quantité physique précédente,
+  sort au coût moyen courant et persiste le ledger `SALE` lié au mouvement ;
+- un rejeu de la même vente ne diminue ni Stock ni StockValuation et ne crée
+  aucun ledger supplémentaire ;
+- une valorisation absente provoque `VALUATION_NOT_INITIALIZED` et annule
+  mouvement physique, paiement, mouvement de caisse, vente et clé
+  d’idempotence ;
+- le workflow M2 PostgreSQL vérifie quantité valorisée, coût unitaire, valeur
+  sortie, valeur résiduelle, lien physique, rejeu et rollback.
+
+Commit :
+
+```text
+2cf2052 feat(costing): value sale stock consumption
+```
+
+Validation consolidée :
+
+```text
+RepositoryInventoryMovementValuerTest : OK (6 tests, 33 assertions)
+RepositoryInventoryStockConsumerTest : OK (2 tests, 14 assertions)
+Workflow M2 HTTP : OK (1 test, 56 assertions)
+Suite PHPUnit complète : OK (511 tests, 2 424 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.6 : enrichir `CompleteSale` pour valoriser chaque
-`StockMovement SALE` au coût moyen courant dans sa transaction existante. La
-tranche doit préparer le `SaleLineCostSnapshot`, empêcher tout écart entre
-stock physique et valorisé et conserver l’idempotence/concurrence déjà prouvée
-du workflow M2. L’Epic 5.7 persistera ensuite le snapshot de coût par ligne.
+Implémenter l’Epic 5.7 : persister un `SaleLineCostSnapshot` immutable par
+ligne suivie avec Stock, StockMovement, quantité de base, coût unitaire, coût
+total, devise et version de valorisation. Le contrat de consommation devra
+retourner les résultats Costing nécessaires sans exposer son domaine à Sales.
