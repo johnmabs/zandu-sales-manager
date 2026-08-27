@@ -253,4 +253,17 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/sales/{id}/complete')->getPost());
         self::assertNotNull($paths->getPath('/api/sales/{id}/receipt')->getGet());
     }
+
+    public function testInventoryValuationBootstrapIsDocumented(): void
+    {
+        self::bootKernel();
+        $operation = self::getContainer()->get(OpenApiFactoryInterface::class)([])
+            ->getPaths()
+            ->getPath('/api/stores/{storeId}/inventory-valuations/{productId}/initialize')
+            ->getPost();
+
+        self::assertNotNull($operation);
+        self::assertNotNull($operation->getRequestBody());
+        self::assertArrayHasKey('application/json', $operation->getRequestBody()->getContent());
+    }
 }
