@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Zandu\Tests\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\{PreserveGlobalState, RunTestsInSeparateProcesses};
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
+#[RunTestsInSeparateProcesses]
+#[PreserveGlobalState(false)]
 final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
 {
     private const OWNER_EMAIL = 'scope-owner@example.com';
@@ -240,8 +243,39 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
 
         self::assertSame('8.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
         self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id = ? AND source_type = 'SALE'", [$organizationId]));
+        self::assertSame('8.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory_costing.stock_valuation WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
+        self::assertSame('3200.000000', $connection->fetchOne('SELECT total_value FROM inventory_costing.stock_valuation WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
+        $saleValuation = $connection->fetchAssociative("SELECT type, quantity, unit_cost, value, resulting_total_value, source_reference_id, stock_movement_id FROM inventory_costing.stock_valuation_movement WHERE organization_id = ? AND type = 'SALE'", [$organizationId]);
+        self::assertIsArray($saleValuation);
+        self::assertSame('SALE', $saleValuation['type']);
+        self::assertSame('2.000000000000', $saleValuation['quantity']);
+        self::assertSame('400.000000000000', $saleValuation['unit_cost']);
+        self::assertSame('800.000000', $saleValuation['value']);
+        self::assertSame('3200.000000', $saleValuation['resulting_total_value']);
+        self::assertSame($sale['id'], $saleValuation['source_reference_id']);
+        self::assertNotNull($saleValuation['stock_movement_id']);
+        self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id = ? AND type = 'SALE'", [$organizationId]));
         self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM cash_management.cash_movement WHERE organization_id = ? AND type = 'SALE_PAYMENT'", [$organizationId]));
         self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM payments.payment WHERE organization_id = ? AND status = 'CONFIRMED'", [$organizationId]));
+
+        $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation_movement WHERE organization_id = ?', [$organizationId]);
+        $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation WHERE organization_id = ?', [$organizationId]);
+        $client->request('POST', '/api/stores/' . $store['id'] . '/sales', server: $this->headers($ownerToken));
+        self::assertResponseStatusCodeSame(201);
+        $unvaluedSale = $this->payload($client);
+        $client->jsonRequest('POST', '/api/sales/' . $unvaluedSale['id'] . '/lines', ['productId' => $productId, 'productPackagingId' => $packagingId, 'quantity' => '1'], $this->headers($ownerToken));
+        self::assertResponseStatusCodeSame(201);
+        $client->jsonRequest('POST', '/api/sales/' . $unvaluedSale['id'] . '/complete', [
+            'cashSessionId' => $session['id'],
+            'payment' => ['method' => 'CASH', 'amount' => ['amount' => '1500', 'currency' => 'XAF']],
+        ], [...$this->headers($ownerToken), 'HTTP_IDEMPOTENCY_KEY' => 'unvalued-sale-completion']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('VALUATION_NOT_INITIALIZED', $this->payload($client)['code']);
+        self::assertSame('8.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
+        self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id = ? AND source_type = 'SALE'", [$organizationId]));
+        self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM cash_management.cash_movement WHERE organization_id = ? AND type = 'SALE_PAYMENT'", [$organizationId]));
+        self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM payments.payment WHERE organization_id = ? AND status = 'CONFIRMED'", [$organizationId]));
+        self::assertSame('DRAFT', $connection->fetchOne('SELECT status FROM sales.sale WHERE organization_id = ? AND id = ?', [$organizationId, $unvaluedSale['id']]));
     }
 
     private function registerOwnerAndLogin(KernelBrowser $client): string

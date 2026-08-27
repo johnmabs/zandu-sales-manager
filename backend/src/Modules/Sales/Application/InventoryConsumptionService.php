@@ -8,12 +8,13 @@ use LogicException;
 use Zandu\Modules\Catalog\Application\Contract\InventoryProductProvider;
 use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale,InventoryStockConsumer,StockConsumptionResult};
 use Zandu\Modules\Sales\Domain\Sale;
+use Zandu\SharedKernel\Context\ActorContext;
 
 final readonly class InventoryConsumptionService
 {
     public function __construct(private InventoryStockConsumer $consumer, private InventoryProductProvider $products) {}
 
-    public function consume(Sale $sale): ?StockConsumptionResult
+    public function consume(Sale $sale, ActorContext $actorContext): ?StockConsumptionResult
     {
         $items = [];
         $descriptors = [];
@@ -29,6 +30,6 @@ final readonly class InventoryConsumptionService
         if ([] === $items) {
             return null;
         }
-        return $this->consumer->consumeStockForSale(new ConsumeStockForSale($sale->organizationId(), $sale->storeId(), $sale->id(), $items));
+        return $this->consumer->consumeStockForSale(new ConsumeStockForSale($sale->organizationId(), $sale->storeId(), $sale->id(), $items, $actorContext));
     }
 }

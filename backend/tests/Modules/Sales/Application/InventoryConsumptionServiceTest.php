@@ -29,7 +29,8 @@ final class InventoryConsumptionServiceTest extends TestCase
                 throw new \LogicException('A sale without lines must not resolve products.');
             }
         };
-        $result = (new InventoryConsumptionService($consumer, $products))->consume($this->createSale());
+        $sale = $this->createSale();
+        $result = (new InventoryConsumptionService($consumer, $products))->consume($sale, $this->actor());
         self::assertNull($result);
         self::assertSame(0, $consumer->calls);
     }
@@ -38,5 +39,18 @@ final class InventoryConsumptionServiceTest extends TestCase
     {
         $f = new \Zandu\Platform\Identity\SymfonyUuidFactory();
         return Sale::create(SaleId::fromString('0198ec01-1111-7111-8111-111111111111', $f), \Zandu\SharedKernel\Identity\OrganizationId::fromString('0198ec02-1111-7111-8111-111111111111', $f), \Zandu\SharedKernel\Identity\StoreId::fromString('0198ec03-1111-7111-8111-111111111111', $f), 'XAF', \Zandu\SharedKernel\Money\Money::fromString('0', \Zandu\SharedKernel\Money\Currency::fromCode('XAF'), new \Zandu\Platform\Decimal\BrickDecimalFactory()), new \Zandu\SharedKernel\Context\ActorContext(\Zandu\SharedKernel\Identity\ActorId::fromString('0198ec04-1111-7111-8111-111111111111', $f), \Zandu\SharedKernel\Identity\OrganizationId::fromString('0198ec02-1111-7111-8111-111111111111', $f), \Zandu\SharedKernel\Context\ActorType::User, \Zandu\SharedKernel\Messaging\CorrelationId::fromString('0198ec05-1111-7111-8111-111111111111', $f), new \DateTimeImmutable()), new \DateTimeImmutable());
+    }
+
+    private function actor(): \Zandu\SharedKernel\Context\ActorContext
+    {
+        $factory = new \Zandu\Platform\Identity\SymfonyUuidFactory();
+
+        return new \Zandu\SharedKernel\Context\ActorContext(
+            \Zandu\SharedKernel\Identity\ActorId::fromString('0198ec04-1111-7111-8111-111111111111', $factory),
+            \Zandu\SharedKernel\Identity\OrganizationId::fromString('0198ec02-1111-7111-8111-111111111111', $factory),
+            \Zandu\SharedKernel\Context\ActorType::User,
+            \Zandu\SharedKernel\Messaging\CorrelationId::fromString('0198ec05-1111-7111-8111-111111111111', $factory),
+            new \DateTimeImmutable(),
+        );
     }
 }

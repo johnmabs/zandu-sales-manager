@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Inventory\Application\Contract;
 
+use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,SaleId,StoreId};
 use Zandu\SharedKernel\Quantity\Quantity;
 
@@ -15,5 +16,6 @@ final readonly class ConsumeStockForSale
         public StoreId $storeId,
         public SaleId $saleId,
         public array $items,
+        public ActorContext $actorContext,
     ) {}
 }

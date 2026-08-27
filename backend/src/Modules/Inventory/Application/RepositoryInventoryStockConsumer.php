@@ -8,6 +8,7 @@ use LogicException;
 use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale, InventoryStockConsumer, StockConsumptionResult};
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementSource, StockMovementType};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
 use Zandu\SharedKernel\Identity\{IdGenerator, StockMovementId};
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\SharedKernel\Time\Clock;
@@ -17,6 +18,7 @@ final readonly class RepositoryInventoryStockConsumer implements InventoryStockC
     public function __construct(
         private StockRepository $stocks,
         private StockMovementRepository $movements,
+        private InventoryMovementValuer $costing,
         private IdGenerator $ids,
         private Clock $clock,
     ) {}
@@ -57,6 +59,20 @@ final readonly class RepositoryInventoryStockConsumer implements InventoryStockC
             if (!$this->stocks->decreaseIfAvailable($request->organizationId, $stock->id(), $quantity, $stock->version())) {
                 throw new LogicException('Insufficient stock or concurrent stock modification.');
             }
+            $this->costing->value(new ValueInventoryMovement(
+                $request->storeId,
+                $item['productId'],
+                $stock->id(),
+                $movement->id(),
+                InventoryCostingMovementType::Sale,
+                $quantity->value(),
+                $movement->previousQuantity()->value(),
+                $movement->resultingQuantity()->value(),
+                null,
+                $request->saleId->toString(),
+                $movement->occurredAt(),
+                $request->actorContext,
+            ));
         }
 
         return new StockConsumptionResult($request->saleId, $alreadyConsumed);

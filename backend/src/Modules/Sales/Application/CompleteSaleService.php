@@ -51,7 +51,7 @@ final readonly class CompleteSaleService
             $now = $this->clock->now();
             $this->pricing?->assertCurrent($sale, $now);
             $businessDate = $now->setTimezone(new DateTimeZone($store->timeZone))->format('Y-m-d');
-            $this->inventory->consume($sale);
+            $this->inventory->consume($sale, $command->actor);
             $paymentId = $this->payments->recordCashSale($command->actor->organizationId(), $sale->id(), $command->amount, $command->actor->actorId());
             $this->cash->record($sale, $command->cashSessionId, $command->amount, $command->actor->actorId());
             $sale->complete($command->actor, $now, $businessDate);
