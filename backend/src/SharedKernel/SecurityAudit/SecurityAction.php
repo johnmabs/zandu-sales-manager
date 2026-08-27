@@ -30,6 +30,7 @@ enum SecurityAction: string
     case CategoryArchived = 'CATEGORY_ARCHIVED';
     case StockInitialized = 'STOCK_INITIALIZED';
     case StockAdjusted = 'STOCK_ADJUSTED';
+    case StockValuationInitialized = 'STOCK_VALUATION_INITIALIZED';
     case CashRegisterArchived = 'CASH_REGISTER_ARCHIVED';
     case CashSessionOpened = 'CASH_SESSION_OPENED';
     case CashSessionClosed = 'CASH_SESSION_CLOSED';

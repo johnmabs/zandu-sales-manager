@@ -122,6 +122,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             SecurityAction::CategoryArchived => 'catalog.category_archived.v1',
             SecurityAction::StockInitialized => 'inventory.stock_initialized.v1',
             SecurityAction::StockAdjusted => 'inventory.stock_adjusted.v1',
+            SecurityAction::StockValuationInitialized => 'inventory_costing.stock_valuation_initialized.v1',
             SecurityAction::CashRegisterArchived => 'cash.cash_register_archived.v1',
             SecurityAction::CashSessionOpened => 'cash.cash_session_opened.v1',
             SecurityAction::CashSessionClosed => 'cash.cash_session_closed.v1',
