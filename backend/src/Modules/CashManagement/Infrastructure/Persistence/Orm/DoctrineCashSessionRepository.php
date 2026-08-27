@@ -29,6 +29,15 @@ final readonly class DoctrineCashSessionRepository implements CashSessionReposit
     {
         return $this->aggregate($this->em->getRepository(CashSessionRecord::class)->findOneBy(['organizationId' => $o->toString(),'storeId' => $store->toString(),'id' => $id->toString()]));
     }
+    public function findForUpdate(OrganizationId $o, StoreId $store, CashSessionId $id): ?CashSession
+    {
+        $found = $this->em->getConnection()->fetchOne(
+            'SELECT id FROM cash_management.cash_session WHERE organization_id = ? AND store_id = ? AND id = ? FOR UPDATE',
+            [$o->toString(), $store->toString(), $id->toString()],
+        );
+
+        return false === $found ? null : $this->find($o, $store, $id);
+    }
     public function findOpen(OrganizationId $o, CashRegisterId $register): ?CashSession
     {
         return $this->aggregate($this->em->getRepository(CashSessionRecord::class)->findOneBy(['organizationId' => $o->toString(),'cashRegisterId' => $register->toString(),'status' => 'OPEN']));

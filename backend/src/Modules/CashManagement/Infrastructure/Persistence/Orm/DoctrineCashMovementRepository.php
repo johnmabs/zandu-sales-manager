@@ -16,9 +16,21 @@ final readonly class DoctrineCashMovementRepository implements CashMovementRepos
     {
         $this->em->persist(CashMovementRecord::fromAggregate($m));
         $this->em->flush();
-    }public function findBySession(OrganizationId $o, CashSessionId $s): array
+    }
+    public function appendOnce(CashMovement $m): bool
     {
-        return array_map(fn($r) => $this->aggregate($r), $this->em->getRepository(CashMovementRecord::class)->findBy(['organizationId' => $o->toString(),'cashSessionId' => $s->toString()], ['occurredAt' => 'ASC']));
+        $sourceType = CashMovementType::SalePayment === $m->type() ? 'SALE' : 'MANUAL';
+        $affected = $this->em->getConnection()->executeStatement(
+            'INSERT INTO cash_management.cash_movement (id, organization_id, store_id, cash_session_id, type, amount, currency, source_type, source_reference_id, reason, occurred_at, performed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (organization_id, source_type, source_reference_id) WHERE source_reference_id IS NOT NULL DO NOTHING',
+            [$m->id()->toString(), $m->organizationId()->toString(), $m->storeId()->toString(), $m->sessionId()->toString(), $m->type()->value, $m->amount()->amount()->toString(), $m->amount()->currency()->code(), $sourceType, $m->sourceReference(), $m->reason(), $m->occurredAt()->format(DATE_ATOM), $m->performedBy()->toString()],
+        );
+
+        return 1 === $affected;
+    }
+    /** @return list<CashMovement> */
+    public function findBySession(OrganizationId $o, StoreId $store, CashSessionId $s): array
+    {
+        return array_map(fn($r) => $this->aggregate($r), $this->em->getRepository(CashMovementRecord::class)->findBy(['organizationId' => $o->toString(),'storeId' => $store->toString(),'cashSessionId' => $s->toString()], ['occurredAt' => 'ASC']));
     }private function aggregate(CashMovementRecord $r): CashMovement
     {
         $f = $this->uuids;

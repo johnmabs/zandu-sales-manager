@@ -10,5 +10,6 @@ interface CashRegisterRepository
 {
     public function save(CashRegister $register): void;
     public function find(OrganizationId $organizationId, StoreId $storeId, CashRegisterId $id): ?CashRegister;
+    public function findForUpdate(OrganizationId $organizationId, StoreId $storeId, CashRegisterId $id): ?CashRegister;
     /** @return list<CashRegister> */ public function findAll(OrganizationId $organizationId, StoreId $storeId): array;
 }

@@ -9,8 +9,9 @@ enum CashMovementType: string
     case CashIn = 'CASH_IN';
     case CashOut = 'CASH_OUT';
     case CashWithdrawal = 'CASH_WITHDRAWAL';
+    case SalePayment = 'SALE_PAYMENT';
     public function isIn(): bool
     {
-        return self::CashIn === $this;
+        return self::CashIn === $this || self::SalePayment === $this;
     }
 }

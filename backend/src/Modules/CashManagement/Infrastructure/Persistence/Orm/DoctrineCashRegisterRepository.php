@@ -27,6 +27,15 @@ final readonly class DoctrineCashRegisterRepository implements CashRegisterRepos
     {
         return $this->aggregate($this->em->getRepository(CashRegisterRecord::class)->findOneBy(['organizationId' => $o->toString(),'storeId' => $s->toString(),'id' => $id->toString()]));
     }
+    public function findForUpdate(OrganizationId $o, StoreId $s, CashRegisterId $id): ?CashRegister
+    {
+        $found = $this->em->getConnection()->fetchOne(
+            'SELECT id FROM cash_management.cash_register WHERE organization_id = ? AND store_id = ? AND id = ? FOR UPDATE',
+            [$o->toString(), $s->toString(), $id->toString()],
+        );
+
+        return false === $found ? null : $this->find($o, $s, $id);
+    }
     public function findAll(OrganizationId $o, StoreId $s): array
     {
         return array_values(array_filter(array_map(fn($r) => $this->aggregate($r), $this->em->getRepository(CashRegisterRecord::class)->findBy(['organizationId' => $o->toString(),'storeId' => $s->toString()], ['code' => 'ASC']))));

@@ -17,7 +17,7 @@ final readonly class CashMovementQueryService
     public function list(ActorContext $a, StoreId $store, CashSessionId $session): array
     {
         $this->authorization->authorize($a, PermissionCode::CashMovementRead, ResourceScope::store($a->organizationId(), $store));
-        return array_map($this->view(...), $this->movements->findBySession($a->organizationId(), $session));
+        return array_map($this->view(...), $this->movements->findBySession($a->organizationId(), $store, $session));
     }
     /** @return array<string,mixed> */
     private function view(\Zandu\Modules\CashManagement\Domain\CashMovement\CashMovement $m): array
