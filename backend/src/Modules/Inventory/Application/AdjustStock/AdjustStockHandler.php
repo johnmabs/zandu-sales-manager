@@ -9,6 +9,7 @@ use LogicException;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementRepository,StockMovementSource,StockMovementType};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard,OperationalMode};
 use Zandu\SharedKernel\Access\{PermissionCode,ResourceScope};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
@@ -19,7 +20,7 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class AdjustStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private AuthorizationService $authorization, private SecurityAuditTrail $audit) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryMovementValuer $costing, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private AuthorizationService $authorization, private SecurityAuditTrail $audit) {}
     public function __invoke(AdjustStock $command): void
     {
         if ('' === trim($command->reason)) {
@@ -41,8 +42,23 @@ final readonly class AdjustStockHandler
             $previous = $stock->quantityOnHand();
             $command->delta->isNegative() ? $stock->decrease($quantity) : $stock->increase($quantity);
             $now = $this->clock->now();
+            $movement = StockMovement::record(StockMovementId::generate($this->ids), $organizationId, $command->storeId, $command->productId, $stock->id(), $type, $quantity, $previous, StockMovementSource::manualAdjustment(), $command->reason, $command->actorContext->actorId(), $now);
             $this->stocks->save($stock);
-            $this->movements->append(StockMovement::record(StockMovementId::generate($this->ids), $organizationId, $command->storeId, $command->productId, $stock->id(), $type, $quantity, $previous, StockMovementSource::manualAdjustment(), $command->reason, $command->actorContext->actorId(), $now));
+            $this->movements->append($movement);
+            $this->costing->value(new ValueInventoryMovement(
+                $command->storeId,
+                $command->productId,
+                $stock->id(),
+                $movement->id(),
+                $command->delta->isNegative() ? InventoryCostingMovementType::AdjustmentOut : InventoryCostingMovementType::AdjustmentIn,
+                $quantity->value(),
+                $movement->previousQuantity()->value(),
+                $movement->resultingQuantity()->value(),
+                $command->unitCost,
+                trim($command->reason),
+                $now,
+                $command->actorContext,
+            ));
             $this->audit->recordSuccess($command->actorContext, SecurityAction::StockAdjusted, ResourceReference::for('stock', $stock->id()), SafeAuditMetadata::empty(), $now);
         });
     }

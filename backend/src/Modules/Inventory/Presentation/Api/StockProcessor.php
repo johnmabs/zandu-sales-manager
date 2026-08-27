@@ -27,11 +27,11 @@ final readonly class StockProcessor implements ProcessorInterface
         if ('stock_initialize' === $operation->getName()) {
             if (!$data instanceof InitializeStockInput) {
                 throw new InvalidArgumentException('Stock initialization input is required.');
-            } $stock = ($this->initialize)(new InitializeStock($store, $product, Quantity::fromString($data->quantity, $this->decimals), $actor));
+            } $stock = ($this->initialize)(new InitializeStock($store, $product, Quantity::fromString($data->quantity, $this->decimals), $this->decimals->fromString($data->unitCost), $actor));
         } elseif ('stock_adjust' === $operation->getName()) {
             if (!$data instanceof AdjustStockInput) {
                 throw new InvalidArgumentException('Stock adjustment input is required.');
-            } ($this->adjust)(new AdjustStock($store, $product, Quantity::fromString($data->delta, $this->decimals), $data->reason, $actor));
+            } ($this->adjust)(new AdjustStock($store, $product, Quantity::fromString($data->delta, $this->decimals), $data->reason, null !== $data->unitCost ? $this->decimals->fromString($data->unitCost) : null, $actor));
             $view = $this->queries->get($actor, $store, $product);
             return new StockResource($view['id'], $view['organizationId'], $view['storeId'], $view['productId'], $view['quantityOnHand'], $view['initialized'], $view['version']);
         } else {

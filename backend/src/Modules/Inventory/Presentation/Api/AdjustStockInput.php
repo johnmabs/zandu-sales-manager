@@ -6,5 +6,5 @@ namespace Zandu\Modules\Inventory\Presentation\Api;
 
 final readonly class AdjustStockInput
 {
-    public function __construct(public string $delta, public string $reason) {}
+    public function __construct(public string $delta, public string $reason, public ?string $unitCost = null) {}
 }

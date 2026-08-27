@@ -266,4 +266,15 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($operation->getRequestBody());
         self::assertArrayHasKey('application/json', $operation->getRequestBody()->getContent());
     }
+
+    public function testInventoryMovementCostInputsAreDocumented(): void
+    {
+        self::bootKernel();
+        $schemas = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getComponents()->getSchemas();
+        $initialize = json_decode(json_encode($schemas['StockResource.InitializeStockInput'], JSON_THROW_ON_ERROR), true, flags: JSON_THROW_ON_ERROR);
+        $adjust = json_decode(json_encode($schemas['StockResource.AdjustStockInput'], JSON_THROW_ON_ERROR), true, flags: JSON_THROW_ON_ERROR);
+
+        self::assertArrayHasKey('unitCost', $initialize['properties']);
+        self::assertArrayHasKey('unitCost', $adjust['properties']);
+    }
 }

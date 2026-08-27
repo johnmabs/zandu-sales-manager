@@ -6,5 +6,5 @@ namespace Zandu\Modules\Inventory\Presentation\Api;
 
 final readonly class InitializeStockInput
 {
-    public function __construct(public string $quantity) {}
+    public function __construct(public string $quantity, public string $unitCost) {}
 }

@@ -10,6 +10,7 @@ use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
 use Zandu\Modules\Inventory\Domain\Stock\{Stock,StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementRepository,StockMovementSource,StockMovementType};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard,OperationalMode};
 use Zandu\SharedKernel\Access\{PermissionCode,ResourceScope};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
@@ -21,7 +22,7 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class InitializeStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryProductProvider $products, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private AuthorizationService $authorization, private SecurityAuditTrail $audit) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryProductProvider $products, private InventoryMovementValuer $costing, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private AuthorizationService $authorization, private SecurityAuditTrail $audit) {}
     public function __invoke(InitializeStock $command): Stock
     {
         $organizationId = $command->actorContext->organizationId();
@@ -38,8 +39,23 @@ final readonly class InitializeStockHandler
             $stock = Stock::create(StockId::generate($this->ids), $organizationId, $command->storeId, $command->productId, $this->zero());
             $now = $this->clock->now();
             $stock->initialize(new StockQuantity($command->quantity), $command->actorContext->actorId(), $now);
+            $movement = StockMovement::record(StockMovementId::generate($this->ids), $organizationId, $command->storeId, $command->productId, $stock->id(), StockMovementType::InitialStock, new MovementQuantity($command->quantity), $this->zero(), StockMovementSource::initialization(), null, $command->actorContext->actorId(), $now);
             $this->stocks->save($stock);
-            $this->movements->append(StockMovement::record(StockMovementId::generate($this->ids), $organizationId, $command->storeId, $command->productId, $stock->id(), StockMovementType::InitialStock, new MovementQuantity($command->quantity), $this->zero(), StockMovementSource::initialization(), null, $command->actorContext->actorId(), $now));
+            $this->movements->append($movement);
+            $this->costing->value(new ValueInventoryMovement(
+                $command->storeId,
+                $command->productId,
+                $stock->id(),
+                $movement->id(),
+                InventoryCostingMovementType::InitialStock,
+                $command->quantity,
+                $movement->previousQuantity()->value(),
+                $movement->resultingQuantity()->value(),
+                $command->unitCost,
+                'Initial stock',
+                $now,
+                $command->actorContext,
+            ));
             $this->audit->recordSuccess($command->actorContext, SecurityAction::StockInitialized, ResourceReference::for('stock', $stock->id()), SafeAuditMetadata::empty(), $now);
             return $stock;
         });

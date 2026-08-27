@@ -108,6 +108,7 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
 
         $client->jsonRequest('POST', '/api/stores/' . $storeA['id'] . '/stocks/' . $productId . '/initialize', [
             'quantity' => '1',
+            'unitCost' => '1000',
         ], $this->headers($managerToken));
         self::assertResponseStatusCodeSame(403);
 
@@ -209,7 +210,7 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
         $connection->executeStatement("INSERT INTO pricing.price_lists (id,organization_id,code,name,currency,status,scope,priority,created_at,created_by,version) VALUES (?,?,'M2','Tarif M2','XAF','ACTIVE','ORGANIZATION',100,date_trunc('second',NOW()),?,1)", [$priceListId, $organizationId, $actorId]);
         $connection->executeStatement("INSERT INTO pricing.product_prices (id,organization_id,price_list_id,product_id,packaging_id,amount,currency,status,created_at,created_by,version) VALUES (?,?,?,?,?,1500,'XAF','ACTIVE',date_trunc('second',NOW()),?,1)", [$productPriceId, $organizationId, $priceListId, $productId, $packagingId, $actorId]);
 
-        $client->jsonRequest('POST', '/api/stores/' . $store['id'] . '/stocks/' . $productId . '/initialize', ['quantity' => '10'], $this->headers($ownerToken));
+        $client->jsonRequest('POST', '/api/stores/' . $store['id'] . '/stocks/' . $productId . '/initialize', ['quantity' => '10', 'unitCost' => '400'], $this->headers($ownerToken));
         self::assertResponseStatusCodeSame(201);
         $client->request('POST', '/api/stores/' . $store['id'] . '/sales', server: $this->headers($ownerToken));
         self::assertResponseStatusCodeSame(201);
@@ -376,6 +377,8 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
             $connection->executeStatement('DELETE FROM sales.sale_completion_keys WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM sales.sale_line WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM sales.sale WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation_movement WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock_movement WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM pricing.product_prices WHERE organization_id = ?', [$organizationId]);
