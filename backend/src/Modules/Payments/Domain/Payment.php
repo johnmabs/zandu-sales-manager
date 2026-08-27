@@ -21,6 +21,11 @@ final class Payment
         return new self($id, $organizationId, $saleId, $amount, PaymentStatus::Created, $actor, $at);
     }
 
+    public static function reconstitute(PaymentId $id, OrganizationId $organizationId, SaleId $saleId, Money $amount, PaymentStatus $status, ActorId $actor, DateTimeImmutable $createdAt, ?DateTimeImmutable $confirmedAt, int $version): self
+    {
+        return new self($id, $organizationId, $saleId, $amount, $status, $actor, $createdAt, $confirmedAt, $version);
+    }
+
     public function confirm(DateTimeImmutable $at): void
     {
         if (PaymentStatus::Created !== $this->status) {
