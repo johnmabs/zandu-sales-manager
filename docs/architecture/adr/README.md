@@ -39,6 +39,7 @@ Un ADR accepté n’est pas réécrit pour masquer l’historique d’une nouvel
 | [ADR-0019](0019-tenant-owned-units-of-measure.md) | Unités de mesure propres au tenant | ACCEPTED |
 | [ADR-0020](0020-pilot-sales-tax-policy.md) | Politique fiscale explicite du pilote Sales | ACCEPTED |
 | [ADR-0021](0021-inventory-costing-activation-policy.md) | Politique d’activation de la valorisation Inventory | ACCEPTED |
+| [ADR-0022](0022-cash-refund-ownership-and-workflow.md) | Ownership et workflow du remboursement cash | ACCEPTED |
 
 ## Décisions encore ouvertes ou proposées
 
