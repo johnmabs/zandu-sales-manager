@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Tests\Api;
 
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\{PreserveGlobalState, RunInSeparateProcess};
 use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -41,6 +42,8 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
         parent::tearDown();
     }
 
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
     public function testOwnerBootstrapsValuationAtomicallyWhileManagerIsDenied(): void
     {
         $client = self::createClient();
