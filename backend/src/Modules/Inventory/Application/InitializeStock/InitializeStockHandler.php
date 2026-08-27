@@ -6,10 +6,12 @@ namespace Zandu\Modules\Inventory\Application\InitializeStock;
 
 use LogicException;
 use Zandu\Modules\Catalog\Application\Contract\InventoryProductProvider;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
 use Zandu\Modules\Inventory\Domain\Stock\{Stock,StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementId,StockMovementRepository,StockMovementSource,StockMovementType};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard,OperationalMode};
+use Zandu\SharedKernel\Access\{PermissionCode,ResourceScope};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{IdGenerator,StockId};
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -19,11 +21,12 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class InitializeStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryProductProvider $products, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private SecurityAuditTrail $audit) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private InventoryProductProvider $products, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private AuthorizationService $authorization, private SecurityAuditTrail $audit) {}
     public function __invoke(InitializeStock $command): Stock
     {
         $organizationId = $command->actorContext->organizationId();
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): Stock {
+            $this->authorization->authorize($command->actorContext, PermissionCode::InventoryInitialize, ResourceScope::store($organizationId, $command->storeId));
             $descriptor = $this->products->provide($organizationId, $command->productId);
             $this->operationalGuard->assertStore($command->actorContext, $command->storeId, OperationalMode::Standard);
             if (!$descriptor->inventoryTracked() || 'PHYSICAL' !== $descriptor->productType()) {

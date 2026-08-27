@@ -9,6 +9,7 @@ use Zandu\SharedKernel\Identity\{OrganizationId,StockId,StoreId};
 interface StockMovementRepository
 {
     public function append(StockMovement $movement): void;
+    public function appendOnce(StockMovement $movement): bool;
     /** @return list<StockMovement> */
     public function findByStock(OrganizationId $organizationId, StockId $stockId): array;
     /** @return list<StockMovement> */

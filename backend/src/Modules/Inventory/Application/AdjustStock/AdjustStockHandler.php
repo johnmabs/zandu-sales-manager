@@ -6,9 +6,11 @@ namespace Zandu\Modules\Inventory\Application\AdjustStock;
 
 use InvalidArgumentException;
 use LogicException;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementId,StockMovementRepository,StockMovementSource,StockMovementType};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard,OperationalMode};
+use Zandu\SharedKernel\Access\{PermissionCode,ResourceScope};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{IdGenerator};
 use Zandu\SharedKernel\SecurityAudit\{ResourceReference,SafeAuditMetadata,SecurityAction,SecurityAuditTrail};
@@ -17,7 +19,7 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class AdjustStockHandler
 {
-    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private SecurityAuditTrail $audit) {}
+    public function __construct(private StockRepository $stocks, private StockMovementRepository $movements, private IdGenerator $ids, private Clock $clock, private TenantTransaction $transaction, private DecimalFactory $decimals, private OperationalGuard $operationalGuard, private AuthorizationService $authorization, private SecurityAuditTrail $audit) {}
     public function __invoke(AdjustStock $command): void
     {
         if ('' === trim($command->reason)) {
@@ -25,6 +27,7 @@ final readonly class AdjustStockHandler
         }
         $organizationId = $command->actorContext->organizationId();
         $this->transaction->transactional($organizationId, function () use ($command, $organizationId): void {
+            $this->authorization->authorize($command->actorContext, PermissionCode::InventoryAdjust, ResourceScope::store($organizationId, $command->storeId));
             $stock = $this->stocks->get($organizationId, $command->storeId, $command->productId);
             $this->operationalGuard->assertStore($command->actorContext, $command->storeId, OperationalMode::Standard);
             if (!$stock->initialized()) {

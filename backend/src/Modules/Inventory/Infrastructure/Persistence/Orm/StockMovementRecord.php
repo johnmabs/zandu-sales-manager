@@ -45,7 +45,7 @@ final class StockMovementRecord
     ) {}
     public static function fromAggregate(StockMovement $m): self
     {
-        return new self($m->id()->toString(), $m->organizationId()->toString(), $m->storeId()->toString(), $m->productId()->toString(), $m->stockId()->toString(), $m->type()->value, $m->quantity()->toString(), $m->previousQuantity()->toString(), $m->resultingQuantity()->toString(), $m->source()->type(), $m->source()->referenceId()?->toString(), $m->reason(), $m->performedBy()?->toString(), $m->occurredAt());
+        return new self($m->id()->toString(), $m->organizationId()->toString(), $m->storeId()->toString(), $m->productId()->toString(), $m->stockId()->toString(), $m->type()->value, $m->quantity()->toString(), $m->previousQuantity()->toString(), $m->resultingQuantity()->toString(), $m->source()->type(), $m->source()->referenceId(), $m->reason(), $m->performedBy()?->toString(), $m->occurredAt());
     }
     public function id(): string
     {

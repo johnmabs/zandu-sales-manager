@@ -9,8 +9,10 @@ enum StockMovementType: string
     case InitialStock = 'INITIAL_STOCK';
     case AdjustmentIn = 'ADJUSTMENT_IN';
     case AdjustmentOut = 'ADJUSTMENT_OUT';
+    case Sale = 'SALE';
+
     public function isIncrease(): bool
     {
-        return self::AdjustmentOut !== $this;
+        return !in_array($this, [self::AdjustmentOut, self::Sale], true);
     }
 }
