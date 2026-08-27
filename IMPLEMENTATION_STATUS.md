@@ -58,7 +58,8 @@ Epic 5.4    TERMINÉ   Moving weighted average calculator
 Epic 5.2    TERMINÉ   StockValuation aggregate et persistence
 Epic 5.3    TERMINÉ   StockValuationMovement ledger et persistence
 Persistence TERMINÉ   PostgreSQL, contraintes, repositories et RLS Costing
-Epic 5.5    PROCHAINE Bootstrap explicite des valorisations
+Epic 5.5    TERMINÉ   Bootstrap explicite des valorisations
+Inventory   PROCHAINE Valoriser INITIAL_STOCK et les ajustements
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -67,7 +68,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827100000 appliquée en dernier
-Tests                 494 tests, 2 220 assertions
+Tests                 501 tests, 2 303 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7869,7 +7870,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — domaine et persistence Costing terminés.**
+**État courant : EN COURS — bootstrap des valorisations opérationnel.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8033,9 +8034,54 @@ Deptrac modules : 0 violation, 10 uncovered
 Conteneurs Symfony dev/test/prod : OK
 ```
 
+### Epic 5.5 — Costing bootstrap
+
+**Statut : TERMINÉ**
+
+- commande `InitializeStockValuation` avec coût d’ouverture explicite et
+  justification obligatoire de 1 à 255 caractères ;
+- permission sensible `INVENTORY_COSTING_INITIALIZE`, réservée actuellement au
+  rôle Organization Owner et contrôlée au scope Store ;
+- contrat Inventory dédié donnant accès à la position exacte sous verrou
+  pessimiste sans exposer le domaine Inventory à Inventory Costing ;
+- devise obtenue depuis le contexte métier du magasin ;
+- quantité positive valorisée à 12 décimales pour le coût et 6 pour la valeur ;
+- position nulle acceptée uniquement avec un coût d’ouverture nul ;
+- création atomique de `StockValuation`, du ledger `OPENING`, de l’audit
+  `STOCK_VALUATION_INITIALIZED` et de l’outbox versionnée ;
+- endpoint `POST /api/stores/{storeId}/inventory-valuations/{productId}/initialize` ;
+- seconde initialisation refusée par `VALUATION_ALREADY_INITIALIZED` sans effet
+  dupliqué ;
+- sérialisation concurrente prouvée sur la ligne Stock PostgreSQL ;
+- contrat OpenAPI exposé dans Swagger UI et ReDoc en développement.
+
+Commits :
+
+```text
+d230687 feat(inventory): expose locked stock position for costing
+78f6274 feat(costing): add valuation bootstrap
+4162507 feat(api): expose valuation bootstrap
+064bbc9 test(costing): serialize valuation bootstrap
+49fde55 test(api): isolate valuation bootstrap workflow
+```
+
+Validation consolidée :
+
+```text
+InitializeStockValuationHandlerTest : OK (4 tests, 30 assertions)
+InventoryValuationBootstrapWorkflowTest : OK (1 test, 42 assertions)
+StockValuationBootstrapConcurrencyTest : OK (1 test, 3 assertions)
+Suite PHPUnit complète : OK (501 tests, 2 303 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.5 `InitializeStockValuation` : permission dédiée, lecture
-du Stock tenant/store-scoped, coût d’ouverture explicite, raison obligatoire,
-création atomique de la valorisation et du mouvement `OPENING`, puis exposition
-API et tests d’idempotence/concurrence.
+Implémenter la prochaine tranche de l’ordre recommandé : valoriser dans la même
+transaction les mouvements `INITIAL_STOCK`, `ADJUSTMENT_IN` et
+`ADJUSTMENT_OUT`, exiger le coût explicite des entrées, utiliser le coût moyen
+courant pour les sorties et annuler aussi le mouvement physique si la
+valorisation échoue. L’Epic 5.6 d’intégration des ventes viendra ensuite.

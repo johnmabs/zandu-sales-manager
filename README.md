@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — décisions d’architecture validées |
+| 5 | Inventory Costing et Returns | En cours — bootstrap des valorisations opérationnel |
 
-Dernière validation consolidée le 27 août 2026 : **460 tests et 2 115
+Dernière validation consolidée le 27 août 2026 : **501 tests et 2 303
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -211,6 +211,26 @@ La politique fiscale du pilote est explicitement `NO_TAX` selon
 HTTP PostgreSQL vérifie le parcours complet et son rejeu sans effet dupliqué.
 Le détail du Gate M2 et des preuves est maintenu dans
 [le planning du Lot 4](docs/planning/zandu-lot-4-sales-complete-sale-cash.md).
+
+### Initialiser la valorisation d'un stock
+
+Le bootstrap Costing reprend sous verrou la quantité physique actuelle et crée
+atomiquement la valorisation économique, son mouvement `OPENING`, l'audit et
+l'événement outbox. Un coût explicite et une justification sont obligatoires :
+
+```bash
+curl --request POST \
+  http://localhost:8080/api/stores/<store-id>/inventory-valuations/<product-id>/initialize \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "openingUnitCost": "4000",
+    "reason": "Controlled opening inventory"
+  }'
+```
+
+La permission dédiée est `INVENTORY_COSTING_INITIALIZE`. Une position déjà
+valorisée est refusée avec `VALUATION_ALREADY_INITIALIZED`.
 
 ### Contrat d'erreurs
 
