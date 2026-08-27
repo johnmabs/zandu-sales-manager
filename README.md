@@ -6,10 +6,10 @@ leurs droits d'accès, ainsi que le catalogue, la tarification, les stocks, les
 caisses et les ventes.
 
 Le projet est actuellement en développement. Les **Lots 0 à 4** sont terminés
-et le **Gate M2 — première vente cash de bout en bout** est validé. La prochaine
-phase fonctionnelle n'est pas encore décrite dans `docs/planning` ; son
-périmètre doit donc être planifié avant de reprendre l'implémentation. L'état
-détaillé et les preuves de validation sont disponibles dans
+et le **Gate M2 — première vente cash de bout en bout** est validé. Le **Lot 5 —
+Inventory Costing & Returns** est entré en implémentation ; il constitue la
+première partie du jalon M3 consacré à la gestion complète du stock. L'état
+détaillé, le backlog et les preuves de validation sont disponibles dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## État de l'implémentation
@@ -21,6 +21,7 @@ détaillé et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
+| 5 | Inventory Costing et Returns | En cours — décisions d’architecture validées |
 
 Dernière validation consolidée le 27 août 2026 : **460 tests et 2 115
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
@@ -397,6 +398,7 @@ global générique `backend/src/ApiResource`.
 - [Planning du Lot 2](docs/planning/zandu-lot-2-catalog-basic-pricing.md) ;
 - [Planning du Lot 3](docs/planning/zandu-lot-3-inventory-cash-foundations.md) ;
 - [Planning du Lot 4](docs/planning/zandu-lot-4-sales-complete-sale-cash.md) ;
+- [Planning du Lot 5](docs/planning/zandu-lot-5-inventory-costing-returns.md) ;
 - [Spécification DDD](docs/architecture/ddd/zandu-sales-manager-ddd-v1.1.docx) ;
 - [Index des décisions d'architecture](docs/architecture/adr/README.md) ;
 - [Fitness tests d'architecture](docs/architecture/fitness-tests.md).
