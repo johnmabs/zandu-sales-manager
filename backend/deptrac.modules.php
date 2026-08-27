@@ -114,6 +114,12 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $payments = Layer::withName('Payments')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Payments\\.*',
+        ),
+    );
+
     $identityAccessContract = Layer::withName('IdentityAccessContract')->collectors(
         ClassLikeConfig::create('.*Zandu\\Modules\\IdentityAccess\\Application\\Contract\\.*'),
     );
@@ -152,6 +158,18 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $sharedKernel = Layer::withName('SharedKernel')->collectors(
+        ClassLikeConfig::create('.*Zandu\\SharedKernel\\.*'),
+    );
+
+    $platform = Layer::withName('Platform')->collectors(
+        ClassLikeConfig::create('.*Zandu\\Platform\\.*'),
+    );
+
+    $framework = Layer::withName('Framework')->collectors(
+        ClassLikeConfig::create('.*(Doctrine|Symfony|ApiPlatform|Brick\\Math|OpenTelemetry|Monolog)\\.*'),
+    );
+
     $config
         ->paths('./src')
         ->layers(
@@ -165,11 +183,15 @@ return static function (DeptracConfig $config): void {
             $inventoryContract,
             $cashManagement,
             $cashManagementContract,
+            $payments,
             $identityAccess,
             $identityAccessContract,
             $operations,
             $organization,
             $organizationContract,
+            $sharedKernel,
+            $platform,
+            $framework,
         )
         ->rulesets(
             Ruleset::forLayer($catalog)
@@ -177,36 +199,53 @@ return static function (DeptracConfig $config): void {
                     $catalogContract,
                     $identityAccessContract,
                     $organizationContract,
+                    $sharedKernel,
+                    $platform,
+                    $framework,
                 ),
-            Ruleset::forLayer($catalogContract),
+            Ruleset::forLayer($catalogContract)->accesses($sharedKernel),
             Ruleset::forLayer($pricing)
                 ->accesses(
                     $pricingContract,
                     $catalogContract,
                     $identityAccessContract,
                     $organizationContract,
+                    $sharedKernel,
+                    $platform,
+                    $framework,
                 ),
-            Ruleset::forLayer($pricingContract),
+            Ruleset::forLayer($pricingContract)->accesses($sharedKernel),
             Ruleset::forLayer($sales)
                 ->accesses(
                     $salesContract,
                     $pricingContract,
+                    $catalogContract,
                     $inventoryContract,
                     $cashManagementContract,
+                    $identityAccessContract,
+                    $organizationContract,
+                    $sharedKernel,
+                    $platform,
+                    $framework,
                 ),
             Ruleset::forLayer($inventory)
-                ->accesses($catalogContract, $inventoryContract, $identityAccessContract, $organizationContract),
+                ->accesses($catalogContract, $inventoryContract, $identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
             Ruleset::forLayer($cashManagement)
-                ->accesses($identityAccessContract, $organizationContract),
-            Ruleset::forLayer($salesContract),
-            Ruleset::forLayer($inventoryContract),
-            Ruleset::forLayer($cashManagementContract),
+                ->accesses($cashManagementContract, $identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
+            Ruleset::forLayer($payments)
+                ->accesses($salesContract, $sharedKernel, $framework),
+            Ruleset::forLayer($salesContract)->accesses($sharedKernel),
+            Ruleset::forLayer($inventoryContract)->accesses($sharedKernel),
+            Ruleset::forLayer($cashManagementContract)->accesses($sharedKernel),
             Ruleset::forLayer($identityAccess)
-                ->accesses($identityAccessContract, $organizationContract),
-            Ruleset::forLayer($identityAccessContract),
-            Ruleset::forLayer($operations),
+                ->accesses($identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
+            Ruleset::forLayer($identityAccessContract)->accesses($sharedKernel),
+            Ruleset::forLayer($operations)->accesses($sharedKernel, $framework),
             Ruleset::forLayer($organization)
-                ->accesses($identityAccessContract, $organizationContract),
-            Ruleset::forLayer($organizationContract),
+                ->accesses($identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
+            Ruleset::forLayer($organizationContract)->accesses($sharedKernel),
+            Ruleset::forLayer($sharedKernel),
+            Ruleset::forLayer($platform)->accesses($sharedKernel, $framework),
+            Ruleset::forLayer($framework),
         );
 };
