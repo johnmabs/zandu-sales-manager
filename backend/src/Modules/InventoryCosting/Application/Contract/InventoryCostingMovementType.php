@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Zandu\Modules\InventoryCosting\Application\Contract;
+
+enum InventoryCostingMovementType: string
+{
+    case InitialStock = 'INITIAL_STOCK';
+    case AdjustmentIn = 'ADJUSTMENT_IN';
+    case AdjustmentOut = 'ADJUSTMENT_OUT';
+
+    public function isIncoming(): bool
+    {
+        return self::AdjustmentOut !== $this;
+    }
+}

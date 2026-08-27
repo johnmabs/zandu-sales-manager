@@ -158,6 +158,8 @@ services:
         alias: Zandu\Modules\InventoryCosting\Infrastructure\Persistence\Orm\DoctrineStockValuationRepository
     Zandu\Modules\InventoryCosting\Domain\ValuationMovement\StockValuationMovementRepository:
         alias: Zandu\Modules\InventoryCosting\Infrastructure\Persistence\Orm\DoctrineStockValuationMovementRepository
+    Zandu\Modules\InventoryCosting\Application\Contract\InventoryMovementValuer:
+        alias: Zandu\Modules\InventoryCosting\Application\RepositoryInventoryMovementValuer
     Zandu\Modules\CashManagement\Domain\CashRegister\CashRegisterRepository:
         alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashRegisterRepository
     Zandu\Modules\CashManagement\Domain\CashSession\CashSessionRepository:
