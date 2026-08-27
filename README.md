@@ -1,13 +1,31 @@
 # Zandu Sales Manager
 
-Zandu Sales Manager est une plateforme de gestion commerciale multi-tenant,
+Zandu Sales Manager est une plateforme de gestion commerciale multi-tenant
 conçue pour administrer des organisations, leurs magasins, leurs membres et
-leurs droits d'accès.
+leurs droits d'accès, ainsi que le catalogue, la tarification, les stocks, les
+caisses et les ventes.
 
-Le projet est actuellement en développement. Le **Lot 0 — Architecture
-exécutable** et le **Lot 1 — Administration opérationnelle** sont terminés. La
-prochaine étape recommandée est le **Lot 2 — Catalog & basic Pricing**. L'état
-détaillé est disponible dans [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
+Le projet est actuellement en développement. Les **Lots 0 à 4** sont terminés
+et le **Gate M2 — première vente cash de bout en bout** est validé. La prochaine
+phase fonctionnelle n'est pas encore décrite dans `docs/planning` ; son
+périmètre doit donc être planifié avant de reprendre l'implémentation. L'état
+détaillé et les preuves de validation sont disponibles dans
+[`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
+
+## État de l'implémentation
+
+| Lot | Périmètre | État |
+| --- | --- | --- |
+| 0 | Architecture exécutable | Terminé |
+| 1 | Administration opérationnelle | Terminé |
+| 2 | Catalogue et tarification de base | Terminé |
+| 3 | Fondations Inventory et Cash | Terminé |
+| 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
+
+Dernière validation consolidée le 27 août 2026 : **460 tests et 2 115
+assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
+configurations Deptrac et aucune vulnérabilité connue dans les dépendances
+Composer verrouillées.
 
 ## Stack technique
 
@@ -374,7 +392,11 @@ global générique `backend/src/ApiResource`.
 ## Documentation
 
 - [Suivi d'implémentation](IMPLEMENTATION_STATUS.md) ;
+- [Planning du Lot 0](docs/planning/zandu-lot-0-architecture-executable.md) ;
 - [Planning du Lot 1](docs/planning/zandu-lot-1-administration-operationnelle.md) ;
+- [Planning du Lot 2](docs/planning/zandu-lot-2-catalog-basic-pricing.md) ;
+- [Planning du Lot 3](docs/planning/zandu-lot-3-inventory-cash-foundations.md) ;
+- [Planning du Lot 4](docs/planning/zandu-lot-4-sales-complete-sale-cash.md) ;
 - [Spécification DDD](docs/architecture/ddd/zandu-sales-manager-ddd-v1.1.docx) ;
 - [Index des décisions d'architecture](docs/architecture/adr/README.md) ;
 - [Fitness tests d'architecture](docs/architecture/fitness-tests.md).
