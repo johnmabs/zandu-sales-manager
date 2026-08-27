@@ -15,9 +15,18 @@ final class SaleCompletionIdempotencyTest extends TestCase
     {
         $store = new InMemorySaleCompletionIdempotency();
         $sale = SaleId::fromString('0198ef01-1111-7111-8111-111111111111', new SymfonyUuidFactory());
-        self::assertFalse($store->wasCompleted($sale, 'checkout-1'));
-        $store->markCompleted($sale, 'checkout-1');
-        self::assertTrue($store->wasCompleted($sale, 'checkout-1'));
-        self::assertFalse($store->wasCompleted($sale, 'checkout-2'));
+        self::assertTrue($store->claim($sale, 'checkout-1', 'hash-1'));
+        self::assertFalse($store->claim($sale, 'checkout-1', 'hash-1'));
+        self::assertTrue($store->claim($sale, 'checkout-2', 'hash-2'));
+    }
+
+    public function testReusingAKeyForAnotherPayloadIsRejected(): void
+    {
+        $store = new InMemorySaleCompletionIdempotency();
+        $sale = SaleId::fromString('0198ef01-1111-7111-8111-111111111111', new SymfonyUuidFactory());
+        $store->claim($sale, 'checkout-1', 'hash-1');
+
+        $this->expectException(\LogicException::class);
+        $store->claim($sale, 'checkout-1', 'hash-2');
     }
 }

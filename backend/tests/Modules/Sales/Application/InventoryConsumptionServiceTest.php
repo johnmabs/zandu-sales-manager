@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Zandu\Tests\Modules\Sales\Application;
 
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\Catalog\Application\Contract\{InventoryProductDescriptor, InventoryProductProvider};
 use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale,InventoryStockConsumer,StockConsumptionResult};
-use Zandu\Modules\Sales\Application\Contract\SaleProductDescriptor;
 use Zandu\Modules\Sales\Application\InventoryConsumptionService;
 use Zandu\Modules\Sales\Domain\Sale;
 use Zandu\SharedKernel\Identity\SaleId;
@@ -23,7 +23,13 @@ final class InventoryConsumptionServiceTest extends TestCase
                 return new StockConsumptionResult($request->saleId);
             }
         };
-        $result = (new InventoryConsumptionService($consumer))->consume($this->createSale(), []);
+        $products = new class implements InventoryProductProvider {
+            public function provide(\Zandu\SharedKernel\Identity\OrganizationId $organizationId, \Zandu\SharedKernel\Identity\ProductId $productId): InventoryProductDescriptor
+            {
+                throw new \LogicException('A sale without lines must not resolve products.');
+            }
+        };
+        $result = (new InventoryConsumptionService($consumer, $products))->consume($this->createSale());
         self::assertNull($result);
         self::assertSame(0, $consumer->calls);
     }

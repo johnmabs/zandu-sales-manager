@@ -5,27 +5,26 @@ declare(strict_types=1);
 namespace Zandu\Modules\Sales\Application;
 
 use LogicException;
+use Zandu\Modules\Catalog\Application\Contract\InventoryProductProvider;
 use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale,InventoryStockConsumer,StockConsumptionResult};
-use Zandu\Modules\Sales\Application\Contract\SaleProductDescriptor;
 use Zandu\Modules\Sales\Domain\Sale;
 
 final readonly class InventoryConsumptionService
 {
-    public function __construct(private InventoryStockConsumer $consumer) {}
+    public function __construct(private InventoryStockConsumer $consumer, private InventoryProductProvider $products) {}
 
-    /** @param list<SaleProductDescriptor> $products */
-    public function consume(Sale $sale, array $products): ?StockConsumptionResult
+    public function consume(Sale $sale): ?StockConsumptionResult
     {
         $items = [];
-        foreach ($products as $product) {
-            if (!$product->inventoryTracked || 'PHYSICAL' !== $product->productType) {
+        $descriptors = [];
+        foreach ($sale->lines() as $line) {
+            $key = $line->productId()->toString();
+            $descriptors[$key] ??= $this->products->provide($sale->organizationId(), $line->productId());
+            $product = $descriptors[$key];
+            if (!$product->inventoryTracked() || 'PHYSICAL' !== $product->productType()) {
                 continue;
             }
-            foreach ($sale->lines() as $line) {
-                if ($line->productId()->equals($product->productId) && $line->productPackagingId()->equals($product->productPackagingId)) {
-                    $items[] = ['productId' => $line->productId(), 'baseQuantity' => $line->baseQuantity()];
-                }
-            }
+            $items[] = ['productId' => $line->productId(), 'baseQuantity' => $line->baseQuantity()];
         }
         if ([] === $items) {
             return null;

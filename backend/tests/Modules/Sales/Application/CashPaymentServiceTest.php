@@ -29,8 +29,10 @@ final class CashPaymentServiceTest extends TestCase
         };
         $f = new SymfonyUuidFactory();
         $sale = Sale::create(SaleId::fromString('0198ed01-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198ed02-1111-7111-8111-111111111111', $f), StoreId::fromString('0198ed03-1111-7111-8111-111111111111', $f), 'XAF', Money::fromString('0', Currency::fromCode('XAF'), new BrickDecimalFactory()), new ActorContext(ActorId::fromString('0198ed04-1111-7111-8111-111111111111', $f), OrganizationId::fromString('0198ed02-1111-7111-8111-111111111111', $f), ActorType::User, MessageCorrelationId::fromString('0198ed05-1111-7111-8111-111111111111', $f), new \DateTimeImmutable()), new \DateTimeImmutable());
-        $result = (new CashPaymentService($recorder))->record($sale, CashSessionId::fromString('0198ed06-1111-7111-8111-111111111111', $f), Money::fromString('10', Currency::fromCode('XAF'), new BrickDecimalFactory()));
+        $actorId = ActorId::fromString('0198ed04-1111-7111-8111-111111111111', $f);
+        $result = (new CashPaymentService($recorder))->record($sale, CashSessionId::fromString('0198ed06-1111-7111-8111-111111111111', $f), Money::fromString('10', Currency::fromCode('XAF'), new BrickDecimalFactory()), $actorId);
         self::assertSame($sale->id()->toString(), $result->saleId->toString());
         self::assertSame($sale->storeId()->toString(), $recorder->request?->storeId->toString());
+        self::assertSame($actorId->toString(), $recorder->request?->actorId->toString());
     }
 }

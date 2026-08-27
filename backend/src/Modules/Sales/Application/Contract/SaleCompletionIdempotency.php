@@ -8,6 +8,6 @@ use Zandu\SharedKernel\Identity\SaleId;
 
 interface SaleCompletionIdempotency
 {
-    public function wasCompleted(SaleId $saleId, string $key): bool;
-    public function markCompleted(SaleId $saleId, string $key): void;
+    /** Returns false when the same request was already claimed. */
+    public function claim(SaleId $saleId, string $key, string $payloadHash): bool;
 }
