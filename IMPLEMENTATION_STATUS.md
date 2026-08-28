@@ -55,7 +55,8 @@ Le Lot 6 est ouvert en backlog :
 ```text
 Phase 0     TERMINÉ   Planning Purchasing & Goods Receipts analysé et aligné
 Epic 6.1    TERMINÉ   Purchasing foundation, boundaries et schéma PostgreSQL
-Epic 6.2    PROCHAINE Supplier aggregate et persistence tenant-scoped
+Epic 6.2    TERMINÉ   Supplier aggregate, RLS, permissions et management
+Epic 6.3    PROCHAINE PurchasingPolicy et décisions associées
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -8818,9 +8819,47 @@ Deptrac layers/modules : 0 violation, 10 uncovered
 Migrations dev/test : version 20260828200000 appliquée
 ```
 
+### Epic 6.2 — Supplier
+
+**Statut : TERMINÉ**
+
+- l’agrégat organisation-scoped porte le nom, les coordonnées facultatives,
+  l’audit, la version et le cycle `ACTIVE/INACTIVE/ARCHIVED` sans suppression ;
+- les transitions et erreurs métier sont explicites et les fournisseurs
+  archivés deviennent immuables tout en restant historiquement référençables ;
+- `purchasing.supplier` applique FK organisation, contraintes SQL, versioning
+  optimiste et RLS forcée ;
+- les repositories ne peuvent ni lire ni modifier un fournisseur d’un autre
+  tenant ;
+- création, modification, activation, désactivation et archivage s’exécutent
+  dans une transaction tenant après autorisation et guard opérationnel ;
+- le propriétaire dispose de toutes les permissions Supplier, le manager et le
+  comptable de la lecture, et le caissier d’aucun accès Supplier.
+
+Commits atomiques :
+
+```text
+826b80e feat(purchasing): add supplier aggregate
+f669e5a feat(purchasing): persist suppliers
+6a95c0a feat(access): add supplier permissions
+6dba00d feat(purchasing): add supplier management
+6cbd682 test(access): align supplier permission catalog
+```
+
+Validation locale :
+
+```text
+Suite PHPUnit complète : OK (592 tests, 2 866 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+Migrations dev/test : version 20260828210000 appliquée
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.2 — Supplier aggregate et persistence tenant-scoped. Les
-décisions structurantes sur la réception directe, l’over-receipt, le costing
-prospectif des corrections et PurchaseReturn au coût moyen courant doivent être
-formalisées avant les epics qui les consomment.
+Formaliser puis implémenter l’Epic 6.3 — `PurchasingPolicy`. La baseline du
+planning autorise la réception directe et interdit l’over-receipt sans
+permission, motif et auteur explicites.
