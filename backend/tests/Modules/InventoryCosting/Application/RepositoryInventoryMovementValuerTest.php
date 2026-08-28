@@ -128,10 +128,41 @@ final class RepositoryInventoryMovementValuerTest extends TestCase
         self::assertSame('0198f709-1111-7111-8111-111111111111', $ledger->source()->referenceId());
     }
 
+    public function testItRestoresASaleReturnAtItsOriginalCost(): void
+    {
+        $valuation = $this->valuation('8', '4700');
+        $valuations = $this->createStub(StockValuationRepository::class);
+        $valuations->method('getByStockForUpdate')->willReturn($valuation);
+        $ledger = null;
+        $movements = $this->createMock(StockValuationMovementRepository::class);
+        $movements->expects(self::once())->method('append')->willReturnCallback(static function (StockValuationMovement $movement) use (&$ledger): void {
+            $ledger = $movement;
+        });
+
+        $this->valuer($valuations, $movements)->value($this->movement(
+            InventoryCostingMovementType::SaleReturn,
+            '2',
+            '8',
+            '10',
+            '4000',
+            '0198f70a-1111-7111-8111-111111111111',
+        ));
+
+        self::assertSame('10', $valuation->quantityOnHand()->toString());
+        self::assertSame('45600.000000', $valuation->totalValue()->amount()->toString());
+        self::assertSame('4560.000000000000', $valuation->averageUnitCost()->amount()->toString());
+        self::assertInstanceOf(StockValuationMovement::class, $ledger);
+        self::assertSame(StockValuationMovementType::SaleReturn, $ledger->type());
+        self::assertSame('4000.000000000000', $ledger->unitCost()->amount()->toString());
+        self::assertSame('8000.000000', $ledger->value()->amount()->toString());
+        self::assertSame('0198f70a-1111-7111-8111-111111111111', $ledger->source()->referenceId());
+    }
+
     /** @return iterable<string, array{InventoryCostingMovementType, ?string, string}> */
     public static function invalidCostPolicy(): iterable
     {
         yield 'incoming without cost' => [InventoryCostingMovementType::AdjustmentIn, null, 'VALUATION_UNIT_COST_REQUIRED'];
+        yield 'sale return without original cost' => [InventoryCostingMovementType::SaleReturn, null, 'VALUATION_UNIT_COST_REQUIRED'];
         yield 'outgoing with cost' => [InventoryCostingMovementType::AdjustmentOut, '1', 'VALUATION_UNIT_COST_UNEXPECTED'];
     }
 

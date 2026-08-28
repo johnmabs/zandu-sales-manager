@@ -46,7 +46,7 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
 
         $previousTotal = $valuation->totalValue();
         $previousAverage = $valuation->averageUnitCost();
-        $result = InventoryCostingMovementType::AdjustmentIn === $movement->type
+        $result = $movement->type->isIncoming()
             ? $valuation->receive($movement->quantity, $this->requiredIncomingCost($incomingUnitCost), $this->calculator)
             : $valuation->issue($movement->quantity, $this->calculator);
         $this->assertResultingQuantity($movement, $result);
@@ -109,6 +109,7 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
             InventoryCostingMovementType::AdjustmentIn => StockValuationMovementType::AdjustmentIn,
             InventoryCostingMovementType::AdjustmentOut => StockValuationMovementType::AdjustmentOut,
             InventoryCostingMovementType::Sale => StockValuationMovementType::Sale,
+            InventoryCostingMovementType::SaleReturn => StockValuationMovementType::SaleReturn,
         };
 
         return StockValuationMovement::record(
