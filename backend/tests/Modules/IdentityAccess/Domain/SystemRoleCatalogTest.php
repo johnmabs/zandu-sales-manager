@@ -56,6 +56,8 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::SaleUpdateDraft,
             PermissionCode::SaleCancelDraft,
             PermissionCode::SaleComplete,
+            PermissionCode::PaymentRefundCreate,
+            PermissionCode::PaymentRefundRead,
         ], $roles[1]->permissions());
         self::assertSame([
             PermissionCode::StoreRead,
@@ -73,6 +75,8 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::SaleUpdateDraft,
             PermissionCode::SaleCancelDraft,
             PermissionCode::SaleComplete,
+            PermissionCode::PaymentRefundCreate,
+            PermissionCode::PaymentRefundRead,
         ], $roles[2]->permissions());
         self::assertSame([
             PermissionCode::OrganizationRead,
@@ -86,6 +90,7 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::CashSessionRead,
             PermissionCode::CashMovementRead,
             PermissionCode::SaleRead,
+            PermissionCode::PaymentRefundRead,
         ], $roles[3]->permissions());
 
         foreach (array_slice($roles, 1) as $nonOwnerRole) {

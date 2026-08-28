@@ -38,4 +38,5 @@ enum SecurityAction: string
     case CashOutRecorded = 'CASH_OUT_RECORDED';
     case CashWithdrawalRecorded = 'CASH_WITHDRAWAL_RECORDED';
     case SaleCompleted = 'SALE_COMPLETED';
+    case PaymentRefundConfirmed = 'PAYMENT_REFUND_CONFIRMED';
 }

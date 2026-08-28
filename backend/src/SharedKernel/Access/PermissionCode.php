@@ -80,4 +80,7 @@ enum PermissionCode: string
     case SaleCancelDraft = 'SALE_CANCEL_DRAFT';
     case SaleComplete = 'SALE_COMPLETE';
     case SalePriceOverride = 'SALE_PRICE_OVERRIDE';
+
+    case PaymentRefundCreate = 'PAYMENT_REFUND_CREATE';
+    case PaymentRefundRead = 'PAYMENT_REFUND_READ';
 }

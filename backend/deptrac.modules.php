@@ -259,7 +259,7 @@ return static function (DeptracConfig $config): void {
             Ruleset::forLayer($cashManagement)
                 ->accesses($cashManagementContract, $identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
             Ruleset::forLayer($payments)
-                ->accesses($salesContract, $sharedKernel, $framework),
+                ->accesses($salesContract, $cashManagementContract, $identityAccessContract, $organizationContract, $sharedKernel, $framework),
             Ruleset::forLayer($salesContract)->accesses($sharedKernel),
             Ruleset::forLayer($inventoryContract)->accesses($sharedKernel),
             Ruleset::forLayer($inventoryCostingContract)->accesses($sharedKernel),
