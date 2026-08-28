@@ -23,7 +23,7 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | En cours — workflow Returns et remboursement cash opérationnels |
 
-Dernière validation consolidée le 28 août 2026 : **566 tests et 2 693
+Dernière validation consolidée le 28 août 2026 : **571 tests et 2 742
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -242,7 +242,10 @@ de caisse `REFUND` sortant sur une session ouverte, plus audit et outbox dans la
 même transaction. Le rejeu idempotent ne duplique aucun effet et le workflow
 ne touche jamais Inventory ou Costing. Une matrice de fautes PostgreSQL prouve
 également qu’une erreur d’audit, d’outbox ou juste avant commit annule ensemble
-le remboursement, le mouvement Cash et tous leurs effets transverses.
+le remboursement, le mouvement Cash et tous leurs effets transverses. La même
+preuve couvre `CompleteReturnSale` : une faute après restock/valorisation ou
+pendant les effets transverses restaure le Stock, le Costing et le retour sans
+aucun ledger partiel.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario

@@ -72,6 +72,7 @@ Epic 5.12   TERMINÉ   Montants de retour alloués depuis les snapshots originau
 Epic 5.13   TERMINÉ   Remboursement cash essentiel, borné et idempotent
 API Returns TERMINÉ   Workflow ReturnSale complet exposé et documenté
 Rollback Refund TERMINÉ Faute tardive sans aucun ledger partiel
+Rollback Return TERMINÉ Inventory, Costing et ledgers sans effet partiel
 Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```
 
@@ -80,7 +81,7 @@ Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 566 tests, 2 693 assertions
+Tests                 571 tests, 2 742 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8616,10 +8617,43 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Atomicité CompleteReturnSale — matrice PostgreSQL
+
+**Statut : TERMINÉ**
+
+- scénario d’intégration avec les repositories réels de Sales, Inventory,
+  Inventory Costing, audit et outbox ;
+- faute `inventory` injectée après création du mouvement `SALE_RETURN`, hausse
+  du Stock, mise à jour de la valorisation et création du ledger Costing ;
+- fautes supplémentaires injectées à l’audit, à l’outbox et juste avant
+  `COMMIT` ;
+- chaque faute maintient le retour `DRAFT`, le Stock à `8`, la valorisation à
+  `3 200 XAF` et ne conserve ni montant de retour, ni mouvement physique, ni
+  ledger Costing, ni audit, ni outbox ;
+- le chemin nominal valide atomiquement le retour `COMPLETED`, le Stock à `14`,
+  la valorisation à `5 600 XAF` et tous les ledgers associés.
+
+Commit atomique :
+
+```text
+5604d36 test(returns): verify return transaction rollback
+```
+
+Validation consolidée :
+
+```text
+CompleteReturnSaleAtomicityTest : OK (5 tests, 49 assertions)
+Suite PHPUnit complète : OK (571 tests, 2 742 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
 Auditer le Gate de sortie du Lot 5 puis compléter en priorité les preuves encore
-absentes des chapitres 32 à 37 : matrice de rollback de la complétion
-`ReturnSale`, idempotence transverse et isolation tenant/scopes. Le Lot 5 ne
-sera déclaré terminé qu’après la démonstration consolidée et la validation de
-chaque critère du chapitre 39.
+absentes des chapitres 32 à 37 : idempotence transverse Return/Refund et
+isolation tenant/scopes des nouveaux points d’entrée. Le Lot 5 ne sera déclaré
+terminé qu’après la démonstration consolidée et la validation de chaque critère
+du chapitre 39.
