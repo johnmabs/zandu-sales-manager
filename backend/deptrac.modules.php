@@ -75,6 +75,12 @@ return static function (DeptracConfig $config): void {
         ),
     );
 
+    $purchasingContract = Layer::withName('PurchasingContract')->collectors(
+        ClassLikeConfig::create(
+            '.*Zandu\\Modules\\Purchasing\\Application\\Contract\\.*',
+        ),
+    );
+
     $sales = Layer::withName('Sales')->collectors(
         BoolConfig::create(
             must: [
@@ -130,6 +136,21 @@ return static function (DeptracConfig $config): void {
             mustNot: [
                 ClassLikeConfig::create(
                     '.*Zandu\\Modules\\CashManagement\\Application\\Contract\\.*',
+                ),
+            ],
+        ),
+    );
+
+    $purchasing = Layer::withName('Purchasing')->collectors(
+        BoolConfig::create(
+            must: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Purchasing\\.*',
+                ),
+            ],
+            mustNot: [
+                ClassLikeConfig::create(
+                    '.*Zandu\\Modules\\Purchasing\\Application\\Contract\\.*',
                 ),
             ],
         ),
@@ -206,6 +227,8 @@ return static function (DeptracConfig $config): void {
             $inventoryCostingContract,
             $cashManagement,
             $cashManagementContract,
+            $purchasing,
+            $purchasingContract,
             $payments,
             $identityAccess,
             $identityAccessContract,
@@ -258,12 +281,15 @@ return static function (DeptracConfig $config): void {
                 ->accesses($inventoryCostingContract, $inventoryContract, $identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
             Ruleset::forLayer($cashManagement)
                 ->accesses($cashManagementContract, $identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
+            Ruleset::forLayer($purchasing)
+                ->accesses($purchasingContract, $catalogContract, $inventoryContract, $inventoryCostingContract, $identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
             Ruleset::forLayer($payments)
                 ->accesses($salesContract, $cashManagementContract, $identityAccessContract, $organizationContract, $sharedKernel, $framework),
             Ruleset::forLayer($salesContract)->accesses($sharedKernel),
             Ruleset::forLayer($inventoryContract)->accesses($sharedKernel),
             Ruleset::forLayer($inventoryCostingContract)->accesses($sharedKernel),
             Ruleset::forLayer($cashManagementContract)->accesses($sharedKernel),
+            Ruleset::forLayer($purchasingContract)->accesses($sharedKernel),
             Ruleset::forLayer($identityAccess)
                 ->accesses($identityAccessContract, $organizationContract, $sharedKernel, $platform, $framework),
             Ruleset::forLayer($identityAccessContract)->accesses($sharedKernel),
