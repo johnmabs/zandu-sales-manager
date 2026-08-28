@@ -10,6 +10,8 @@ use Zandu\SharedKernel\Identity\CashSessionId;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
+use Zandu\SharedKernel\Identity\PurchaseOrderId;
+use Zandu\SharedKernel\Identity\PurchaseOrderLineId;
 use Zandu\SharedKernel\Identity\SaleId;
 use Zandu\SharedKernel\Identity\StockId;
 use Zandu\SharedKernel\Identity\StoreId;
@@ -71,6 +73,8 @@ final class TypedIdTest extends TestCase
         yield 'stock' => [StockId::class];
         yield 'cash session' => [CashSessionId::class];
         yield 'supplier' => [SupplierId::class];
+        yield 'purchase order' => [PurchaseOrderId::class];
+        yield 'purchase order line' => [PurchaseOrderLineId::class];
     }
 }
 
