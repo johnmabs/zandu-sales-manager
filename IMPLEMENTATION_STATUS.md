@@ -73,6 +73,7 @@ Epic 5.13   TERMINÉ   Remboursement cash essentiel, borné et idempotent
 API Returns TERMINÉ   Workflow ReturnSale complet exposé et documenté
 Rollback Refund TERMINÉ Faute tardive sans aucun ledger partiel
 Rollback Return TERMINÉ Inventory, Costing et ledgers sans effet partiel
+Idempotence TERMINÉ   Rejeux Return/Refund sans aucun effet dupliqué
 Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```
 
@@ -81,7 +82,7 @@ Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 571 tests, 2 742 assertions
+Tests                 571 tests, 2 745 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8650,10 +8651,41 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Idempotence transverse Return / Refund
+
+**Statut : TERMINÉ**
+
+- `CompleteReturnSaleService` reconnaît désormais sous verrou un retour déjà
+  `COMPLETED` et renvoie son résultat persisté après les contrôles
+  d’autorisation et de scope ;
+- le rejeu ne rappelle ni Inventory ni Costing et ne duplique aucun mouvement,
+  montant, audit ou message outbox ;
+- le refund rejoué avec la même `Idempotency-Key` et le même payload renvoie le
+  même `PaymentRefund` persisté ;
+- aucun second `CashMovement REFUND`, audit ou message outbox n’est créé ;
+- les preuves sont exécutées avec les repositories PostgreSQL réels.
+
+Commits atomiques :
+
+```text
+6cb1aa8 fix(sales): make return completion idempotent
+429a523 test(payments): verify persisted refund replay
+```
+
+Validation consolidée :
+
+```text
+Tests ciblés Return/Refund : OK (17 tests, 100 assertions)
+Suite PHPUnit complète : OK (571 tests, 2 745 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Auditer le Gate de sortie du Lot 5 puis compléter en priorité les preuves encore
-absentes des chapitres 32 à 37 : idempotence transverse Return/Refund et
-isolation tenant/scopes des nouveaux points d’entrée. Le Lot 5 ne sera déclaré
-terminé qu’après la démonstration consolidée et la validation de chaque critère
-du chapitre 39.
+Auditer le Gate de sortie du Lot 5 puis compléter l’isolation tenant et les
+scopes Store des nouveaux points d’entrée Returns/Refund. Le Lot 5 ne sera
+déclaré terminé qu’après la démonstration consolidée et la validation de chaque
+critère du chapitre 39.
