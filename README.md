@@ -5,11 +5,11 @@ conçue pour administrer des organisations, leurs magasins, leurs membres et
 leurs droits d'accès, ainsi que le catalogue, la tarification, les stocks, les
 caisses et les ventes.
 
-Le projet est actuellement en développement. Les **Lots 0 à 4** sont terminés
-et le **Gate M2 — première vente cash de bout en bout** est validé. Le **Lot 5 —
-Inventory Costing & Returns** est entré en implémentation ; il constitue la
-première partie du jalon M3 consacré à la gestion complète du stock. L'état
-détaillé, le backlog et les preuves de validation sont disponibles dans
+Le projet est actuellement en développement. Les **Lots 0 à 5** sont terminés,
+le **Gate M2 — première vente cash de bout en bout** est validé et le **Lot 5 —
+Inventory Costing & Returns** clôt la première partie du jalon M3 consacré à la
+gestion complète du stock. L'état détaillé, le backlog et les preuves de
+validation sont disponibles dans
 [`IMPLEMENTATION_STATUS.md`](IMPLEMENTATION_STATUS.md).
 
 ## État de l'implémentation
@@ -21,14 +21,13 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | Prêt pour CI — Gate local validé |
+| 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 
 Dernière validation consolidée le 28 août 2026 : **576 tests et 2 777
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
-Composer verrouillées. L’image production et la restauration PostgreSQL sont
-également validées localement ; la clôture du Lot 5 attend la CI distante après
-publication des commits.
+Composer verrouillées. L’image production, la restauration PostgreSQL et le
+workflow GitHub Actions `Backend CI` sont également validés.
 
 ## Stack technique
 

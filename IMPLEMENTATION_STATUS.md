@@ -41,15 +41,16 @@ Epic 1.9   TERMINÉ   Integration & tenant isolation tests
 Gate Lot 1 TERMINÉ   Administration opérationnelle complète
 ```
 
-Les Lots 2, 3 et 4 sont également clos :
+Les Lots 2, 3, 4 et 5 sont également clos :
 
 ```text
 Gate Lot 2 TERMINÉ   Catalogue et tarification de base opérationnels
 Gate Lot 3 TERMINÉ   Inventory et Cash foundations opérationnels
 Gate Lot 4 TERMINÉ   M2 — première vente cash de bout en bout
+Gate Lot 5 TERMINÉ   Inventory Costing & Returns, première partie de M3
 ```
 
-Le Lot 5 est en cours :
+Le détail du Lot 5 clôturé :
 
 ```text
 Phase 0     TERMINÉ   ADR Costing et Refund, planning aligné
@@ -75,7 +76,7 @@ Rollback Refund TERMINÉ Faute tardive sans aucun ledger partiel
 Rollback Return TERMINÉ Inventory, Costing et ledgers sans effet partiel
 Idempotence TERMINÉ   Rejeux Return/Refund sans aucun effet dupliqué
 Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
-Gate Lot 5  PRÊT CI   Gate local validé, confirmation GitHub Actions attendue
+Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
 État consolidé au 28 août 2026 :
@@ -8718,7 +8719,7 @@ Deptrac modules : 0 violation, 10 uncovered
 
 ### Démonstration consolidée et audit du Gate Lot 5
 
-**Statut : PRÊT POUR CI**
+**Statut : TERMINÉ**
 
 La démonstration PostgreSQL enchaîne dans une même fixture une vente cash déjà
 valorisée, un retour partiel avec restock au coût original puis un remboursement
@@ -8759,8 +8760,8 @@ Audit du chapitre 39 :
   historique n’est inventée ;
 - lint Composer/Symfony, PHP-CS-Fixer, PHPStan, Deptrac, PHPUnit, Composer audit,
   image production immutable et backup/restore : verts localement ;
-- CI GitHub distante : en attente, car la branche locale n’a pas encore été
-  poussée. Le Gate ne sera marqué `TERMINÉ` qu’après son succès.
+- CI GitHub distante : workflow `Backend CI` terminé avec succès sur le commit
+  `7c1e3ff` le 28 août 2026 ([run 33187545106](https://github.com/johnmabs/zandu-sales-manager/actions/runs/33187545106)).
 
 Validation locale consolidée :
 
@@ -8774,11 +8775,11 @@ Composer audit --locked : aucune vulnérabilité
 Conteneur Symfony : OK
 Image production immutable : health/ready OK
 Backup/restore PostgreSQL : OK, 41 migrations restaurées
-GitHub Actions : EN ATTENTE DE PUSH
+GitHub Actions : OK — run 33187545106 sur 7c1e3ff
 ```
 
 ### Prochaine étape
 
-Pousser les commits, attendre la réussite du workflow `Backend CI`, puis marquer
-le Gate Lot 5 `TERMINÉ`. En cas d’échec distant, corriger la cause dans un commit
-atomique avant la clôture.
+Préparer le Lot 6 Purchasing : rédiger son planning détaillé et décider les ADR
+nécessaires pour Supplier, PurchaseOrder, GoodsReceipt, coût d’entrée Inventory
+et corrections compensatoires avant toute implémentation.
