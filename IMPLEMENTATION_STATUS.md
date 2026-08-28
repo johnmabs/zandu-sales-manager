@@ -74,6 +74,7 @@ API Returns TERMINÉ   Workflow ReturnSale complet exposé et documenté
 Rollback Refund TERMINÉ Faute tardive sans aucun ledger partiel
 Rollback Return TERMINÉ Inventory, Costing et ledgers sans effet partiel
 Idempotence TERMINÉ   Rejeux Return/Refund sans aucun effet dupliqué
+Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```
 
@@ -82,7 +83,7 @@ Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 571 tests, 2 745 assertions
+Tests                 575 tests, 2 767 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8683,9 +8684,41 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Isolation tenant et scopes Store — Return / Refund
+
+**Statut : TERMINÉ**
+
+- sous le rôle PostgreSQL runtime du tenant A, une vente du tenant B est
+  invisible et aucune création de `ReturnSale` n’est possible ;
+- un paiement d’un autre tenant est également résolu comme absent avant toute
+  création de refund ou sortie de caisse ;
+- les handlers transmettent les permissions `SALE_RETURN_CREATE` et
+  `PAYMENT_REFUND_CREATE` avec le scope exact du magasin source ;
+- un refus d’autorisation empêche la sauvegarde du retour et tout
+  `CashMovement REFUND` ;
+- les scénarios négatifs conservent zéro effet métier ou transverse.
+
+Commits atomiques :
+
+```text
+c20ed9e test(returns): verify tenant and store isolation
+4c38e8b test(payments): verify refund tenant and store isolation
+```
+
+Validation consolidée :
+
+```text
+Tests ciblés isolation Return/Refund : OK (21 tests, 92 assertions)
+Suite PHPUnit complète : OK (575 tests, 2 767 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Auditer le Gate de sortie du Lot 5 puis compléter l’isolation tenant et les
-scopes Store des nouveaux points d’entrée Returns/Refund. Le Lot 5 ne sera
-déclaré terminé qu’après la démonstration consolidée et la validation de chaque
-critère du chapitre 39.
+Effectuer l’audit final du Gate Lot 5 contre chaque critère du chapitre 39,
+exécuter la démonstration consolidée Costing/Return/Refund et vérifier les
+contrôles externes restants, notamment Composer audit et CI, avant de déclarer
+le Lot 5 terminé.
