@@ -73,9 +73,12 @@ final class CashPaymentRefundAtomicityTest extends KernelTestCase
 
     public function testSuccessfulRefundCommitsEveryLedgerTogether(): void
     {
-        $refund = ($this->service(null))($this->command());
+        $service = $this->service(null);
+        $refund = $service($this->command());
+        $replayed = $service($this->command());
 
         self::assertSame('CONFIRMED', $refund->status()->value);
+        self::assertTrue($refund->id()->equals($replayed->id()));
         self::assertSame(1, $this->rowCount('payments.payment_refund'));
         self::assertSame(1, $this->rowCount('cash_management.cash_movement'));
         self::assertSame(1, $this->rowCount('security.security_audit_entries'));
