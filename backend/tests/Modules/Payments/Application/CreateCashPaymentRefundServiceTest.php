@@ -14,6 +14,7 @@ use Zandu\Modules\Payments\Domain\{Payment, PaymentRefund, PaymentRefundReposito
 use Zandu\Modules\Sales\Application\Contract\{RefundableReturn, RefundableReturnProvider};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
+use Zandu\SharedKernel\Access\{AuthorizationDenied, PermissionCode, ResourceScope};
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Idempotency\IdempotencyKey;
 use Zandu\SharedKernel\Identity\{ActorId, CashSessionId, OrganizationId, PaymentId, ReturnSaleId, SaleId, StoreId};
@@ -117,7 +118,27 @@ final class CreateCashPaymentRefundServiceTest extends TestCase
         self::assertSame('0', $repository->confirmedTotalForPayment($this->organizationId(), $this->paymentId(), Currency::fromCode('XAF'))->amount()->toString());
     }
 
-    private function service(InMemoryPaymentRefundRepository $refunds, CashRefundRecorder $cash, string $paymentAmount = '1000', string $returnAmount = '1000'): CreateCashPaymentRefundService
+    public function testStoreScopedDenialPreventsCashRefund(): void
+    {
+        $repository = new InMemoryPaymentRefundRepository($this->decimals());
+        $actor = $this->actor();
+        $scope = ResourceScope::store($this->organizationId(), $this->storeId());
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::once())
+            ->method('authorize')
+            ->with($actor, PermissionCode::PaymentRefundCreate, self::callback(
+                fn(ResourceScope $actual): bool => $actual->organizationId->equals($scope->organizationId)
+                    && $actual->storeId?->equals($this->storeId()),
+            ))
+            ->willThrowException(AuthorizationDenied::forPermission($actor, PermissionCode::PaymentRefundCreate, $scope));
+        $cash = $this->createMock(CashRefundRecorder::class);
+        $cash->expects(self::never())->method('recordCashRefund');
+
+        $this->expectException(AuthorizationDenied::class);
+        ($this->service($repository, $cash, authorization: $authorization))($this->command('400', 'denied-key', $actor));
+    }
+
+    private function service(InMemoryPaymentRefundRepository $refunds, CashRefundRecorder $cash, string $paymentAmount = '1000', string $returnAmount = '1000', ?AuthorizationService $authorization = null): CreateCashPaymentRefundService
     {
         $payment = Payment::createCashSale($this->paymentId(), $this->organizationId(), $this->saleId(), $this->money($paymentAmount), $this->actor()->actorId(), new DateTimeImmutable('2026-08-28T09:00:00Z'));
         $payment->confirm(new DateTimeImmutable('2026-08-28T09:00:00Z'));
@@ -138,7 +159,7 @@ final class CreateCashPaymentRefundServiceTest extends TestCase
             $refunds,
             $returns,
             $cash,
-            $this->createStub(AuthorizationService::class),
+            $authorization ?? $this->createStub(AuthorizationService::class),
             $this->createStub(OperationalGuard::class),
             $this->createStub(SecurityAuditTrail::class),
             $this->createStub(OutboxRepository::class),
@@ -147,9 +168,9 @@ final class CreateCashPaymentRefundServiceTest extends TestCase
         );
     }
 
-    private function command(string $amount, string $key): CreateCashPaymentRefund
+    private function command(string $amount, string $key, ?ActorContext $actor = null): CreateCashPaymentRefund
     {
-        return new CreateCashPaymentRefund($this->paymentId(), $this->returnSaleId(), $this->cashSessionId(), $this->money($amount), ' Customer return ', IdempotencyKey::fromString($key), $this->actor());
+        return new CreateCashPaymentRefund($this->paymentId(), $this->returnSaleId(), $this->cashSessionId(), $this->money($amount), ' Customer return ', IdempotencyKey::fromString($key), $actor ?? $this->actor());
     }
 
     private function actor(): ActorContext

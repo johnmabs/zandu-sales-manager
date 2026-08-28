@@ -85,6 +85,20 @@ final class CashPaymentRefundAtomicityTest extends KernelTestCase
         self::assertSame(2, $this->rowCount('messaging.outbox_messages'));
     }
 
+    public function testRuntimeTenantCannotRefundAnotherTenantPayment(): void
+    {
+        $otherOrganization = OrganizationId::fromString('019a3800-0000-7000-8000-000000000099', $this->uuids);
+
+        try {
+            ($this->service(null))($this->command($this->actor($otherOrganization)));
+            self::fail('Another tenant payment must remain hidden from the refund workflow.');
+        } catch (\LogicException $exception) {
+            self::assertSame('Payment not found.', $exception->getMessage());
+        }
+
+        $this->assertNoRefundEffect();
+    }
+
     /** @return iterable<string, array{string}> */
     public static function lateFailurePhases(): iterable
     {
@@ -121,7 +135,7 @@ final class CashPaymentRefundAtomicityTest extends KernelTestCase
         );
     }
 
-    private function command(): CreateCashPaymentRefund
+    private function command(?ActorContext $actor = null): CreateCashPaymentRefund
     {
         return new CreateCashPaymentRefund(
             $this->paymentId(),
@@ -130,7 +144,7 @@ final class CashPaymentRefundAtomicityTest extends KernelTestCase
             $this->money('400'),
             'Customer return',
             IdempotencyKey::fromString('atomic-refund-key'),
-            $this->actor(),
+            $actor ?? $this->actor(),
         );
     }
 
@@ -175,11 +189,11 @@ final class CashPaymentRefundAtomicityTest extends KernelTestCase
         return (int) $this->connection->fetchOne('SELECT COUNT(*) FROM ' . $table . ' WHERE organization_id = ?', [self::ORGANIZATION]);
     }
 
-    private function actor(): ActorContext
+    private function actor(?OrganizationId $organizationId = null): ActorContext
     {
         return new ActorContext(
             ActorId::fromString(self::ACTOR, $this->uuids),
-            $this->organizationId(),
+            $organizationId ?? $this->organizationId(),
             ActorType::User,
             CorrelationId::fromString('019a3800-0000-7000-8000-000000000010', $this->uuids),
             new DateTimeImmutable('2026-08-28T11:00:00Z'),
