@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — mécanisme physique SALE_RETURN prêt |
+| 5 | Inventory Costing et Returns | En cours — retours restockés au coût original |
 
-Dernière validation consolidée le 28 août 2026 : **537 tests et 2 571
+Dernière validation consolidée le 28 août 2026 : **542 tests et 2 593
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -224,8 +224,8 @@ La complétion verrouille la vente source, exige son statut `COMPLETED` et
 empêche les retours cumulés de dépasser chaque quantité vendue. Les endpoints
 Returns restent à construire. Inventory sait désormais préparer un restock
 idempotent `SALE_RETURN` pour les lignes `restock=true`. Son activation dans
-la complétion attend volontairement la restauration atomique du coût original,
-afin de ne jamais désynchroniser Stock et StockValuation.
+la complétion restaure désormais simultanément le coût snapshoté d’origine et
+crée le ledger Costing associé, sans désynchroniser Stock et StockValuation.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario

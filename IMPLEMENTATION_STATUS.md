@@ -66,8 +66,9 @@ Epic 5.8    TERMINÉ   Atomicité CompleteSale/Costing prouvée par faute inject
 Epic 5.9    TERMINÉ   ReturnSale et ReturnSaleLine foundation
 Persistence TERMINÉ   ReturnSale PostgreSQL, snapshots liés et RLS
 Returns     TERMINÉ   Vente source terminée et limites cumulatives
-Epic 5.10   EN COURS  Mécanisme SALE_RETURN prêt, branchement différé au costing
-Epic 5.11   PROCHAINE Restaurer le coût original et activer le restock atomique
+Epic 5.10   TERMINÉ   Restock Inventory idempotent via SALE_RETURN
+Epic 5.11   TERMINÉ   Coût original restauré et restock activé atomiquement
+Epic 5.12   PROCHAINE Calculer les montants de retour depuis les snapshots
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -76,7 +77,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260828140000 appliquée en dernier
-Tests                 537 tests, 2 571 assertions
+Tests                 542 tests, 2 593 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7878,7 +7879,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — mécanisme physique SALE_RETURN prêt.**
+**État courant : EN COURS — retours restockés au coût original.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8341,8 +8342,7 @@ Deptrac modules : 0 violation, 10 uncovered
 
 ### Epic 5.10 — Inventory restock
 
-**Statut : EN COURS — mécanisme physique terminé, activation transactionnelle
-reportée avec l’Epic 5.11.**
+**Statut : TERMINÉ**
 
 - nouveau type de mouvement physique `SALE_RETURN`, direction entrante et
   source `RETURN / ReturnSaleId` ;
@@ -8359,13 +8359,11 @@ reportée avec l’Epic 5.11.**
   même retour ne modifie plus le Stock ;
 - résultat typé contenant StockId, StockMovementId, quantités précédente,
   retournée et résultante, prêt pour l’intégration Costing ;
-- aucune mutation pour `restock=false` : Sales filtrera ces lignes lors du
-  branchement transactionnel.
+- aucune mutation pour `restock=false` : Sales filtre ces lignes avant
+  l’appel Inventory.
 
-Le mécanisme n’est pas encore appelé par `CompleteReturnSaleService`. Ce choix
-préserve l’ADR-0021 : une hausse physique ne doit jamais être commitée sans la
-hausse correspondante de `StockValuation`. L’Epic 5.11 branchera donc restock et
-restauration du coût original dans la même transaction.
+Le mécanisme est appelé par `CompleteReturnSaleService` avec la valorisation de
+l’Epic 5.11 dans la même transaction tenant-scoped.
 
 Commit :
 
@@ -8385,10 +8383,51 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.11 — Return costing
+
+**Statut : TERMINÉ**
+
+- nouveau type applicatif Costing `SALE_RETURN`, entrée exigeant un coût
+  explicite et traduite en ledger `StockValuationMovement SALE_RETURN` ;
+- restauration au `unitCost` du `SaleLineCostSnapshot` original, jamais au
+  coût moyen courant ni depuis Catalog/Pricing ;
+- plusieurs lignes historiques d’un même produit sont agrégées en valeur et
+  quantité, puis valorisées avec leur coût original pondéré à 12 décimales ;
+- la valeur restaurée est ajoutée au total courant et le coût moyen résultant
+  est recalculé ;
+- chaque ledger Costing référence exactement le `StockMovement SALE_RETURN` et
+  le `ReturnSaleId` source ;
+- `CompleteReturnSaleService` exige un snapshot de coût pour toute ligne
+  `restock=true`, sinon `SALE_LINE_COST_SNAPSHOT_NOT_FOUND` ;
+- Stock, mouvement physique, valorisation, ledger et passage du retour à
+  `COMPLETED` partagent la même transaction ;
+- une erreur Inventory/Costing survient avant la complétion et provoque le
+  rollback transactionnel ;
+- un rejeu du mécanisme physique déjà commité ne recrée ni mouvement ni
+  valorisation.
+
+Commits atomiques :
+
+```text
+21b2396 feat(costing): value sale return movements
+deb6ef9 feat(costing): restore original sale cost on return
+```
+
+Validation consolidée :
+
+```text
+Tests ciblés Costing/Inventory/Returns : OK (17 tests, 79 assertions)
+Suite PHPUnit complète : OK (542 tests, 2 593 assertions)
+Conteneur Symfony test : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.11 : valoriser chaque restock depuis les
-`SaleLineCostSnapshot` originaux, créer le ledger Costing `SALE_RETURN`, puis
-appeler le mécanisme Inventory depuis `CompleteReturnSaleService` dans sa
-transaction existante. Une absence de snapshot requis ou une erreur Costing
-devra annuler Stock, StockMovement, StockValuation et complétion du retour.
+Implémenter l’Epic 5.12 avec un `ReturnAmountCalculator` fondé exclusivement sur
+les snapshots commerciaux originaux. Les allocations cumulées de prix,
+remise et taxe devront rester bornées par la ligne vendue, et un retour total
+devra restituer exactement le montant original malgré les arrondis.
