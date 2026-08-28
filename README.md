@@ -21,12 +21,14 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — workflow Returns et remboursement cash opérationnels |
+| 5 | Inventory Costing et Returns | Prêt pour CI — Gate local validé |
 
-Dernière validation consolidée le 28 août 2026 : **575 tests et 2 767
+Dernière validation consolidée le 28 août 2026 : **576 tests et 2 777
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
-Composer verrouillées.
+Composer verrouillées. L’image production et la restauration PostgreSQL sont
+également validées localement ; la clôture du Lot 5 attend la CI distante après
+publication des commits.
 
 ## Stack technique
 

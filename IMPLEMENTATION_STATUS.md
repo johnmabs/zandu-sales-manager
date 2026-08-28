@@ -75,7 +75,7 @@ Rollback Refund TERMINÉ Faute tardive sans aucun ledger partiel
 Rollback Return TERMINÉ Inventory, Costing et ledgers sans effet partiel
 Idempotence TERMINÉ   Rejeux Return/Refund sans aucun effet dupliqué
 Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
-Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
+Gate Lot 5  PRÊT CI   Gate local validé, confirmation GitHub Actions attendue
 ```
 
 État consolidé au 28 août 2026 :
@@ -83,7 +83,7 @@ Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 575 tests, 2 767 assertions
+Tests                 576 tests, 2 777 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8716,9 +8716,69 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Démonstration consolidée et audit du Gate Lot 5
+
+**Statut : PRÊT POUR CI**
+
+La démonstration PostgreSQL enchaîne dans une même fixture une vente cash déjà
+valorisée, un retour partiel avec restock au coût original puis un remboursement
+cash du montant snapshoté. Elle confirme :
+
+```text
+Stock après vente                    8
+Stock après retour                  14
+Valeur après vente          3 200 XAF
+Valeur après retour         5 600 XAF
+StockMovement SALE_RETURN            1
+StockValuationMovement SALE_RETURN   1
+PaymentRefund CONFIRMED               1
+CashMovement REFUND                   1
+Audits sensibles                      2
+Messages outbox                       4
+```
+
+Commit atomique :
+
+```text
+897712c test(returns): demonstrate return and cash refund workflow
+```
+
+Audit du chapitre 39 :
+
+- fondation Costing, moving weighted average, snapshots, ledgers append-only et
+  atomicité CompleteSale : validés ;
+- ReturnSale, quantités et montants cumulatifs, restock optionnel, coût original,
+  concurrence, rollback et idempotence : validés ;
+- PaymentRefund cash, plafonds, séparation Return/Refund, rollback et
+  idempotence : validés ;
+- permissions, scopes Store, audit, API/OpenAPI, contrat d’erreurs, PostgreSQL,
+  contraintes, RLS et isolation tenant : validés ;
+- absence de `Product.costPrice`, de calcul monétaire en `float` et des domaines
+  explicitement hors périmètre : vérifiée ;
+- ADR de bootstrap inchangée et toujours alignée ; aucune valorisation
+  historique n’est inventée ;
+- lint Composer/Symfony, PHP-CS-Fixer, PHPStan, Deptrac, PHPUnit, Composer audit,
+  image production immutable et backup/restore : verts localement ;
+- CI GitHub distante : en attente, car la branche locale n’a pas encore été
+  poussée. Le Gate ne sera marqué `TERMINÉ` qu’après son succès.
+
+Validation locale consolidée :
+
+```text
+Suite PHPUnit complète : OK (576 tests, 2 777 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation
+Composer validate : OK
+Composer audit --locked : aucune vulnérabilité
+Conteneur Symfony : OK
+Image production immutable : health/ready OK
+Backup/restore PostgreSQL : OK, 41 migrations restaurées
+GitHub Actions : EN ATTENTE DE PUSH
+```
+
 ### Prochaine étape
 
-Effectuer l’audit final du Gate Lot 5 contre chaque critère du chapitre 39,
-exécuter la démonstration consolidée Costing/Return/Refund et vérifier les
-contrôles externes restants, notamment Composer audit et CI, avant de déclarer
-le Lot 5 terminé.
+Pousser les commits, attendre la réussite du workflow `Backend CI`, puis marquer
+le Gate Lot 5 `TERMINÉ`. En cas d’échec distant, corriger la cause dans un commit
+atomique avant la clôture.
