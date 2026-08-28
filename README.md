@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — retours valorisés et montants originaux alloués |
+| 5 | Inventory Costing et Returns | En cours — retours valorisés et remboursement cash opérationnel |
 
-Dernière validation consolidée le 28 août 2026 : **548 tests et 2 618
+Dernière validation consolidée le 28 août 2026 : **556 tests et 2 639
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -232,6 +232,12 @@ résidu d’arrondi sur le dernier retour : des retours partiels successifs ne
 dépassent jamais les montants originaux et un retour complet restitue exactement
 le total remboursable. Chaque allocation complétée est figée dans une table RLS
 append-only, prête à borner le futur remboursement cash de l’Epic 5.13.
+L’Epic 5.13 fournit désormais `PaymentRefund` et la route canonique
+`POST /api/payments/{paymentId}/refunds`. Le paiement et le retour imposent deux
+plafonds cumulatifs distincts sous verrou ; chaque succès ajoute un mouvement
+de caisse `REFUND` sortant sur une session ouverte, plus audit et outbox dans la
+même transaction. Le rejeu idempotent ne duplique aucun effet et le workflow
+ne touche jamais Inventory ou Costing.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario

@@ -69,7 +69,8 @@ Returns     TERMINÉ   Vente source terminée et limites cumulatives
 Epic 5.10   TERMINÉ   Restock Inventory idempotent via SALE_RETURN
 Epic 5.11   TERMINÉ   Coût original restauré et restock activé atomiquement
 Epic 5.12   TERMINÉ   Montants de retour alloués depuis les snapshots originaux
-Epic 5.13   PROCHAINE Remboursement cash essentiel et idempotent
+Epic 5.13   TERMINÉ   Remboursement cash essentiel, borné et idempotent
+API Returns PROCHAINE Exposer le workflow ReturnSale complet
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -77,8 +78,8 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 
 ```text
 Branche              main
-Migrations           Version20260828160000 appliquée en dernier
-Tests                 548 tests, 2 618 assertions
+Migrations           Version20260828180000 appliquée en dernier
+Tests                 556 tests, 2 639 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8467,9 +8468,55 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.13 — Essential cash refund
+
+**Statut : TERMINÉ**
+
+- `PaymentRefund` appartient à Payments et conserve paiement, retour,
+  `CashSession`, montant, devise, raison, acteur, statut et clé d’idempotence ;
+- le ledger `payments.payment_refund` est tenant-scoped, protégé par RLS et
+  append-only pour le rôle runtime ;
+- Payments verrouille le paiement original avant de lire les cumuls, exige un
+  paiement `CASH` confirmé et vérifie séparément les plafonds du paiement et du
+  `ReturnSale` ;
+- Sales expose uniquement le contrat `RefundableReturnProvider` : Payments ne
+  dépend ni du domaine ni de la persistence Sales ;
+- même clé et même payload renvoient le refund existant, tandis qu’un payload
+  différent produit `IDEMPOTENCY_CONFLICT` ;
+- CashManagement exige une session `OPEN` du même magasin et de la même devise,
+  puis crée exactement un `CashMovement REFUND` sortant ;
+- refund, mouvement Cash, audit et outbox sont enregistrés dans la même
+  transaction tenant-scoped ; une faute Cash laisse le refund non persisté ;
+- les permissions `PAYMENT_REFUND_CREATE` et `PAYMENT_REFUND_READ` sont
+  intégrées aux rôles système ;
+- l’API canonique `POST /api/payments/{paymentId}/refunds` exige
+  `Idempotency-Key` et est publiée dans Swagger UI/ReDoc ;
+- aucun chemin de remboursement ne dépend d’Inventory ni de Costing.
+
+Commits atomiques :
+
+```text
+0e1bca1 feat(payments): add payment refund ledger
+025ec96 feat(cash): record cash refund movement
+1c01242 feat(payments): add cash payment refund
+```
+
+Validation consolidée :
+
+```text
+Suite PHPUnit complète : OK (556 tests, 2 639 assertions)
+Migration dev et test : Version20260828180000
+Route API Platform : POST /api/payments/{paymentId}/refunds
+Conteneur Symfony test : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.13 — remboursement cash essentiel — conformément à
-l’ADR-0022 : paiement original confirmé, `ReturnSale` terminé, plafond par
-montant remboursable du retour, devise identique, idempotence, puis
-`CashMovement REFUND` sortant sur une `CashSession OPEN`, sans effet Inventory.
+Construire l’API Returns décrite au chapitre 27 du Lot 5 : création depuis une
+vente, ajout des lignes, complétion, annulation, lecture unitaire et liste par
+vente. Elle devra réutiliser les agrégats et services déjà validés, avec les
+permissions `SALE_RETURN_*`, l’audit, l’outbox et les scopes Store.
