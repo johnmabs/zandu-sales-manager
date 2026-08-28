@@ -46,7 +46,7 @@ CREATE TABLE purchasing.purchase_order (
     CONSTRAINT purchase_order_currency_check CHECK (currency ~ '^[A-Z]{3}$'),
     CONSTRAINT purchase_order_total_check CHECK (expected_total >= 0),
     CONSTRAINT purchase_order_confirmation_audit_check CHECK ((confirmed_by IS NULL) = (confirmed_at IS NULL)),
-    CONSTRAINT purchase_order_close_audit_check CHECK ((closed_by IS NULL) = (closed_at IS NULL) AND (closed_at IS NULL) = (closed_reason IS NULL)),
+    CONSTRAINT purchase_order_close_audit_check CHECK ((closed_by IS NULL) = (closed_at IS NULL) AND (closed_at IS NULL OR status = 'CLOSED')),
     CONSTRAINT purchase_order_cancel_audit_check CHECK ((cancelled_by IS NULL) = (cancelled_at IS NULL)),
     CONSTRAINT purchase_order_version_check CHECK (version > 0)
 )

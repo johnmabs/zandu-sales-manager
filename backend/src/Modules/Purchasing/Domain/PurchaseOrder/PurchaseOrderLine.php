@@ -65,6 +65,30 @@ final readonly class PurchaseOrderLine
         return $this->unitCost->multiply($this->enteredOrderedQuantity->value(), 6, RoundingMode::HalfEven);
     }
 
+    public function withAdditionalReceipt(Quantity $quantity): self
+    {
+        if ($quantity->isZero() || $quantity->isNegative()) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_RECEIPT_QUANTITY_INVALID', 'Received quantity increment must be positive.');
+        }
+        $receivedQuantity = $this->receivedQuantity->add($quantity);
+        if ($receivedQuantity->compareTo($this->orderedBaseQuantity) > 0) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_OVER_RECEIPT', 'Received quantity cannot exceed ordered base quantity.');
+        }
+
+        return new self(
+            $this->id,
+            $this->purchaseOrderId,
+            $this->productId,
+            $this->productPackagingId,
+            $this->enteredOrderedQuantity,
+            $this->conversionFactorSnapshot,
+            $this->orderedBaseQuantity,
+            $this->unitCost,
+            $this->inventoryUnitCost,
+            $receivedQuantity,
+        );
+    }
+
     public function id(): PurchaseOrderLineId
     {
         return $this->id;

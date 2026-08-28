@@ -100,6 +100,19 @@ final class DbalPurchaseOrderRepositoryTest extends KernelTestCase
         self::assertSame('600.000000', $restored->expectedTotal()->amount()->toString());
         self::assertSame('60.000000000000', $restored->lines()[0]->orderedBaseQuantity()->toString());
         self::assertSame(2, $restored->version());
+
+        $received = $this->transactions->transactional($organizationId, function () use ($restored): PurchaseOrder {
+            $restored->confirm(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-28T13:00:00Z'));
+            $this->repository->save($restored);
+            $restored->recordReceipt($restored->lines()[0]->id(), $this->quantity('5'), ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-28T14:00:00Z'));
+            $this->repository->save($restored);
+
+            return $this->repository->get($restored->organizationId(), $restored->id());
+        });
+
+        self::assertSame('PARTIALLY_RECEIVED', $received->status()->value);
+        self::assertSame('5.000000000000', $received->lines()[0]->receivedQuantity()->toString());
+        self::assertSame(4, $received->version());
     }
 
     private function fixtures(): void
@@ -114,6 +127,7 @@ final class DbalPurchaseOrderRepositoryTest extends KernelTestCase
 
     private function cleanup(): void
     {
+        $this->db->executeStatement("UPDATE purchasing.purchase_order SET status = 'DRAFT' WHERE organization_id = ?", [self::ORGANIZATION]);
         foreach (['purchasing.purchase_order_line', 'purchasing.purchase_order', 'purchasing.supplier', 'catalog.product_packagings', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
             $this->db->executeStatement(sprintf('DELETE FROM %s WHERE organization_id = ?', $table), [self::ORGANIZATION]);
         }

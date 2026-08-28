@@ -6,6 +6,8 @@ namespace Zandu\Tests\Modules\Purchasing\Domain\PurchaseOrder;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderClosed;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderFullyReceived;
 use Zandu\Modules\Purchasing\Domain\PurchaseOrder\PurchaseOrder;
 use Zandu\Modules\Purchasing\Domain\PurchaseOrder\PurchaseOrderLine;
 use Zandu\Modules\Purchasing\Domain\PurchaseOrder\PurchaseOrderNumber;
@@ -95,6 +97,61 @@ final class PurchaseOrderTest extends TestCase
         );
     }
 
+    public function testConfirmationRequiresLinesAndFreezesTheirSnapshots(): void
+    {
+        $order = $this->order();
+        $this->assertViolation('PURCHASE_ORDER_EMPTY', fn() => $order->confirm($this->actorId(), new DateTimeImmutable()));
+        $order->addLine($this->line('001', '010', '100', '1', '1', '1', '20', '20'));
+
+        $order->confirm($this->actorId(), new DateTimeImmutable('2026-08-28T14:00:00+01:00'));
+
+        self::assertSame(PurchaseOrderStatus::Confirmed, $order->status());
+        self::assertSame('UTC', $order->confirmedAt()?->getTimezone()->getName());
+        $this->assertViolation(
+            'PURCHASE_ORDER_NOT_EDITABLE',
+            fn() => $order->addLine($this->line('002', '011', '101', '1', '1', '1', '20', '20')),
+        );
+    }
+
+    public function testReceiptsAreCumulativeAndCannotExceedOrderedQuantity(): void
+    {
+        $order = $this->confirmedOrder();
+        $lineId = $order->lines()[0]->id();
+
+        $order->recordReceipt($lineId, $this->quantity('5'), $this->actorId(), new DateTimeImmutable());
+        self::assertSame(PurchaseOrderStatus::PartiallyReceived, $order->status());
+        self::assertSame('5', $order->lines()[0]->receivedQuantity()->toString());
+        $this->assertViolation(
+            'PURCHASE_ORDER_OVER_RECEIPT',
+            fn() => $order->recordReceipt($lineId, $this->quantity('8'), $this->actorId(), new DateTimeImmutable()),
+        );
+
+        $order->recordReceipt($lineId, $this->quantity('7'), $this->actorId(), new DateTimeImmutable());
+        self::assertSame(PurchaseOrderStatus::FullyReceived, $order->status());
+        self::assertInstanceOf(PurchaseOrderFullyReceived::class, array_slice($order->releaseEvents(), -1)[0]);
+    }
+
+    public function testCancellationIsRejectedAfterAReceipt(): void
+    {
+        $order = $this->confirmedOrder();
+        $order->recordReceipt($order->lines()[0]->id(), $this->quantity('1'), $this->actorId(), new DateTimeImmutable());
+
+        $this->assertViolation('PURCHASE_ORDER_NOT_CANCELLABLE', fn() => $order->cancel($this->actorId(), new DateTimeImmutable()));
+    }
+
+    public function testClosingAPartialOrderRequiresAnAuditedReason(): void
+    {
+        $order = $this->confirmedOrder();
+        $order->recordReceipt($order->lines()[0]->id(), $this->quantity('1'), $this->actorId(), new DateTimeImmutable());
+        $this->assertViolation('PURCHASE_ORDER_CLOSE_REASON_REQUIRED', fn() => $order->close($this->actorId(), new DateTimeImmutable()));
+
+        $order->close($this->actorId(), new DateTimeImmutable('2026-08-28T15:00:00+01:00'), 'Supplier cannot deliver remainder');
+
+        self::assertSame(PurchaseOrderStatus::Closed, $order->status());
+        self::assertSame('Supplier cannot deliver remainder', $order->closedReason());
+        self::assertInstanceOf(PurchaseOrderClosed::class, array_slice($order->releaseEvents(), -1)[0]);
+    }
+
     private function order(): PurchaseOrder
     {
         return PurchaseOrder::create(
@@ -108,6 +165,20 @@ final class PurchaseOrderTest extends TestCase
             ActorId::fromString($this->uuid('904'), $this->ids),
             new DateTimeImmutable('2026-08-28T12:00:00+01:00'),
         );
+    }
+
+    private function confirmedOrder(): PurchaseOrder
+    {
+        $order = $this->order();
+        $order->addLine($this->line('001', '010', '100', '1', '12', '12', '120', '10'));
+        $order->confirm($this->actorId(), new DateTimeImmutable());
+
+        return $order;
+    }
+
+    private function actorId(): ActorId
+    {
+        return ActorId::fromString($this->uuid('904'), $this->ids);
     }
 
     private function line(string $line, string $product, string $packaging, string $entered, string $factor, string $base, string $unitCost, string $inventoryCost): PurchaseOrderLine

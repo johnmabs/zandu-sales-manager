@@ -7,6 +7,13 @@ namespace Zandu\Modules\Purchasing\Domain\PurchaseOrder;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderCancelled;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderClosed;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderConfirmed;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderCreated;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderEvent;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderFullyReceived;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\Event\PurchaseOrderPartiallyReceived;
 use Zandu\Modules\Purchasing\Domain\PurchasingRuleViolation;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
@@ -17,9 +24,13 @@ use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\SupplierId;
 use Zandu\SharedKernel\Money\Currency;
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Quantity\Quantity;
 
 final class PurchaseOrder
 {
+    /** @var list<PurchaseOrderEvent> */
+    private array $recordedEvents = [];
+
     /** @param list<PurchaseOrderLine> $lines */
     private function __construct(
         private readonly PurchaseOrderId $id,
@@ -65,7 +76,11 @@ final class PurchaseOrder
             throw new InvalidArgumentException('A new purchase order total must be zero.');
         }
 
-        return new self($id, $organizationId, $destinationStoreId, $supplierId, $number, PurchaseOrderStatus::Draft, $currency, $zeroTotal, $createdBy, self::utc($createdAt), null, null, null, null, null, null, null, 1, []);
+        $createdAt = self::utc($createdAt);
+        $order = new self($id, $organizationId, $destinationStoreId, $supplierId, $number, PurchaseOrderStatus::Draft, $currency, $zeroTotal, $createdBy, $createdAt, null, null, null, null, null, null, null, 1, []);
+        $order->recordedEvents[] = new PurchaseOrderCreated($organizationId, $id, $createdBy, $createdAt);
+
+        return $order;
     }
 
     /** @param list<PurchaseOrderLine> $lines */
@@ -133,6 +148,88 @@ final class PurchaseOrder
         }
 
         throw PurchasingRuleViolation::with('PURCHASE_ORDER_LINE_NOT_FOUND', 'Purchase order line not found.');
+    }
+
+    public function confirm(ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        $this->ensureDraft();
+        if ([] === $this->lines) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_EMPTY', 'A purchase order must contain at least one line before confirmation.');
+        }
+        $occurredAt = self::utc($occurredAt);
+        $this->status = PurchaseOrderStatus::Confirmed;
+        $this->confirmedBy = $actorId;
+        $this->confirmedAt = $occurredAt;
+        ++$this->version;
+        $this->recordedEvents[] = new PurchaseOrderConfirmed($this->organizationId, $this->id, $actorId, $occurredAt);
+    }
+
+    public function recordReceipt(PurchaseOrderLineId $lineId, Quantity $baseQuantity, ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        if (!in_array($this->status, [PurchaseOrderStatus::Confirmed, PurchaseOrderStatus::PartiallyReceived], true)) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_NOT_RECEIVABLE', 'Only a confirmed or partially received purchase order can receive stock.');
+        }
+        foreach ($this->lines as $index => $line) {
+            if ($line->id()->equals($lineId)) {
+                $this->lines[$index] = $line->withAdditionalReceipt($baseQuantity);
+                $fullyReceived = array_all(
+                    $this->lines,
+                    static fn(PurchaseOrderLine $candidate): bool => $candidate->receivedQuantity()->equals($candidate->orderedBaseQuantity()),
+                );
+                $occurredAt = self::utc($occurredAt);
+                $this->status = $fullyReceived ? PurchaseOrderStatus::FullyReceived : PurchaseOrderStatus::PartiallyReceived;
+                ++$this->version;
+                $event = $fullyReceived ? new PurchaseOrderFullyReceived($this->organizationId, $this->id, $actorId, $occurredAt) : new PurchaseOrderPartiallyReceived($this->organizationId, $this->id, $actorId, $occurredAt);
+                $this->recordedEvents[] = $event;
+
+                return;
+            }
+        }
+
+        throw PurchasingRuleViolation::with('PURCHASE_ORDER_LINE_NOT_FOUND', 'Purchase order line not found.');
+    }
+
+    public function cancel(ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        if (!in_array($this->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Confirmed], true)) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_NOT_CANCELLABLE', 'A purchase order can only be cancelled before any receipt.');
+        }
+        $occurredAt = self::utc($occurredAt);
+        $this->status = PurchaseOrderStatus::Cancelled;
+        $this->cancelledBy = $actorId;
+        $this->cancelledAt = $occurredAt;
+        ++$this->version;
+        $this->recordedEvents[] = new PurchaseOrderCancelled($this->organizationId, $this->id, $actorId, $occurredAt);
+    }
+
+    public function close(ActorId $actorId, DateTimeImmutable $occurredAt, ?string $reason = null): void
+    {
+        if (!in_array($this->status, [PurchaseOrderStatus::PartiallyReceived, PurchaseOrderStatus::FullyReceived], true)) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_NOT_CLOSABLE', 'Only a received purchase order can be closed.');
+        }
+        $reason = null === $reason ? null : trim($reason);
+        if (PurchaseOrderStatus::PartiallyReceived === $this->status && (null === $reason || '' === $reason)) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_CLOSE_REASON_REQUIRED', 'Closing a partially received purchase order requires a reason.');
+        }
+        if (null !== $reason && mb_strlen($reason) > 500) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_CLOSE_REASON_INVALID', 'Purchase order close reason cannot exceed 500 characters.');
+        }
+        $occurredAt = self::utc($occurredAt);
+        $this->status = PurchaseOrderStatus::Closed;
+        $this->closedBy = $actorId;
+        $this->closedAt = $occurredAt;
+        $this->closedReason = '' === $reason ? null : $reason;
+        ++$this->version;
+        $this->recordedEvents[] = new PurchaseOrderClosed($this->organizationId, $this->id, $actorId, $occurredAt);
+    }
+
+    /** @return list<PurchaseOrderEvent> */
+    public function releaseEvents(): array
+    {
+        $events = $this->recordedEvents;
+        $this->recordedEvents = [];
+
+        return $events;
     }
 
     private function assertLine(PurchaseOrderLine $line, ?PurchaseOrderLineId $ignoredLineId): void
