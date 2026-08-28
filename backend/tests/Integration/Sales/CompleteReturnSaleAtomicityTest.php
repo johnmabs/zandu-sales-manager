@@ -9,16 +9,23 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Zandu\Modules\CashManagement\Application\Contract\CashRefundRecorder;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\Contract\{InventoryStockRestocker, RestockSaleReturn};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard, StoreBusinessContextProvider};
+use Zandu\Modules\Payments\Application\{CreateCashPaymentRefund, CreateCashPaymentRefundService};
+use Zandu\Modules\Payments\Domain\{PaymentRefundRepository, PaymentRepository};
 use Zandu\Modules\Sales\Application\{CompleteReturnSale, CompleteReturnSaleService, ReturnAmountCalculator, ReturnSaleEventPublisher};
+use Zandu\Modules\Sales\Application\Contract\RefundableReturnProvider;
 use Zandu\Modules\Sales\Domain\{ReturnSaleRepository, SaleRepository};
+use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
-use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ReturnSaleId};
+use Zandu\SharedKernel\Idempotency\IdempotencyKey;
+use Zandu\SharedKernel\Identity\{ActorId, CashSessionId, OrganizationId, PaymentId, ReturnSaleId};
 use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxMessage, OutboxRepository};
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\SecurityAudit\{ResourceReference, SafeAuditMetadata, SecurityAction, SecurityAuditTrail};
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
@@ -37,6 +44,9 @@ final class CompleteReturnSaleAtomicityTest extends KernelTestCase
     private const VALUATION = '019a3900-0000-7000-8000-000000000010';
     private const RETURN = '019a3900-0000-7000-8000-000000000011';
     private const RETURN_LINE = '019a3900-0000-7000-8000-000000000012';
+    private const REGISTER = '019a3900-0000-7000-8000-000000000014';
+    private const SESSION = '019a3900-0000-7000-8000-000000000015';
+    private const PAYMENT = '019a3900-0000-7000-8000-000000000016';
 
     private Connection $connection;
     private SymfonyUuidFactory $uuids;
@@ -86,6 +96,46 @@ final class CompleteReturnSaleAtomicityTest extends KernelTestCase
         self::assertSame(1, $this->rowCount('sales.return_sale_line_amount'));
         self::assertSame(1, $this->rowCount('security.security_audit_entries'));
         self::assertSame(2, $this->rowCount('messaging.outbox_messages'));
+    }
+
+    public function testConsolidatedReturnAndCashRefundWorkflow(): void
+    {
+        $return = ($this->service(null))(new CompleteReturnSale($this->returnId(), $this->actor()));
+        $container = self::getContainer();
+        $clock = new FrozenClock(new DateTimeImmutable('2026-08-28T15:00:00Z'));
+        $refundService = new CreateCashPaymentRefundService(
+            new DoctrineTenantTransaction($this->connection, 'zandu_runtime'),
+            $container->get(PaymentRepository::class),
+            $container->get(PaymentRefundRepository::class),
+            $container->get(RefundableReturnProvider::class),
+            $container->get(CashRefundRecorder::class),
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+            $container->get(SecurityAuditTrail::class),
+            $container->get(OutboxRepository::class),
+            new SymfonyUuidV7Generator(),
+            $clock,
+        );
+        $refund = $refundService(new CreateCashPaymentRefund(
+            PaymentId::fromString(self::PAYMENT, $this->uuids),
+            $return->id(),
+            CashSessionId::fromString(self::SESSION, $this->uuids),
+            Money::fromString('9000', Currency::fromCode('XAF'), new BrickDecimalFactory()),
+            'Customer return',
+            IdempotencyKey::fromString('lot-five-demonstration'),
+            $this->actor(),
+        ));
+
+        self::assertSame('COMPLETED', $return->status()->value);
+        self::assertSame('CONFIRMED', $refund->status()->value);
+        self::assertSame('14.000000000000', $this->value('SELECT quantity_on_hand FROM inventory.stock WHERE id = ?', self::STOCK));
+        self::assertSame('5600.000000', $this->value('SELECT total_value FROM inventory_costing.stock_valuation WHERE id = ?', self::VALUATION));
+        self::assertSame(1, $this->typedCount('inventory.stock_movement', 'SALE_RETURN'));
+        self::assertSame(1, $this->typedCount('inventory_costing.stock_valuation_movement', 'SALE_RETURN'));
+        self::assertSame(1, $this->rowCount('payments.payment_refund'));
+        self::assertSame(1, $this->typedCount('cash_management.cash_movement', 'REFUND'));
+        self::assertSame(2, $this->rowCount('security.security_audit_entries'));
+        self::assertSame(4, $this->rowCount('messaging.outbox_messages'));
     }
 
     /** @return iterable<string, array{string}> */
@@ -140,10 +190,13 @@ final class CompleteReturnSaleAtomicityTest extends KernelTestCase
     {
         $this->connection->executeStatement("INSERT INTO organization.organizations (id,name,status,country_code,default_currency,default_time_zone,default_locale,created_by,created_at,updated_by,updated_at,version) VALUES (?,?,'ACTIVE','CG','XAF','Africa/Brazzaville','fr_CG',?,NOW(),?,NOW(),1)", [self::ORGANIZATION, 'Return atomicity', self::ACTOR, self::ACTOR]);
         $this->connection->executeStatement("INSERT INTO organization.stores (id,organization_id,code,name,status,time_zone,currency,locale,created_by,created_at,updated_by,updated_at,version) VALUES (?,?,?,?,'ACTIVE','Africa/Brazzaville','XAF','fr_CG',?,NOW(),?,NOW(),1)", [self::STORE, self::ORGANIZATION, 'ATM', 'Atomic Return Store', self::ACTOR, self::ACTOR]);
+        $this->connection->executeStatement("INSERT INTO cash_management.cash_register (id,organization_id,store_id,code,name,status,created_at,created_by,version) VALUES (?,?,?,?,?,'ACTIVE',NOW(),?,1)", [self::REGISTER, self::ORGANIZATION, self::STORE, 'ATM', 'Atomic Register', self::ACTOR]);
+        $this->connection->executeStatement("INSERT INTO cash_management.cash_session (id,organization_id,store_id,cash_register_id,cashier_id,currency,opening_balance,opened_at,status,version) VALUES (?,?,?,?,?,'XAF',10000,NOW(),'OPEN',1)", [self::SESSION, self::ORGANIZATION, self::STORE, self::REGISTER, self::ACTOR]);
         $this->connection->executeStatement("INSERT INTO catalog.units_of_measure (id,organization_id,code,name,dimension,precision,rounding_mode,status,version) VALUES (?,?,?,?,'COUNT',0,'HalfUp','ACTIVE',1)", [self::UNIT, self::ORGANIZATION, 'EA-ATM', 'Atomic unit']);
         $this->connection->executeStatement("INSERT INTO catalog.products (id,organization_id,product_code,name,status,type,base_unit_id,inventory_tracked,created_at,created_by,activated_at,activated_by,version) VALUES (?,?,?,?,'ACTIVE','PHYSICAL',?,TRUE,NOW(),?,NOW(),?,1)", [self::PRODUCT, self::ORGANIZATION, 'SKU-ATM', 'Atomic product', self::UNIT, self::ACTOR, self::ACTOR]);
         $this->connection->executeStatement('INSERT INTO inventory.stock (id,organization_id,store_id,product_id,quantity_on_hand,initialized,initialized_at,initialized_by,version) VALUES (?,?,?,?,8,TRUE,NOW(),?,2)', [self::STOCK, self::ORGANIZATION, self::STORE, self::PRODUCT, self::ACTOR]);
         $this->connection->executeStatement("INSERT INTO sales.sale (id,organization_id,store_id,status,currency,subtotal,discount_total,tax_total,total,created_by,created_at,completed_by,completed_at,business_date,version) VALUES (?,?,?,'COMPLETED','XAF',18000,0,0,18000,?,NOW(),?,NOW(),CURRENT_DATE,2)", [self::SALE, self::ORGANIZATION, self::STORE, self::ACTOR, self::ACTOR]);
+        $this->connection->executeStatement("INSERT INTO payments.payment (id,organization_id,purpose,target_reference,method,status,amount,currency,created_by,created_at,confirmed_at,version) VALUES (?,?,'SALE',?,'CASH','CONFIRMED',18000,'XAF',?,NOW(),NOW(),2)", [self::PAYMENT, self::ORGANIZATION, self::SALE, self::ACTOR]);
         $this->connection->executeStatement("INSERT INTO sales.sale_line (id,organization_id,sale_id,line_number,product_id,product_packaging_id,product_code_snapshot,product_name_snapshot,packaging_code_snapshot,packaging_name_snapshot,unit_id_snapshot,entered_quantity,conversion_factor_snapshot,base_quantity,unit_price,discount_amount,taxable_amount,tax_amount,subtotal,total,source_versions) VALUES (?,?,?,1,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CAST(? AS JSONB))", [self::SALE_LINE, self::ORGANIZATION, self::SALE, self::PRODUCT, self::UNIT, 'SKU-ATM', 'Atomic product', 'PACK-6', 'Pack of six', self::UNIT, '2', '6', '12', '9000', '0', '18000', '0', '18000', '18000', '{}']);
         $this->connection->executeStatement("INSERT INTO inventory.stock_movement (id,organization_id,store_id,product_id,stock_id,type,quantity,previous_quantity,resulting_quantity,source_type,source_reference_id,performed_by,occurred_at) VALUES (?,?,?,?,?,'SALE',2,10,8,'SALE',?,?,NOW())", [self::SALE_MOVEMENT, self::ORGANIZATION, self::STORE, self::PRODUCT, self::STOCK, self::SALE, self::ACTOR]);
         $this->connection->executeStatement("INSERT INTO sales.sale_line_cost_snapshot (organization_id,sale_line_id,stock_id,stock_movement_id,quantity,unit_cost,total_cost,currency,valuation_version,occurred_at) VALUES (?,?,?,?,12,400,4800,'XAF',2,NOW())", [self::ORGANIZATION, self::SALE_LINE, self::STOCK, self::SALE_MOVEMENT]);
@@ -154,7 +207,7 @@ final class CompleteReturnSaleAtomicityTest extends KernelTestCase
 
     private function cleanup(): void
     {
-        foreach (['messaging.outbox_messages', 'security.security_audit_entries', 'inventory_costing.stock_valuation_movement', 'sales.return_sale_line_amount', 'sales.return_sale_line', 'sales.return_sale', 'sales.sale_line_cost_snapshot', 'inventory_costing.stock_valuation', 'inventory.stock_movement', 'inventory.stock', 'sales.sale_line', 'sales.sale', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
+        foreach (['messaging.outbox_messages', 'security.security_audit_entries', 'payments.payment_refund', 'cash_management.cash_movement', 'inventory_costing.stock_valuation_movement', 'sales.return_sale_line_amount', 'sales.return_sale_line', 'sales.return_sale', 'payments.payment', 'sales.sale_line_cost_snapshot', 'inventory_costing.stock_valuation', 'inventory.stock_movement', 'inventory.stock', 'sales.sale_line', 'sales.sale', 'catalog.products', 'catalog.units_of_measure', 'cash_management.cash_session', 'cash_management.cash_register', 'organization.stores'] as $table) {
             $this->connection->executeStatement('DELETE FROM ' . $table . ' WHERE organization_id = ?', [self::ORGANIZATION]);
         }
         $this->connection->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::ORGANIZATION]);
