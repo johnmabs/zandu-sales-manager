@@ -7,7 +7,7 @@ namespace Zandu\Tests\Modules\Sales\Domain;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
-use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleStatus, SaleLine, SalesRuleViolation};
+use Zandu\Modules\Sales\Domain\{ReturnAmounts, ReturnSale, ReturnSaleLine, ReturnSaleStatus, SaleLine, SalesRuleViolation};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
@@ -52,7 +52,7 @@ final class ReturnSaleTest extends TestCase
     {
         $return = $this->returnSale();
         $return->addLine($this->returnLine());
-        $return->complete($this->actor(), new DateTimeImmutable('2026-08-28T23:30:00+01:00'), '2026-08-28');
+        $return->complete($this->actor(), new DateTimeImmutable('2026-08-28T23:30:00+01:00'), '2026-08-28', $this->lineAmounts($return));
 
         self::assertSame(ReturnSaleStatus::Completed, $return->status());
         self::assertSame('2026-08-28', $return->businessDate());
@@ -69,13 +69,27 @@ final class ReturnSaleTest extends TestCase
         $return = $this->returnSale();
 
         try {
-            $return->complete($this->actor(), new DateTimeImmutable(), '2026-08-28');
+            $return->complete($this->actor(), new DateTimeImmutable(), '2026-08-28', []);
             self::fail('An empty return should not be completed.');
         } catch (SalesRuleViolation $exception) {
             self::assertSame('RETURN_EMPTY', $exception->errorCode());
         }
         self::assertSame(ReturnSaleStatus::Draft, $return->status());
         self::assertSame(1, $return->version());
+    }
+
+    public function testItRequiresCalculatedAmountsForEveryLine(): void
+    {
+        $return = $this->returnSale();
+        $return->addLine($this->returnLine());
+
+        try {
+            $return->complete($this->actor(), new DateTimeImmutable(), '2026-08-28', []);
+            self::fail('A return without calculated amounts should not be completed.');
+        } catch (SalesRuleViolation $exception) {
+            self::assertSame('RETURN_AMOUNTS_REQUIRED', $exception->errorCode());
+        }
+        self::assertSame(ReturnSaleStatus::Draft, $return->status());
     }
 
     public function testItCancelsADraftAndRejectsFurtherMutation(): void
@@ -89,7 +103,7 @@ final class ReturnSaleTest extends TestCase
         self::assertSame(2, $return->version());
 
         $this->expectException(SalesRuleViolation::class);
-        $return->complete($this->actor(), new DateTimeImmutable(), '2026-08-28');
+        $return->complete($this->actor(), new DateTimeImmutable(), '2026-08-28', []);
     }
 
     public function testItRejectsALineFromAnotherSale(): void
@@ -112,6 +126,18 @@ final class ReturnSaleTest extends TestCase
             $this->actor(),
             $at ?? new DateTimeImmutable('2026-08-28T10:00:00Z'),
         );
+    }
+
+    /** @return array<string, ReturnAmounts> */
+    private function lineAmounts(ReturnSale $return): array
+    {
+        $currency = Currency::fromCode('XAF');
+        $decimals = new BrickDecimalFactory();
+        $zero = Money::fromString('0', $currency, $decimals);
+        $half = Money::fromString('500', $currency, $decimals);
+        $line = $return->lines()[0];
+
+        return [$line->id()->toString() => new ReturnAmounts($zero, $half, $zero, $half, $half)];
     }
 
     private function returnLine(string $id = '019a3100-0000-7000-8000-000000000003', ?string $saleId = null): ReturnSaleLine

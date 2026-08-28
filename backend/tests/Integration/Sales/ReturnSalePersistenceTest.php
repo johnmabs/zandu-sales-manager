@@ -7,6 +7,7 @@ namespace Zandu\Tests\Integration\Sales;
 use DateTimeImmutable;
 use Doctrine\DBAL\Exception\DriverException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Zandu\Modules\Sales\Application\ReturnAmountCalculator;
 use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, SaleLineCostSnapshotRepository, SaleRepository};
 use Zandu\Modules\Sales\Infrastructure\Persistence\{DbalReturnSaleRepository, DbalSaleLineCostSnapshotRepository, DbalSaleRepository};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
@@ -94,12 +95,23 @@ final class ReturnSalePersistenceTest extends KernelTestCase
 
         $this->transaction->transactional($organization, function () use ($organization, $returnId): void {
             $locked = $this->returns->getForUpdate($organization, $returnId);
-            $locked->complete($this->actor($organization), new DateTimeImmutable('2026-08-28T13:00:00+01:00'), '2026-08-28');
+            $line = $locked->lines()[0];
+            $zero = $line->baseReturnedQuantity()->subtract($line->baseReturnedQuantity());
+            $amounts = (new ReturnAmountCalculator())->calculate($line->originalLine(), $zero, $line->baseReturnedQuantity());
+            $locked->complete(
+                $this->actor($organization),
+                new DateTimeImmutable('2026-08-28T13:00:00+01:00'),
+                '2026-08-28',
+                [$line->id()->toString() => $amounts],
+            );
             $this->returns->save($locked);
         });
         $completed = $this->transaction->transactional($organization, fn(): ReturnSale => $this->returns->get($organization, $returnId));
         self::assertSame(ReturnSaleStatus::Completed, $completed->status());
         self::assertSame('2026-08-28', $completed->businessDate());
+        self::assertSame('9000.000000000000', $completed->lines()[0]->amounts()?->total()->amount()->toString());
+        self::assertFalse((bool) $this->connection->fetchOne("SELECT has_table_privilege('zandu_runtime', 'sales.return_sale_line_amount', 'UPDATE')"));
+        self::assertFalse((bool) $this->connection->fetchOne("SELECT has_table_privilege('zandu_runtime', 'sales.return_sale_line_amount', 'DELETE')"));
         self::assertCount(1, $this->transaction->transactional($organization, fn(): array => $this->returns->findBySale($organization, $this->saleId('a'))));
     }
 
@@ -160,6 +172,7 @@ final class ReturnSalePersistenceTest extends KernelTestCase
     private function cleanup(): void
     {
         $organizations = [self::A, self::B];
+        $this->connection->executeStatement('DELETE FROM sales.return_sale_line_amount WHERE organization_id IN (?, ?)', $organizations);
         $this->connection->executeStatement('DELETE FROM sales.return_sale_line WHERE organization_id IN (?, ?)', $organizations);
         $this->connection->executeStatement('DELETE FROM sales.return_sale WHERE organization_id IN (?, ?)', $organizations);
         $this->connection->executeStatement('DELETE FROM sales.sale_line_cost_snapshot WHERE organization_id IN (?, ?)', $organizations);

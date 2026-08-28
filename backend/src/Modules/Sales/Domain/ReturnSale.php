@@ -94,7 +94,8 @@ final class ReturnSale
         ++$this->version;
     }
 
-    public function complete(ActorContext $actor, DateTimeImmutable $at, string $businessDate): void
+    /** @param array<string, ReturnAmounts> $lineAmounts indexed by return sale line id */
+    public function complete(ActorContext $actor, DateTimeImmutable $at, string $businessDate, array $lineAmounts): void
     {
         $this->ensureEditable();
         if ([] === $this->lines) {
@@ -103,6 +104,21 @@ final class ReturnSale
         self::assertActorOrganization($actor, $this->organizationId);
         self::assertBusinessDate($businessDate);
 
+        $allocatedLines = [];
+        foreach ($this->lines as $line) {
+            $key = $line->id()->toString();
+            $amounts = $lineAmounts[$key] ?? throw SalesRuleViolation::with(
+                'RETURN_AMOUNTS_REQUIRED',
+                'Every return line must have calculated amounts before completion.',
+            );
+            $allocatedLines[] = $line->withAmounts($amounts);
+            unset($lineAmounts[$key]);
+        }
+        if ([] !== $lineAmounts) {
+            throw new LogicException('Return amounts contain an unknown return line.');
+        }
+
+        $this->lines = $allocatedLines;
         $this->status = ReturnSaleStatus::Completed;
         $this->businessDate = $businessDate;
         $this->completedBy = $actor->actorId();

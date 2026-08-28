@@ -19,6 +19,7 @@ final readonly class CompleteReturnSaleService
         private TenantTransaction $transaction,
         private SaleRepository $sales,
         private ReturnSaleRepository $returns,
+        private ReturnAmountCalculator $amounts,
         private InventoryStockRestocker $inventory,
         private StoreBusinessContextProvider $stores,
         private Clock $clock,
@@ -31,7 +32,19 @@ final readonly class CompleteReturnSaleService
             $source = $this->sales->getForUpdate($command->actor->organizationId(), $candidate->saleId());
             $return = $this->returns->getForUpdate($command->actor->organizationId(), $command->returnSaleId);
             $this->assertSource($source, $return);
-            $this->assertCumulativeQuantities($source, $return);
+            $previouslyReturned = $this->previouslyReturnedQuantities($source, $return);
+
+            $lineAmounts = [];
+            foreach ($return->lines() as $line) {
+                $key = $line->saleLineId()->toString();
+                $previous = $previouslyReturned[$key]
+                    ?? $line->baseReturnedQuantity()->subtract($line->baseReturnedQuantity());
+                $lineAmounts[$line->id()->toString()] = $this->amounts->calculate(
+                    $source->line($line->saleLineId()),
+                    $previous,
+                    $line->baseReturnedQuantity(),
+                );
+            }
 
             $restockItems = [];
             foreach ($return->lines() as $line) {
@@ -61,7 +74,7 @@ final readonly class CompleteReturnSaleService
             $now = $this->clock->now();
             $store = $this->stores->provide($return->organizationId(), $return->storeId());
             $businessDate = $now->setTimezone(new DateTimeZone($store->timeZone))->format('Y-m-d');
-            $return->complete($command->actor, $now, $businessDate);
+            $return->complete($command->actor, $now, $businessDate, $lineAmounts);
             $this->returns->save($return);
 
             return $return;
@@ -78,7 +91,8 @@ final readonly class CompleteReturnSaleService
         }
     }
 
-    private function assertCumulativeQuantities(Sale $source, ReturnSale $candidate): void
+    /** @return array<string, Quantity> */
+    private function previouslyReturnedQuantities(Sale $source, ReturnSale $candidate): array
     {
         /** @var array<string, Quantity> $returned */
         $returned = [];
@@ -94,14 +108,6 @@ final readonly class CompleteReturnSaleService
             }
         }
 
-        foreach ($candidate->lines() as $line) {
-            $key = $line->saleLineId()->toString();
-            $cumulative = isset($returned[$key])
-                ? $returned[$key]->add($line->baseReturnedQuantity())
-                : $line->baseReturnedQuantity();
-            if ($cumulative->compareTo($source->line($line->saleLineId())->baseQuantity()) > 0) {
-                throw SalesRuleViolation::with('RETURN_QUANTITY_EXCEEDS_SOLD', 'Cumulative return quantity cannot exceed the sold quantity.');
-            }
-        }
+        return $returned;
     }
 }

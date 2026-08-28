@@ -21,6 +21,7 @@ final readonly class ReturnSaleLine
         private Quantity $returnedQuantity,
         private bool $restock,
         ?string $reason,
+        private ?ReturnAmounts $amounts = null,
     ) {
         if ($returnedQuantity->isZero() || $returnedQuantity->isNegative()) {
             throw SalesRuleViolation::with('RETURN_QUANTITY_INVALID', 'Return quantity must be greater than zero.');
@@ -30,6 +31,9 @@ final readonly class ReturnSaleLine
         }
         if (null !== $originalCostSnapshot && !$originalCostSnapshot->saleLineId()->equals($originalLine->id())) {
             throw new LogicException('Return cost snapshot belongs to another sale line.');
+        }
+        if (null !== $amounts) {
+            self::assertAmountsDoNotExceedOriginal($amounts, $originalLine);
         }
 
         $this->reason = self::normalizeReason($reason);
@@ -83,6 +87,40 @@ final readonly class ReturnSaleLine
     public function originalCostSnapshot(): ?SaleLineCostSnapshot
     {
         return $this->originalCostSnapshot;
+    }
+
+    public function amounts(): ?ReturnAmounts
+    {
+        return $this->amounts;
+    }
+
+    public function withAmounts(ReturnAmounts $amounts): self
+    {
+        return new self(
+            $this->id,
+            $this->originalLine,
+            $this->originalCostSnapshot,
+            $this->returnedQuantity,
+            $this->restock,
+            $this->reason,
+            $amounts,
+        );
+    }
+
+    private static function assertAmountsDoNotExceedOriginal(ReturnAmounts $amounts, SaleLine $original): void
+    {
+        $pairs = [
+            [$amounts->discountAmount(), $original->discountAmount()],
+            [$amounts->taxableAmount(), $original->taxableAmount()],
+            [$amounts->taxAmount(), $original->taxAmount()],
+            [$amounts->subtotal(), $original->subtotal()],
+            [$amounts->total(), $original->total()],
+        ];
+        foreach ($pairs as [$returned, $originalAmount]) {
+            if ($returned->compareTo($originalAmount) > 0) {
+                throw SalesRuleViolation::with('RETURN_AMOUNT_EXCEEDS_ORIGINAL', 'A return amount cannot exceed its original sale line snapshot.');
+            }
+        }
     }
 
     private static function normalizeReason(?string $reason): ?string

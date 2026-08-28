@@ -9,8 +9,8 @@ use LogicException;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Inventory\Application\Contract\{InventoryStockRestocker, RestockSaleReturn, StockRestockResult};
 use Zandu\Modules\Organization\Application\Contract\{StoreBusinessContext, StoreBusinessContextProvider};
-use Zandu\Modules\Sales\Application\{CompleteReturnSale, CompleteReturnSaleService};
-use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshot, SaleRepository, SalesRuleViolation};
+use Zandu\Modules\Sales\Application\{CompleteReturnSale, CompleteReturnSaleService, ReturnAmountCalculator};
+use Zandu\Modules\Sales\Domain\{ReturnAmounts, ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshot, SaleRepository, SalesRuleViolation};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
@@ -34,6 +34,7 @@ final class CompleteReturnSaleServiceTest extends TestCase
         self::assertSame(ReturnSaleStatus::Completed, $completed->status());
         self::assertSame('2026-08-29', $completed->businessDate());
         self::assertSame(3, $completed->version());
+        self::assertSame('500.000000000000', $completed->lines()[0]->amounts()?->total()->amount()->toString());
     }
 
     public function testItRejectsAReturnWhoseSourceSaleIsNotCompleted(): void
@@ -55,7 +56,12 @@ final class CompleteReturnSaleServiceTest extends TestCase
     {
         $sale = $this->completedSale();
         $existing = $this->returnSale($sale, '1.5', '019a3300-0000-7000-8000-000000000022');
-        $existing->complete($this->actor(), new DateTimeImmutable('2026-08-28T10:00:00Z'), '2026-08-28');
+        $existing->complete(
+            $this->actor(),
+            new DateTimeImmutable('2026-08-28T10:00:00Z'),
+            '2026-08-28',
+            $this->calculatedAmounts($existing, '0'),
+        );
         $candidate = $this->returnSale($sale, '1', '019a3300-0000-7000-8000-000000000023');
         $service = $this->service($sale, [$existing, $candidate]);
 
@@ -80,6 +86,33 @@ final class CompleteReturnSaleServiceTest extends TestCase
         $completed = $service(new CompleteReturnSale($candidate->id(), $this->actor()));
 
         self::assertSame(ReturnSaleStatus::Completed, $completed->status());
+    }
+
+    public function testItAllocatesTheExactRemainingAmountAcrossMultipleReturns(): void
+    {
+        $sale = $this->completedSale();
+        $existing = $this->returnSale($sale, '0.5', '019a3300-0000-7000-8000-000000000030');
+        $existing->complete(
+            $this->actor(),
+            new DateTimeImmutable('2026-08-28T10:00:00Z'),
+            '2026-08-28',
+            $this->calculatedAmounts($existing, '0'),
+        );
+        $candidate = $this->returnSale($sale, '1.5', '019a3300-0000-7000-8000-000000000031');
+
+        $completed = $this->service($sale, [$existing, $candidate])(
+            new CompleteReturnSale($candidate->id(), $this->actor()),
+        );
+
+        $existingAmounts = $existing->lines()[0]->amounts();
+        $completedAmounts = $completed->lines()[0]->amounts();
+        self::assertNotNull($existingAmounts);
+        self::assertNotNull($completedAmounts);
+        self::assertSame('250.000000000000', $existingAmounts->total()->amount()->toString());
+        self::assertSame('750.000000000000', $completedAmounts->total()->amount()->toString());
+        self::assertTrue($sale->lines()[0]->total()->equals(
+            $existingAmounts->total()->add($completedAmounts->total()),
+        ));
     }
 
     public function testItRestocksOnlyWithTheOriginalCostSnapshot(): void
@@ -190,10 +223,27 @@ final class CompleteReturnSaleServiceTest extends TestCase
             $transaction,
             $sales,
             $repository,
+            new ReturnAmountCalculator(),
             $inventory ?? $this->createStub(InventoryStockRestocker::class),
             $stores,
             new FrozenClock(new DateTimeImmutable('2026-08-28T23:30:00Z')),
         );
+    }
+
+    /** @return array<string, ReturnAmounts> */
+    private function calculatedAmounts(ReturnSale $return, string $previouslyReturnedBaseQuantity): array
+    {
+        $calculator = new ReturnAmountCalculator();
+        $amounts = [];
+        foreach ($return->lines() as $line) {
+            $amounts[$line->id()->toString()] = $calculator->calculate(
+                $line->originalLine(),
+                $this->quantity($previouslyReturnedBaseQuantity),
+                $line->baseReturnedQuantity(),
+            );
+        }
+
+        return $amounts;
     }
 
     private function completedSale(): Sale

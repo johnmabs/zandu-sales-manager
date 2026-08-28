@@ -7,9 +7,10 @@ namespace Zandu\Modules\Sales\Infrastructure\Persistence;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use LogicException;
-use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshot, SaleLineCostSnapshotRepository, SaleRepository};
+use Zandu\Modules\Sales\Domain\{ReturnAmounts, ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshot, SaleLineCostSnapshotRepository, SaleRepository};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ReturnSaleId, ReturnSaleLineId, SaleId, StoreId, UuidFactory};
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final readonly class DbalReturnSaleRepository implements ReturnSaleRepository
@@ -62,25 +63,25 @@ final readonly class DbalReturnSaleRepository implements ReturnSaleRepository
                 if ((string) $existingReturnId !== $returnSale->id()->toString()) {
                     throw new LogicException('Return sale line identity already belongs to another return.');
                 }
-
-                continue;
+            } else {
+                $this->connection->executeStatement(
+                    'INSERT INTO sales.return_sale_line (id, organization_id, return_sale_id, sale_id, line_number, sale_line_id, product_id, returned_quantity, base_returned_quantity, restock, reason) VALUES (:id, :organization_id, :return_sale_id, :sale_id, :line_number, :sale_line_id, :product_id, :returned_quantity, :base_returned_quantity, :restock, :reason)',
+                    [
+                        'id' => $line->id()->toString(),
+                        'organization_id' => $returnSale->organizationId()->toString(),
+                        'return_sale_id' => $returnSale->id()->toString(),
+                        'sale_id' => $returnSale->saleId()->toString(),
+                        'line_number' => $index + 1,
+                        'sale_line_id' => $line->saleLineId()->toString(),
+                        'product_id' => $line->productId()->toString(),
+                        'returned_quantity' => $line->returnedQuantity()->toString(),
+                        'base_returned_quantity' => $line->baseReturnedQuantity()->toString(),
+                        'restock' => $line->restock() ? 1 : 0,
+                        'reason' => $line->reason(),
+                    ],
+                );
             }
-            $this->connection->executeStatement(
-                'INSERT INTO sales.return_sale_line (id, organization_id, return_sale_id, sale_id, line_number, sale_line_id, product_id, returned_quantity, base_returned_quantity, restock, reason) VALUES (:id, :organization_id, :return_sale_id, :sale_id, :line_number, :sale_line_id, :product_id, :returned_quantity, :base_returned_quantity, :restock, :reason)',
-                [
-                    'id' => $line->id()->toString(),
-                    'organization_id' => $returnSale->organizationId()->toString(),
-                    'return_sale_id' => $returnSale->id()->toString(),
-                    'sale_id' => $returnSale->saleId()->toString(),
-                    'line_number' => $index + 1,
-                    'sale_line_id' => $line->saleLineId()->toString(),
-                    'product_id' => $line->productId()->toString(),
-                    'returned_quantity' => $line->returnedQuantity()->toString(),
-                    'base_returned_quantity' => $line->baseReturnedQuantity()->toString(),
-                    'restock' => $line->restock() ? 1 : 0,
-                    'reason' => $line->reason(),
-                ],
-            );
+            $this->saveAmounts($returnSale->organizationId(), $line);
         }
     }
 
@@ -128,7 +129,7 @@ final readonly class DbalReturnSaleRepository implements ReturnSaleRepository
             $costs[$snapshot->saleLineId()->toString()] = $snapshot;
         }
         $lineRows = $this->connection->fetchAllAssociative(
-            'SELECT * FROM sales.return_sale_line WHERE organization_id = ? AND return_sale_id = ? ORDER BY line_number',
+            'SELECT line.*, amount.discount_amount AS returned_discount_amount, amount.taxable_amount AS returned_taxable_amount, amount.tax_amount AS returned_tax_amount, amount.subtotal AS returned_subtotal, amount.total AS returned_total, amount.currency AS returned_currency FROM sales.return_sale_line line LEFT JOIN sales.return_sale_line_amount amount ON amount.organization_id = line.organization_id AND amount.return_sale_line_id = line.id WHERE line.organization_id = ? AND line.return_sale_id = ? ORDER BY line.line_number',
             [$organizationId->toString(), $returnSaleId->toString()],
         );
 
@@ -188,12 +189,63 @@ final readonly class DbalReturnSaleRepository implements ReturnSaleRepository
             Quantity::fromString((string) $row['returned_quantity'], $this->decimals),
             (bool) $row['restock'],
             null === $row['reason'] ? null : (string) $row['reason'],
+            $this->amounts($row),
         );
         if (!$sourceSale->id()->equals($original->saleId()) || !$line->baseReturnedQuantity()->equals(Quantity::fromString((string) $row['base_returned_quantity'], $this->decimals))) {
             throw new LogicException('Persisted return line snapshots are inconsistent.');
         }
 
         return $line;
+    }
+
+    private function saveAmounts(OrganizationId $organizationId, ReturnSaleLine $line): void
+    {
+        $amounts = $line->amounts();
+        if (null === $amounts) {
+            return;
+        }
+        $existing = $this->connection->fetchAssociative(
+            'SELECT discount_amount, taxable_amount, tax_amount, subtotal, total, currency FROM sales.return_sale_line_amount WHERE organization_id = ? AND return_sale_line_id = ?',
+            [$organizationId->toString(), $line->id()->toString()],
+        );
+        $data = [
+            'return_sale_line_id' => $line->id()->toString(),
+            'organization_id' => $organizationId->toString(),
+            'discount_amount' => $amounts->discountAmount()->amount()->toString(),
+            'taxable_amount' => $amounts->taxableAmount()->amount()->toString(),
+            'tax_amount' => $amounts->taxAmount()->amount()->toString(),
+            'subtotal' => $amounts->subtotal()->amount()->toString(),
+            'total' => $amounts->total()->amount()->toString(),
+            'currency' => $amounts->total()->currency()->code(),
+        ];
+        if (false === $existing) {
+            $this->connection->insert('sales.return_sale_line_amount', $data);
+
+            return;
+        }
+        foreach (['discount_amount', 'taxable_amount', 'tax_amount', 'subtotal', 'total', 'currency'] as $field) {
+            if ((string) $existing[$field] !== $data[$field]) {
+                throw new LogicException('Persisted return line amounts are immutable.');
+            }
+        }
+    }
+
+    /** @param array<string, mixed> $row */
+    private function amounts(array $row): ?ReturnAmounts
+    {
+        if (null === $row['returned_currency']) {
+            return null;
+        }
+        $currency = Currency::fromCode((string) $row['returned_currency']);
+        $money = fn(string $field): Money => Money::fromString((string) $row[$field], $currency, $this->decimals);
+
+        return new ReturnAmounts(
+            $money('returned_discount_amount'),
+            $money('returned_taxable_amount'),
+            $money('returned_tax_amount'),
+            $money('returned_subtotal'),
+            $money('returned_total'),
+        );
     }
 
     private function actor(mixed $value): ?ActorId
