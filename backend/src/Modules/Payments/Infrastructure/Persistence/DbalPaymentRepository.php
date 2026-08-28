@@ -6,7 +6,7 @@ namespace Zandu\Modules\Payments\Infrastructure\Persistence;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Zandu\Modules\Payments\Domain\{Payment,PaymentRepository,PaymentStatus};
+use Zandu\Modules\Payments\Domain\{Payment, PaymentRepository, PaymentRuleViolation, PaymentStatus};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,PaymentId,SaleId,UuidFactory};
 use Zandu\SharedKernel\Money\{Currency,Money};
@@ -38,12 +38,31 @@ final readonly class DbalPaymentRepository implements PaymentRepository
         if (false === $row) {
             return null;
         }
+        return $this->payment($row, $organizationId);
+    }
+
+    public function getForUpdate(OrganizationId $organizationId, PaymentId $paymentId): Payment
+    {
+        $row = $this->connection->fetchAssociative(
+            'SELECT * FROM payments.payment WHERE organization_id = ? AND id = ? FOR UPDATE',
+            [$organizationId->toString(), $paymentId->toString()],
+        );
+        if (false === $row) {
+            throw PaymentRuleViolation::with('PAYMENT_NOT_FOUND', 'Payment not found.');
+        }
+
+        return $this->payment($row, $organizationId);
+    }
+
+    /** @param array<string, mixed> $row */
+    private function payment(array $row, OrganizationId $organizationId): Payment
+    {
         $currency = Currency::fromCode((string) $row['currency']);
 
         return Payment::reconstitute(
             PaymentId::fromString((string) $row['id'], $this->uuids),
             $organizationId,
-            $saleId,
+            SaleId::fromString((string) $row['target_reference'], $this->uuids),
             Money::fromString((string) $row['amount'], $currency, $this->decimals),
             PaymentStatus::from((string) $row['status']),
             ActorId::fromString((string) $row['created_by'], $this->uuids),

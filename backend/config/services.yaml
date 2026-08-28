@@ -178,6 +178,10 @@ services:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleRepository
     Zandu\Modules\Sales\Domain\SaleLineCostSnapshotRepository:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleLineCostSnapshotRepository
+    Zandu\Modules\Sales\Application\Contract\RefundableReturnProvider:
+        alias: Zandu\Modules\Sales\Application\RepositoryRefundableReturnProvider
+    Zandu\Modules\Payments\Domain\PaymentRefundRepository:
+        alias: Zandu\Modules\Payments\Infrastructure\Persistence\DbalPaymentRefundRepository
     Zandu\Modules\Sales\Domain\ReturnSaleRepository:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalReturnSaleRepository
     Zandu\Modules\Sales\Application\Contract\SaleCompletionIdempotency:
