@@ -13,6 +13,7 @@ use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\SaleId;
 use Zandu\SharedKernel\Identity\StockId;
 use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\Identity\SupplierId;
 use Zandu\SharedKernel\Identity\TypedId;
 use Zandu\SharedKernel\Identity\Uuid;
 use Zandu\SharedKernel\Identity\UuidFactory;
@@ -69,6 +70,7 @@ final class TypedIdTest extends TestCase
         yield 'sale' => [SaleId::class];
         yield 'stock' => [StockId::class];
         yield 'cash session' => [CashSessionId::class];
+        yield 'supplier' => [SupplierId::class];
     }
 }
 
