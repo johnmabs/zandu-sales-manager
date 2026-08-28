@@ -68,7 +68,8 @@ Persistence TERMINÉ   ReturnSale PostgreSQL, snapshots liés et RLS
 Returns     TERMINÉ   Vente source terminée et limites cumulatives
 Epic 5.10   TERMINÉ   Restock Inventory idempotent via SALE_RETURN
 Epic 5.11   TERMINÉ   Coût original restauré et restock activé atomiquement
-Epic 5.12   PROCHAINE Calculer les montants de retour depuis les snapshots
+Epic 5.12   TERMINÉ   Montants de retour alloués depuis les snapshots originaux
+Epic 5.13   PROCHAINE Remboursement cash essentiel et idempotent
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -76,8 +77,8 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 
 ```text
 Branche              main
-Migrations           Version20260828140000 appliquée en dernier
-Tests                 542 tests, 2 593 assertions
+Migrations           Version20260828160000 appliquée en dernier
+Tests                 548 tests, 2 618 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8425,9 +8426,50 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.12 — Return amount calculation
+
+**Statut : TERMINÉ**
+
+- `ReturnAmountCalculator` alloue remise, base taxable, taxe, sous-total et
+  total exclusivement depuis les snapshots immuables de `SaleLine` ;
+- l’allocation utilise la cible cumulative après retour moins la cible
+  cumulative avant retour, sans consulter Catalog, Pricing ni la fiscalité
+  courante ;
+- les calculs intermédiaires utilisent 24 décimales et les montants persistés
+  12 décimales avec un arrondi déterministe `HalfUp` ;
+- le dernier retour absorbe le résidu : plusieurs retours partiels somment
+  exactement au montant, à la taxe et à la remise originaux ;
+- les quantités et montants cumulés ne peuvent pas dépasser les snapshots de
+  la ligne vendue ;
+- toute ligne doit recevoir ses montants avant que `ReturnSale` passe à
+  `COMPLETED` ;
+- les montants sont conservés dans `sales.return_sale_line_amount`, table
+  tenant-scoped sous RLS et append-only pour le rôle runtime ;
+- la vente source reste verrouillée pendant le calcul, la valorisation du
+  restock, la complétion et la persistance des snapshots monétaires.
+
+Commit atomique :
+
+```text
+664c9c0 feat(sales): calculate return amounts from original snapshots
+```
+
+Validation consolidée :
+
+```text
+Tests ciblés Return amounts/Returns : OK (22 tests, 80 assertions)
+Suite PHPUnit complète : OK (548 tests, 2 618 assertions)
+Migration dev et test : Version20260828160000
+Conteneur Symfony test : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.12 avec un `ReturnAmountCalculator` fondé exclusivement sur
-les snapshots commerciaux originaux. Les allocations cumulées de prix,
-remise et taxe devront rester bornées par la ligne vendue, et un retour total
-devra restituer exactement le montant original malgré les arrondis.
+Implémenter l’Epic 5.13 — remboursement cash essentiel — conformément à
+l’ADR-0022 : paiement original confirmé, `ReturnSale` terminé, plafond par
+montant remboursable du retour, devise identique, idempotence, puis
+`CashMovement REFUND` sortant sur une `CashSession OPEN`, sans effet Inventory.
