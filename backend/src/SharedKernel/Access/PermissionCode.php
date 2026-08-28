@@ -45,6 +45,11 @@ enum PermissionCode: string
     case ProductDeactivate = 'PRODUCT_DEACTIVATE';
     case ProductArchive = 'PRODUCT_ARCHIVE';
 
+    case SupplierCreate = 'SUPPLIER_CREATE';
+    case SupplierRead = 'SUPPLIER_READ';
+    case SupplierUpdate = 'SUPPLIER_UPDATE';
+    case SupplierArchive = 'SUPPLIER_ARCHIVE';
+
     case PriceListCreate = 'PRICE_LIST_CREATE';
     case PriceListRead = 'PRICE_LIST_READ';
     case PriceListUpdate = 'PRICE_LIST_UPDATE';

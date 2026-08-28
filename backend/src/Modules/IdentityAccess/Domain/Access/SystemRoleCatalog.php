@@ -43,6 +43,7 @@ final readonly class SystemRoleCatalog
                     PermissionCode::StoreClose,
                     PermissionCode::CatalogRead,
                     PermissionCode::ProductRead,
+                    PermissionCode::SupplierRead,
                     PermissionCode::PriceListRead,
                     PermissionCode::ProductPriceRead,
                     PermissionCode::InventoryRead,
@@ -113,6 +114,7 @@ final readonly class SystemRoleCatalog
                     PermissionCode::SaleRead,
                     PermissionCode::PaymentRefundRead,
                     PermissionCode::SaleReturnRead,
+                    PermissionCode::SupplierRead,
                 ],
             ),
         ];
