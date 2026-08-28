@@ -66,7 +66,8 @@ Epic 5.8    TERMINÉ   Atomicité CompleteSale/Costing prouvée par faute inject
 Epic 5.9    TERMINÉ   ReturnSale et ReturnSaleLine foundation
 Persistence TERMINÉ   ReturnSale PostgreSQL, snapshots liés et RLS
 Returns     TERMINÉ   Vente source terminée et limites cumulatives
-Epic 5.10   PROCHAINE Restock Inventory via SALE_RETURN
+Epic 5.10   EN COURS  Mécanisme SALE_RETURN prêt, branchement différé au costing
+Epic 5.11   PROCHAINE Restaurer le coût original et activer le restock atomique
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -74,8 +75,8 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 
 ```text
 Branche              main
-Migrations           Version20260828120000 appliquée en dernier
-Tests                 534 tests, 2 553 assertions
+Migrations           Version20260828140000 appliquée en dernier
+Tests                 537 tests, 2 571 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7877,7 +7878,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — retours persistés et cumuls protégés.**
+**État courant : EN COURS — mécanisme physique SALE_RETURN prêt.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8338,10 +8339,56 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.10 — Inventory restock
+
+**Statut : EN COURS — mécanisme physique terminé, activation transactionnelle
+reportée avec l’Epic 5.11.**
+
+- nouveau type de mouvement physique `SALE_RETURN`, direction entrante et
+  source `RETURN / ReturnSaleId` ;
+- contraintes PostgreSQL étendues par `Version20260828140000`, appliquée aux
+  bases dev et test ;
+- contrat Inventory v1 consommable par Sales, sans exposition du domaine
+  Inventory ;
+- agrégation des lignes par produit avant mutation et ordre de verrouillage
+  déterministe pour réduire les risques de deadlock ;
+- verrou pessimiste de chaque Stock, création append-once du mouvement puis
+  hausse optimiste de la quantité ;
+- idempotence portée par l’unicité existante
+  `(organization, product, source_type, source_reference_id)` : un rejeu du
+  même retour ne modifie plus le Stock ;
+- résultat typé contenant StockId, StockMovementId, quantités précédente,
+  retournée et résultante, prêt pour l’intégration Costing ;
+- aucune mutation pour `restock=false` : Sales filtrera ces lignes lors du
+  branchement transactionnel.
+
+Le mécanisme n’est pas encore appelé par `CompleteReturnSaleService`. Ce choix
+préserve l’ADR-0021 : une hausse physique ne doit jamais être commitée sans la
+hausse correspondante de `StockValuation`. L’Epic 5.11 branchera donc restock et
+restauration du coût original dans la même transaction.
+
+Commit :
+
+```text
+3909fbc feat(inventory): restock returned sale items
+```
+
+Validation consolidée :
+
+```text
+StockMovementTest + RepositoryInventoryStockRestockerTest : OK (5 tests, 25 assertions)
+Suite PHPUnit complète : OK (537 tests, 2 571 assertions)
+Conteneur Symfony test : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.10 : exposer à Sales un contrat Inventory de restock,
-augmenter le Stock et créer un `StockMovement SALE_RETURN` uniquement pour les
-lignes `restock=true`. L’effet devra être idempotent par retour et produit ; les
-lignes `restock=false` et les services ne devront produire aucune mutation de
-stock. L’Epic 5.11 restaurera ensuite leur coût original.
+Implémenter l’Epic 5.11 : valoriser chaque restock depuis les
+`SaleLineCostSnapshot` originaux, créer le ledger Costing `SALE_RETURN`, puis
+appeler le mécanisme Inventory depuis `CompleteReturnSaleService` dans sa
+transaction existante. Une absence de snapshot requis ou une erreur Costing
+devra annuler Stock, StockMovement, StockValuation et complétion du retour.
