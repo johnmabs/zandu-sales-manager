@@ -71,6 +71,7 @@ Epic 5.11   TERMINÉ   Coût original restauré et restock activé atomiquement
 Epic 5.12   TERMINÉ   Montants de retour alloués depuis les snapshots originaux
 Epic 5.13   TERMINÉ   Remboursement cash essentiel, borné et idempotent
 API Returns TERMINÉ   Workflow ReturnSale complet exposé et documenté
+Rollback Refund TERMINÉ Faute tardive sans aucun ledger partiel
 Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```
 
@@ -79,7 +80,7 @@ Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 561 tests, 2 665 assertions
+Tests                 566 tests, 2 693 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8579,9 +8580,46 @@ PHP-CS-Fixer : OK
 PHPStan : OK
 ```
 
+### Atomicité PaymentRefund — matrice de fautes tardives
+
+**Statut : TERMINÉ**
+
+- scénario d’intégration exécuté sur PostgreSQL avec les repositories réels de
+  Payment, PaymentRefund, CashMovement, audit et outbox ;
+- fautes injectées après les écritures métier au niveau de l’audit, de l’outbox
+  explicite et juste avant `COMMIT` ;
+- chaque faute restaure un état sans `PaymentRefund`, sans `CashMovement`, sans
+  audit et sans message outbox partiel ;
+- le paiement reste `CONFIRMED` et la session de caisse reste `OPEN` ;
+- le chemin nominal confirme que le refund, le mouvement Cash, l’audit et les
+  deux messages outbox sont validés ensemble ;
+- correction associée du type Doctrine `datetimetz_immutable`, qui accepte
+  désormais les `TIMESTAMPTZ` PostgreSQL contenant des microsecondes.
+
+Commits atomiques :
+
+```text
+8cf9aef fix(persistence): parse PostgreSQL timestamp microseconds
+0ed9d9a test(payments): verify refund transaction rollback
+```
+
+Validation consolidée :
+
+```text
+CashPaymentRefundAtomicityTest : OK (4 tests, 26 assertions)
+PostgreSqlDateTimeTzImmutableTypeTest : OK (1 test, 2 assertions)
+Suite PHPUnit complète : OK (566 tests, 2 693 assertions)
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
 Auditer le Gate de sortie du Lot 5 puis compléter en priorité les preuves encore
-absentes des chapitres 32 à 37 : matrice de rollback Return/Refund, idempotence
-transverse et isolation tenant/scopes. Le Lot 5 ne sera déclaré terminé qu’après
-la démonstration consolidée et la validation de chaque critère du chapitre 39.
+absentes des chapitres 32 à 37 : matrice de rollback de la complétion
+`ReturnSale`, idempotence transverse et isolation tenant/scopes. Le Lot 5 ne
+sera déclaré terminé qu’après la démonstration consolidée et la validation de
+chaque critère du chapitre 39.
