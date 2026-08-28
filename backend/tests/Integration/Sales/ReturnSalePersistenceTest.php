@@ -9,16 +9,20 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception\DriverException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
-use Zandu\Modules\Sales\Application\ReturnAmountCalculator;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Sales\Application\{CreateReturnSale, CreateReturnSaleHandler, ReturnAmountCalculator, ReturnSaleEventPublisher};
 use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, SaleLineCostSnapshotRepository, SaleRepository};
 use Zandu\Modules\Sales\Infrastructure\Persistence\{DbalReturnSaleRepository, DbalSaleLineCostSnapshotRepository, DbalSaleRepository};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
-use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ReturnSaleId, ReturnSaleLineId, SaleId};
-use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxRepository};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
+use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
 final class ReturnSalePersistenceTest extends KernelTestCase
 {
@@ -132,6 +136,31 @@ final class ReturnSalePersistenceTest extends KernelTestCase
             fn(): array => $this->returns->findBySale($organizationB, $this->saleId('b')),
         );
         self::assertSame([], $visible);
+    }
+
+    public function testRuntimeTenantCannotCreateAReturnFromAnotherTenantSale(): void
+    {
+        $organizationA = $this->organization(self::A);
+        $clock = new FrozenClock(new DateTimeImmutable('2026-08-28T12:00:00Z'));
+        $handler = new CreateReturnSaleHandler(
+            $this->sales,
+            $this->returns,
+            $this->transaction,
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+            $this->createStub(SecurityAuditTrail::class),
+            new ReturnSaleEventPublisher($this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $clock),
+            new SymfonyUuidV7Generator(),
+            $clock,
+        );
+
+        try {
+            $handler(new CreateReturnSale($this->saleId('b'), null, $this->actor($organizationA)));
+            self::fail('Tenant A must not create a return from Tenant B sale.');
+        } catch (\LogicException $exception) {
+            self::assertSame('Sale not found.', $exception->getMessage());
+        }
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM sales.return_sale WHERE organization_id IN (?, ?)', [self::A, self::B]));
     }
 
     public function testRuntimeRoleCannotRewriteAnOriginalReturnLine(): void

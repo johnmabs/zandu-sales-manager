@@ -12,6 +12,7 @@ use Zandu\Modules\Sales\Application\{AddReturnSaleLine, AddReturnSaleLineHandler
 use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshotRepository, SaleRepository};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
+use Zandu\SharedKernel\Access\{AuthorizationDenied, PermissionCode, ResourceScope};
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, ProductPackagingId, ReturnSaleId, SaleId, SaleLineId, StoreId, UnitOfMeasureId};
 use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxRepository};
@@ -45,6 +46,39 @@ final class ReturnSaleApplicationHandlersTest extends TestCase
         self::assertSame(ReturnSaleStatus::Draft, $return->status());
         self::assertSame('Damaged', $return->reason());
         self::assertTrue($sale->id()->equals($return->saleId()));
+    }
+
+    public function testStoreScopedDenialPreventsReturnCreation(): void
+    {
+        $sale = $this->completedSale();
+        $actor = $this->actor();
+        $scope = ResourceScope::store($this->organizationId(), $this->storeId());
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::once())
+            ->method('authorize')
+            ->with($actor, PermissionCode::SaleReturnCreate, self::callback(
+                fn(ResourceScope $actual): bool => $actual->organizationId->equals($scope->organizationId)
+                    && $actual->storeId?->equals($this->storeId()),
+            ))
+            ->willThrowException(AuthorizationDenied::forPermission($actor, PermissionCode::SaleReturnCreate, $scope));
+        $returns = $this->createMock(ReturnSaleRepository::class);
+        $returns->expects(self::never())->method('save');
+        $guard = $this->createMock(OperationalGuard::class);
+        $guard->expects(self::never())->method('assertStore');
+        $handler = new CreateReturnSaleHandler(
+            $this->sales($sale),
+            $returns,
+            $this->transaction(),
+            $authorization,
+            $guard,
+            $this->createStub(SecurityAuditTrail::class),
+            $this->events(),
+            new SymfonyUuidV7Generator(),
+            $this->clock(),
+        );
+
+        $this->expectException(AuthorizationDenied::class);
+        $handler(new CreateReturnSale($sale->id(), null, $actor));
     }
 
     public function testItAddsAnOriginalSaleLineToADraftReturn(): void
