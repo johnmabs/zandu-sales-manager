@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Zandu\Tests\Integration\Sales;
 
 use DateTimeImmutable;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception\DriverException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Throwable;
 use Zandu\Modules\Sales\Application\ReturnAmountCalculator;
 use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, SaleLineCostSnapshotRepository, SaleRepository};
 use Zandu\Modules\Sales\Infrastructure\Persistence\{DbalReturnSaleRepository, DbalSaleLineCostSnapshotRepository, DbalSaleRepository};
@@ -149,6 +151,56 @@ final class ReturnSalePersistenceTest extends KernelTestCase
         );
     }
 
+    public function testSaleLockSerializesReturnsAndProtectsTheCumulativeQuantity(): void
+    {
+        $organization = self::A;
+        $sale = $this->saleId('a')->toString();
+        $line = $this->id('a', 5);
+        $returnA = $this->returnId('a')->toString();
+        $returnB = '019a3218-0000-7000-8000-000000000018';
+        $returnLineA = $this->returnLineId('a')->toString();
+        $returnLineB = '019a3219-0000-7000-8000-000000000019';
+        $store = $this->id('a', 1);
+        $product = $this->id('a', 3);
+
+        foreach ([[$returnA, $returnLineA], [$returnB, $returnLineB]] as [$returnId, $returnLineId]) {
+            $this->connection->executeStatement("INSERT INTO sales.return_sale (id,organization_id,store_id,sale_id,status,created_by,created_at,version) VALUES (?,?,?,?,'DRAFT',?,NOW(),2)", [$returnId, $organization, $store, $sale, self::ACTOR]);
+            $this->connection->executeStatement('INSERT INTO sales.return_sale_line (id,organization_id,return_sale_id,sale_id,line_number,sale_line_id,product_id,returned_quantity,base_returned_quantity,restock) VALUES (?,?,?,?,1,?,?,8,8,FALSE)', [$returnLineId, $organization, $returnId, $sale, $line, $product]);
+        }
+
+        $second = DriverManager::getConnection($this->connection->getParams());
+        $this->connection->beginTransaction();
+        $this->tenantContext($this->connection, $organization);
+        self::assertSame($sale, $this->connection->fetchOne('SELECT id FROM sales.sale WHERE id = ? FOR UPDATE', [$sale]));
+
+        $second->beginTransaction();
+        $this->tenantContext($second, $organization);
+        $second->executeStatement("SET LOCAL lock_timeout = '100ms'");
+        $blocked = false;
+        try {
+            $second->fetchOne('SELECT id FROM sales.sale WHERE id = ? FOR UPDATE', [$sale]);
+        } catch (Throwable) {
+            $blocked = true;
+        } finally {
+            $second->rollBack();
+        }
+        self::assertTrue($blocked, 'A concurrent return must wait for the source sale lock.');
+
+        $this->connection->executeStatement("UPDATE sales.return_sale SET status = 'COMPLETED', business_date = CURRENT_DATE, completed_by = ?, completed_at = NOW(), version = 3 WHERE id = ?", [self::ACTOR, $returnA]);
+        $this->connection->commit();
+
+        $second->beginTransaction();
+        $this->tenantContext($second, $organization);
+        self::assertSame($sale, $second->fetchOne('SELECT id FROM sales.sale WHERE id = ? FOR UPDATE', [$sale]));
+        $alreadyReturned = (string) $second->fetchOne("SELECT COALESCE(SUM(line.base_returned_quantity), 0) FROM sales.return_sale_line line JOIN sales.return_sale parent ON parent.organization_id = line.organization_id AND parent.id = line.return_sale_id WHERE line.organization_id = ? AND line.sale_line_id = ? AND parent.status = 'COMPLETED'", [$organization, $line]);
+        self::assertSame('8.000000000000', $alreadyReturned);
+        self::assertGreaterThan(0, $this->quantity($alreadyReturned)->add($this->quantity('8'))->compareTo($this->quantity('12')));
+        $second->rollBack();
+        $second->close();
+
+        self::assertSame('DRAFT', $this->connection->fetchOne('SELECT status FROM sales.return_sale WHERE id = ?', [$returnB]));
+    }
+
     private function fixture(string $organization, string $suffix): void
     {
         $store = $this->id($suffix, 1);
@@ -184,6 +236,12 @@ final class ReturnSalePersistenceTest extends KernelTestCase
         $this->connection->executeStatement('DELETE FROM catalog.units_of_measure WHERE organization_id IN (?, ?)', $organizations);
         $this->connection->executeStatement('DELETE FROM organization.stores WHERE organization_id IN (?, ?)', $organizations);
         $this->connection->executeStatement('DELETE FROM organization.organizations WHERE id IN (?, ?)', $organizations);
+    }
+
+    private function tenantContext(\Doctrine\DBAL\Connection $connection, string $organization): void
+    {
+        $connection->executeStatement('SET LOCAL ROLE zandu_runtime');
+        $connection->executeStatement("SELECT set_config('app.organization_id', ?, true)", [$organization]);
     }
 
     private function id(string $suffix, int $part): string
