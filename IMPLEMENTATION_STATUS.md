@@ -64,7 +64,9 @@ Epic 5.6    TERMINÉ   CompleteSale valorise les sorties SALE
 Epic 5.7    TERMINÉ   SaleLineCostSnapshot immutable et tenant-scoped
 Epic 5.8    TERMINÉ   Atomicité CompleteSale/Costing prouvée par faute injectée
 Epic 5.9    TERMINÉ   ReturnSale et ReturnSaleLine foundation
-Returns     PROCHAINE Vente source terminée et limites cumulatives
+Persistence TERMINÉ   ReturnSale PostgreSQL, snapshots liés et RLS
+Returns     TERMINÉ   Vente source terminée et limites cumulatives
+Epic 5.10   PROCHAINE Restock Inventory via SALE_RETURN
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -72,8 +74,8 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 
 ```text
 Branche              main
-Migrations           Version20260827200000 appliquée en dernier
-Tests                 527 tests, 2 532 assertions
+Migrations           Version20260828120000 appliquée en dernier
+Tests                 534 tests, 2 553 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7875,7 +7877,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — fondation domaine ReturnSale disponible.**
+**État courant : EN COURS — retours persistés et cumuls protégés.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8278,11 +8280,68 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Persistence ReturnSale — PostgreSQL et RLS
+
+**Statut : TERMINÉ**
+
+- tables tenant-owned `sales.return_sale` et `sales.return_sale_line` avec
+  contraintes de statuts, cycle de vie, version, quantités et numéros de ligne ;
+- clés étrangères composites prouvant que le retour, la vente, la ligne
+  originale et le produit appartiennent au même tenant et à la même vente ;
+- les snapshots commerciaux restent portés par la ligne de vente immutable et
+  le snapshot de coût original est rechargé lorsqu’il existe, sans copie
+  divergente dans une nouvelle colonne JSON ;
+- repository DBAL avec création, mise à jour optimiste, lecture verrouillée et
+  recherche de tous les retours d’une vente ;
+- lignes append-only pour le rôle runtime, parent modifiable uniquement pour
+  son cycle de vie ;
+- RLS forcée et isolation inter-tenant vérifiée en intégration ;
+- migration `Version20260828120000` appliquée aux bases dev et test.
+
+Commit :
+
+```text
+a500cd5 feat(sales): persist return sales
+```
+
+### Invariants ReturnSale — vente source et limites cumulatives
+
+**Statut : TERMINÉ**
+
+- la complétion recharge puis verrouille de façon pessimiste la vente source avant
+  le retour, ce qui sérialise tous les retours concurrents d’une même vente ;
+- seule une vente `COMPLETED` est retournable, sinon `SALE_NOT_RETURNABLE` ;
+- les quantités de base de tous les retours déjà `COMPLETED` sont cumulées par
+  ligne de vente originale ;
+- les retours `DRAFT` ou `CANCELLED` ne consomment pas la quantité retournable ;
+- tout dépassement est refusé avec `RETURN_QUANTITY_EXCEEDS_SOLD` avant la
+  mutation du retour ;
+- la date métier est calculée avec le fuseau du magasin et la complétion est
+  persistée dans la transaction tenant-scoped.
+
+Commit :
+
+```text
+3cbb291 feat(sales): enforce cumulative return limits
+```
+
+Validation consolidée :
+
+```text
+ReturnSalePersistenceTest : OK (3 tests, 13 assertions)
+CompleteReturnSaleServiceTest : OK (4 tests, 8 assertions)
+Suite PHPUnit complète : OK (534 tests, 2 553 assertions)
+Conteneur Symfony test : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter les invariants ReturnSale de la section 17 du planning : charger
-une vente source `COMPLETED`, calculer les quantités déjà retournées sur tous
-ses retours et refuser atomiquement tout cumul supérieur aux quantités vendues.
-La persistence PostgreSQL tenant-scoped des retours doit être introduite avant
-ce contrôle concurrent, puis l’Epic 5.10 pourra intégrer `SALE_RETURN` dans
-Inventory lorsque `restock=true`.
+Implémenter l’Epic 5.10 : exposer à Sales un contrat Inventory de restock,
+augmenter le Stock et créer un `StockMovement SALE_RETURN` uniquement pour les
+lignes `restock=true`. L’effet devra être idempotent par retour et produit ; les
+lignes `restock=false` et les services ne devront produire aucune mutation de
+stock. L’Epic 5.11 restaurera ensuite leur coût original.

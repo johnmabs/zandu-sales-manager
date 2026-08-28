@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — fondation domaine ReturnSale disponible |
+| 5 | Inventory Costing et Returns | En cours — retours persistés et cumuls protégés |
 
-Dernière validation consolidée le 28 août 2026 : **527 tests et 2 532
+Dernière validation consolidée le 28 août 2026 : **534 tests et 2 553
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -219,7 +219,10 @@ conserve les snapshots commerciaux et de coût de la ligne vendue, calcule la
 quantité retournée en unité de base et distingue explicitement `restock=true`
 de `restock=false`. L’agrégat `ReturnSale` protège son ownership tenant, son
 cycle `DRAFT`, `COMPLETED`, `CANCELLED`, sa date métier et son immutabilité.
-La persistence et les endpoints Returns restent à construire.
+La persistence PostgreSQL/RLS conserve les liens vers les snapshots originaux.
+La complétion verrouille la vente source, exige son statut `COMPLETED` et
+empêche les retours cumulés de dépasser chaque quantité vendue. Les endpoints
+Returns et le restock Inventory restent à construire.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario
