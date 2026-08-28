@@ -10,7 +10,7 @@ use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementSource,StockMovementType};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
-use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,StockId,StockMovementId,StoreId};
+use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,ReturnSaleId,StockId,StockMovementId,StoreId};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final class StockMovementTest extends TestCase
@@ -46,6 +46,30 @@ final class StockMovementTest extends TestCase
         self::assertSame('7', $m->resultingQuantity()->toString());
         self::assertSame('Damaged items', $m->reason());
         self::assertTrue((new \ReflectionClass($m))->isReadOnly());
+    }
+
+    public function testSaleReturnIsAnIncreaseLinkedToTheReturn(): void
+    {
+        $f = new SymfonyUuidFactory();
+        $returnId = ReturnSaleId::fromString('0198d40b-1111-7111-8111-111111111111', $f);
+        $movement = StockMovement::record(
+            StockMovementId::fromString('0198d40c-1111-7111-8111-111111111111', $f),
+            OrganizationId::fromString('0198d40d-1111-7111-8111-111111111111', $f),
+            StoreId::fromString('0198d40e-1111-7111-8111-111111111111', $f),
+            ProductId::fromString('0198d40f-1111-7111-8111-111111111111', $f),
+            StockId::fromString('0198d410-1111-7111-8111-111111111111', $f),
+            StockMovementType::SaleReturn,
+            new MovementQuantity($this->q('2')),
+            new StockQuantity($this->q('8')),
+            StockMovementSource::saleReturn($returnId),
+            null,
+            null,
+            new DateTimeImmutable('2026-08-28T10:00:00Z'),
+        );
+
+        self::assertSame('10', $movement->resultingQuantity()->toString());
+        self::assertSame('RETURN', $movement->source()->type());
+        self::assertSame($returnId->toString(), $movement->source()->referenceId());
     }
     private function q(string $v): Quantity
     {
