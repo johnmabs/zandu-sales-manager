@@ -71,9 +71,13 @@ final class CompleteReturnSaleAtomicityTest extends KernelTestCase
 
     public function testSuccessfulCompletionCommitsEveryReturnEffectTogether(): void
     {
-        $completed = ($this->service(null))(new CompleteReturnSale($this->returnId(), $this->actor()));
+        $service = $this->service(null);
+        $completed = $service(new CompleteReturnSale($this->returnId(), $this->actor()));
+        $replayed = $service(new CompleteReturnSale($this->returnId(), $this->actor()));
 
         self::assertSame('COMPLETED', $completed->status()->value);
+        self::assertTrue($completed->id()->equals($replayed->id()));
+        self::assertEquals($completed->completedAt(), $replayed->completedAt());
         self::assertSame('14.000000000000', $this->value('SELECT quantity_on_hand FROM inventory.stock WHERE id = ?', self::STOCK));
         self::assertSame('14.000000000000', $this->value('SELECT quantity_on_hand FROM inventory_costing.stock_valuation WHERE id = ?', self::VALUATION));
         self::assertSame('5600.000000', $this->value('SELECT total_value FROM inventory_costing.stock_valuation WHERE id = ?', self::VALUATION));

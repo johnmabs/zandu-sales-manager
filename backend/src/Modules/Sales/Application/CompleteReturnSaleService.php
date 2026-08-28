@@ -42,6 +42,9 @@ final readonly class CompleteReturnSaleService
             $this->assertSource($source, $return);
             $this->authorization->authorize($command->actor, PermissionCode::SaleReturnComplete, ResourceScope::store($return->organizationId(), $return->storeId()));
             $this->guard->assertStore($command->actor, $return->storeId());
+            if (ReturnSaleStatus::Completed === $return->status()) {
+                return $return;
+            }
             $previouslyReturned = $this->previouslyReturnedQuantities($source, $return);
 
             $lineAmounts = [];
