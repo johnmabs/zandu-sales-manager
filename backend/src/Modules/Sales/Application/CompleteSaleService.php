@@ -19,7 +19,7 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class CompleteSaleService
 {
-    public function __construct(private TenantTransaction $transaction, private SaleRepository $sales, private InventoryConsumptionService $inventory, private CashPaymentService $cash, private PaymentRecorder $payments, private SaleCompletionIdempotency $idempotency, private AuthorizationService $authorization, private OperationalGuard $operationalGuard, private StoreBusinessContextProvider $stores, private SecurityAuditTrail $audit, private OutboxRepository $outbox, private IdGenerator $ids, private Clock $clock, private ?SalePricingService $pricing = null) {}
+    public function __construct(private TenantTransaction $transaction, private SaleRepository $sales, private InventoryConsumptionService $inventory, private SaleLineCostSnapshotService $costSnapshots, private CashPaymentService $cash, private PaymentRecorder $payments, private SaleCompletionIdempotency $idempotency, private AuthorizationService $authorization, private OperationalGuard $operationalGuard, private StoreBusinessContextProvider $stores, private SecurityAuditTrail $audit, private OutboxRepository $outbox, private IdGenerator $ids, private Clock $clock, private ?SalePricingService $pricing = null) {}
 
     public function __invoke(CompleteSale $command): CompleteSaleResult
     {
@@ -51,11 +51,12 @@ final readonly class CompleteSaleService
             $now = $this->clock->now();
             $this->pricing?->assertCurrent($sale, $now);
             $businessDate = $now->setTimezone(new DateTimeZone($store->timeZone))->format('Y-m-d');
-            $this->inventory->consume($sale, $command->actor);
+            $consumption = $this->inventory->consume($sale, $command->actor);
             $paymentId = $this->payments->recordCashSale($command->actor->organizationId(), $sale->id(), $command->amount, $command->actor->actorId());
             $this->cash->record($sale, $command->cashSessionId, $command->amount, $command->actor->actorId());
             $sale->complete($command->actor, $now, $businessDate);
             $this->sales->save($sale);
+            $this->costSnapshots->capture($sale, $consumption);
             $this->audit->recordSuccess($command->actor, SecurityAction::SaleCompleted, ResourceReference::for('sale', $sale->id()), SafeAuditMetadata::fromArray(['businessDate' => $businessDate]), $now);
             $this->outbox->append(new OutboxMessage(
                 OutboxMessageId::generate($this->ids),

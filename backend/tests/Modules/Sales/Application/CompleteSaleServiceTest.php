@@ -10,9 +10,9 @@ use Zandu\Modules\CashManagement\Application\Contract\{CashMovementRecorder,Cash
 use Zandu\Modules\Catalog\Application\Contract\{InventoryProductDescriptor, InventoryProductProvider};
 use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale,InventoryStockConsumer,StockConsumptionResult};
 use Zandu\Modules\Organization\Application\Contract\{StoreBusinessContext, StoreBusinessContextProvider};
-use Zandu\Modules\Sales\Application\{CashPaymentService,CompleteSale,CompleteSaleService,InMemorySaleCompletionIdempotency,InventoryConsumptionService};
+use Zandu\Modules\Sales\Application\{CashPaymentService,CompleteSale,CompleteSaleService,InMemorySaleCompletionIdempotency,InventoryConsumptionService,SaleLineCostSnapshotService};
 use Zandu\Modules\Sales\Application\Contract\PaymentRecorder;
-use Zandu\Modules\Sales\Domain\{Sale,SaleLine,SaleRepository,SaleStatus};
+use Zandu\Modules\Sales\Domain\{Sale,SaleLine,SaleLineCostSnapshot,SaleLineCostSnapshotRepository,SaleRepository,SaleStatus};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Identity\SymfonyUuidV7Generator;
@@ -93,6 +93,17 @@ final class CompleteSaleServiceTest extends TestCase
             $transaction,
             $sales,
             new InventoryConsumptionService($inventory, $products),
+            new SaleLineCostSnapshotService(new class implements SaleLineCostSnapshotRepository {
+                public function append(SaleLineCostSnapshot $snapshot): void {}
+                public function findBySaleLine(OrganizationId $organizationId, SaleLineId $saleLineId): ?SaleLineCostSnapshot
+                {
+                    return null;
+                }
+                public function findBySale(OrganizationId $organizationId, SaleId $saleId): array
+                {
+                    return [];
+                }
+            }),
             new CashPaymentService($cash),
             $payments,
             new InMemorySaleCompletionIdempotency(),

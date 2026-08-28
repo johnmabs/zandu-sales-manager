@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\Inventory\Application;
 
 use LogicException;
-use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale, InventoryStockConsumer, StockConsumptionResult};
+use Zandu\Modules\Inventory\Application\Contract\{ConsumeStockForSale, CostedStockConsumption, InventoryStockConsumer, StockConsumptionResult};
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementSource, StockMovementType};
 use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
@@ -35,6 +35,7 @@ final readonly class RepositoryInventoryStockConsumer implements InventoryStockC
         }
 
         $alreadyConsumed = true;
+        $costedItems = [];
         foreach ($items as $item) {
             $stock = $this->stocks->get($request->organizationId, $request->storeId, $item['productId']);
             $quantity = new MovementQuantity($item['quantity']);
@@ -59,7 +60,7 @@ final readonly class RepositoryInventoryStockConsumer implements InventoryStockC
             if (!$this->stocks->decreaseIfAvailable($request->organizationId, $stock->id(), $quantity, $stock->version())) {
                 throw new LogicException('Insufficient stock or concurrent stock modification.');
             }
-            $this->costing->value(new ValueInventoryMovement(
+            $valued = $this->costing->value(new ValueInventoryMovement(
                 $request->storeId,
                 $item['productId'],
                 $stock->id(),
@@ -73,8 +74,18 @@ final readonly class RepositoryInventoryStockConsumer implements InventoryStockC
                 $movement->occurredAt(),
                 $request->actorContext,
             ));
+            $costedItems[] = new CostedStockConsumption(
+                $item['productId'],
+                $valued->stockId,
+                $valued->stockMovementId,
+                $valued->quantity,
+                $valued->unitCost,
+                $valued->totalCost,
+                $valued->valuationVersion,
+                $valued->occurredAt,
+            );
         }
 
-        return new StockConsumptionResult($request->saleId, $alreadyConsumed);
+        return new StockConsumptionResult($request->saleId, $alreadyConsumed, $costedItems);
     }
 }

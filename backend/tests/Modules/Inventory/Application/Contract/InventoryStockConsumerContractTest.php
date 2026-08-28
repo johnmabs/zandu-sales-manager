@@ -12,7 +12,7 @@ final class InventoryStockConsumerContractTest extends TestCase
     public function testContractIsVersionedAndExposesIdempotentResult(): void
     {
         self::assertTrue(method_exists(InventoryStockConsumer::class, 'consumeStockForSale'));
-        self::assertSame(2, StockConsumptionResult::CONTRACT_VERSION);
+        self::assertSame(3, StockConsumptionResult::CONTRACT_VERSION);
         $saleId = \Zandu\SharedKernel\Identity\SaleId::fromString('00000000-0000-7000-8000-000000000001', new \Zandu\Platform\Identity\SymfonyUuidFactory());
         $result = new StockConsumptionResult($saleId, true);
         self::assertTrue($result->alreadyConsumed);

@@ -255,6 +255,17 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
         self::assertSame($sale['id'], $saleValuation['source_reference_id']);
         self::assertNotNull($saleValuation['stock_movement_id']);
         self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id = ? AND type = 'SALE'", [$organizationId]));
+        $costSnapshot = $connection->fetchAssociative('SELECT sale_line_id, stock_id, stock_movement_id, quantity, unit_cost, total_cost, currency, valuation_version FROM sales.sale_line_cost_snapshot WHERE organization_id = ?', [$organizationId]);
+        self::assertIsArray($costSnapshot);
+        self::assertSame($connection->fetchOne('SELECT id FROM sales.sale_line WHERE organization_id = ? AND sale_id = ?', [$organizationId, $sale['id']]), $costSnapshot['sale_line_id']);
+        self::assertSame($connection->fetchOne('SELECT id FROM inventory.stock WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]), $costSnapshot['stock_id']);
+        self::assertSame($saleValuation['stock_movement_id'], $costSnapshot['stock_movement_id']);
+        self::assertSame('2.000000000000', $costSnapshot['quantity']);
+        self::assertSame('400.000000000000', $costSnapshot['unit_cost']);
+        self::assertSame('800.000000', $costSnapshot['total_cost']);
+        self::assertSame('XAF', $costSnapshot['currency']);
+        self::assertSame(2, $costSnapshot['valuation_version']);
+        self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM sales.sale_line_cost_snapshot WHERE organization_id = ?', [$organizationId]));
         self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM cash_management.cash_movement WHERE organization_id = ? AND type = 'SALE_PAYMENT'", [$organizationId]));
         self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM payments.payment WHERE organization_id = ? AND status = 'CONFIRMED'", [$organizationId]));
 
@@ -409,6 +420,7 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
             $connection->executeStatement('DELETE FROM cash_management.cash_register WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM payments.payment WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM sales.sale_completion_keys WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM sales.sale_line_cost_snapshot WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM sales.sale_line WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM sales.sale WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation_movement WHERE organization_id = ?', [$organizationId]);

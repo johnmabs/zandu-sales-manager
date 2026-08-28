@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\InventoryCosting\Application;
 
-use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement, ValuedInventoryMovement};
 use Zandu\Modules\InventoryCosting\Domain\InventoryCostingRuleViolation;
 use Zandu\Modules\InventoryCosting\Domain\Valuation\{MovingWeightedAverageCalculator, MovingWeightedAverageResult, StockValuation, StockValuationRepository};
 use Zandu\Modules\InventoryCosting\Domain\ValuationMovement\{StockValuationMovement, StockValuationMovementRepository, StockValuationMovementSource, StockValuationMovementType};
@@ -23,7 +23,7 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
         private IdGenerator $ids,
     ) {}
 
-    public function value(ValueInventoryMovement $movement): void
+    public function value(ValueInventoryMovement $movement): ValuedInventoryMovement
     {
         $organizationId = $movement->actorContext->organizationId();
         $currency = Currency::fromCode($this->stores->provide($organizationId, $movement->storeId)->currency);
@@ -33,9 +33,7 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
         $this->assertCostPolicy($movement->type, $incomingUnitCost);
 
         if (InventoryCostingMovementType::InitialStock === $movement->type) {
-            $this->initialize($movement, $this->requiredIncomingCost($incomingUnitCost));
-
-            return;
+            return $this->initialize($movement, $this->requiredIncomingCost($incomingUnitCost));
         }
 
         $valuation = $this->valuations->getByStockForUpdate($organizationId, $movement->stockId);
@@ -54,9 +52,11 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
         $this->assertResultingQuantity($movement, $result);
         $this->valuations->save($valuation);
         $this->movements->append($this->ledger($movement, $valuation, $result, $previousTotal, $previousAverage));
+
+        return $this->result($movement, $valuation, $result);
     }
 
-    private function initialize(ValueInventoryMovement $movement, Money $incomingUnitCost): void
+    private function initialize(ValueInventoryMovement $movement, Money $incomingUnitCost): ValuedInventoryMovement
     {
         $organizationId = $movement->actorContext->organizationId();
         if (null !== $this->valuations->findByStock($organizationId, $movement->stockId)) {
@@ -93,6 +93,8 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
         );
         $this->valuations->save($valuation);
         $this->movements->append($this->ledger($movement, $valuation, $result, $zeroValue, $zeroAverage));
+
+        return $this->result($movement, $valuation, $result);
     }
 
     private function ledger(
@@ -163,5 +165,21 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
                 'Stock valuation result does not match the physical stock result.',
             );
         }
+    }
+
+    private function result(
+        ValueInventoryMovement $movement,
+        StockValuation $valuation,
+        MovingWeightedAverageResult $result,
+    ): ValuedInventoryMovement {
+        return new ValuedInventoryMovement(
+            $movement->stockId,
+            $movement->stockMovementId,
+            $movement->quantity,
+            $result->movementUnitCost,
+            $result->movementValue,
+            $valuation->version(),
+            $movement->occurredAt,
+        );
     }
 }

@@ -10,12 +10,13 @@ use Zandu\Modules\Inventory\Application\Contract\ConsumeStockForSale;
 use Zandu\Modules\Inventory\Application\RepositoryInventoryStockConsumer;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, Stock, StockQuantity, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository};
-use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement, ValuedInventoryMovement};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, SaleId, StockId, StoreId};
 use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\SharedKernel\Time\Clock;
 
@@ -57,12 +58,23 @@ final class RepositoryInventoryStockConsumerTest extends TestCase
             && '10' === $movement->previousQuantity->toString()
             && '8' === $movement->resultingQuantity->toString()
             && self::SALE === $movement->reason
-            && self::CORRELATION === $movement->actorContext->correlationId()->toString()));
+            && self::CORRELATION === $movement->actorContext->correlationId()->toString()))
+            ->willReturnCallback(fn(ValueInventoryMovement $movement): ValuedInventoryMovement => new ValuedInventoryMovement(
+                $movement->stockId,
+                $movement->stockMovementId,
+                $movement->quantity,
+                Money::fromString('400', Currency::fromCode('XAF'), $this->decimals),
+                Money::fromString('800', Currency::fromCode('XAF'), $this->decimals),
+                2,
+                $movement->occurredAt,
+            ));
 
         $result = $this->consumer($stocks, $movements, $costing)->consumeStockForSale($this->request());
 
         self::assertFalse($result->alreadyConsumed);
         self::assertSame(self::SALE, $result->saleId->toString());
+        self::assertCount(1, $result->costedItems);
+        self::assertSame('400', $result->costedItems[0]->unitCost->amount()->toString());
     }
 
     public function testReplayDoesNotDecreaseOrValueStockAgain(): void
