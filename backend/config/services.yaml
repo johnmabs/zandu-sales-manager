@@ -176,6 +176,8 @@ services:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleRepository
     Zandu\Modules\Sales\Domain\SaleLineCostSnapshotRepository:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleLineCostSnapshotRepository
+    Zandu\Modules\Sales\Domain\ReturnSaleRepository:
+        alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalReturnSaleRepository
     Zandu\Modules\Sales\Application\Contract\SaleCompletionIdempotency:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleCompletionIdempotency
 
