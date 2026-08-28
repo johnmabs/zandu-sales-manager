@@ -440,6 +440,9 @@ feat(purchasing): add supplier management
 
 # 9. Epic 6.3 — PurchasingPolicy
 
+Décision applicable : [ADR-0023 — Politique de réception fournisseur du
+MVP](../architecture/adr/0023-purchasing-receipt-policy.md).
+
 Créer une policy possédée par Purchasing.
 
 Minimum :
