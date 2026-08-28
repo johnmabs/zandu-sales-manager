@@ -50,6 +50,14 @@ Gate Lot 4 TERMINÉ   M2 — première vente cash de bout en bout
 Gate Lot 5 TERMINÉ   Inventory Costing & Returns, première partie de M3
 ```
 
+Le Lot 6 est ouvert en backlog :
+
+```text
+Phase 0     TERMINÉ   Planning Purchasing & Goods Receipts analysé et aligné
+Epic 6.1    PROCHAINE Purchasing foundation et boundaries exécutables
+Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
+```
+
 Le détail du Lot 5 clôturé :
 
 ```text
@@ -8780,6 +8788,7 @@ GitHub Actions : OK — run 33187545106 sur 7c1e3ff
 
 ### Prochaine étape
 
-Préparer le Lot 6 Purchasing : rédiger son planning détaillé et décider les ADR
-nécessaires pour Supplier, PurchaseOrder, GoodsReceipt, coût d’entrée Inventory
-et corrections compensatoires avant toute implémentation.
+Implémenter l’Epic 6.1 — Purchasing foundation, puis formaliser avant leur code
+les décisions structurantes encore portées par le planning : réception directe,
+over-receipt, costing prospectif des corrections et PurchaseReturn au coût moyen
+courant.

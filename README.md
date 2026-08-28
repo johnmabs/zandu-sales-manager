@@ -29,6 +29,11 @@ configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
 workflow GitHub Actions `Backend CI` sont également validés.
 
+Le [planning du Lot 6](docs/planning/zandu-lot-6-purchasing-goods-receipts.md)
+ouvre désormais le backlog `Purchasing & Goods Receipts`. Le Lot 7 reste annoncé
+comme la tranche `StockTransfer & StockCount`, mais ne dispose pas encore d’un
+document de planning autonome dans le repository.
+
 ## Stack technique
 
 - PHP 8.5 et Symfony 7.4 LTS ;
