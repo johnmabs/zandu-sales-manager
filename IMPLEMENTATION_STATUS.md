@@ -79,7 +79,7 @@ Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 560 tests, 2 659 assertions
+Tests                 561 tests, 2 665 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8552,10 +8552,36 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Concurrence ReturnSale — limite cumulative
+
+**Statut : TERMINÉ**
+
+- test PostgreSQL réel avec deux connexions et le rôle runtime tenant-scoped ;
+- la première complétion conserve le verrou pessimiste de la vente source ;
+- une seconde tentative concurrente ne peut pas lire puis valider un cumul
+  obsolète : elle attend le verrou ;
+- après libération, elle observe les `8` unités déjà retournées et détecte que
+  `8 + 8` dépasserait les `12` unités vendues ;
+- le second retour reste `DRAFT`, sans dépassement du cumul complété.
+
+Commit atomique :
+
+```text
+b17c473 test(returns): verify concurrent return quantity safety
+```
+
+Validation consolidée :
+
+```text
+ReturnSalePersistenceTest : OK (4 tests, 22 assertions)
+Suite PHPUnit complète : OK (561 tests, 2 665 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+```
+
 ### Prochaine étape
 
 Auditer le Gate de sortie du Lot 5 puis compléter en priorité les preuves encore
-absentes des chapitres 32 à 37 : matrice de rollback Return/Refund, concurrence
-PostgreSQL sur les quantités retournées, idempotence transverse et isolation
-tenant/scopes. Le Lot 5 ne sera déclaré terminé qu’après la démonstration
-consolidée et la validation de chaque critère du chapitre 39.
+absentes des chapitres 32 à 37 : matrice de rollback Return/Refund, idempotence
+transverse et isolation tenant/scopes. Le Lot 5 ne sera déclaré terminé qu’après
+la démonstration consolidée et la validation de chaque critère du chapitre 39.

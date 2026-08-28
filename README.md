@@ -23,7 +23,7 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | En cours — workflow Returns et remboursement cash opérationnels |
 
-Dernière validation consolidée le 28 août 2026 : **560 tests et 2 659
+Dernière validation consolidée le 28 août 2026 : **561 tests et 2 665
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
