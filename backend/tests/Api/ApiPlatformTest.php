@@ -277,4 +277,17 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertArrayHasKey('unitCost', $initialize['properties']);
         self::assertArrayHasKey('unitCost', $adjust['properties']);
     }
+
+    public function testReturnSaleOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/sales/{saleId}/returns')->getPost());
+        self::assertNotNull($paths->getPath('/api/sales/{saleId}/returns')->getGet());
+        self::assertNotNull($paths->getPath('/api/returns/{id}/lines')->getPost());
+        self::assertNotNull($paths->getPath('/api/returns/{id}/complete')->getPost());
+        self::assertNotNull($paths->getPath('/api/returns/{id}/cancel')->getPost());
+        self::assertNotNull($paths->getPath('/api/returns/{id}')->getGet());
+    }
 }
