@@ -7,13 +7,14 @@ namespace Zandu\Tests\Modules\Sales\Application;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\Inventory\Application\Contract\{InventoryStockRestocker, RestockSaleReturn, StockRestockResult};
 use Zandu\Modules\Organization\Application\Contract\{StoreBusinessContext, StoreBusinessContextProvider};
 use Zandu\Modules\Sales\Application\{CompleteReturnSale, CompleteReturnSaleService};
-use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleRepository, SalesRuleViolation};
+use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshot, SaleRepository, SalesRuleViolation};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
-use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, ProductPackagingId, ReturnSaleId, ReturnSaleLineId, SaleId, SaleLineId, StoreId, UnitOfMeasureId};
+use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, ProductPackagingId, ReturnSaleId, ReturnSaleLineId, SaleId, SaleLineId, StockId, StockMovementId, StoreId, UnitOfMeasureId};
 use Zandu\SharedKernel\Messaging\CorrelationId;
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -81,8 +82,55 @@ final class CompleteReturnSaleServiceTest extends TestCase
         self::assertSame(ReturnSaleStatus::Completed, $completed->status());
     }
 
+    public function testItRestocksOnlyWithTheOriginalCostSnapshot(): void
+    {
+        $sale = $this->completedSale();
+        $candidate = $this->returnSale($sale, '1', '019a3300-0000-7000-8000-000000000027', true, true);
+        $inventory = $this->createMock(InventoryStockRestocker::class);
+        $inventory->expects(self::once())->method('restockSaleReturn')->with(self::callback(static fn(RestockSaleReturn $request): bool => 1 === count($request->items)
+            && '6.000000000000' === $request->items[0]['baseQuantity']->toString()
+            && '400.000000000000' === $request->items[0]['originalUnitCost']->amount()->toString()))
+            ->willReturn(new StockRestockResult($candidate->id(), false));
+
+        $completed = $this->service($sale, [$candidate], $inventory)(new CompleteReturnSale($candidate->id(), $this->actor()));
+
+        self::assertSame(ReturnSaleStatus::Completed, $completed->status());
+    }
+
+    public function testItRejectsRestockWithoutTheOriginalCostSnapshot(): void
+    {
+        $sale = $this->completedSale();
+        $candidate = $this->returnSale($sale, '1', '019a3300-0000-7000-8000-000000000028', true, false);
+        $inventory = $this->createMock(InventoryStockRestocker::class);
+        $inventory->expects(self::never())->method('restockSaleReturn');
+
+        try {
+            $this->service($sale, [$candidate], $inventory)(new CompleteReturnSale($candidate->id(), $this->actor()));
+            self::fail('A restock without original cost should be rejected.');
+        } catch (SalesRuleViolation $exception) {
+            self::assertSame('SALE_LINE_COST_SNAPSHOT_NOT_FOUND', $exception->errorCode());
+        }
+        self::assertSame(ReturnSaleStatus::Draft, $candidate->status());
+    }
+
+    public function testInventoryOrCostingFailureLeavesTheReturnUncompleted(): void
+    {
+        $sale = $this->completedSale();
+        $candidate = $this->returnSale($sale, '1', '019a3300-0000-7000-8000-000000000029', true, true);
+        $inventory = $this->createStub(InventoryStockRestocker::class);
+        $inventory->method('restockSaleReturn')->willThrowException(new \RuntimeException('Injected return costing failure.'));
+
+        try {
+            $this->service($sale, [$candidate], $inventory)(new CompleteReturnSale($candidate->id(), $this->actor()));
+            self::fail('A return costing failure should abort completion.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Injected return costing failure.', $exception->getMessage());
+        }
+        self::assertSame(ReturnSaleStatus::Draft, $candidate->status());
+    }
+
     /** @param list<ReturnSale> $returns */
-    private function service(Sale $sale, array $returns): CompleteReturnSaleService
+    private function service(Sale $sale, array $returns, ?InventoryStockRestocker $inventory = null): CompleteReturnSaleService
     {
         $sales = new class ($sale) implements SaleRepository {
             public int $lockCalls = 0;
@@ -142,6 +190,7 @@ final class CompleteReturnSaleServiceTest extends TestCase
             $transaction,
             $sales,
             $repository,
+            $inventory ?? $this->createStub(InventoryStockRestocker::class),
             $stores,
             new FrozenClock(new DateTimeImmutable('2026-08-28T23:30:00Z')),
         );
@@ -172,7 +221,7 @@ final class CompleteReturnSaleServiceTest extends TestCase
         return $sale;
     }
 
-    private function returnSale(Sale $sale, string $quantity, string $id): ReturnSale
+    private function returnSale(Sale $sale, string $quantity, string $id, bool $restock = false, bool $withCost = false): ReturnSale
     {
         $return = ReturnSale::create(
             ReturnSaleId::fromString($id, $this->uuids()),
@@ -186,13 +235,27 @@ final class CompleteReturnSaleServiceTest extends TestCase
         $return->addLine(new ReturnSaleLine(
             ReturnSaleLineId::fromString(substr($id, 0, -2) . '3' . substr($id, -1), $this->uuids()),
             $sale->lines()[0],
-            null,
+            $withCost ? $this->costSnapshot($sale->lines()[0]->id()) : null,
             $this->quantity($quantity),
-            false,
+            $restock,
             null,
         ));
 
         return $return;
+    }
+
+    private function costSnapshot(SaleLineId $saleLineId): SaleLineCostSnapshot
+    {
+        return SaleLineCostSnapshot::capture(
+            $this->organizationId(),
+            $saleLineId,
+            StockId::fromString('019a3300-0000-7000-8000-000000000011', $this->uuids()),
+            StockMovementId::fromString('019a3300-0000-7000-8000-000000000012', $this->uuids()),
+            $this->quantity('12'),
+            Money::fromString('400', Currency::fromCode('XAF'), $this->decimals()),
+            2,
+            new DateTimeImmutable('2026-08-28T09:00:00Z'),
+        );
     }
 
     private function saleLine(Sale $sale): SaleLine

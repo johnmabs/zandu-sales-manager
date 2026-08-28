@@ -6,6 +6,7 @@ namespace Zandu\Modules\Sales\Application;
 
 use DateTimeZone;
 use LogicException;
+use Zandu\Modules\Inventory\Application\Contract\{InventoryStockRestocker, RestockSaleReturn};
 use Zandu\Modules\Organization\Application\Contract\StoreBusinessContextProvider;
 use Zandu\Modules\Sales\Domain\{ReturnSale, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleRepository, SaleStatus, SalesRuleViolation};
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -18,6 +19,7 @@ final readonly class CompleteReturnSaleService
         private TenantTransaction $transaction,
         private SaleRepository $sales,
         private ReturnSaleRepository $returns,
+        private InventoryStockRestocker $inventory,
         private StoreBusinessContextProvider $stores,
         private Clock $clock,
     ) {}
@@ -30,6 +32,31 @@ final readonly class CompleteReturnSaleService
             $return = $this->returns->getForUpdate($command->actor->organizationId(), $command->returnSaleId);
             $this->assertSource($source, $return);
             $this->assertCumulativeQuantities($source, $return);
+
+            $restockItems = [];
+            foreach ($return->lines() as $line) {
+                if (!$line->restock()) {
+                    continue;
+                }
+                $cost = $line->originalCostSnapshot() ?? throw SalesRuleViolation::with(
+                    'SALE_LINE_COST_SNAPSHOT_NOT_FOUND',
+                    'The original sale line cost snapshot is required to restock a return.',
+                );
+                $restockItems[] = [
+                    'productId' => $line->productId(),
+                    'baseQuantity' => $line->baseReturnedQuantity(),
+                    'originalUnitCost' => $cost->unitCost(),
+                ];
+            }
+            if ([] !== $restockItems) {
+                $this->inventory->restockSaleReturn(new RestockSaleReturn(
+                    $return->organizationId(),
+                    $return->storeId(),
+                    $return->id(),
+                    $restockItems,
+                    $command->actor,
+                ));
+            }
 
             $now = $this->clock->now();
             $store = $this->stores->provide($return->organizationId(), $return->storeId());

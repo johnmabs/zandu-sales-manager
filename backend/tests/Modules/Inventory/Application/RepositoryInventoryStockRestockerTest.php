@@ -10,11 +10,13 @@ use Zandu\Modules\Inventory\Application\Contract\RestockSaleReturn;
 use Zandu\Modules\Inventory\Application\RepositoryInventoryStockRestocker;
 use Zandu\Modules\Inventory\Domain\Stock\{Stock, StockQuantity, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementType};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement, ValuedInventoryMovement};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, ReturnSaleId, StockId, StoreId};
 use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
@@ -42,8 +44,21 @@ final class RepositoryInventoryStockRestockerTest extends TestCase
             && '13' === $movement->resultingQuantity()->toString()
             && 'RETURN' === $movement->source()->type()
             && $this->returnId()->toString() === $movement->source()->referenceId()))->willReturn(true);
+        $costing = $this->createMock(InventoryMovementValuer::class);
+        $costing->expects(self::once())->method('value')->with(self::callback(fn(ValueInventoryMovement $movement): bool => InventoryCostingMovementType::SaleReturn === $movement->type
+            && '3' === $movement->quantity->toString()
+            && '466.666666666667' === $movement->incomingUnitCost?->toString()
+            && $this->returnId()->toString() === $movement->reason))->willReturnCallback(fn(ValueInventoryMovement $movement): ValuedInventoryMovement => new ValuedInventoryMovement(
+                $movement->stockId,
+                $movement->stockMovementId,
+                $movement->quantity,
+                $this->money('466.666666666667'),
+                $this->money('1400'),
+                3,
+                $movement->occurredAt,
+            ));
 
-        $result = $this->restocker($stocks, $movements)->restockSaleReturn($this->request());
+        $result = $this->restocker($stocks, $movements, $costing)->restockSaleReturn($this->request());
 
         self::assertFalse($result->alreadyRestocked);
         self::assertSame(1, $result::CONTRACT_VERSION);
@@ -59,18 +74,21 @@ final class RepositoryInventoryStockRestockerTest extends TestCase
         $stocks->expects(self::never())->method('save');
         $movements = $this->createStub(StockMovementRepository::class);
         $movements->method('appendOnce')->willReturn(false);
+        $costing = $this->createMock(InventoryMovementValuer::class);
+        $costing->expects(self::never())->method('value');
 
-        $result = $this->restocker($stocks, $movements)->restockSaleReturn($this->request());
+        $result = $this->restocker($stocks, $movements, $costing)->restockSaleReturn($this->request());
 
         self::assertTrue($result->alreadyRestocked);
         self::assertSame([], $result->items);
     }
 
-    private function restocker(StockRepository $stocks, StockMovementRepository $movements): RepositoryInventoryStockRestocker
+    private function restocker(StockRepository $stocks, StockMovementRepository $movements, InventoryMovementValuer $costing): RepositoryInventoryStockRestocker
     {
         return new RepositoryInventoryStockRestocker(
             $stocks,
             $movements,
+            $costing,
             new SymfonyUuidV7Generator(),
             new FrozenClock(new DateTimeImmutable('2026-08-28T14:00:00Z')),
         );
@@ -83,8 +101,8 @@ final class RepositoryInventoryStockRestockerTest extends TestCase
             $this->storeId(),
             $this->returnId(),
             [
-                ['productId' => $this->productId(), 'baseQuantity' => $this->quantity('1')],
-                ['productId' => $this->productId(), 'baseQuantity' => $this->quantity('2')],
+                ['productId' => $this->productId(), 'baseQuantity' => $this->quantity('1'), 'originalUnitCost' => $this->money('400')],
+                ['productId' => $this->productId(), 'baseQuantity' => $this->quantity('2'), 'originalUnitCost' => $this->money('500')],
             ],
             $this->actor(),
         );
@@ -139,5 +157,10 @@ final class RepositoryInventoryStockRestockerTest extends TestCase
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, $this->decimals);
+    }
+
+    private function money(string $value): Money
+    {
+        return Money::fromString($value, Currency::fromCode('XAF'), $this->decimals);
     }
 }
