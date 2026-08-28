@@ -191,6 +191,12 @@ services:
 
     Zandu\Modules\Purchasing\Domain\Supplier\SupplierRepository:
         alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\Orm\DoctrineSupplierRepository
+    Zandu\Modules\Purchasing\Application\PurchasingPolicy:
+        alias: Zandu\Modules\Purchasing\Application\ConfiguredPurchasingPolicy
+    Zandu\Modules\Purchasing\Application\ConfiguredPurchasingPolicy:
+        arguments:
+            $purchaseOrderRequiredForReceipt: '%env(bool:PURCHASING_PURCHASE_ORDER_REQUIRED_FOR_RECEIPT)%'
+            $overReceiptPolicy: '%env(string:PURCHASING_OVER_RECEIPT_POLICY)%'
 
     Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
         alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver
