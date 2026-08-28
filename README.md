@@ -22,8 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
+| 6 | Purchasing et Goods Receipts | En cours — fondation terminée |
 
-Dernière validation consolidée le 28 août 2026 : **576 tests et 2 777
+Dernière validation consolidée le 28 août 2026 : **577 tests et 2 781
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le

@@ -54,7 +54,8 @@ Le Lot 6 est ouvert en backlog :
 
 ```text
 Phase 0     TERMINÉ   Planning Purchasing & Goods Receipts analysé et aligné
-Epic 6.1    PROCHAINE Purchasing foundation et boundaries exécutables
+Epic 6.1    TERMINÉ   Purchasing foundation, boundaries et schéma PostgreSQL
+Epic 6.2    PROCHAINE Supplier aggregate et persistence tenant-scoped
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -8786,9 +8787,40 @@ Backup/restore PostgreSQL : OK, 41 migrations restaurées
 GitHub Actions : OK — run 33187545106 sur 7c1e3ff
 ```
 
+### Epic 6.1 — Purchasing foundation
+
+**Statut : TERMINÉ**
+
+- la structure `Domain`, `Application/Contract`, `Infrastructure` et
+  `Presentation/Api` du module Purchasing est matérialisée ;
+- `PurchasingRuleViolation` fournit le contrat d’erreur métier stable ;
+- Deptrac distingue le module Purchasing de son contrat applicatif et interdit
+  les dépendances directes vers les domaines Catalog, Inventory et Costing ;
+- le schéma PostgreSQL `purchasing` existe sur les bases locale et de test ;
+- aucune table n’est créée avant de disposer des invariants tenant et RLS de
+  l’agrégat concerné.
+
+Commits atomiques :
+
+```text
+9db9c28 refactor(purchasing): add bounded context structure
+83140b1 feat(database): add purchasing schema foundation
+```
+
+Validation locale :
+
+```text
+Suite PHPUnit complète : OK (577 tests, 2 781 assertions)
+Composer validate et conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+Migrations dev/test : version 20260828200000 appliquée
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.1 — Purchasing foundation, puis formaliser avant leur code
-les décisions structurantes encore portées par le planning : réception directe,
-over-receipt, costing prospectif des corrections et PurchaseReturn au coût moyen
-courant.
+Implémenter l’Epic 6.2 — Supplier aggregate et persistence tenant-scoped. Les
+décisions structurantes sur la réception directe, l’over-receipt, le costing
+prospectif des corrections et PurchaseReturn au coût moyen courant doivent être
+formalisées avant les epics qui les consomment.
