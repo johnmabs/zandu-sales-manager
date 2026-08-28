@@ -289,6 +289,123 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
         self::assertSame('DRAFT', $connection->fetchOne('SELECT status FROM sales.sale WHERE organization_id = ? AND id = ?', [$organizationId, $unvaluedSale['id']]));
     }
 
+    public function testCostSnapshotFailureRollsBackCompleteSaleAndAllowsRetry(): void
+    {
+        $client = self::createClient();
+        $ownerToken = $this->registerOwnerAndLogin($client);
+        $store = $this->createStore($client, $ownerToken, 'ATOMIC', 'Atomic Store');
+        $register = $this->createCashRegister($client, $ownerToken, $store['id'], 'ATOMIC-REG');
+        $session = $this->openCashSession($client, $ownerToken, $store['id'], $register['id'], '0');
+        $connection = $this->entityManager->getConnection();
+        $organizationId = $connection->fetchOne('SELECT default_organization_id FROM identity_access.users WHERE email = ?', [self::OWNER_EMAIL]);
+        $actorId = $connection->fetchOne('SELECT actor_id FROM identity_access.users WHERE email = ?', [self::OWNER_EMAIL]);
+        self::assertIsString($organizationId);
+        self::assertIsString($actorId);
+        $unitId = '019a2000-0000-7000-8000-000000000001';
+        $productId = '019a2000-0000-7000-8000-000000000002';
+        $packagingId = '019a2000-0000-7000-8000-000000000003';
+        $priceListId = '019a2000-0000-7000-8000-000000000004';
+        $productPriceId = '019a2000-0000-7000-8000-000000000005';
+        $connection->executeStatement("INSERT INTO catalog.units_of_measure (id,organization_id,code,name,dimension,precision,rounding_mode,status,version) VALUES (?,?,'AT-EA','Article','COUNT',0,'HalfUp','ACTIVE',1)", [$unitId, $organizationId]);
+        $connection->executeStatement("INSERT INTO catalog.products (id,organization_id,product_code,name,status,type,base_unit_id,inventory_tracked,created_at,created_by,activated_at,activated_by,version) VALUES (?,?,'AT-SKU','Produit atomique','ACTIVE','PHYSICAL',?,TRUE,date_trunc('second',NOW()),?,date_trunc('second',NOW()),?,1)", [$productId, $organizationId, $unitId, $actorId, $actorId]);
+        $connection->executeStatement("INSERT INTO catalog.product_packagings (id,organization_id,product_id,base,code,name,unit_id,conversion_factor,precision,minimum_quantity,quantity_increment,allowed_for_sale,allowed_for_purchase,status,created_at,created_by,version) VALUES (?,?,?,TRUE,'AT-EA','Article',?,1,0,1,1,TRUE,TRUE,'ACTIVE',date_trunc('second',NOW()),?,1)", [$packagingId, $organizationId, $productId, $unitId, $actorId]);
+        $connection->executeStatement("INSERT INTO pricing.price_lists (id,organization_id,code,name,currency,status,scope,priority,created_at,created_by,version) VALUES (?,?,'ATOMIC','Tarif atomique','XAF','ACTIVE','ORGANIZATION',100,date_trunc('second',NOW()),?,1)", [$priceListId, $organizationId, $actorId]);
+        $connection->executeStatement("INSERT INTO pricing.product_prices (id,organization_id,price_list_id,product_id,packaging_id,amount,currency,status,created_at,created_by,version) VALUES (?,?,?,?,?,1500,'XAF','ACTIVE',date_trunc('second',NOW()),?,1)", [$productPriceId, $organizationId, $priceListId, $productId, $packagingId, $actorId]);
+
+        $client->jsonRequest('POST', '/api/stores/' . $store['id'] . '/stocks/' . $productId . '/initialize', ['quantity' => '10', 'unitCost' => '400'], $this->headers($ownerToken));
+        self::assertResponseStatusCodeSame(201);
+        $client->request('POST', '/api/stores/' . $store['id'] . '/sales', server: $this->headers($ownerToken));
+        self::assertResponseStatusCodeSame(201);
+        $sale = $this->payload($client);
+        $client->jsonRequest('POST', '/api/sales/' . $sale['id'] . '/lines', ['productId' => $productId, 'productPackagingId' => $packagingId, 'quantity' => '2'], $this->headers($ownerToken));
+        self::assertResponseStatusCodeSame(201);
+
+        $factory = new \Zandu\Platform\Identity\SymfonyUuidFactory();
+        $decimals = new \Zandu\Platform\Decimal\BrickDecimalFactory();
+        $actor = new \Zandu\SharedKernel\Context\ActorContext(
+            \Zandu\SharedKernel\Identity\ActorId::fromString($actorId, $factory),
+            \Zandu\SharedKernel\Identity\OrganizationId::fromString($organizationId, $factory),
+            \Zandu\SharedKernel\Context\ActorType::User,
+            \Zandu\SharedKernel\Messaging\CorrelationId::fromString('019a2000-0000-7000-8000-000000000006', $factory),
+            new \DateTimeImmutable('2026-08-28T08:00:00Z'),
+        );
+        $command = new \Zandu\Modules\Sales\Application\CompleteSale(
+            \Zandu\SharedKernel\Identity\SaleId::fromString($sale['id'], $factory),
+            \Zandu\SharedKernel\Money\Money::fromString('3000', \Zandu\SharedKernel\Money\Currency::fromCode('XAF'), $decimals),
+            \Zandu\SharedKernel\Identity\CashSessionId::fromString($session['id'], $factory),
+            $actor,
+            'snapshot-failure-retry',
+        );
+        $failingSnapshots = new class implements \Zandu\Modules\Sales\Domain\SaleLineCostSnapshotRepository {
+            public int $appendCalls = 0;
+            public function append(\Zandu\Modules\Sales\Domain\SaleLineCostSnapshot $snapshot): void
+            {
+                ++$this->appendCalls;
+                throw new \RuntimeException('Injected cost snapshot failure.');
+            }
+            public function findBySaleLine(\Zandu\SharedKernel\Identity\OrganizationId $organizationId, \Zandu\SharedKernel\Identity\SaleLineId $saleLineId): ?\Zandu\Modules\Sales\Domain\SaleLineCostSnapshot
+            {
+                return null;
+            }
+            public function findBySale(\Zandu\SharedKernel\Identity\OrganizationId $organizationId, \Zandu\SharedKernel\Identity\SaleId $saleId): array
+            {
+                return [];
+            }
+        };
+        $container = self::getContainer();
+        $completeSaleService = fn(\Zandu\Modules\Sales\Application\SaleLineCostSnapshotService $snapshots): \Zandu\Modules\Sales\Application\CompleteSaleService => new \Zandu\Modules\Sales\Application\CompleteSaleService(
+            $container->get(\Zandu\SharedKernel\Tenancy\TenantTransaction::class),
+            $container->get(\Zandu\Modules\Sales\Domain\SaleRepository::class),
+            $container->get(\Zandu\Modules\Sales\Application\InventoryConsumptionService::class),
+            $snapshots,
+            $container->get(\Zandu\Modules\Sales\Application\CashPaymentService::class),
+            $container->get(\Zandu\Modules\Sales\Application\Contract\PaymentRecorder::class),
+            $container->get(\Zandu\Modules\Sales\Application\Contract\SaleCompletionIdempotency::class),
+            new \Zandu\Tests\Modules\Organization\Application\AllowAllAuthorizationService(),
+            new \Zandu\Tests\Modules\Organization\Application\AllowAllOperationalGuard(),
+            $container->get(\Zandu\Modules\Organization\Application\Contract\StoreBusinessContextProvider::class),
+            $container->get(\Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail::class),
+            $container->get(\Zandu\SharedKernel\Messaging\OutboxRepository::class),
+            $container->get(\Zandu\SharedKernel\Identity\IdGenerator::class),
+            $container->get(\Zandu\SharedKernel\Time\Clock::class),
+            $container->get(\Zandu\Modules\Sales\Application\SalePricingService::class),
+        );
+        $service = $completeSaleService(new \Zandu\Modules\Sales\Application\SaleLineCostSnapshotService($failingSnapshots));
+        $baseline = [
+            'outbox' => (int) $connection->fetchOne('SELECT COUNT(*) FROM messaging.outbox_messages WHERE organization_id = ?', [$organizationId]),
+            'audit' => (int) $connection->fetchOne('SELECT COUNT(*) FROM security.security_audit_entries WHERE organization_id = ?', [$organizationId]),
+        ];
+
+        try {
+            $service($command);
+            self::fail('The injected snapshot failure should abort CompleteSale.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Injected cost snapshot failure.', $exception->getMessage());
+        }
+        self::assertSame(1, $failingSnapshots->appendCalls);
+        $container->get(EntityManagerInterface::class)->clear();
+        self::assertSame('DRAFT', $connection->fetchOne('SELECT status FROM sales.sale WHERE organization_id = ? AND id = ?', [$organizationId, $sale['id']]));
+        self::assertSame('10.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
+        self::assertSame(0, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id = ? AND source_type = 'SALE'", [$organizationId]));
+        self::assertSame('10.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory_costing.stock_valuation WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
+        self::assertSame('4000.000000', $connection->fetchOne('SELECT total_value FROM inventory_costing.stock_valuation WHERE organization_id = ? AND product_id = ?', [$organizationId, $productId]));
+        self::assertSame(0, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id = ? AND type = 'SALE'", [$organizationId]));
+        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM sales.sale_line_cost_snapshot WHERE organization_id = ?', [$organizationId]));
+        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM payments.payment WHERE organization_id = ?', [$organizationId]));
+        self::assertSame(0, (int) $connection->fetchOne("SELECT COUNT(*) FROM cash_management.cash_movement WHERE organization_id = ? AND type = 'SALE_PAYMENT'", [$organizationId]));
+        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM sales.sale_completion_keys WHERE organization_id = ?', [$organizationId]));
+        self::assertSame($baseline['outbox'], (int) $connection->fetchOne('SELECT COUNT(*) FROM messaging.outbox_messages WHERE organization_id = ?', [$organizationId]));
+        self::assertSame($baseline['audit'], (int) $connection->fetchOne('SELECT COUNT(*) FROM security.security_audit_entries WHERE organization_id = ?', [$organizationId]));
+
+        $result = $completeSaleService(new \Zandu\Modules\Sales\Application\SaleLineCostSnapshotService(
+            $container->get(\Zandu\Modules\Sales\Domain\SaleLineCostSnapshotRepository::class),
+        ))($command);
+        self::assertSame($sale['id'], $result->saleId->toString());
+        self::assertSame('COMPLETED', $connection->fetchOne('SELECT status FROM sales.sale WHERE organization_id = ? AND id = ?', [$organizationId, $sale['id']]));
+        self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM sales.sale_line_cost_snapshot WHERE organization_id = ?', [$organizationId]));
+        self::assertSame(1, (int) $connection->fetchOne('SELECT COUNT(*) FROM sales.sale_completion_keys WHERE organization_id = ?', [$organizationId]));
+    }
+
     private function registerOwnerAndLogin(KernelBrowser $client): string
     {
         $client->jsonRequest('POST', '/api/auth/register', [
