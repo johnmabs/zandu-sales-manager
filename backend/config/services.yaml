@@ -189,6 +189,9 @@ services:
     Zandu\Modules\Sales\Application\Contract\SaleCompletionIdempotency:
         alias: Zandu\Modules\Sales\Infrastructure\Persistence\DbalSaleCompletionIdempotency
 
+    Zandu\Modules\Purchasing\Domain\Supplier\SupplierRepository:
+        alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\Orm\DoctrineSupplierRepository
+
     Zandu\Modules\Pricing\Application\Contract\ProductPriceResolver:
         alias: Zandu\Modules\Pricing\Application\RepositoryProductPriceResolver
 
