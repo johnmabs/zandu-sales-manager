@@ -63,7 +63,8 @@ Inventory   TERMINÉ   INITIAL_STOCK et ajustements valorisés atomiquement
 Epic 5.6    TERMINÉ   CompleteSale valorise les sorties SALE
 Epic 5.7    TERMINÉ   SaleLineCostSnapshot immutable et tenant-scoped
 Epic 5.8    TERMINÉ   Atomicité CompleteSale/Costing prouvée par faute injectée
-Epic 5.9    PROCHAINE ReturnSale foundation
+Epic 5.9    TERMINÉ   ReturnSale et ReturnSaleLine foundation
+Returns     PROCHAINE Vente source terminée et limites cumulatives
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -72,7 +73,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827200000 appliquée en dernier
-Tests                 517 tests, 2 491 assertions
+Tests                 527 tests, 2 532 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7874,7 +7875,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — atomicité CompleteSale/Costing prouvée.**
+**État courant : EN COURS — fondation domaine ReturnSale disponible.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8238,10 +8239,50 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.9 — ReturnSale foundation
+
+**Statut : TERMINÉ — modèle de domaine sans persistence ni API.**
+
+- identités typées `ReturnSaleId` et `ReturnSaleLineId` et statuts `DRAFT`,
+  `COMPLETED`, `CANCELLED` ;
+- `ReturnSaleLine` conserve directement la ligne de vente immutable et son
+  éventuel `SaleLineCostSnapshot`, sans résolution du catalogue ou du tarif
+  courant ;
+- quantité retournée strictement positive, bornée par la quantité vendue et
+  convertie en quantité de base avec le facteur snapshoté ;
+- option `restock` explicite, motif optionnel normalisé et cohérence du
+  snapshot de coût avec la ligne originale ;
+- agrégat tenant-owned lié à la vente et au magasin, avec auteur, timestamps
+  UTC, date métier, version et collection de lignes ;
+- une seule occurrence de chaque ligne vendue dans un même retour ;
+- complétion interdite sans ligne, annulation limitée au brouillon et toute
+  mutation refusée après complétion ou annulation ;
+- contrôle de l’organisation de l’acteur et des snapshots de coût.
+
+Commits atomiques, ordonnés selon les dépendances du modèle :
+
+```text
+3b13878 feat(sales): add return sale line model
+30a9f2a feat(sales): add return sale aggregate
+```
+
+Validation consolidée :
+
+```text
+ReturnSaleLineTest : OK (4 tests, 15 assertions)
+ReturnSaleTest : OK (6 tests, 26 assertions)
+Suite PHPUnit complète : OK (527 tests, 2 532 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.9 en commençant par l’agrégat `ReturnSale`, ses statuts
-`DRAFT`, `COMPLETED` et `CANCELLED`, puis le modèle `ReturnSaleLine` relié à la
-ligne de vente originale. Les invariants doivent notamment exiger une vente
-source terminée et empêcher le cumul des quantités retournées de dépasser les
-quantités vendues.
+Implémenter les invariants ReturnSale de la section 17 du planning : charger
+une vente source `COMPLETED`, calculer les quantités déjà retournées sur tous
+ses retours et refuser atomiquement tout cumul supérieur aux quantités vendues.
+La persistence PostgreSQL tenant-scoped des retours doit être introduite avant
+ce contrôle concurrent, puis l’Epic 5.10 pourra intégrer `SALE_RETURN` dans
+Inventory lorsque `restock=true`.
