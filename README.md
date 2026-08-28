@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — ventes valorisées au coût moyen |
+| 5 | Inventory Costing et Returns | En cours — coûts de vente snapshotés par ligne |
 
-Dernière validation consolidée le 27 août 2026 : **511 tests et 2 424
+Dernière validation consolidée le 28 août 2026 : **516 tests et 2 455
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -206,8 +206,10 @@ CASH, Inventory, Inventory Costing, CashMovement, audit et outbox dans une
 transaction tenant-scoped ; il verrouille la vente, revalide Pricing, contrôle
 le scope Store, calcule la date métier et retourne la monnaie à rendre. Chaque
 sortie `SALE` diminue la valorisation au coût moyen courant et crée un ledger
-lié au mouvement physique. Une valorisation absente ou incohérente annule toute
-la finalisation.
+lié au mouvement physique. Chaque ligne de produit suivi conserve en plus un
+`SaleLineCostSnapshot` immutable avec quantité de base, coût unitaire, coût
+total, devise et version de valorisation. Une valorisation absente ou
+incohérente annule toute la finalisation.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario

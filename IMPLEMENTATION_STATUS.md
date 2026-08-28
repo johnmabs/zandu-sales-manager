@@ -61,16 +61,17 @@ Persistence TERMINÉ   PostgreSQL, contraintes, repositories et RLS Costing
 Epic 5.5    TERMINÉ   Bootstrap explicite des valorisations
 Inventory   TERMINÉ   INITIAL_STOCK et ajustements valorisés atomiquement
 Epic 5.6    TERMINÉ   CompleteSale valorise les sorties SALE
-Epic 5.7    PROCHAINE SaleLineCostSnapshot immutable
+Epic 5.7    TERMINÉ   SaleLineCostSnapshot immutable et tenant-scoped
+Epic 5.8    PROCHAINE Preuve injectée d’atomicité CompleteSale/Costing
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
-État consolidé au 27 août 2026 :
+État consolidé au 28 août 2026 :
 
 ```text
 Branche              main
-Migrations           Version20260827100000 appliquée en dernier
-Tests                 511 tests, 2 424 assertions
+Migrations           Version20260827200000 appliquée en dernier
+Tests                 516 tests, 2 455 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7872,7 +7873,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — sorties de vente valorisées au coût moyen.**
+**État courant : EN COURS — coûts de vente snapshotés par ligne.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8159,9 +8160,53 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.7 — SaleLineCostSnapshot
+
+**Statut : TERMINÉ**
+
+- modèle Sales readonly identifié par Organization et SaleLine, lié au Stock
+  et au StockMovement ayant porté la consommation ;
+- quantité de base, coût unitaire à 12 décimales, coût total à 6 décimales,
+  devise, version de valorisation et horodatage UTC conservés ;
+- cohérence quantité × coût, devise, valeurs positives et version validée dans
+  le modèle et par les contraintes PostgreSQL ;
+- table append-only pour le rôle runtime, unicité d’un snapshot par ligne,
+  clés étrangères tenant-scoped et RLS forcée ;
+- résultat Costing typé traduit par Inventory dans son contrat v3, sans fuite
+  du domaine Costing vers Sales ;
+- capture d’un snapshot par ligne suivie, y compris plusieurs lignes du même
+  produit ; aucun snapshot fictif pour les services ou produits non suivis ;
+- validation complète du mapping avant la première insertion afin d’éviter les
+  écritures partielles ;
+- capture après la sauvegarde des lignes `COMPLETED`, dans la transaction
+  `CompleteSale`, afin de respecter la persistence actuelle qui réécrit les
+  lignes ;
+- le workflow M2 vérifie les identités Stock/StockMovement, quantité, coût,
+  devise, version et absence de duplication au rejeu.
+
+Commits :
+
+```text
+5c60070 feat(sales): persist sale line cost snapshots
+838c50f feat(sales): capture sale line cost snapshots
+```
+
+Validation consolidée :
+
+```text
+SaleLineCostSnapshotServiceTest : OK (2 tests, 10 assertions)
+SaleLineCostSnapshotPersistenceTest : OK (3 tests, 9 assertions)
+Workflow M2 HTTP : OK (1 test, 66 assertions)
+Suite PHPUnit complète : OK (516 tests, 2 455 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.7 : persister un `SaleLineCostSnapshot` immutable par
-ligne suivie avec Stock, StockMovement, quantité de base, coût unitaire, coût
-total, devise et version de valorisation. Le contrat de consommation devra
-retourner les résultats Costing nécessaires sans exposer son domaine à Sales.
+Implémenter l’Epic 5.8 avec une faute injectée au moment de la capture du
+snapshot et prouver que `CompleteSale` annule alors Sale, Payment, Cash,
+Stock, StockMovement, StockValuation, ledger, snapshot, outbox et clé
+d’idempotence. Ensuite commencer l’Epic 5.9, fondation des retours de vente.
