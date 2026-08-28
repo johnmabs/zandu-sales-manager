@@ -62,7 +62,8 @@ Epic 5.5    TERMINÉ   Bootstrap explicite des valorisations
 Inventory   TERMINÉ   INITIAL_STOCK et ajustements valorisés atomiquement
 Epic 5.6    TERMINÉ   CompleteSale valorise les sorties SALE
 Epic 5.7    TERMINÉ   SaleLineCostSnapshot immutable et tenant-scoped
-Epic 5.8    PROCHAINE Preuve injectée d’atomicité CompleteSale/Costing
+Epic 5.8    TERMINÉ   Atomicité CompleteSale/Costing prouvée par faute injectée
+Epic 5.9    PROCHAINE ReturnSale foundation
 Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```
 
@@ -71,7 +72,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260827200000 appliquée en dernier
-Tests                 516 tests, 2 455 assertions
+Tests                 517 tests, 2 491 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -7873,7 +7874,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — coûts de vente snapshotés par ligne.**
+**État courant : EN COURS — atomicité CompleteSale/Costing prouvée.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -8204,9 +8205,43 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### Epic 5.8 — Atomicité CompleteSale avec costing
+
+**Statut : TERMINÉ**
+
+- une faute contrôlée est injectée exactement lors de l’insertion du premier
+  `SaleLineCostSnapshot`, après les mutations physiques et financières de
+  `CompleteSale` ;
+- l’échec annule la vente, le paiement, le mouvement de caisse, le stock, le
+  `StockMovement SALE`, la valorisation courante, le ledger `SALE` et le
+  snapshot ;
+- audit, outbox et clé d’idempotence restent également inchangés ;
+- après nettoyage de l’identity map Doctrine consécutif au rollback, le même
+  service réussit avec le repository réel et la même clé d’idempotence ;
+- le retry produit une seule vente terminée, un seul snapshot et une seule
+  revendication de clé.
+
+Commit :
+
+```text
+700f65d test(costing): verify CompleteSale costing atomicity
+```
+
+Validation consolidée :
+
+```text
+Scénario de faute injectée : OK (1 test, 36 assertions)
+Suite PHPUnit complète : OK (517 tests, 2 491 assertions)
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 5.8 avec une faute injectée au moment de la capture du
-snapshot et prouver que `CompleteSale` annule alors Sale, Payment, Cash,
-Stock, StockMovement, StockValuation, ledger, snapshot, outbox et clé
-d’idempotence. Ensuite commencer l’Epic 5.9, fondation des retours de vente.
+Implémenter l’Epic 5.9 en commençant par l’agrégat `ReturnSale`, ses statuts
+`DRAFT`, `COMPLETED` et `CANCELLED`, puis le modèle `ReturnSaleLine` relié à la
+ligne de vente originale. Les invariants doivent notamment exiger une vente
+source terminée et empêcher le cumul des quantités retournées de dépasser les
+quantités vendues.

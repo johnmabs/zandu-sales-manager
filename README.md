@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — coûts de vente snapshotés par ligne |
+| 5 | Inventory Costing et Returns | En cours — atomicité CompleteSale/Costing prouvée |
 
-Dernière validation consolidée le 28 août 2026 : **516 tests et 2 455
+Dernière validation consolidée le 28 août 2026 : **517 tests et 2 491
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -209,7 +209,10 @@ sortie `SALE` diminue la valorisation au coût moyen courant et crée un ledger
 lié au mouvement physique. Chaque ligne de produit suivi conserve en plus un
 `SaleLineCostSnapshot` immutable avec quantité de base, coût unitaire, coût
 total, devise et version de valorisation. Une valorisation absente ou
-incohérente annule toute la finalisation.
+incohérente annule toute la finalisation. Une panne injectée au moment de la
+capture du snapshot prouve également le rollback de Sale, Payment, Cash,
+Inventory, Costing, audit, outbox et clé d'idempotence, puis la réussite d'un
+retry avec la même clé.
 
 La politique fiscale du pilote est explicitement `NO_TAX` selon
 [l'ADR-0020](docs/architecture/adr/0020-pilot-sales-tax-policy.md). Un scénario
