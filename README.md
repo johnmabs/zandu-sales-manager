@@ -22,9 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — Supplier et policy terminés |
+| 6 | Purchasing et Goods Receipts | En cours — PurchaseOrder opérationnel côté domaine |
 
-Dernière validation consolidée le 28 août 2026 : **596 tests et 2 878
+Dernière validation consolidée le 28 août 2026 : **609 tests et 2 917
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -34,6 +34,11 @@ Le [planning du Lot 6](docs/planning/zandu-lot-6-purchasing-goods-receipts.md)
 ouvre désormais le backlog `Purchasing & Goods Receipts`. Le Lot 7 reste annoncé
 comme la tranche `StockTransfer & StockCount`, mais ne dispose pas encore d’un
 document de planning autonome dans le repository.
+
+Le module Purchasing fournit désormais les fournisseurs, la policy de
+réception et l’agrégat `PurchaseOrder` persistant. Son cycle de vie et ses
+snapshots de quantité/coût sont protégés dans le domaine et par PostgreSQL ; les
+cas d’usage et l’API PurchaseOrder constituent la prochaine étape.
 
 ## Stack technique
 

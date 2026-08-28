@@ -57,7 +57,8 @@ Phase 0     TERMINÉ   Planning Purchasing & Goods Receipts analysé et aligné
 Epic 6.1    TERMINÉ   Purchasing foundation, boundaries et schéma PostgreSQL
 Epic 6.2    TERMINÉ   Supplier aggregate, RLS, permissions et management
 Epic 6.3    TERMINÉ   PurchasingPolicy et ADR réception fournisseur
-Epic 6.4    PROCHAINE PurchaseOrder aggregate
+Epic 6.4    TERMINÉ   PurchaseOrder aggregate, persistence et lifecycle
+Epic 6.5    PROCHAINE PurchaseOrder use cases
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -94,8 +95,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260828180000 appliquée en dernier
-Tests                 576 tests, 2 777 assertions
+Migrations           Version20260828220000 appliquée en dernier
+Tests                 609 tests, 2 917 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8891,8 +8892,48 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.4 — PurchaseOrder
+
+**Statut : TERMINÉ**
+
+- l’agrégat `PurchaseOrder` porte le fournisseur, le magasin destinataire, le
+  numéro tenant-scoped, la devise, le total attendu, les audits et la version ;
+- chaque ligne conserve la quantité saisie, le packaging facultatif, le facteur
+  de conversion, la quantité de base et les coûts d’achat/inventaire exacts ;
+- les invariants interdisent une devise différente, un produit dupliqué, un
+  snapshot incohérent, un coût négatif et toute édition après confirmation ;
+- le cycle `DRAFT → CONFIRMED → PARTIALLY_RECEIVED → FULLY_RECEIVED → CLOSED`
+  est explicite, ainsi que l’annulation avant toute réception ;
+- le cumul reçu refuse zéro, les valeurs négatives et la sur-réception ; une
+  clôture partielle exige un motif audité ;
+- `purchasing.purchase_order` et `purchase_order_line` appliquent FKs tenant,
+  unicités, contraintes numériques, version optimiste et RLS forcée ;
+- un trigger PostgreSQL protège les snapshots confirmés et n’autorise ensuite
+  que l’évolution de `received_quantity` ;
+- les événements métier du cycle sont enregistrés par l’agrégat.
+
+Commits atomiques :
+
+```text
+8a2c393 feat(purchasing): add purchase order aggregate
+a8b30b0 feat(purchasing): persist purchase orders
+a1d1837 feat(purchasing): add purchase order lifecycle
+```
+
+Validation locale :
+
+```text
+Suite PHPUnit complète : OK (609 tests, 2 917 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+Migrations dev/test : version 20260828220000 appliquée
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.4 — l’agrégat `PurchaseOrder`, ses lignes, statuts et
-invariants, sans encore mélanger les cas d’usage de confirmation et clôture de
-l’Epic 6.5.
+Implémenter l’Epic 6.5 — les cas d’usage `CreatePurchaseOrder`, ajout,
+modification et retrait de ligne, puis confirmation, annulation et clôture avec
+les validations croisées Store, Supplier et Catalog prévues par le lot.
