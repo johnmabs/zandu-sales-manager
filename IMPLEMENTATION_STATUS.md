@@ -70,8 +70,8 @@ Epic 5.10   TERMINÉ   Restock Inventory idempotent via SALE_RETURN
 Epic 5.11   TERMINÉ   Coût original restauré et restock activé atomiquement
 Epic 5.12   TERMINÉ   Montants de retour alloués depuis les snapshots originaux
 Epic 5.13   TERMINÉ   Remboursement cash essentiel, borné et idempotent
-API Returns PROCHAINE Exposer le workflow ReturnSale complet
-Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
+API Returns TERMINÉ   Workflow ReturnSale complet exposé et documenté
+Gate Lot 5  PROCHAINE Consolider les tests transverses et auditer le gate M3
 ```
 
 État consolidé au 28 août 2026 :
@@ -79,7 +79,7 @@ Gate Lot 5  À FAIRE   Première partie de M3 — gestion complète du stock
 ```text
 Branche              main
 Migrations           Version20260828180000 appliquée en dernier
-Tests                 556 tests, 2 639 assertions
+Tests                 560 tests, 2 659 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8514,9 +8514,48 @@ Deptrac layers : 0 violation, 10 uncovered
 Deptrac modules : 0 violation, 10 uncovered
 ```
 
+### API Returns — workflow complet
+
+**Statut : TERMINÉ**
+
+- commandes dédiées à la création d’un retour, à l’ajout de lignes et à son
+  annulation, avec réutilisation du service atomique de complétion ;
+- création limitée aux ventes `COMPLETED` et mutation sous verrou du retour ;
+- permissions `SALE_RETURN_CREATE`, `SALE_RETURN_READ`,
+  `SALE_RETURN_COMPLETE` et `SALE_RETURN_CANCEL`, intégrées aux rôles système ;
+- contrôle du scope Store et garde opérationnelle sur toutes les mutations ;
+- audit sensible et événements outbox versionnés pour création, ajout de ligne,
+  complétion et annulation ;
+- lectures tenant-scoped unitaire et par vente, projetées sans exposer le
+  domaine ;
+- six opérations du chapitre 27 exposées par API Platform : création, ajout de
+  ligne, complétion, annulation, lecture et liste par vente ;
+- contrat OpenAPI protégé par un test et visible dans Swagger UI/ReDoc en
+  environnement de développement.
+
+Commits atomiques :
+
+```text
+2fec4c5 feat(sales): add return sale application workflow
+a36961b feat(sales): expose return sale API
+```
+
+Validation consolidée :
+
+```text
+Suite PHPUnit complète : OK (560 tests, 2 659 assertions)
+Routes API Platform Returns : 6/6
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers : 0 violation, 10 uncovered
+Deptrac modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Construire l’API Returns décrite au chapitre 27 du Lot 5 : création depuis une
-vente, ajout des lignes, complétion, annulation, lecture unitaire et liste par
-vente. Elle devra réutiliser les agrégats et services déjà validés, avec les
-permissions `SALE_RETURN_*`, l’audit, l’outbox et les scopes Store.
+Auditer le Gate de sortie du Lot 5 puis compléter en priorité les preuves encore
+absentes des chapitres 32 à 37 : matrice de rollback Return/Refund, concurrence
+PostgreSQL sur les quantités retournées, idempotence transverse et isolation
+tenant/scopes. Le Lot 5 ne sera déclaré terminé qu’après la démonstration
+consolidée et la validation de chaque critère du chapitre 39.

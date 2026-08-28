@@ -21,9 +21,9 @@ détaillé, le backlog et les preuves de validation sont disponibles dans
 | 2 | Catalogue et tarification de base | Terminé |
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
-| 5 | Inventory Costing et Returns | En cours — retours valorisés et remboursement cash opérationnel |
+| 5 | Inventory Costing et Returns | En cours — workflow Returns et remboursement cash opérationnels |
 
-Dernière validation consolidée le 28 août 2026 : **556 tests et 2 639
+Dernière validation consolidée le 28 août 2026 : **560 tests et 2 659
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées.
@@ -221,17 +221,20 @@ de `restock=false`. L’agrégat `ReturnSale` protège son ownership tenant, son
 cycle `DRAFT`, `COMPLETED`, `CANCELLED`, sa date métier et son immutabilité.
 La persistence PostgreSQL/RLS conserve les liens vers les snapshots originaux.
 La complétion verrouille la vente source, exige son statut `COMPLETED` et
-empêche les retours cumulés de dépasser chaque quantité vendue. Les endpoints
-Returns restent à construire. Inventory sait désormais préparer un restock
-idempotent `SALE_RETURN` pour les lignes `restock=true`. Son activation dans
-la complétion restaure désormais simultanément le coût snapshoté d’origine et
-crée le ledger Costing associé, sans désynchroniser Stock et StockValuation.
+empêche les retours cumulés de dépasser chaque quantité vendue. Le workflow
+Returns complet est exposé par API Platform : création depuis une vente, ajout
+de lignes, complétion, annulation, lecture et liste par vente. Ces opérations
+appliquent les permissions `SALE_RETURN_*`, le scope Store, l’audit et l’outbox,
+et sont publiées dans Swagger UI/ReDoc. Inventory prépare un restock idempotent
+`SALE_RETURN` pour les lignes `restock=true`. Son activation dans la complétion
+restaure simultanément le coût snapshoté d’origine et crée le ledger Costing
+associé, sans désynchroniser Stock et StockValuation.
 `ReturnAmountCalculator` alloue aussi remise, base taxable, taxe, sous-total et
 total depuis les seuls snapshots de vente. Son calcul cumulatif absorbe le
 résidu d’arrondi sur le dernier retour : des retours partiels successifs ne
 dépassent jamais les montants originaux et un retour complet restitue exactement
 le total remboursable. Chaque allocation complétée est figée dans une table RLS
-append-only, prête à borner le futur remboursement cash de l’Epic 5.13.
+append-only et borne le remboursement cash de l’Epic 5.13.
 L’Epic 5.13 fournit désormais `PaymentRefund` et la route canonique
 `POST /api/payments/{paymentId}/refunds`. Le paiement et le retour imposent deux
 plafonds cumulatifs distincts sous verrou ; chaque succès ajoute un mouvement
