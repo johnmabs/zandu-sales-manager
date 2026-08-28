@@ -7,17 +7,21 @@ namespace Zandu\Tests\Modules\Sales\Application;
 use DateTimeImmutable;
 use LogicException;
 use PHPUnit\Framework\TestCase;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\Contract\{InventoryStockRestocker, RestockSaleReturn, StockRestockResult};
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Modules\Organization\Application\Contract\{StoreBusinessContext, StoreBusinessContextProvider};
-use Zandu\Modules\Sales\Application\{CompleteReturnSale, CompleteReturnSaleService, ReturnAmountCalculator};
+use Zandu\Modules\Sales\Application\{CompleteReturnSale, CompleteReturnSaleService, ReturnAmountCalculator, ReturnSaleEventPublisher};
 use Zandu\Modules\Sales\Domain\{ReturnAmounts, ReturnSale, ReturnSaleLine, ReturnSaleRepository, ReturnSaleStatus, Sale, SaleLine, SaleLineCostSnapshot, SaleRepository, SalesRuleViolation};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
-use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, ProductPackagingId, ReturnSaleId, ReturnSaleLineId, SaleId, SaleLineId, StockId, StockMovementId, StoreId, UnitOfMeasureId};
 use Zandu\SharedKernel\Messaging\CorrelationId;
+use Zandu\SharedKernel\Messaging\OutboxRepository;
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
@@ -219,14 +223,20 @@ final class CompleteReturnSaleServiceTest extends TestCase
             }
         };
 
+        $clock = new FrozenClock(new DateTimeImmutable('2026-08-28T23:30:00Z'));
+
         return new CompleteReturnSaleService(
             $transaction,
             $sales,
             $repository,
             new ReturnAmountCalculator(),
             $inventory ?? $this->createStub(InventoryStockRestocker::class),
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+            $this->createStub(SecurityAuditTrail::class),
+            new ReturnSaleEventPublisher($this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $clock),
             $stores,
-            new FrozenClock(new DateTimeImmutable('2026-08-28T23:30:00Z')),
+            $clock,
         );
     }
 

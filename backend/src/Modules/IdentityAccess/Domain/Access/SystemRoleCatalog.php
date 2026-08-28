@@ -59,6 +59,10 @@ final readonly class SystemRoleCatalog
                     PermissionCode::SaleComplete,
                     PermissionCode::PaymentRefundCreate,
                     PermissionCode::PaymentRefundRead,
+                    PermissionCode::SaleReturnCreate,
+                    PermissionCode::SaleReturnRead,
+                    PermissionCode::SaleReturnComplete,
+                    PermissionCode::SaleReturnCancel,
                 ],
             ),
             Role::system(
@@ -84,6 +88,10 @@ final readonly class SystemRoleCatalog
                     PermissionCode::SaleComplete,
                     PermissionCode::PaymentRefundCreate,
                     PermissionCode::PaymentRefundRead,
+                    PermissionCode::SaleReturnCreate,
+                    PermissionCode::SaleReturnRead,
+                    PermissionCode::SaleReturnComplete,
+                    PermissionCode::SaleReturnCancel,
                 ],
             ),
             Role::system(
@@ -104,6 +112,7 @@ final readonly class SystemRoleCatalog
                     PermissionCode::CashMovementRead,
                     PermissionCode::SaleRead,
                     PermissionCode::PaymentRefundRead,
+                    PermissionCode::SaleReturnRead,
                 ],
             ),
         ];

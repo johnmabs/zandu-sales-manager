@@ -83,4 +83,9 @@ enum PermissionCode: string
 
     case PaymentRefundCreate = 'PAYMENT_REFUND_CREATE';
     case PaymentRefundRead = 'PAYMENT_REFUND_READ';
+
+    case SaleReturnCreate = 'SALE_RETURN_CREATE';
+    case SaleReturnRead = 'SALE_RETURN_READ';
+    case SaleReturnComplete = 'SALE_RETURN_COMPLETE';
+    case SaleReturnCancel = 'SALE_RETURN_CANCEL';
 }

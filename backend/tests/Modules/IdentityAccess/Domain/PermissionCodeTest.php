@@ -29,6 +29,7 @@ final class PermissionCodeTest extends TestCase
             'CASH_IN_RECORD', 'CASH_OUT_RECORD', 'CASH_WITHDRAWAL_RECORD',
             'SALE_CREATE', 'SALE_READ', 'SALE_UPDATE_DRAFT', 'SALE_CANCEL_DRAFT', 'SALE_COMPLETE', 'SALE_PRICE_OVERRIDE',
             'PAYMENT_REFUND_CREATE', 'PAYMENT_REFUND_READ',
+            'SALE_RETURN_CREATE', 'SALE_RETURN_READ', 'SALE_RETURN_COMPLETE', 'SALE_RETURN_CANCEL',
         ], array_column(PermissionCode::cases(), 'value'));
 
         foreach (PermissionCode::cases() as $permission) {

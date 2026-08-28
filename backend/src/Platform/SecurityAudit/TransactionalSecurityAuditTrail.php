@@ -131,6 +131,10 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             SecurityAction::CashWithdrawalRecorded => 'cash.cash_withdrawal_recorded.v1',
             SecurityAction::SaleCompleted => 'sales.sale_completed_audit.v1',
             SecurityAction::PaymentRefundConfirmed => 'payments.payment_refund_confirmed_audit.v1',
+            SecurityAction::SaleReturnCreated => 'sales.sale_return_created_audit.v1',
+            SecurityAction::SaleReturnLineAdded => 'sales.sale_return_line_added_audit.v1',
+            SecurityAction::SaleReturnCompleted => 'sales.sale_return_completed_audit.v1',
+            SecurityAction::SaleReturnCancelled => 'sales.sale_return_cancelled_audit.v1',
         };
     }
 }
