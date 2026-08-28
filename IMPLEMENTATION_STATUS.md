@@ -56,7 +56,8 @@ Le Lot 6 est ouvert en backlog :
 Phase 0     TERMINÉ   Planning Purchasing & Goods Receipts analysé et aligné
 Epic 6.1    TERMINÉ   Purchasing foundation, boundaries et schéma PostgreSQL
 Epic 6.2    TERMINÉ   Supplier aggregate, RLS, permissions et management
-Epic 6.3    PROCHAINE PurchasingPolicy et décisions associées
+Epic 6.3    TERMINÉ   PurchasingPolicy et ADR réception fournisseur
+Epic 6.4    PROCHAINE PurchaseOrder aggregate
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -8858,8 +8859,40 @@ Deptrac layers/modules : 0 violation, 10 uncovered
 Migrations dev/test : version 20260828210000 appliquée
 ```
 
+### Epic 6.3 — PurchasingPolicy
+
+**Statut : TERMINÉ**
+
+- l’ADR-0023 fixe une policy globale de déploiement pour le MVP et reporte
+  explicitement toute configuration tenant-scoped à une décision versionnée ;
+- la baseline autorise les réceptions directes avec
+  `PURCHASING_PURCHASE_ORDER_REQUIRED_FOR_RECEIPT=0` ;
+- `PURCHASING_OVER_RECEIPT_POLICY=FORBIDDEN` protège l’invariant de quantité ;
+- une valeur inconnue échoue explicitement au lieu d’activer un fallback ;
+- le mode strict exigeant un PurchaseOrder est testable par configuration ;
+- l’exception future d’over-receipt restera bornée à une opération, avec
+  permission, motif et auteur, et ne deviendra pas un mode global permissif.
+
+Commits atomiques :
+
+```text
+2782aa9 docs(adr): define purchasing receipt policy
+6b33388 feat(purchasing): add purchasing policy
+```
+
+Validation locale :
+
+```text
+Suite PHPUnit complète : OK (596 tests, 2 878 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Formaliser puis implémenter l’Epic 6.3 — `PurchasingPolicy`. La baseline du
-planning autorise la réception directe et interdit l’over-receipt sans
-permission, motif et auteur explicites.
+Implémenter l’Epic 6.4 — l’agrégat `PurchaseOrder`, ses lignes, statuts et
+invariants, sans encore mélanger les cas d’usage de confirmation et clôture de
+l’Epic 6.5.
