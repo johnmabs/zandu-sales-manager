@@ -170,6 +170,8 @@ services:
         alias: Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\DoctrineCashMovementRepository
     Zandu\Modules\CashManagement\Application\Contract\CashMovementRecorder:
         alias: Zandu\Modules\CashManagement\Application\SalePaymentCashMovementRecorder
+    Zandu\Modules\CashManagement\Application\Contract\CashRefundRecorder:
+        alias: Zandu\Modules\CashManagement\Application\CashRefundMovementRecorder
     Zandu\Modules\Sales\Application\Contract\PaymentRecorder:
         alias: Zandu\Modules\Payments\Application\CashSalePaymentRecorder
     Zandu\Modules\Payments\Domain\PaymentRepository:

@@ -19,7 +19,11 @@ final readonly class DoctrineCashMovementRepository implements CashMovementRepos
     }
     public function appendOnce(CashMovement $m): bool
     {
-        $sourceType = CashMovementType::SalePayment === $m->type() ? 'SALE' : 'MANUAL';
+        $sourceType = match ($m->type()) {
+            CashMovementType::SalePayment => 'SALE',
+            CashMovementType::Refund => 'REFUND',
+            default => 'MANUAL',
+        };
         $affected = $this->em->getConnection()->executeStatement(
             'INSERT INTO cash_management.cash_movement (id, organization_id, store_id, cash_session_id, type, amount, currency, source_type, source_reference_id, reason, occurred_at, performed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (organization_id, source_type, source_reference_id) WHERE source_reference_id IS NOT NULL DO NOTHING',
             [$m->id()->toString(), $m->organizationId()->toString(), $m->storeId()->toString(), $m->sessionId()->toString(), $m->type()->value, $m->amount()->amount()->toString(), $m->amount()->currency()->code(), $sourceType, $m->sourceReference(), $m->reason(), $m->occurredAt()->format(DATE_ATOM), $m->performedBy()->toString()],
