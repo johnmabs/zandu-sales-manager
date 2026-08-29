@@ -189,6 +189,25 @@ final class PurchaseOrder
         throw PurchasingRuleViolation::with('PURCHASE_ORDER_LINE_NOT_FOUND', 'Purchase order line not found.');
     }
 
+    public function correctReceivedQuantity(PurchaseOrderLineId $lineId, Quantity $difference, ActorId $actorId, DateTimeImmutable $occurredAt): void
+    {
+        if (!in_array($this->status, [PurchaseOrderStatus::PartiallyReceived, PurchaseOrderStatus::FullyReceived], true)) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_NOT_CORRECTABLE', 'Only a received purchase order can be corrected.');
+        }
+        foreach ($this->lines as $index => $line) {
+            if ($line->id()->equals($lineId)) {
+                $this->lines[$index] = $line->withReceiptCorrection($difference);
+                $fullyReceived = array_all($this->lines, static fn(PurchaseOrderLine $candidate): bool => $candidate->receivedQuantity()->compareTo($candidate->orderedBaseQuantity()) >= 0);
+                $this->status = $fullyReceived ? PurchaseOrderStatus::FullyReceived : PurchaseOrderStatus::PartiallyReceived;
+                ++$this->version;
+                $occurredAt = self::utc($occurredAt);
+                $this->recordedEvents[] = $fullyReceived ? new PurchaseOrderFullyReceived($this->organizationId, $this->id, $actorId, $occurredAt) : new PurchaseOrderPartiallyReceived($this->organizationId, $this->id, $actorId, $occurredAt);
+                return;
+            }
+        }
+        throw PurchasingRuleViolation::with('PURCHASE_ORDER_LINE_NOT_FOUND', 'Purchase order line not found.');
+    }
+
     public function cancel(ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
         if (array_any($this->lines, static fn(PurchaseOrderLine $line): bool => !$line->receivedQuantity()->isZero())) {

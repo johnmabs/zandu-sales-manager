@@ -46,4 +46,5 @@ enum SecurityAction: string
     case PartialPurchaseOrderClosed = 'PARTIAL_PURCHASE_ORDER_CLOSED';
     case GoodsReceiptPosted = 'GOODS_RECEIPT_POSTED';
     case OverReceiptAuthorized = 'OVER_RECEIPT_AUTHORIZED';
+    case GoodsReceiptCorrected = 'GOODS_RECEIPT_CORRECTED';
 }

@@ -94,6 +94,15 @@ final readonly class PurchaseOrderLine
         return $this->receivedQuantity->add($quantity)->compareTo($this->orderedBaseQuantity) > 0;
     }
 
+    public function withReceiptCorrection(Quantity $difference): self
+    {
+        $receivedQuantity = $this->receivedQuantity->add($difference);
+        if ($receivedQuantity->isNegative()) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_CORRECTED_QUANTITY_INVALID', 'A receipt correction cannot make the cumulative received quantity negative.');
+        }
+        return new self($this->id, $this->purchaseOrderId, $this->productId, $this->productPackagingId, $this->enteredOrderedQuantity, $this->conversionFactorSnapshot, $this->orderedBaseQuantity, $this->unitCost, $this->inventoryUnitCost, $receivedQuantity);
+    }
+
     public function id(): PurchaseOrderLineId
     {
         return $this->id;
