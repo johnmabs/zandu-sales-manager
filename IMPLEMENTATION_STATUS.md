@@ -65,7 +65,8 @@ Epic 6.8    TERMINÉ   Publication transactionnelle des réceptions
 Epic 6.9    TERMINÉ   Réception physique Inventory idempotente
 Epic 6.10   TERMINÉ   Valorisation Costing des achats
 Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
-Epic 6.12   PROCHAINE Sur-réception autorisée et auditée
+Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
+Epic 6.13   PROCHAINE Corrections immuables de réception
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -102,8 +103,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260829110000 appliquée en dernier
-Tests                 641 tests, 3 016 assertions
+Migrations           Version20260829120000 appliquée en dernier
+Tests                 643 tests, 3 036 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9186,9 +9187,52 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.12 — Sur-réception autorisée
+
+**Statut : TERMINÉ — exception explicite, bornée et auditée**
+
+- le brouillon conserve toujours la quantité physiquement constatée ; la
+  décision de sur-réception est reportée à `PostGoodsReceipt`, sous verrou de la
+  commande et dans la transaction Inventory/Costing ;
+- le chemin par défaut rejette `received + incoming > ordered` avec
+  `OVER_RECEIPT_NOT_ALLOWED` avant tout mouvement de stock ;
+- l’exception exige une raison non vide de 500 caractères maximum et la
+  permission sensible `PURCHASING_OVER_RECEIPT`, accordée uniquement au rôle
+  Organization Owner dans le catalogue système ;
+- `PurchaseOrderLine` accepte le cumul supérieur uniquement lorsque le handler
+  transmet explicitement l’autorisation et classe alors la commande
+  `FULLY_RECEIVED` ;
+- la quantité n’est jamais tronquée : un scénario `10 commandé / 11 reçu`
+  persiste bien `11` et Inventory reçoit les `11` unités ;
+- l’audit `OVER_RECEIPT_AUTHORIZED` conserve l’acteur, la raison, la commande et
+  le nombre de lignes dans la transactional outbox ;
+- `Version20260829120000` aligne la contrainte PostgreSQL en conservant
+  l’interdit absolu sur toute quantité reçue négative ;
+- un test DB round-trip démontre également la persistence de `65` unités pour
+  `60` commandées.
+
+Commit atomique :
+
+```text
+c1c1671 feat(purchasing): add over receipt authorization
+```
+
+Validation locale :
+
+```text
+Sur-réception et persistence ciblées : OK (21 tests, 166 assertions)
+Suite PHPUnit complète : OK (643 tests, 3 036 assertions)
+Migrations dev/test : version 20260829120000 appliquée
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.12 — sur-réception explicitement autorisée avec permission
-`PURCHASING_OVER_RECEIPT`, raison obligatoire et acteur conservé. Le chemin par
-défaut doit continuer de rejeter `cumulativeReceivedQuantity > orderedQuantity`
-sans jamais tronquer silencieusement la quantité physique reçue.
+Implémenter l’Epic 6.13 — `GoodsReceiptCorrection` immutable et prospectif. Une
+correction publiée devra comparer la quantité effective courante, produire les
+mouvements Inventory/Costing compensatoires et recalculer le cumul de la
+commande liée sans réécrire la réception d’origine.

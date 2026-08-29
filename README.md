@@ -22,9 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — réceptions partielles liées opérationnelles |
+| 6 | Purchasing et Goods Receipts | En cours — sur-réception contrôlée opérationnelle |
 
-Dernière validation consolidée le 29 août 2026 : **641 tests et 3 016
+Dernière validation consolidée le 29 août 2026 : **643 tests et 3 036
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -50,8 +50,10 @@ met à jour une éventuelle commande liée et écrit Inventory, Costing, audit e
 outbox dans une seule transaction idempotente. Les brouillons peuvent désormais
 être créés depuis une commande confirmée avec snapshots serveur et coûts réels
 facultatifs ; leurs publications successives font évoluer la commande de
-`PARTIALLY_RECEIVED` à `FULLY_RECEIVED`. La prochaine étape est la
-sur-réception explicitement autorisée et auditée.
+`PARTIALLY_RECEIVED` à `FULLY_RECEIVED`. Une sur-réception est désormais refusée
+par défaut avant Inventory, ou enregistrée intégralement avec permission
+sensible, raison obligatoire et audit transactionnel. La prochaine étape est
+le workflow prospectif `GoodsReceiptCorrection`.
 
 ## Stack technique
 
