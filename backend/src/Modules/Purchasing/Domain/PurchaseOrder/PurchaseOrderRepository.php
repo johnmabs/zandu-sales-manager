@@ -14,5 +14,7 @@ interface PurchaseOrderRepository
     /** @throws PurchaseOrderNotFound */
     public function get(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): PurchaseOrder;
 
+    public function getForUpdate(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): PurchaseOrder;
+
     public function find(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): ?PurchaseOrder;
 }

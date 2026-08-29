@@ -136,6 +136,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             SecurityAction::SaleReturnCompleted => 'sales.sale_return_completed_audit.v1',
             SecurityAction::SaleReturnCancelled => 'sales.sale_return_cancelled_audit.v1',
             SecurityAction::PartialPurchaseOrderClosed => 'purchasing.partial_purchase_order_closed_audit.v1',
+            SecurityAction::GoodsReceiptPosted => 'purchasing.goods_receipt_posted_audit.v1',
         };
     }
 }

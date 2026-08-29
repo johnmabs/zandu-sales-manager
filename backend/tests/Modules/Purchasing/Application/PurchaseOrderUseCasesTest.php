@@ -304,6 +304,10 @@ final class PurchaseOrderUseCaseRepository implements PurchaseOrderRepository
     {
         return $this->find($organizationId, $purchaseOrderId) ?? throw PurchaseOrderNotFound::withId($purchaseOrderId);
     }
+    public function getForUpdate(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): PurchaseOrder
+    {
+        return $this->get($organizationId, $purchaseOrderId);
+    }
     public function find(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): ?PurchaseOrder
     {
         $order = $this->orders[$purchaseOrderId->toString()] ?? null;

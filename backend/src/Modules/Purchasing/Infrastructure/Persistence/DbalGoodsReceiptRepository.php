@@ -85,6 +85,19 @@ final readonly class DbalGoodsReceiptRepository implements GoodsReceiptRepositor
         return $this->find($organizationId, $goodsReceiptId) ?? throw GoodsReceiptNotFound::withId($goodsReceiptId);
     }
 
+    public function getForUpdate(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): GoodsReceipt
+    {
+        $locked = $this->connection->fetchOne(
+            'SELECT id FROM purchasing.goods_receipt WHERE organization_id = ? AND id = ? FOR UPDATE',
+            [$organizationId->toString(), $goodsReceiptId->toString()],
+        );
+        if (false === $locked) {
+            throw GoodsReceiptNotFound::withId($goodsReceiptId);
+        }
+
+        return $this->get($organizationId, $goodsReceiptId);
+    }
+
     public function find(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): ?GoodsReceipt
     {
         $row = $this->connection->fetchAssociative(

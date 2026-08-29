@@ -227,6 +227,11 @@ final class DirectGoodsReceiptRepository implements GoodsReceiptRepository
         return $this->find($organizationId, $goodsReceiptId) ?? throw GoodsReceiptNotFound::withId($goodsReceiptId);
     }
 
+    public function getForUpdate(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): GoodsReceipt
+    {
+        return $this->get($organizationId, $goodsReceiptId);
+    }
+
     public function find(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): ?GoodsReceipt
     {
         $receipt = $this->receipts[$goodsReceiptId->toString()] ?? null;

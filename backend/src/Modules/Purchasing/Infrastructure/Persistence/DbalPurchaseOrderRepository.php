@@ -93,6 +93,19 @@ final readonly class DbalPurchaseOrderRepository implements PurchaseOrderReposit
         return $this->find($organizationId, $purchaseOrderId) ?? throw PurchaseOrderNotFound::withId($purchaseOrderId);
     }
 
+    public function getForUpdate(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): PurchaseOrder
+    {
+        $locked = $this->connection->fetchOne(
+            'SELECT id FROM purchasing.purchase_order WHERE organization_id = ? AND id = ? FOR UPDATE',
+            [$organizationId->toString(), $purchaseOrderId->toString()],
+        );
+        if (false === $locked) {
+            throw PurchaseOrderNotFound::withId($purchaseOrderId);
+        }
+
+        return $this->get($organizationId, $purchaseOrderId);
+    }
+
     public function find(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): ?PurchaseOrder
     {
         $row = $this->connection->fetchAssociative(
