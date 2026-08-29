@@ -21,6 +21,8 @@ final class PermissionCodeTest extends TestCase
             'CATEGORY_CREATE', 'CATEGORY_UPDATE', 'CATEGORY_ARCHIVE',
             'PRODUCT_CREATE', 'PRODUCT_READ', 'PRODUCT_UPDATE', 'PRODUCT_ACTIVATE', 'PRODUCT_DEACTIVATE', 'PRODUCT_ARCHIVE',
             'SUPPLIER_CREATE', 'SUPPLIER_READ', 'SUPPLIER_UPDATE', 'SUPPLIER_ARCHIVE',
+            'PURCHASE_ORDER_CREATE', 'PURCHASE_ORDER_READ', 'PURCHASE_ORDER_UPDATE_DRAFT',
+            'PURCHASE_ORDER_CONFIRM', 'PURCHASE_ORDER_CANCEL', 'PURCHASE_ORDER_CLOSE',
             'PRICE_LIST_CREATE', 'PRICE_LIST_READ', 'PRICE_LIST_UPDATE', 'PRICE_LIST_ACTIVATE', 'PRICE_LIST_ARCHIVE',
             'PRODUCT_PRICE_CREATE', 'PRODUCT_PRICE_READ', 'PRODUCT_PRICE_UPDATE', 'PRODUCT_PRICE_ARCHIVE',
             'INVENTORY_READ', 'INVENTORY_INITIALIZE', 'INVENTORY_ADJUST', 'STOCK_MOVEMENT_READ',
@@ -33,8 +35,5 @@ final class PermissionCodeTest extends TestCase
             'SALE_RETURN_CREATE', 'SALE_RETURN_READ', 'SALE_RETURN_COMPLETE', 'SALE_RETURN_CANCEL',
         ], array_column(PermissionCode::cases(), 'value'));
 
-        foreach (PermissionCode::cases() as $permission) {
-            self::assertDoesNotMatchRegularExpression('/^PURCHASE_/', $permission->value);
-        }
     }
 }

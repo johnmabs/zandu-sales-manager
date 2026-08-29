@@ -50,6 +50,13 @@ enum PermissionCode: string
     case SupplierUpdate = 'SUPPLIER_UPDATE';
     case SupplierArchive = 'SUPPLIER_ARCHIVE';
 
+    case PurchaseOrderCreate = 'PURCHASE_ORDER_CREATE';
+    case PurchaseOrderRead = 'PURCHASE_ORDER_READ';
+    case PurchaseOrderUpdateDraft = 'PURCHASE_ORDER_UPDATE_DRAFT';
+    case PurchaseOrderConfirm = 'PURCHASE_ORDER_CONFIRM';
+    case PurchaseOrderCancel = 'PURCHASE_ORDER_CANCEL';
+    case PurchaseOrderClose = 'PURCHASE_ORDER_CLOSE';
+
     case PriceListCreate = 'PRICE_LIST_CREATE';
     case PriceListRead = 'PRICE_LIST_READ';
     case PriceListUpdate = 'PRICE_LIST_UPDATE';
