@@ -60,7 +60,8 @@ Epic 6.3    TERMINÉ   PurchasingPolicy et ADR réception fournisseur
 Epic 6.4    TERMINÉ   PurchaseOrder aggregate, persistence et lifecycle
 Epic 6.5    TERMINÉ   PurchaseOrder use cases, permissions et validations
 Epic 6.6    TERMINÉ   GoodsReceipt aggregate et persistence
-Epic 6.7    PROCHAINE Création des réceptions directes
+Epic 6.7    TERMINÉ   Création des réceptions directes
+Epic 6.8    PROCHAINE Publication transactionnelle des réceptions
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -98,7 +99,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260829080000 appliquée en dernier
-Tests                 625 tests, 2 917 assertions
+Tests                 629 tests, 2 938 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9021,9 +9022,50 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.7 — Direct GoodsReceipt
+
+**Statut : TERMINÉ**
+
+- les permissions `GOODS_RECEIPT_CREATE`, `READ`, `POST` et `CANCEL` sont
+  intégrées au catalogue : owner complet, store manager opérationnel,
+  accountant en lecture et cashier sans accès Purchasing ;
+- `CreateDirectGoodsReceipt` crée atomiquement l’en-tête et toutes ses lignes,
+  sans fabriquer de PurchaseOrder artificiel ;
+- la permission de création et le guard opérationnel utilisent obligatoirement
+  le scope du magasin destinataire ;
+- `PurchasingPolicy` interdit explicitement le flux direct lorsque le
+  déploiement exige une commande fournisseur ;
+- le fournisseur doit être actif et la devise de chaque coût doit correspondre
+  à celle du magasin ;
+- Catalog résout chaque produit/packaging achetable et fournit le facteur de
+  conversion ; la quantité de base est calculée côté serveur ;
+- le coût fourni est un coût unitaire d’inventaire en unité de base ; le coût
+  réel facultatif reste absent pour une réception directe ;
+- une réception directe vide est rejetée avant toute génération ou persistence.
+
+Commits atomiques :
+
+```text
+3edb1b0 feat(access): add goods receipt permissions
+04f3cf4 feat(purchasing): add direct goods receipt
+```
+
+Validation locale :
+
+```text
+Permissions GoodsReceipt : OK (2 tests, 62 assertions)
+CreateDirectGoodsReceipt : OK (4 tests, 17 assertions)
+Suite PHPUnit complète : OK (629 tests, 2 938 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.7 — `CreateDirectGoodsReceipt`, avec permissions Store,
-validation du mode direct par `PurchasingPolicy`, résolution Supplier/Catalog et
-construction serveur des snapshots de quantité et de coût. La publication et
-ses effets Inventory/Costing restent réservés aux Epics 6.8 à 6.10.
+Implémenter l’Epic 6.8 — `PostGoodsReceipt` comme transaction locale coordonnée
+et idempotente. Son activation devra inclure les contrats et effets physiques
+Inventory et de valorisation Costing décrits par les Epics 6.9 et 6.10 : aucune
+réception ne doit devenir `POSTED` sans ces écritures atomiques.
