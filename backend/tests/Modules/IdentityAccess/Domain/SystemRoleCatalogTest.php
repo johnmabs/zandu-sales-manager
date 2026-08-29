@@ -53,6 +53,10 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::GoodsReceiptRead,
             PermissionCode::GoodsReceiptPost,
             PermissionCode::GoodsReceiptCancel,
+            PermissionCode::PurchaseReturnCreate,
+            PermissionCode::PurchaseReturnRead,
+            PermissionCode::PurchaseReturnShip,
+            PermissionCode::PurchaseReturnCancel,
             PermissionCode::PriceListRead,
             PermissionCode::ProductPriceRead,
             PermissionCode::InventoryRead,
@@ -114,6 +118,7 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::SupplierRead,
             PermissionCode::PurchaseOrderRead,
             PermissionCode::GoodsReceiptRead,
+            PermissionCode::PurchaseReturnRead,
         ], $roles[3]->permissions());
 
         foreach (array_slice($roles, 1) as $nonOwnerRole) {

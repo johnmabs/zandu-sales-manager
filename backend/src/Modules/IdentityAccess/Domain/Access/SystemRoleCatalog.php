@@ -54,6 +54,10 @@ final readonly class SystemRoleCatalog
                     PermissionCode::GoodsReceiptRead,
                     PermissionCode::GoodsReceiptPost,
                     PermissionCode::GoodsReceiptCancel,
+                    PermissionCode::PurchaseReturnCreate,
+                    PermissionCode::PurchaseReturnRead,
+                    PermissionCode::PurchaseReturnShip,
+                    PermissionCode::PurchaseReturnCancel,
                     PermissionCode::PriceListRead,
                     PermissionCode::ProductPriceRead,
                     PermissionCode::InventoryRead,
@@ -127,6 +131,7 @@ final readonly class SystemRoleCatalog
                     PermissionCode::SupplierRead,
                     PermissionCode::PurchaseOrderRead,
                     PermissionCode::GoodsReceiptRead,
+                    PermissionCode::PurchaseReturnRead,
                 ],
             ),
         ];

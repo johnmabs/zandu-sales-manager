@@ -203,6 +203,8 @@ services:
         alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptRepository
     Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrectionRepository:
         alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptCorrectionRepository
+    Zandu\Modules\Purchasing\Domain\PurchaseReturn\PurchaseReturnRepository:
+        alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalPurchaseReturnRepository
     Zandu\Modules\Purchasing\Application\PurchasingPolicy:
         alias: Zandu\Modules\Purchasing\Application\ConfiguredPurchasingPolicy
     Zandu\Modules\Purchasing\Application\ConfiguredPurchasingPolicy:

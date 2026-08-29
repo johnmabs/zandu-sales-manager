@@ -15,8 +15,10 @@ use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptStatus;
 use Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrection;
 use Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrectionLine;
 use Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrectionStatus;
+use Zandu\Modules\Purchasing\Domain\PurchaseReturn\{PurchaseReturn, PurchaseReturnLine, PurchaseReturnStatus};
 use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptCorrectionRepository;
 use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptRepository;
+use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalPurchaseReturnRepository;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
@@ -27,6 +29,7 @@ use Zandu\SharedKernel\Identity\GoodsReceiptLineId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
+use Zandu\SharedKernel\Identity\{PurchaseReturnId, PurchaseReturnLineId};
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\SupplierId;
 use Zandu\SharedKernel\Money\Currency;
@@ -45,6 +48,8 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
     private const LINE = '0198da20-0000-7000-8000-000000000008';
     private const ACTOR = '0198da20-0000-7000-8000-000000000009';
     private const CORRECTION = '0198da20-0000-7000-8000-000000000010';
+    private const PURCHASE_RETURN = '0198da20-0000-7000-8000-000000000011';
+    private const PURCHASE_RETURN_LINE = '0198da20-0000-7000-8000-000000000012';
 
     private Connection $db;
     private GoodsReceiptRepository $repository;
@@ -139,6 +144,18 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         });
         self::assertSame(GoodsReceiptCorrectionStatus::Posted, $restoredCorrection->status());
         self::assertSame('-5.000000000000', $correctionRepository->postedDifferenceByProduct($organizationId, $posted->id())[self::PRODUCT]->toString());
+
+        $returnRepository = new DbalPurchaseReturnRepository($this->db, $this->ids, $this->decimals);
+        $purchaseReturn = PurchaseReturn::create(PurchaseReturnId::fromString(self::PURCHASE_RETURN, $this->ids), $organizationId, StoreId::fromString(self::STORE, $this->ids), SupplierId::fromString(self::SUPPLIER, $this->ids), $posted->id(), null, 'Damaged goods', ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T12:00:00Z'));
+        $purchaseReturn->addLine(new PurchaseReturnLine(PurchaseReturnLineId::fromString(self::PURCHASE_RETURN_LINE, $this->ids), $purchaseReturn->id(), ProductId::fromString(self::PRODUCT, $this->ids), $this->quantity('2'), GoodsReceiptLineId::fromString(self::LINE, $this->ids)));
+        $restoredReturn = $this->transactions->transactional($organizationId, function () use ($returnRepository, $purchaseReturn): PurchaseReturn {
+            $returnRepository->save($purchaseReturn);
+            return $returnRepository->get($purchaseReturn->organizationId(), $purchaseReturn->id());
+        });
+        $restoredReturn->ship(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T13:00:00Z'));
+        $this->transactions->transactional($organizationId, fn() => $returnRepository->save($restoredReturn));
+        self::assertSame(PurchaseReturnStatus::Shipped, $restoredReturn->status());
+        self::assertSame('2.000000000000', $returnRepository->shippedQuantityByProduct($organizationId, $posted->id())[self::PRODUCT]->toString());
     }
 
     private function fixtures(): void
@@ -154,8 +171,9 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
     private function cleanup(): void
     {
         $this->db->executeStatement("UPDATE purchasing.goods_receipt_correction SET status = 'DRAFT', posted_by = NULL, posted_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
+        $this->db->executeStatement("UPDATE purchasing.purchase_return SET status = 'DRAFT', shipped_by = NULL, shipped_at = NULL, cancelled_by = NULL, cancelled_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
         $this->db->executeStatement("UPDATE purchasing.goods_receipt SET status = 'DRAFT', posted_by = NULL, posted_at = NULL, cancelled_by = NULL, cancelled_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
-        foreach (['purchasing.goods_receipt_correction_line', 'purchasing.goods_receipt_correction', 'purchasing.goods_receipt_line', 'purchasing.goods_receipt', 'purchasing.supplier', 'catalog.product_packagings', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
+        foreach (['purchasing.purchase_return_line', 'purchasing.purchase_return', 'purchasing.goods_receipt_correction_line', 'purchasing.goods_receipt_correction', 'purchasing.goods_receipt_line', 'purchasing.goods_receipt', 'purchasing.supplier', 'catalog.product_packagings', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
             $this->db->executeStatement(sprintf('DELETE FROM %s WHERE organization_id = ?', $table), [self::ORGANIZATION]);
         }
         $this->db->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::ORGANIZATION]);
