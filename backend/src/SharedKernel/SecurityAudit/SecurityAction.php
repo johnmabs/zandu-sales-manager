@@ -43,4 +43,5 @@ enum SecurityAction: string
     case SaleReturnLineAdded = 'SALE_RETURN_LINE_ADDED';
     case SaleReturnCompleted = 'SALE_RETURN_COMPLETED';
     case SaleReturnCancelled = 'SALE_RETURN_CANCELLED';
+    case PartialPurchaseOrderClosed = 'PARTIAL_PURCHASE_ORDER_CLOSED';
 }
