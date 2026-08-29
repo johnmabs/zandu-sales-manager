@@ -58,7 +58,8 @@ Epic 6.1    TERMINÉ   Purchasing foundation, boundaries et schéma PostgreSQL
 Epic 6.2    TERMINÉ   Supplier aggregate, RLS, permissions et management
 Epic 6.3    TERMINÉ   PurchasingPolicy et ADR réception fournisseur
 Epic 6.4    TERMINÉ   PurchaseOrder aggregate, persistence et lifecycle
-Epic 6.5    PROCHAINE PurchaseOrder use cases
+Epic 6.5    TERMINÉ   PurchaseOrder use cases, permissions et validations
+Epic 6.6    PROCHAINE GoodsReceipt aggregate
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -91,12 +92,12 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 28 août 2026 :
+État consolidé au 29 août 2026 :
 
 ```text
 Branche              main
 Migrations           Version20260828220000 appliquée en dernier
-Tests                 609 tests, 2 917 assertions
+Tests                 614 tests, 2 882 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8932,8 +8933,53 @@ Deptrac layers/modules : 0 violation, 10 uncovered
 Migrations dev/test : version 20260828220000 appliquée
 ```
 
+### Epic 6.5 — Use cases PurchaseOrder
+
+**Statut : TERMINÉ**
+
+- les sept cas d’usage prévus sont disponibles : création, ajout, modification
+  et retrait de ligne, confirmation, annulation et clôture ;
+- les permissions `PURCHASE_ORDER_*` utilisent obligatoirement un scope Store :
+  owner complet, store manager opérationnel, accountant en lecture et cashier
+  sans accès Purchasing ;
+- Catalog expose un snapshot achetable tenant-scoped qui exige un produit actif
+  et un packaging actif autorisé à l’achat ;
+- la quantité de base et le coût unitaire d’inventaire sont calculés côté
+  application depuis le facteur Catalog, jamais acceptés depuis le client ;
+- la confirmation revalide Store actif, Supplier actif, produits, packagings et
+  facteurs de conversion avant de figer la commande ;
+- création, édition et confirmation utilisent le mode opérationnel standard ;
+  annulation et clôture utilisent le mode de remédiation ;
+- une clôture partielle produit l’audit et l’événement outbox
+  `PARTIAL_PURCHASE_ORDER_CLOSED` ;
+- les erreurs `PURCHASE_ORDER_HAS_RECEIPTS` et `OVER_RECEIPT_NOT_ALLOWED` sont
+  alignées sur le contrat documenté du lot.
+
+Commits atomiques :
+
+```text
+3748247 feat(access): add purchase order permissions
+7dd4584 feat(catalog): expose purchasable product snapshots
+426a6e6 feat(purchasing): add purchase order draft use cases
+74dd9f4 feat(purchasing): add purchase order lifecycle use cases
+9d18a23 test(purchasing): cover purchase order use cases
+8a59cc3 fix(purchasing): align purchase order error codes
+144dcf6 fix(purchasing): publish partial close audit event
+```
+
+Validation locale :
+
+```text
+Suite PHPUnit complète : OK (614 tests, 2 882 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.5 — les cas d’usage `CreatePurchaseOrder`, ajout,
-modification et retrait de ligne, puis confirmation, annulation et clôture avec
-les validations croisées Store, Supplier et Catalog prévues par le lot.
+Implémenter l’Epic 6.6 — l’agrégat `GoodsReceipt`, ses lignes, son cycle
+`DRAFT → POSTED` ou `DRAFT → CANCELLED` et les invariants d’une réception liée
+ou directe, sans encore déclencher les mouvements Inventory de l’Epic 6.9.
