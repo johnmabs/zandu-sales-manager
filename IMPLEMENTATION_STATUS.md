@@ -61,9 +61,10 @@ Epic 6.4    TERMINÉ   PurchaseOrder aggregate, persistence et lifecycle
 Epic 6.5    TERMINÉ   PurchaseOrder use cases, permissions et validations
 Epic 6.6    TERMINÉ   GoodsReceipt aggregate et persistence
 Epic 6.7    TERMINÉ   Création des réceptions directes
-Epic 6.8    PROCHAINE Publication transactionnelle des réceptions
+Epic 6.8    TERMINÉ   Publication transactionnelle des réceptions
 Epic 6.9    TERMINÉ   Réception physique Inventory idempotente
 Epic 6.10   TERMINÉ   Valorisation Costing des achats
+Epic 6.11   PROCHAINE Réceptions partielles liées aux commandes
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -101,7 +102,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260829110000 appliquée en dernier
-Tests                 633 tests, 2 963 assertions
+Tests                 636 tests, 2 989 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9108,9 +9109,48 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.8 — Publication transactionnelle des réceptions
+
+**Statut : TERMINÉ — Inventory, Costing et Purchasing coordonnés atomiquement**
+
+- `PostGoodsReceipt` verrouille la réception de manière pessimiste dans une
+  `TenantTransaction`, puis autorise l’action au scope Store ;
+- le rejeu d’une réception déjà `POSTED` est sans effet et ne duplique ni
+  mouvement, ni valorisation, ni événement ;
+- le fournisseur actif, la devise du magasin, les snapshots Catalog et la
+  policy opérationnelle sont revérifiés au moment de la publication ;
+- une commande liée est elle aussi verrouillée et validée avant tout effet :
+  même fournisseur, même magasin, produit commandé et absence de
+  sur-réception ;
+- `InventoryGoodsReceiver` crée les mouvements physiques et Costing dans la
+  même transaction ; un résultat partiel ou incohérent bloque la publication ;
+- les quantités reçues de la commande liée sont ensuite cumulées et persistées,
+  puis la réception devient `POSTED` seulement après tous les ledgers ;
+- l’audit de sécurité et l’événement métier
+  `purchasing.goods_receipt_posted.v1` rejoignent la transactional outbox.
+
+Commit atomique :
+
+```text
+5459196 feat(purchasing): add post goods receipt workflow
+```
+
+Validation locale :
+
+```text
+PostGoodsReceipt ciblé : OK (3 tests, 26 assertions)
+Suite PHPUnit complète : OK (636 tests, 2 989 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.8 — `PostGoodsReceipt` comme transaction locale coordonnée
-et idempotente. Son activation devra inclure les contrats et effets physiques
-Inventory et de valorisation Costing décrits par les Epics 6.9 et 6.10 : aucune
-réception ne doit devenir `POSTED` sans ces écritures atomiques.
+Implémenter l’Epic 6.11 — création d’une `GoodsReceipt` liée à une
+`PurchaseOrder` confirmée et prise en charge des réceptions partielles. Le
+workflow devra conserver les snapshots serveur, interdire les produits hors
+commande et démontrer les transitions cumulatives `PARTIALLY_RECEIVED` puis
+`FULLY_RECEIVED`.
