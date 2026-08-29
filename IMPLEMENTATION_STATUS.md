@@ -67,7 +67,7 @@ Epic 6.10   TERMINÉ   Valorisation Costing des achats
 Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
 Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
 Epic 6.13   TERMINÉ   Corrections immuables de réception
-Epic 6.14   PROCHAINE Retours fournisseur
+Epic 6.14   EN COURS  Retours fournisseur
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -104,8 +104,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260829140000 appliquée en dernier
-Tests                 653 tests, 3 095 assertions
+Migrations           Version20260829150000 appliquée en dernier
+Tests                 657 tests, 3 105 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9349,3 +9349,35 @@ Deptrac layers/modules : 0 violation, 10 uncovered
 Implémenter l’Epic 6.14 — `PurchaseReturn` distinct des corrections de réception,
 avec cycle `DRAFT → SHIPPED/CANCELLED`, protection du stock et du reliquat
 retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
+
+### Epic 6.14 — Fondation PurchaseReturn
+
+**Statut : EN COURS — domaine et persistence terminés**
+
+- `PurchaseReturn` porte magasin source, fournisseur, réception/commande
+  facultatives, raison obligatoire et cycle `DRAFT → SHIPPED/CANCELLED` ;
+- les lignes conservent produit, quantité de base positive et lien facultatif à
+  la ligne de réception, avec produit unique par retour ;
+- toute mutation est interdite après expédition ou annulation ;
+- les permissions Create/Read/Ship/Cancel sont attribuées au Store Manager,
+  tandis que l’Accountant reste en lecture seule ;
+- `Version20260829150000` ajoute FKs tenant, contraintes terminales, trigger
+  d’immutabilité et RLS forcée ;
+- le repository DBAL fournit verrou pessimiste et cumul des quantités déjà
+  expédiées par produit/réception ;
+- le round-trip PostgreSQL démontre une expédition persistée et un reliquat
+  agrégé sans modifier la commande source.
+
+Commit atomique :
+
+```text
+46c4d61 feat(purchasing): add purchase return foundation
+```
+
+Validation locale : suite complète OK (657 tests, 3 105 assertions), qualité
+et architecture vertes.
+
+### Prochaine sous-étape
+
+Créer les cas d’usage de brouillon puis `ShipPurchaseReturn`, avec validation du
+reliquat retournable et sortie atomique Inventory/Costing au coût moyen courant.
