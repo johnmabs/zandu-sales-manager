@@ -12,11 +12,16 @@ use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptLine;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptNumber;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptRepository;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptStatus;
+use Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrection;
+use Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrectionLine;
+use Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrectionStatus;
+use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptCorrectionRepository;
 use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptRepository;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\ActorId;
+use Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId;
 use Zandu\SharedKernel\Identity\GoodsReceiptId;
 use Zandu\SharedKernel\Identity\GoodsReceiptLineId;
 use Zandu\SharedKernel\Identity\OrganizationId;
@@ -39,6 +44,7 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
     private const RECEIPT = '0198da20-0000-7000-8000-000000000007';
     private const LINE = '0198da20-0000-7000-8000-000000000008';
     private const ACTOR = '0198da20-0000-7000-8000-000000000009';
+    private const CORRECTION = '0198da20-0000-7000-8000-000000000010';
 
     private Connection $db;
     private GoodsReceiptRepository $repository;
@@ -116,6 +122,23 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         self::assertSame('2026-08-29T09:00:00+00:00', $posted->postedAt()?->format(DATE_ATOM));
         self::assertCount(1, $posted->lines());
         self::assertSame(3, $posted->version());
+
+        $correctionRepository = new DbalGoodsReceiptCorrectionRepository($this->db, $this->ids, $this->decimals);
+        $correction = GoodsReceiptCorrection::create(GoodsReceiptCorrectionId::fromString(self::CORRECTION, $this->ids), $organizationId, $posted->id(), 'Damaged unit found during recount', ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T10:00:00Z'));
+        $correction->addLine(new GoodsReceiptCorrectionLine($correction->id(), ProductId::fromString(self::PRODUCT, $this->ids), $this->quantity('60'), $this->quantity('60'), $this->quantity('55')));
+
+        $restoredCorrection = $this->transactions->transactional($organizationId, function () use ($correctionRepository, $correction): GoodsReceiptCorrection {
+            $correctionRepository->save($correction);
+            return $correctionRepository->get($correction->organizationId(), $correction->id());
+        });
+        self::assertSame('-5.000000000000', $restoredCorrection->lines()[0]->difference()->toString());
+
+        $this->transactions->transactional($organizationId, function () use ($correctionRepository, $restoredCorrection): void {
+            $restoredCorrection->post(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T11:00:00Z'));
+            $correctionRepository->save($restoredCorrection);
+        });
+        self::assertSame(GoodsReceiptCorrectionStatus::Posted, $restoredCorrection->status());
+        self::assertSame('-5.000000000000', $correctionRepository->postedDifferenceByProduct($organizationId, $posted->id())[self::PRODUCT]->toString());
     }
 
     private function fixtures(): void
@@ -130,8 +153,9 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
 
     private function cleanup(): void
     {
+        $this->db->executeStatement("UPDATE purchasing.goods_receipt_correction SET status = 'DRAFT', posted_by = NULL, posted_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
         $this->db->executeStatement("UPDATE purchasing.goods_receipt SET status = 'DRAFT', posted_by = NULL, posted_at = NULL, cancelled_by = NULL, cancelled_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
-        foreach (['purchasing.goods_receipt_line', 'purchasing.goods_receipt', 'purchasing.supplier', 'catalog.product_packagings', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
+        foreach (['purchasing.goods_receipt_correction_line', 'purchasing.goods_receipt_correction', 'purchasing.goods_receipt_line', 'purchasing.goods_receipt', 'purchasing.supplier', 'catalog.product_packagings', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
             $this->db->executeStatement(sprintf('DELETE FROM %s WHERE organization_id = ?', $table), [self::ORGANIZATION]);
         }
         $this->db->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::ORGANIZATION]);
