@@ -158,6 +158,35 @@ final class RepositoryInventoryMovementValuerTest extends TestCase
         self::assertSame('0198f70a-1111-7111-8111-111111111111', $ledger->source()->referenceId());
     }
 
+    public function testItValuesAPurchaseReceiptAtItsInventoryUnitCost(): void
+    {
+        $valuation = $this->valuation('10', '4000');
+        $valuations = $this->createStub(StockValuationRepository::class);
+        $valuations->method('getByStockForUpdate')->willReturn($valuation);
+        $ledger = null;
+        $movements = $this->createMock(StockValuationMovementRepository::class);
+        $movements->expects(self::once())->method('append')->willReturnCallback(static function (StockValuationMovement $movement) use (&$ledger): void {
+            $ledger = $movement;
+        });
+
+        $this->valuer($valuations, $movements)->value($this->movement(
+            InventoryCostingMovementType::PurchaseReceipt,
+            '5',
+            '10',
+            '15',
+            '7000',
+            '0198f70b-1111-7111-8111-111111111111',
+        ));
+
+        self::assertSame('15', $valuation->quantityOnHand()->toString());
+        self::assertSame('75000.000000', $valuation->totalValue()->amount()->toString());
+        self::assertSame('5000.000000000000', $valuation->averageUnitCost()->amount()->toString());
+        self::assertInstanceOf(StockValuationMovement::class, $ledger);
+        self::assertSame(StockValuationMovementType::PurchaseReceipt, $ledger->type());
+        self::assertSame('GOODS_RECEIPT', $ledger->source()->type());
+        self::assertSame('0198f70b-1111-7111-8111-111111111111', $ledger->source()->referenceId());
+    }
+
     /** @return iterable<string, array{InventoryCostingMovementType, ?string, string}> */
     public static function invalidCostPolicy(): iterable
     {
