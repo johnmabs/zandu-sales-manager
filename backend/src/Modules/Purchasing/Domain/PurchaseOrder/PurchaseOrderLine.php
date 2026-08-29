@@ -55,8 +55,8 @@ final readonly class PurchaseOrderLine
         if (!$inventoryUnitCost->equals($calculatedInventoryUnitCost)) {
             throw PurchasingRuleViolation::with('PURCHASE_ORDER_INVENTORY_COST_INVALID', 'Inventory unit cost must match unit cost divided by the conversion factor.');
         }
-        if ($receivedQuantity->isNegative() || $receivedQuantity->compareTo($orderedBaseQuantity) > 0) {
-            throw PurchasingRuleViolation::with('PURCHASE_ORDER_RECEIVED_QUANTITY_INVALID', 'Received quantity must be between zero and the ordered base quantity.');
+        if ($receivedQuantity->isNegative()) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_RECEIVED_QUANTITY_INVALID', 'Received quantity cannot be negative.');
         }
     }
 
@@ -65,13 +65,13 @@ final readonly class PurchaseOrderLine
         return $this->unitCost->multiply($this->enteredOrderedQuantity->value(), 6, RoundingMode::HalfEven);
     }
 
-    public function withAdditionalReceipt(Quantity $quantity): self
+    public function withAdditionalReceipt(Quantity $quantity, bool $allowOverReceipt = false): self
     {
         if ($quantity->isZero() || $quantity->isNegative()) {
             throw PurchasingRuleViolation::with('PURCHASE_ORDER_RECEIPT_QUANTITY_INVALID', 'Received quantity increment must be positive.');
         }
         $receivedQuantity = $this->receivedQuantity->add($quantity);
-        if ($receivedQuantity->compareTo($this->orderedBaseQuantity) > 0) {
+        if (!$allowOverReceipt && $receivedQuantity->compareTo($this->orderedBaseQuantity) > 0) {
             throw PurchasingRuleViolation::with('OVER_RECEIPT_NOT_ALLOWED', 'Received quantity cannot exceed ordered base quantity.');
         }
 
@@ -87,6 +87,11 @@ final readonly class PurchaseOrderLine
             $this->inventoryUnitCost,
             $receivedQuantity,
         );
+    }
+
+    public function wouldExceedOrderedQuantity(Quantity $quantity): bool
+    {
+        return $this->receivedQuantity->add($quantity)->compareTo($this->orderedBaseQuantity) > 0;
     }
 
     public function id(): PurchaseOrderLineId

@@ -13,5 +13,6 @@ final readonly class PostGoodsReceipt
         public GoodsReceiptId $goodsReceiptId,
         public ActorContext $actorContext,
         public string $commandId = '',
+        public ?string $overReceiptReason = null,
     ) {}
 }

@@ -24,7 +24,7 @@ use Zandu\SharedKernel\Identity\{ActorId, GoodsReceiptId, GoodsReceiptLineId, Or
 use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxMessage, OutboxRepository};
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
-use Zandu\SharedKernel\SecurityAudit\{SecurityAction, SecurityAuditTrail};
+use Zandu\SharedKernel\SecurityAudit\{SafeAuditMetadata, SecurityAction, SecurityAuditTrail};
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
@@ -130,6 +130,70 @@ final class PostGoodsReceiptTest extends TestCase
 
         self::assertSame(PurchaseOrderStatus::FullyReceived, $order->status());
         self::assertSame('10', $order->lines()[0]->receivedQuantity()->toString());
+    }
+
+    public function testItRejectsAnOverReceiptByDefaultBeforeInventory(): void
+    {
+        $order = $this->confirmedOrder();
+        $receipt = $this->linkedReceipt('0198dd00-0000-7000-8000-000000000015', $order, '11');
+        $receipts = $this->createStub(GoodsReceiptRepository::class);
+        $receipts->method('getForUpdate')->willReturn($receipt);
+        $orders = $this->createStub(PurchaseOrderRepository::class);
+        $orders->method('getForUpdate')->willReturn($order);
+        $inventory = $this->createMock(InventoryGoodsReceiver::class);
+        $inventory->expects(self::never())->method('receive');
+
+        try {
+            $this->handler($receipts, $inventory, $this->createStub(AuthorizationService::class), $this->createStub(SecurityAuditTrail::class), $this->createStub(OutboxRepository::class), '1', $orders)(new PostGoodsReceipt($receipt->id(), $this->context(), 'over-default'));
+            self::fail('An over receipt without explicit authorization must fail.');
+        } catch (PurchasingRuleViolation $exception) {
+            self::assertSame('OVER_RECEIPT_NOT_ALLOWED', $exception->errorCode());
+            self::assertSame(GoodsReceiptStatus::Draft, $receipt->status());
+            self::assertSame(PurchaseOrderStatus::Confirmed, $order->status());
+        }
+    }
+
+    public function testItAuthorizesAndAuditsTheFullPhysicalOverReceipt(): void
+    {
+        $order = $this->confirmedOrder();
+        $receipt = $this->linkedReceipt('0198dd00-0000-7000-8000-000000000016', $order, '11');
+        $receipts = $this->createStub(GoodsReceiptRepository::class);
+        $receipts->method('getForUpdate')->willReturn($receipt);
+        $orders = $this->createMock(PurchaseOrderRepository::class);
+        $orders->method('getForUpdate')->willReturn($order);
+        $orders->expects(self::once())->method('save')->with($order);
+        $inventory = $this->createStub(InventoryGoodsReceiver::class);
+        $inventory->method('receive')->willReturn(new GoodsReceiptStockResult($receipt->id(), false, [
+            new ReceivedGoodsItem($this->productId(), \Zandu\SharedKernel\Identity\StockId::fromString('0198dd00-0000-7000-8000-000000000009', $this->ids), \Zandu\SharedKernel\Identity\StockMovementId::fromString('0198dd00-0000-7000-8000-000000000010', $this->ids), $this->quantity('11'), $this->quantity('0'), $this->quantity('11')),
+        ]));
+        $permissions = [];
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::exactly(2))->method('authorize')->willReturnCallback(static function (ActorContext $context, PermissionCode $permission) use (&$permissions): void {
+            $permissions[] = $permission;
+        });
+        $actions = [];
+        $overMetadata = null;
+        $audit = $this->createMock(SecurityAuditTrail::class);
+        $audit->expects(self::exactly(2))->method('recordSuccess')->willReturnCallback(static function (ActorContext $context, SecurityAction $action, mixed $resource, SafeAuditMetadata $metadata) use (&$actions, &$overMetadata): void {
+            $actions[] = $action;
+            if (SecurityAction::OverReceiptAuthorized === $action) {
+                $overMetadata = $metadata->toArray();
+            }
+        });
+
+        $this->handler($receipts, $inventory, $authorization, $audit, $this->createStub(OutboxRepository::class), '1', $orders)(new PostGoodsReceipt(
+            $receipt->id(),
+            $this->context(),
+            'over-authorized',
+            'Supplier delivered a sealed case',
+        ));
+
+        self::assertSame([PermissionCode::GoodsReceiptPost, PermissionCode::PurchasingOverReceipt], $permissions);
+        self::assertSame([SecurityAction::OverReceiptAuthorized, SecurityAction::GoodsReceiptPosted], $actions);
+        self::assertSame('Supplier delivered a sealed case', $overMetadata['reason'] ?? null);
+        self::assertSame('11', $order->lines()[0]->receivedQuantity()->toString());
+        self::assertSame(PurchaseOrderStatus::FullyReceived, $order->status());
+        self::assertSame(GoodsReceiptStatus::Posted, $receipt->status());
     }
 
     private function handler(

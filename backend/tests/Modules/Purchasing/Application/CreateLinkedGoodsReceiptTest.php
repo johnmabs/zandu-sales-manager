@@ -120,26 +120,21 @@ final class CreateLinkedGoodsReceiptTest extends TestCase
         ));
     }
 
-    public function testItRejectsAReceiptBeyondTheRemainingQuantity(): void
+    public function testItDefersOverReceiptAuthorizationUntilAtomicPosting(): void
     {
         $order = $this->confirmedOrder();
         $order->recordReceipt($order->lines()[0]->id(), $this->quantity('110'), $this->actorId(), $this->clock->now());
-        $receipts = $this->createMock(GoodsReceiptRepository::class);
-        $receipts->expects(self::never())->method('save');
+        $receipt = $this->handler($order, $this->createStub(GoodsReceiptRepository::class), $this->createStub(AuthorizationService::class))(new CreateLinkedGoodsReceipt(
+            $order->id(),
+            'GR-LINKED-004',
+            null,
+            null,
+            [new LinkedGoodsReceiptLine($order->lines()[0]->id(), $this->quantity('1'))],
+            $this->context(),
+        ));
 
-        try {
-            $this->handler($order, $receipts, $this->createStub(AuthorizationService::class))(new CreateLinkedGoodsReceipt(
-                $order->id(),
-                'GR-LINKED-004',
-                null,
-                null,
-                [new LinkedGoodsReceiptLine($order->lines()[0]->id(), $this->quantity('1'))],
-                $this->context(),
-            ));
-            self::fail('A linked receipt must not exceed the remaining ordered quantity.');
-        } catch (PurchasingRuleViolation $exception) {
-            self::assertSame('OVER_RECEIPT_NOT_ALLOWED', $exception->errorCode());
-        }
+        self::assertSame('12.000000000000', $receipt->lines()[0]->receivedBaseQuantity()->toString());
+        self::assertSame('110', $order->lines()[0]->receivedQuantity()->toString());
     }
 
     private function handler(PurchaseOrder $order, GoodsReceiptRepository $receipts, AuthorizationService $authorization): CreateLinkedGoodsReceiptHandler

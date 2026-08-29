@@ -68,8 +68,11 @@ final readonly class PostGoodsReceiptHandler
                 }
             }
             $order = $this->linkedOrder($receipt);
-            if (null !== $order) {
-                $this->validateLinkedLines($receipt, $order);
+            $overReceipt = null !== $order && $this->validateLinkedLines($receipt, $order);
+            $overReceiptReason = null;
+            if ($overReceipt) {
+                $overReceiptReason = $this->overReceiptReason($command);
+                $this->authorization->authorize($command->actorContext, PermissionCode::PurchasingOverReceipt, $scope);
             }
             $stock = $this->inventory->receive(new ReceiveSupplierGoods(
                 $organizationId,
@@ -89,12 +92,25 @@ final readonly class PostGoodsReceiptHandler
             }
             if (null !== $order) {
                 foreach ($receipt->lines() as $line) {
-                    $order->recordReceipt($line->purchaseOrderLineId() ?? throw new \LogicException('Linked receipt line is required.'), $line->receivedBaseQuantity(), $command->actorContext->actorId(), $now);
+                    $order->recordReceipt($line->purchaseOrderLineId() ?? throw new \LogicException('Linked receipt line is required.'), $line->receivedBaseQuantity(), $command->actorContext->actorId(), $now, $overReceipt);
                     $this->purchaseOrders->save($order);
                 }
             }
             $receipt->post($command->actorContext->actorId(), $now);
             $this->goodsReceipts->save($receipt);
+            if ($overReceipt) {
+                $this->audit->recordSuccess(
+                    $command->actorContext,
+                    SecurityAction::OverReceiptAuthorized,
+                    ResourceReference::for('goods_receipt', $receipt->id()),
+                    SafeAuditMetadata::fromArray([
+                        'purchaseOrderId' => $order->id()->toString(),
+                        'reason' => $overReceiptReason,
+                        'lineCount' => count($receipt->lines()),
+                    ]),
+                    $now,
+                );
+            }
             $this->audit->recordSuccess($command->actorContext, SecurityAction::GoodsReceiptPosted, ResourceReference::for('goods_receipt', $receipt->id()), SafeAuditMetadata::fromArray(['lineCount' => count($receipt->lines()), 'commandId' => $command->commandId]), $now);
             $this->outbox->append(new OutboxMessage(
                 OutboxMessageId::generate($this->ids),
@@ -126,15 +142,34 @@ final readonly class PostGoodsReceiptHandler
         return $order;
     }
 
-    private function validateLinkedLines(GoodsReceipt $receipt, PurchaseOrder $order): void
+    private function validateLinkedLines(GoodsReceipt $receipt, PurchaseOrder $order): bool
     {
+        $overReceipt = false;
         foreach ($receipt->lines() as $receiptLine) {
             $linkedLineId = $receiptLine->purchaseOrderLineId() ?? throw new \LogicException('Linked receipt line is required.');
             $orderLine = array_find($order->lines(), static fn(PurchaseOrderLine $line): bool => $line->id()->equals($linkedLineId));
             if (!$orderLine instanceof PurchaseOrderLine || !$orderLine->productId()->equals($receiptLine->productId())) {
                 throw PurchasingRuleViolation::with('GOODS_RECEIPT_PRODUCT_NOT_ORDERED', 'Every linked receipt product must belong to the purchase order.');
             }
-            $orderLine->withAdditionalReceipt($receiptLine->receivedBaseQuantity());
+            $overReceipt = $orderLine->wouldExceedOrderedQuantity($receiptLine->receivedBaseQuantity()) || $overReceipt;
         }
+
+        return $overReceipt;
+    }
+
+    private function overReceiptReason(PostGoodsReceipt $command): string
+    {
+        if (null === $command->overReceiptReason) {
+            throw PurchasingRuleViolation::with('OVER_RECEIPT_NOT_ALLOWED', 'Received quantity cannot exceed ordered base quantity without explicit authorization.');
+        }
+        $reason = trim($command->overReceiptReason);
+        if ('' === $reason) {
+            throw PurchasingRuleViolation::with('OVER_RECEIPT_REASON_REQUIRED', 'An over receipt requires a non-empty reason.');
+        }
+        if (mb_strlen($reason) > 500) {
+            throw PurchasingRuleViolation::with('OVER_RECEIPT_REASON_INVALID', 'Over receipt reason cannot exceed 500 characters.');
+        }
+
+        return $reason;
     }
 }

@@ -61,6 +61,7 @@ enum PermissionCode: string
     case GoodsReceiptRead = 'GOODS_RECEIPT_READ';
     case GoodsReceiptPost = 'GOODS_RECEIPT_POST';
     case GoodsReceiptCancel = 'GOODS_RECEIPT_CANCEL';
+    case PurchasingOverReceipt = 'PURCHASING_OVER_RECEIPT';
 
     case PriceListCreate = 'PRICE_LIST_CREATE';
     case PriceListRead = 'PRICE_LIST_READ';

@@ -113,6 +113,17 @@ final class DbalPurchaseOrderRepositoryTest extends KernelTestCase
         self::assertSame('PARTIALLY_RECEIVED', $received->status()->value);
         self::assertSame('5.000000000000', $received->lines()[0]->receivedQuantity()->toString());
         self::assertSame(4, $received->version());
+
+        $overReceived = $this->transactions->transactional($organizationId, function () use ($received): PurchaseOrder {
+            $received->recordReceipt($received->lines()[0]->id(), $this->quantity('60'), ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-28T15:00:00Z'), true);
+            $this->repository->save($received);
+
+            return $this->repository->get($received->organizationId(), $received->id());
+        });
+
+        self::assertSame('FULLY_RECEIVED', $overReceived->status()->value);
+        self::assertSame('65.000000000000', $overReceived->lines()[0]->receivedQuantity()->toString());
+        self::assertSame(5, $overReceived->version());
     }
 
     private function fixtures(): void

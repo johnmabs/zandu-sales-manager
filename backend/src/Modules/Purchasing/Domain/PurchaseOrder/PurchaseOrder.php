@@ -164,17 +164,17 @@ final class PurchaseOrder
         $this->recordedEvents[] = new PurchaseOrderConfirmed($this->organizationId, $this->id, $actorId, $occurredAt);
     }
 
-    public function recordReceipt(PurchaseOrderLineId $lineId, Quantity $baseQuantity, ActorId $actorId, DateTimeImmutable $occurredAt): void
+    public function recordReceipt(PurchaseOrderLineId $lineId, Quantity $baseQuantity, ActorId $actorId, DateTimeImmutable $occurredAt, bool $allowOverReceipt = false): void
     {
         if (!in_array($this->status, [PurchaseOrderStatus::Confirmed, PurchaseOrderStatus::PartiallyReceived], true)) {
             throw PurchasingRuleViolation::with('PURCHASE_ORDER_NOT_RECEIVABLE', 'Only a confirmed or partially received purchase order can receive stock.');
         }
         foreach ($this->lines as $index => $line) {
             if ($line->id()->equals($lineId)) {
-                $this->lines[$index] = $line->withAdditionalReceipt($baseQuantity);
+                $this->lines[$index] = $line->withAdditionalReceipt($baseQuantity, $allowOverReceipt);
                 $fullyReceived = array_all(
                     $this->lines,
-                    static fn(PurchaseOrderLine $candidate): bool => $candidate->receivedQuantity()->equals($candidate->orderedBaseQuantity()),
+                    static fn(PurchaseOrderLine $candidate): bool => $candidate->receivedQuantity()->compareTo($candidate->orderedBaseQuantity()) >= 0,
                 );
                 $occurredAt = self::utc($occurredAt);
                 $this->status = $fullyReceived ? PurchaseOrderStatus::FullyReceived : PurchaseOrderStatus::PartiallyReceived;

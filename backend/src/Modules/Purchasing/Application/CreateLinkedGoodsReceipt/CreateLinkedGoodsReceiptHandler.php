@@ -88,7 +88,6 @@ final readonly class CreateLinkedGoodsReceiptHandler
                     $line->enteredReceivedQuantity,
                     $line->actualUnitCost,
                 );
-                $orderLine->withAdditionalReceipt($receiptLine->receivedBaseQuantity());
                 $receipt->addLine($receiptLine);
             }
             $this->goodsReceipts->save($receipt);
