@@ -22,9 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — publication transactionnelle opérationnelle |
+| 6 | Purchasing et Goods Receipts | En cours — réceptions partielles liées opérationnelles |
 
-Dernière validation consolidée le 29 août 2026 : **636 tests et 2 989
+Dernière validation consolidée le 29 août 2026 : **641 tests et 3 016
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -47,8 +47,11 @@ désormais enregistrer de façon idempotente un `PURCHASE_RECEIPT`, augmenter le
 stock et recalculer la moyenne mobile avec des ledgers liés. Le coordinateur
 transactionnel `PostGoodsReceipt` verrouille et publie maintenant la réception,
 met à jour une éventuelle commande liée et écrit Inventory, Costing, audit et
-outbox dans une seule transaction idempotente. La prochaine étape est la
-création des réceptions partielles liées aux commandes.
+outbox dans une seule transaction idempotente. Les brouillons peuvent désormais
+être créés depuis une commande confirmée avec snapshots serveur et coûts réels
+facultatifs ; leurs publications successives font évoluer la commande de
+`PARTIALLY_RECEIVED` à `FULLY_RECEIVED`. La prochaine étape est la
+sur-réception explicitement autorisée et auditée.
 
 ## Stack technique
 

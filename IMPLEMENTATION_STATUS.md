@@ -64,7 +64,8 @@ Epic 6.7    TERMINÉ   Création des réceptions directes
 Epic 6.8    TERMINÉ   Publication transactionnelle des réceptions
 Epic 6.9    TERMINÉ   Réception physique Inventory idempotente
 Epic 6.10   TERMINÉ   Valorisation Costing des achats
-Epic 6.11   PROCHAINE Réceptions partielles liées aux commandes
+Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
+Epic 6.12   PROCHAINE Sur-réception autorisée et auditée
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -102,7 +103,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260829110000 appliquée en dernier
-Tests                 636 tests, 2 989 assertions
+Tests                 641 tests, 3 016 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9147,10 +9148,47 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.11 — Réceptions partielles liées
+
+**Statut : TERMINÉ — création liée et cumul de publication couverts**
+
+- `CreateLinkedGoodsReceipt` verrouille la commande et n’accepte que les états
+  `CONFIRMED` ou `PARTIALLY_RECEIVED` ;
+- le magasin, le fournisseur et la devise proviennent exclusivement de la
+  commande, avec permission et garde opérationnelle au scope Store ;
+- chaque ligne référence une `PurchaseOrderLine` réelle et réutilise ses
+  snapshots produit, packaging et facteur de conversion ;
+- le coût commercial réel est facultatif : lorsqu’il est fourni, le coût
+  Inventory en unité de base est recalculé exactement ; sinon le coût de la
+  commande est conservé ;
+- la quantité de base est calculée côté serveur et prévalidée contre le reliquat
+  commandé avant la persistence du brouillon ;
+- la création ne modifie pas les quantités de la commande : seul
+  `PostGoodsReceipt` les cumule après les écritures Inventory et Costing ;
+- un scénario cumulatif publie successivement `4` puis `6` unités et démontre
+  les transitions `PARTIALLY_RECEIVED` puis `FULLY_RECEIVED`.
+
+Commit atomique :
+
+```text
+86001ba feat(purchasing): support partial goods receipts
+```
+
+Validation locale :
+
+```text
+Création liée et publication partielle ciblées : OK (8 tests, 53 assertions)
+Suite PHPUnit complète : OK (641 tests, 3 016 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.11 — création d’une `GoodsReceipt` liée à une
-`PurchaseOrder` confirmée et prise en charge des réceptions partielles. Le
-workflow devra conserver les snapshots serveur, interdire les produits hors
-commande et démontrer les transitions cumulatives `PARTIALLY_RECEIVED` puis
-`FULLY_RECEIVED`.
+Implémenter l’Epic 6.12 — sur-réception explicitement autorisée avec permission
+`PURCHASING_OVER_RECEIPT`, raison obligatoire et acteur conservé. Le chemin par
+défaut doit continuer de rejeter `cumulativeReceivedQuantity > orderedQuantity`
+sans jamais tronquer silencieusement la quantité physique reçue.
