@@ -195,6 +195,8 @@ services:
         alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\Orm\DoctrineSupplierRepository
     Zandu\Modules\Purchasing\Domain\PurchaseOrder\PurchaseOrderRepository:
         alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalPurchaseOrderRepository
+    Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptRepository:
+        alias: Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptRepository
     Zandu\Modules\Purchasing\Application\PurchasingPolicy:
         alias: Zandu\Modules\Purchasing\Application\ConfiguredPurchasingPolicy
     Zandu\Modules\Purchasing\Application\ConfiguredPurchasingPolicy:
