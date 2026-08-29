@@ -62,6 +62,8 @@ Epic 6.5    TERMINÉ   PurchaseOrder use cases, permissions et validations
 Epic 6.6    TERMINÉ   GoodsReceipt aggregate et persistence
 Epic 6.7    TERMINÉ   Création des réceptions directes
 Epic 6.8    PROCHAINE Publication transactionnelle des réceptions
+Epic 6.9    TERMINÉ   Réception physique Inventory idempotente
+Epic 6.10   TERMINÉ   Valorisation Costing des achats
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -98,8 +100,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260829080000 appliquée en dernier
-Tests                 629 tests, 2 938 assertions
+Migrations           Version20260829110000 appliquée en dernier
+Tests                 633 tests, 2 963 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9056,6 +9058,49 @@ Validation locale :
 Permissions GoodsReceipt : OK (2 tests, 62 assertions)
 CreateDirectGoodsReceipt : OK (4 tests, 17 assertions)
 Suite PHPUnit complète : OK (629 tests, 2 938 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
+### Epics 6.9 et 6.10 — Inventory et Costing des réceptions
+
+**Statut : TERMINÉ — contrats prêts pour le coordinateur 6.8**
+
+- Inventory reconnaît `PURCHASE_RECEIPT` comme mouvement entrant avec une source
+  `GOODS_RECEIPT / GoodsReceiptId` ;
+- l’unicité existante `(tenant, produit, source, référence)` rend la réception
+  physique idempotente par produit ;
+- `InventoryGoodsReceiver` verrouille les stocks dans l’ordre des ProductId,
+  augmente les quantités et conserve les quantités avant/après dans son résultat
+  de contrat versionné ;
+- chaque nouveau mouvement physique est valorisé immédiatement par le service
+  Costing existant, avec le même `stockMovementId` et le même instant ;
+- Costing applique le coût unitaire d’inventaire en unité de base, augmente la
+  valeur totale et recalcule la moyenne mobile pondérée ;
+- le ledger `StockValuationMovement` accepte `PURCHASE_RECEIPT`, impose la source
+  `GOODS_RECEIPT` et reste unique par mouvement physique ;
+- les migrations `Version20260829100000` et `Version20260829110000` alignent les
+  contraintes PostgreSQL des deux ledgers ;
+- aucun endpoint ni changement d’état `GoodsReceipt` n’appelle encore ces
+  contrats hors d’une transaction complète : le coordinateur 6.8 reste requis.
+
+Commits atomiques :
+
+```text
+a3f10f5 feat(costing): value purchase receipts
+4e05774 feat(inventory): receive supplier goods
+```
+
+Validation locale :
+
+```text
+Costing PURCHASE_RECEIPT : OK (9 tests, 53 assertions)
+Inventory receiver et mouvement : OK (6 tests, 27 assertions)
+Suite PHPUnit complète : OK (633 tests, 2 963 assertions)
+Migrations dev/test : version 20260829110000 appliquée
 Composer validate et audit : OK
 Conteneur Symfony : OK
 PHP-CS-Fixer : OK

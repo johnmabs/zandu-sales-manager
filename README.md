@@ -22,9 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — PurchaseOrder et création directe GoodsReceipt opérationnels |
+| 6 | Purchasing et Goods Receipts | En cours — création directe et intégrations Inventory/Costing prêtes |
 
-Dernière validation consolidée le 29 août 2026 : **629 tests et 2 938
+Dernière validation consolidée le 29 août 2026 : **633 tests et 2 963
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -42,9 +42,11 @@ partielles auditées sont opérationnels. La fondation `GoodsReceipt` est elle
 aussi disponible : agrégat, lignes immuables après publication, persistence
 PostgreSQL tenant-scoped et RLS. La création atomique des réceptions directes
 est opérationnelle avec permissions Store, policy de déploiement, fournisseur
-actif et snapshots Catalog calculés côté serveur. La publication coordonnée
-constitue la prochaine étape ; les mouvements Inventory/Costing et les API
-restent dans les tranches suivantes du lot.
+actif et snapshots Catalog calculés côté serveur. Inventory et Costing savent
+désormais enregistrer de façon idempotente un `PURCHASE_RECEIPT`, augmenter le
+stock et recalculer la moyenne mobile avec des ledgers liés. Le coordinateur
+transactionnel `PostGoodsReceipt` constitue la prochaine étape ; aucune
+réception n’est publiée sans lui.
 
 ## Stack technique
 
