@@ -66,7 +66,7 @@ Epic 6.9    TERMINÉ   Réception physique Inventory idempotente
 Epic 6.10   TERMINÉ   Valorisation Costing des achats
 Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
 Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
-Epic 6.13   PROCHAINE Corrections immuables de réception
+Epic 6.13   EN COURS  Corrections immuables de réception
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -103,8 +103,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260829120000 appliquée en dernier
-Tests                 643 tests, 3 036 assertions
+Migrations           Version20260829130000 appliquée en dernier
+Tests                 649 tests, 3 062 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9230,9 +9230,49 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.13 — Fondation GoodsReceiptCorrection
+
+**Statut : EN COURS — domaine, création et persistence terminés**
+
+- `GoodsReceiptCorrection` impose une raison, un cycle `DRAFT → POSTED`, des
+  lignes produit uniques et l’immutabilité après publication ;
+- chaque ligne conserve les quantités originale, effective courante et corrigée,
+  puis calcule exactement la différence signée positive, négative ou nulle ;
+- `CreateGoodsReceiptCorrection` exige `PURCHASING_RECEIPT_CORRECT`, un scope
+  Store opérationnel et une réception source déjà `POSTED` ;
+- la quantité effective est reconstruite depuis la réception originale et la
+  somme des différences de toutes les corrections déjà publiées ;
+- la réception source est verrouillée pendant la création afin de sérialiser le
+  snapshot avec les autres workflows de correction ;
+- `Version20260829130000` persiste les agrégats et lignes tenant-owned avec FKs,
+  contrôles décimaux, trigger d’immutabilité et RLS forcée ;
+- le repository DBAL fournit le verrou pessimiste et l’agrégation des
+  différences publiées ; un round-trip PostgreSQL démontre le snapshot et la
+  différence `-5`.
+
+Commit atomique :
+
+```text
+33c2c78 feat(purchasing): add goods receipt correction foundation
+```
+
+Validation locale :
+
+```text
+Fondation correction ciblée : OK (9 tests, 101 assertions)
+Suite PHPUnit complète : OK (649 tests, 3 062 assertions)
+Migrations dev/test : version 20260829130000 appliquée
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.13 — `GoodsReceiptCorrection` immutable et prospectif. Une
-correction publiée devra comparer la quantité effective courante, produire les
-mouvements Inventory/Costing compensatoires et recalculer le cumul de la
-commande liée sans réécrire la réception d’origine.
+Poursuivre l’Epic 6.13 et l’Epic Costing associé : publier atomiquement une
+correction après revalidation de `currentEffectiveQuantity`, produire les
+mouvements `GOODS_RECEIPT_CORRECTION_IN/OUT`, ajuster la valorisation et la
+commande liée, puis écrire audit et outbox. Une différence nulle ne devra créer
+aucun mouvement.
