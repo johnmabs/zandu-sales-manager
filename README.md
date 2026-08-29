@@ -22,9 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — sur-réception contrôlée opérationnelle |
+| 6 | Purchasing et Goods Receipts | En cours — corrections compensatoires opérationnelles |
 
-Dernière validation consolidée le 29 août 2026 : **651 tests et 3 076
+Dernière validation consolidée le 29 août 2026 : **653 tests et 3 095
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -55,8 +55,10 @@ par défaut avant Inventory, ou enregistrée intégralement avec permission
 sensible, raison obligatoire et audit transactionnel. La fondation
 `GoodsReceiptCorrection` est maintenant persistée avec snapshots de quantité
 effective, permission sensible et RLS. Inventory et Costing savent désormais
-appliquer prospectivement ses différences IN/OUT avec une source idempotente ;
-le coordinateur transactionnel de publication constitue la prochaine étape.
+appliquer prospectivement ses différences IN/OUT avec une source idempotente.
+Le coordinateur transactionnel revalide les snapshots, corrige une éventuelle
+commande liée, publie audit et outbox, et garantit un rejeu sans duplication.
+La prochaine étape est le retour fournisseur `PurchaseReturn`.
 
 ## Stack technique
 

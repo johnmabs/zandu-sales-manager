@@ -66,7 +66,8 @@ Epic 6.9    TERMINÉ   Réception physique Inventory idempotente
 Epic 6.10   TERMINÉ   Valorisation Costing des achats
 Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
 Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
-Epic 6.13   EN COURS  Corrections immuables de réception
+Epic 6.13   TERMINÉ   Corrections immuables de réception
+Epic 6.14   PROCHAINE Retours fournisseur
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -104,7 +105,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260829140000 appliquée en dernier
-Tests                 651 tests, 3 076 assertions
+Tests                 653 tests, 3 095 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9306,9 +9307,45 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.13 — Publication des corrections
+
+**Statut : TERMINÉ — workflow compensatoire coordonné**
+
+- `PostGoodsReceiptCorrection` verrouille correction et réception source dans
+  une même `TenantTransaction` et autorise l’action au scope Store ;
+- chaque `currentEffectiveQuantity` est recalculée juste avant les effets ; un
+  snapshot concurrent devenu obsolète produit `GOODS_RECEIPT_CORRECTION_STALE` ;
+- Inventory/Costing est appliqué avant le passage à `POSTED` et le nombre de
+  mouvements non nuls est contrôlé ;
+- une commande liée voit ses quantités reçues corrigées et son état recalculé
+  entre `PARTIALLY_RECEIVED` et `FULLY_RECEIVED` ;
+- la réception originale reste immutable ; seule la correction compensatoire
+  est publiée ;
+- audit `GOODS_RECEIPT_CORRECTED` et événement
+  `purchasing.goods_receipt_corrected.v1` sont écrits dans la transactional
+  outbox ;
+- le rejeu d’une correction déjà publiée ne duplique aucun effet.
+
+Commit atomique :
+
+```text
+20b649c feat(purchasing): post goods receipt corrections
+```
+
+Validation locale :
+
+```text
+Coordinateur correction ciblé : OK (2 tests, 9 assertions)
+Suite PHPUnit complète : OK (653 tests, 3 095 assertions)
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter `PostGoodsReceiptCorrection` comme transaction locale coordonnée :
-revalider `currentEffectiveQuantity`, appeler le correcteur Inventory/Costing,
-recalculer la commande liée, publier la correction, puis écrire audit et outbox.
-Un échec tardif devra annuler tous ces effets.
+Implémenter l’Epic 6.14 — `PurchaseReturn` distinct des corrections de réception,
+avec cycle `DRAFT → SHIPPED/CANCELLED`, protection du stock et du reliquat
+retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
