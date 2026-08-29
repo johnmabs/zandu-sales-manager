@@ -111,6 +111,8 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
             InventoryCostingMovementType::Sale => StockValuationMovementType::Sale,
             InventoryCostingMovementType::SaleReturn => StockValuationMovementType::SaleReturn,
             InventoryCostingMovementType::PurchaseReceipt => StockValuationMovementType::PurchaseReceipt,
+            InventoryCostingMovementType::GoodsReceiptCorrectionIn => StockValuationMovementType::GoodsReceiptCorrectionIn,
+            InventoryCostingMovementType::GoodsReceiptCorrectionOut => StockValuationMovementType::GoodsReceiptCorrectionOut,
         };
 
         return StockValuationMovement::record(

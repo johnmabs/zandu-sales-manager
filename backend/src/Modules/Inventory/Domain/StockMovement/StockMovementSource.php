@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Inventory\Domain\StockMovement;
 
-use Zandu\SharedKernel\Identity\{GoodsReceiptId, ReturnSaleId, SaleId};
+use Zandu\SharedKernel\Identity\{GoodsReceiptCorrectionId, GoodsReceiptId, ReturnSaleId, SaleId};
 use Zandu\SharedKernel\Identity\Uuid;
 
 final readonly class StockMovementSource
@@ -29,6 +29,10 @@ final readonly class StockMovementSource
     public static function goodsReceipt(GoodsReceiptId $goodsReceiptId): self
     {
         return new self('GOODS_RECEIPT', $goodsReceiptId->toString());
+    }
+    public static function goodsReceiptCorrection(GoodsReceiptCorrectionId $correctionId): self
+    {
+        return new self('GOODS_RECEIPT_CORRECTION', $correctionId->toString());
     }
     public function type(): string
     {

@@ -12,9 +12,11 @@ enum StockMovementType: string
     case Sale = 'SALE';
     case SaleReturn = 'SALE_RETURN';
     case PurchaseReceipt = 'PURCHASE_RECEIPT';
+    case GoodsReceiptCorrectionIn = 'GOODS_RECEIPT_CORRECTION_IN';
+    case GoodsReceiptCorrectionOut = 'GOODS_RECEIPT_CORRECTION_OUT';
 
     public function isIncrease(): bool
     {
-        return !in_array($this, [self::AdjustmentOut, self::Sale], true);
+        return !in_array($this, [self::AdjustmentOut, self::Sale, self::GoodsReceiptCorrectionOut], true);
     }
 }
