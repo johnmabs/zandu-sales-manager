@@ -24,7 +24,7 @@ validation sont disponibles dans
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | En cours — sur-réception contrôlée opérationnelle |
 
-Dernière validation consolidée le 29 août 2026 : **649 tests et 3 062
+Dernière validation consolidée le 29 août 2026 : **651 tests et 3 076
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -54,8 +54,9 @@ facultatifs ; leurs publications successives font évoluer la commande de
 par défaut avant Inventory, ou enregistrée intégralement avec permission
 sensible, raison obligatoire et audit transactionnel. La fondation
 `GoodsReceiptCorrection` est maintenant persistée avec snapshots de quantité
-effective, permission sensible et RLS ; sa publication compensatoire
-Inventory/Costing constitue la prochaine étape.
+effective, permission sensible et RLS. Inventory et Costing savent désormais
+appliquer prospectivement ses différences IN/OUT avec une source idempotente ;
+le coordinateur transactionnel de publication constitue la prochaine étape.
 
 ## Stack technique
 

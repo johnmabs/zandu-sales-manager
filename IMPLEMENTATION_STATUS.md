@@ -103,8 +103,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260829130000 appliquée en dernier
-Tests                 649 tests, 3 062 assertions
+Migrations           Version20260829140000 appliquée en dernier
+Tests                 651 tests, 3 076 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9269,10 +9269,46 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.13 — Inventory et Costing des corrections
+
+**Statut : TERMINÉ pour les contrats — coordinateur de publication restant**
+
+- Inventory expose `InventoryGoodsReceiptCorrector` et verrouille les stocks
+  dans l’ordre des produits ;
+- une différence positive crée `GOODS_RECEIPT_CORRECTION_IN`, augmente le stock
+  et valorise l’entrée au coût unitaire de la réception originale ;
+- une différence négative crée `GOODS_RECEIPT_CORRECTION_OUT`, protège le stock
+  contre une quantité négative et utilise le coût moyen courant ;
+- une différence nulle ne verrouille aucun stock et ne produit aucun ledger ;
+- tous les mouvements portent la source idempotente
+  `GOODS_RECEIPT_CORRECTION / GoodsReceiptCorrectionId` ;
+- Costing dispose des deux types dédiés et produit les
+  `StockValuationMovement` prospectifs correspondants ;
+- `Version20260829140000` aligne les contraintes de types et de sources des
+  ledgers physiques et valorisés.
+
+Commit atomique :
+
+```text
+36624bf feat(costing): value goods receipt corrections
+```
+
+Validation locale :
+
+```text
+Inventory/Costing correction ciblés : OK (21 tests, 99 assertions)
+Suite PHPUnit complète : OK (651 tests, 3 076 assertions)
+Migrations dev/test : version 20260829140000 appliquée
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Poursuivre l’Epic 6.13 et l’Epic Costing associé : publier atomiquement une
-correction après revalidation de `currentEffectiveQuantity`, produire les
-mouvements `GOODS_RECEIPT_CORRECTION_IN/OUT`, ajuster la valorisation et la
-commande liée, puis écrire audit et outbox. Une différence nulle ne devra créer
-aucun mouvement.
+Implémenter `PostGoodsReceiptCorrection` comme transaction locale coordonnée :
+revalider `currentEffectiveQuantity`, appeler le correcteur Inventory/Costing,
+recalculer la commande liée, publier la correction, puis écrire audit et outbox.
+Un échec tardif devra annuler tous ces effets.
