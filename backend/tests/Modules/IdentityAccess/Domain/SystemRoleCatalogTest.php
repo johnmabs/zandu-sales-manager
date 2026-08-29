@@ -49,6 +49,10 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::PurchaseOrderConfirm,
             PermissionCode::PurchaseOrderCancel,
             PermissionCode::PurchaseOrderClose,
+            PermissionCode::GoodsReceiptCreate,
+            PermissionCode::GoodsReceiptRead,
+            PermissionCode::GoodsReceiptPost,
+            PermissionCode::GoodsReceiptCancel,
             PermissionCode::PriceListRead,
             PermissionCode::ProductPriceRead,
             PermissionCode::InventoryRead,
@@ -109,6 +113,7 @@ final class SystemRoleCatalogTest extends TestCase
             PermissionCode::SaleReturnRead,
             PermissionCode::SupplierRead,
             PermissionCode::PurchaseOrderRead,
+            PermissionCode::GoodsReceiptRead,
         ], $roles[3]->permissions());
 
         foreach (array_slice($roles, 1) as $nonOwnerRole) {
@@ -133,5 +138,9 @@ final class SystemRoleCatalogTest extends TestCase
         self::assertFalse($roles[2]->grants(PermissionCode::PurchaseOrderRead));
         self::assertTrue($roles[3]->grants(PermissionCode::PurchaseOrderRead));
         self::assertFalse($roles[3]->grants(PermissionCode::PurchaseOrderConfirm));
+        self::assertTrue($roles[1]->grants(PermissionCode::GoodsReceiptCreate));
+        self::assertFalse($roles[2]->grants(PermissionCode::GoodsReceiptRead));
+        self::assertTrue($roles[3]->grants(PermissionCode::GoodsReceiptRead));
+        self::assertFalse($roles[3]->grants(PermissionCode::GoodsReceiptPost));
     }
 }

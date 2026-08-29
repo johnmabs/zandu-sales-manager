@@ -50,6 +50,10 @@ final readonly class SystemRoleCatalog
                     PermissionCode::PurchaseOrderConfirm,
                     PermissionCode::PurchaseOrderCancel,
                     PermissionCode::PurchaseOrderClose,
+                    PermissionCode::GoodsReceiptCreate,
+                    PermissionCode::GoodsReceiptRead,
+                    PermissionCode::GoodsReceiptPost,
+                    PermissionCode::GoodsReceiptCancel,
                     PermissionCode::PriceListRead,
                     PermissionCode::ProductPriceRead,
                     PermissionCode::InventoryRead,
@@ -122,6 +126,7 @@ final readonly class SystemRoleCatalog
                     PermissionCode::SaleReturnRead,
                     PermissionCode::SupplierRead,
                     PermissionCode::PurchaseOrderRead,
+                    PermissionCode::GoodsReceiptRead,
                 ],
             ),
         ];

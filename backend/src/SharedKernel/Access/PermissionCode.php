@@ -57,6 +57,11 @@ enum PermissionCode: string
     case PurchaseOrderCancel = 'PURCHASE_ORDER_CANCEL';
     case PurchaseOrderClose = 'PURCHASE_ORDER_CLOSE';
 
+    case GoodsReceiptCreate = 'GOODS_RECEIPT_CREATE';
+    case GoodsReceiptRead = 'GOODS_RECEIPT_READ';
+    case GoodsReceiptPost = 'GOODS_RECEIPT_POST';
+    case GoodsReceiptCancel = 'GOODS_RECEIPT_CANCEL';
+
     case PriceListCreate = 'PRICE_LIST_CREATE';
     case PriceListRead = 'PRICE_LIST_READ';
     case PriceListUpdate = 'PRICE_LIST_UPDATE';
