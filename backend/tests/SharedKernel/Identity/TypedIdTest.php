@@ -7,6 +7,8 @@ namespace Zandu\Tests\SharedKernel\Identity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Zandu\SharedKernel\Identity\CashSessionId;
+use Zandu\SharedKernel\Identity\GoodsReceiptId;
+use Zandu\SharedKernel\Identity\GoodsReceiptLineId;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
@@ -75,6 +77,8 @@ final class TypedIdTest extends TestCase
         yield 'supplier' => [SupplierId::class];
         yield 'purchase order' => [PurchaseOrderId::class];
         yield 'purchase order line' => [PurchaseOrderLineId::class];
+        yield 'goods receipt' => [GoodsReceiptId::class];
+        yield 'goods receipt line' => [GoodsReceiptLineId::class];
     }
 }
 
