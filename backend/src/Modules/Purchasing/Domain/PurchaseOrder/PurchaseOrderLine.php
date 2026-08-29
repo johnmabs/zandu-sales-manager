@@ -72,7 +72,7 @@ final readonly class PurchaseOrderLine
         }
         $receivedQuantity = $this->receivedQuantity->add($quantity);
         if ($receivedQuantity->compareTo($this->orderedBaseQuantity) > 0) {
-            throw PurchasingRuleViolation::with('PURCHASE_ORDER_OVER_RECEIPT', 'Received quantity cannot exceed ordered base quantity.');
+            throw PurchasingRuleViolation::with('OVER_RECEIPT_NOT_ALLOWED', 'Received quantity cannot exceed ordered base quantity.');
         }
 
         return new self(

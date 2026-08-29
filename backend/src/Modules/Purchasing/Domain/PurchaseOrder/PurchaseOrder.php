@@ -191,6 +191,9 @@ final class PurchaseOrder
 
     public function cancel(ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
+        if (array_any($this->lines, static fn(PurchaseOrderLine $line): bool => !$line->receivedQuantity()->isZero())) {
+            throw PurchasingRuleViolation::with('PURCHASE_ORDER_HAS_RECEIPTS', 'A purchase order with receipts cannot be cancelled.');
+        }
         if (!in_array($this->status, [PurchaseOrderStatus::Draft, PurchaseOrderStatus::Confirmed], true)) {
             throw PurchasingRuleViolation::with('PURCHASE_ORDER_NOT_CANCELLABLE', 'A purchase order can only be cancelled before any receipt.');
         }

@@ -122,7 +122,7 @@ final class PurchaseOrderTest extends TestCase
         self::assertSame(PurchaseOrderStatus::PartiallyReceived, $order->status());
         self::assertSame('5', $order->lines()[0]->receivedQuantity()->toString());
         $this->assertViolation(
-            'PURCHASE_ORDER_OVER_RECEIPT',
+            'OVER_RECEIPT_NOT_ALLOWED',
             fn() => $order->recordReceipt($lineId, $this->quantity('8'), $this->actorId(), new DateTimeImmutable()),
         );
 
@@ -136,7 +136,7 @@ final class PurchaseOrderTest extends TestCase
         $order = $this->confirmedOrder();
         $order->recordReceipt($order->lines()[0]->id(), $this->quantity('1'), $this->actorId(), new DateTimeImmutable());
 
-        $this->assertViolation('PURCHASE_ORDER_NOT_CANCELLABLE', fn() => $order->cancel($this->actorId(), new DateTimeImmutable()));
+        $this->assertViolation('PURCHASE_ORDER_HAS_RECEIPTS', fn() => $order->cancel($this->actorId(), new DateTimeImmutable()));
     }
 
     public function testClosingAPartialOrderRequiresAnAuditedReason(): void
