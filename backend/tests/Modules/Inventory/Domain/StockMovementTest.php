@@ -10,7 +10,7 @@ use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementSource,StockMovementType};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
-use Zandu\SharedKernel\Identity\{OrganizationId,ProductId,ReturnSaleId,StockId,StockMovementId,StoreId};
+use Zandu\SharedKernel\Identity\{GoodsReceiptId,OrganizationId,ProductId,ReturnSaleId,StockId,StockMovementId,StoreId};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final class StockMovementTest extends TestCase
@@ -70,6 +70,30 @@ final class StockMovementTest extends TestCase
         self::assertSame('10', $movement->resultingQuantity()->toString());
         self::assertSame('RETURN', $movement->source()->type());
         self::assertSame($returnId->toString(), $movement->source()->referenceId());
+    }
+
+    public function testPurchaseReceiptIsAnIncreaseLinkedToTheGoodsReceipt(): void
+    {
+        $f = new SymfonyUuidFactory();
+        $receiptId = GoodsReceiptId::fromString('0198d411-1111-7111-8111-111111111111', $f);
+        $movement = StockMovement::record(
+            StockMovementId::fromString('0198d412-1111-7111-8111-111111111111', $f),
+            OrganizationId::fromString('0198d413-1111-7111-8111-111111111111', $f),
+            StoreId::fromString('0198d414-1111-7111-8111-111111111111', $f),
+            ProductId::fromString('0198d415-1111-7111-8111-111111111111', $f),
+            StockId::fromString('0198d416-1111-7111-8111-111111111111', $f),
+            StockMovementType::PurchaseReceipt,
+            new MovementQuantity($this->q('3')),
+            new StockQuantity($this->q('8')),
+            StockMovementSource::goodsReceipt($receiptId),
+            null,
+            null,
+            new DateTimeImmutable('2026-08-29T11:00:00Z'),
+        );
+
+        self::assertSame('11', $movement->resultingQuantity()->toString());
+        self::assertSame('GOODS_RECEIPT', $movement->source()->type());
+        self::assertSame($receiptId->toString(), $movement->source()->referenceId());
     }
     private function q(string $v): Quantity
     {

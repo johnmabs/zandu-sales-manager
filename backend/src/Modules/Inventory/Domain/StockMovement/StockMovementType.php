@@ -11,6 +11,7 @@ enum StockMovementType: string
     case AdjustmentOut = 'ADJUSTMENT_OUT';
     case Sale = 'SALE';
     case SaleReturn = 'SALE_RETURN';
+    case PurchaseReceipt = 'PURCHASE_RECEIPT';
 
     public function isIncrease(): bool
     {
