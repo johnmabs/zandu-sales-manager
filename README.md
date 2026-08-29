@@ -22,9 +22,9 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — PurchaseOrder opérationnel côté application |
+| 6 | Purchasing et Goods Receipts | En cours — PurchaseOrder opérationnel et fondation GoodsReceipt persistée |
 
-Dernière validation consolidée le 29 août 2026 : **614 tests et 2 882
+Dernière validation consolidée le 29 août 2026 : **625 tests et 2 917
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -38,9 +38,11 @@ document de planning autonome dans le repository.
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions
 Store, validations Supplier/Catalog, snapshots de quantité/coût et clôtures
-partielles auditées sont opérationnels. L’agrégat `GoodsReceipt` constitue la
-prochaine étape ; l’API PurchaseOrder reste planifiée dans la tranche API du
-lot.
+partielles auditées sont opérationnels. La fondation `GoodsReceipt` est elle
+aussi disponible : agrégat, lignes immuables après publication, persistence
+PostgreSQL tenant-scoped et RLS. Le cas d’usage de réception directe constitue
+la prochaine étape ; les mouvements Inventory/Costing et les API restent dans
+les tranches suivantes du lot.
 
 ## Stack technique
 
@@ -508,6 +510,7 @@ global générique `backend/src/ApiResource`.
 - [Planning du Lot 3](docs/planning/zandu-lot-3-inventory-cash-foundations.md) ;
 - [Planning du Lot 4](docs/planning/zandu-lot-4-sales-complete-sale-cash.md) ;
 - [Planning du Lot 5](docs/planning/zandu-lot-5-inventory-costing-returns.md) ;
+- [Planning du Lot 6](docs/planning/zandu-lot-6-purchasing-goods-receipts.md) ;
 - [Spécification DDD](docs/architecture/ddd/zandu-sales-manager-ddd-v1.1.docx) ;
 - [Index des décisions d'architecture](docs/architecture/adr/README.md) ;
 - [Fitness tests d'architecture](docs/architecture/fitness-tests.md).

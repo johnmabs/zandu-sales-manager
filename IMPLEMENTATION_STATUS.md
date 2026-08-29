@@ -59,7 +59,8 @@ Epic 6.2    TERMINÉ   Supplier aggregate, RLS, permissions et management
 Epic 6.3    TERMINÉ   PurchasingPolicy et ADR réception fournisseur
 Epic 6.4    TERMINÉ   PurchaseOrder aggregate, persistence et lifecycle
 Epic 6.5    TERMINÉ   PurchaseOrder use cases, permissions et validations
-Epic 6.6    PROCHAINE GoodsReceipt aggregate
+Epic 6.6    TERMINÉ   GoodsReceipt aggregate et persistence
+Epic 6.7    PROCHAINE Création des réceptions directes
 Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -96,8 +97,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260828220000 appliquée en dernier
-Tests                 614 tests, 2 882 assertions
+Migrations           Version20260829080000 appliquée en dernier
+Tests                 625 tests, 2 917 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -8978,8 +8979,51 @@ PHPStan : OK
 Deptrac layers/modules : 0 violation, 10 uncovered
 ```
 
+### Epic 6.6 — GoodsReceipt foundation
+
+**Statut : TERMINÉ**
+
+- l’agrégat `GoodsReceipt` porte le tenant, le magasin, le fournisseur, un
+  PurchaseOrder facultatif, un numéro tenant-scoped, les audits et la version ;
+- chaque `GoodsReceiptLine` conserve les quantités saisie et de base, le facteur
+  de conversion, le packaging facultatif et les coûts réel et d’inventaire ;
+- les snapshots imposent les calculs exacts
+  `base = quantité × facteur` et `coût inventaire = coût réel ÷ facteur` ;
+- le domaine distingue strictement une réception directe d’une réception liée,
+  interdit les produits dupliqués et garantit une devise commune ;
+- le cycle `DRAFT → POSTED` ou `DRAFT → CANCELLED` est explicite et toute
+  mutation métier après sortie du brouillon est rejetée ;
+- `purchasing.goods_receipt` et `goods_receipt_line` appliquent FKs tenant,
+  unicités, contraintes numériques, version optimiste et RLS forcée ;
+- un trigger PostgreSQL interdit toute mutation des lignes dès que la réception
+  n’est plus en brouillon ;
+- la publication du domaine ne crée volontairement encore aucun mouvement
+  Inventory ou Costing : ces effets restent coordonnés par les Epics 6.8 à 6.10.
+
+Commits atomiques :
+
+```text
+3a90d6b feat(purchasing): add goods receipt aggregate
+1c6aed2 feat(purchasing): persist goods receipts
+```
+
+Validation locale :
+
+```text
+Tests ciblés domaine GoodsReceipt : OK (29 tests, 64 assertions)
+Test d’intégration persistence : OK (1 test, 10 assertions)
+Suite PHPUnit complète : OK (625 tests, 2 917 assertions)
+Migrations dev/test : version 20260829080000 appliquée
+Composer validate et audit : OK
+Conteneur Symfony : OK
+PHP-CS-Fixer : OK
+PHPStan : OK
+Deptrac layers/modules : 0 violation, 10 uncovered
+```
+
 ### Prochaine étape
 
-Implémenter l’Epic 6.6 — l’agrégat `GoodsReceipt`, ses lignes, son cycle
-`DRAFT → POSTED` ou `DRAFT → CANCELLED` et les invariants d’une réception liée
-ou directe, sans encore déclencher les mouvements Inventory de l’Epic 6.9.
+Implémenter l’Epic 6.7 — `CreateDirectGoodsReceipt`, avec permissions Store,
+validation du mode direct par `PurchasingPolicy`, résolution Supplier/Catalog et
+construction serveur des snapshots de quantité et de coût. La publication et
+ses effets Inventory/Costing restent réservés aux Epics 6.8 à 6.10.
