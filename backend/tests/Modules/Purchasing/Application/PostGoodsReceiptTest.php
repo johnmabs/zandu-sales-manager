@@ -13,14 +13,14 @@ use Zandu\Modules\Organization\Application\Contract\{OperationalGuard, StoreBusi
 use Zandu\Modules\Purchasing\Application\PostGoodsReceipt\{PostGoodsReceipt, PostGoodsReceiptHandler};
 use Zandu\Modules\Purchasing\Application\TenantSupplierLoader;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\{GoodsReceipt, GoodsReceiptLine, GoodsReceiptNumber, GoodsReceiptRepository, GoodsReceiptStatus};
-use Zandu\Modules\Purchasing\Domain\PurchaseOrder\PurchaseOrderRepository;
+use Zandu\Modules\Purchasing\Domain\PurchaseOrder\{PurchaseOrder, PurchaseOrderLine, PurchaseOrderNumber, PurchaseOrderRepository, PurchaseOrderStatus};
 use Zandu\Modules\Purchasing\Domain\PurchasingRuleViolation;
 use Zandu\Modules\Purchasing\Domain\Supplier\{Supplier, SupplierName, SupplierRepository};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
-use Zandu\SharedKernel\Identity\{ActorId, GoodsReceiptId, GoodsReceiptLineId, OrganizationId, ProductId, StoreId, SupplierId};
+use Zandu\SharedKernel\Identity\{ActorId, GoodsReceiptId, GoodsReceiptLineId, OrganizationId, ProductId, PurchaseOrderId, PurchaseOrderLineId, StoreId, SupplierId};
 use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxMessage, OutboxRepository};
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -102,6 +102,36 @@ final class PostGoodsReceiptTest extends TestCase
         }
     }
 
+    public function testItCumulatesTwoLinkedReceiptsUntilTheOrderIsFullyReceived(): void
+    {
+        $order = $this->confirmedOrder();
+        $orders = $this->createMock(PurchaseOrderRepository::class);
+        $orders->expects(self::exactly(2))->method('getForUpdate')->willReturn($order);
+        $orders->expects(self::exactly(2))->method('save')->with($order);
+        $inventory = $this->createStub(InventoryGoodsReceiver::class);
+        $inventory->method('receive')->willReturnCallback(fn(ReceiveSupplierGoods $request): GoodsReceiptStockResult => new GoodsReceiptStockResult(
+            $request->goodsReceiptId,
+            false,
+            [new ReceivedGoodsItem($this->productId(), \Zandu\SharedKernel\Identity\StockId::fromString('0198dd00-0000-7000-8000-000000000009', $this->ids), \Zandu\SharedKernel\Identity\StockMovementId::fromString('0198dd00-0000-7000-8000-000000000010', $this->ids), $request->items[0]['baseQuantity'], $this->quantity('0'), $request->items[0]['baseQuantity'])],
+        ));
+
+        $first = $this->linkedReceipt('0198dd00-0000-7000-8000-000000000011', $order, '4');
+        $firstReceipts = $this->createStub(GoodsReceiptRepository::class);
+        $firstReceipts->method('getForUpdate')->willReturn($first);
+        $this->handler($firstReceipts, $inventory, $this->createStub(AuthorizationService::class), $this->createStub(SecurityAuditTrail::class), $this->createStub(OutboxRepository::class), '1', $orders)(new PostGoodsReceipt($first->id(), $this->context(), 'partial-1'));
+
+        self::assertSame(PurchaseOrderStatus::PartiallyReceived, $order->status());
+        self::assertSame('4', $order->lines()[0]->receivedQuantity()->toString());
+
+        $second = $this->linkedReceipt('0198dd00-0000-7000-8000-000000000012', $order, '6');
+        $secondReceipts = $this->createStub(GoodsReceiptRepository::class);
+        $secondReceipts->method('getForUpdate')->willReturn($second);
+        $this->handler($secondReceipts, $inventory, $this->createStub(AuthorizationService::class), $this->createStub(SecurityAuditTrail::class), $this->createStub(OutboxRepository::class), '1', $orders)(new PostGoodsReceipt($second->id(), $this->context(), 'partial-2'));
+
+        self::assertSame(PurchaseOrderStatus::FullyReceived, $order->status());
+        self::assertSame('10', $order->lines()[0]->receivedQuantity()->toString());
+    }
+
     private function handler(
         GoodsReceiptRepository $receipts,
         InventoryGoodsReceiver $inventory,
@@ -109,6 +139,7 @@ final class PostGoodsReceiptTest extends TestCase
         SecurityAuditTrail $audit,
         OutboxRepository $outbox,
         string $catalogFactor = '1',
+        ?PurchaseOrderRepository $purchaseOrders = null,
     ): PostGoodsReceiptHandler {
         $suppliers = $this->createStub(SupplierRepository::class);
         $suppliers->method('get')->willReturn(Supplier::create($this->supplierId(), $this->organizationId(), SupplierName::fromString('Acme'), null, null, null, null, $this->actorId(), $this->clock->now()));
@@ -119,7 +150,7 @@ final class PostGoodsReceiptTest extends TestCase
 
         return new PostGoodsReceiptHandler(
             $receipts,
-            $this->createStub(PurchaseOrderRepository::class),
+            $purchaseOrders ?? $this->createStub(PurchaseOrderRepository::class),
             new TenantSupplierLoader($suppliers),
             $stores,
             $catalog,
@@ -151,6 +182,55 @@ final class PostGoodsReceiptTest extends TestCase
         ));
 
         return $receipt;
+    }
+
+    private function linkedReceipt(string $receiptId, PurchaseOrder $order, string $quantity): GoodsReceipt
+    {
+        $receipt = GoodsReceipt::create(GoodsReceiptId::fromString($receiptId, $this->ids), $this->organizationId(), $this->storeId(), $this->supplierId(), $order->id(), GoodsReceiptNumber::fromString('GR-PARTIAL'), null, null, $this->actorId(), $this->clock->now());
+        $receipt->addLine(new GoodsReceiptLine(
+            GoodsReceiptLineId::generate(new SymfonyUuidV7Generator()),
+            $receipt->id(),
+            $this->productId(),
+            null,
+            $this->quantity($quantity),
+            $this->quantity('1'),
+            $this->quantity($quantity),
+            null,
+            $this->money('10'),
+            $order->lines()[0]->id(),
+        ));
+
+        return $receipt;
+    }
+
+    private function confirmedOrder(): PurchaseOrder
+    {
+        $order = PurchaseOrder::create(
+            PurchaseOrderId::fromString('0198dd00-0000-7000-8000-000000000013', $this->ids),
+            $this->organizationId(),
+            $this->storeId(),
+            $this->supplierId(),
+            PurchaseOrderNumber::fromString('PO-PARTIAL'),
+            Currency::fromCode('XAF'),
+            $this->money('0'),
+            $this->actorId(),
+            $this->clock->now(),
+        );
+        $order->addLine(new PurchaseOrderLine(
+            PurchaseOrderLineId::fromString('0198dd00-0000-7000-8000-000000000014', $this->ids),
+            $order->id(),
+            $this->productId(),
+            null,
+            $this->quantity('10'),
+            $this->quantity('1'),
+            $this->quantity('10'),
+            $this->money('10'),
+            $this->money('10'),
+            $this->quantity('0'),
+        ));
+        $order->confirm($this->actorId(), $this->clock->now());
+
+        return $order;
     }
 
     private function command(): PostGoodsReceipt
