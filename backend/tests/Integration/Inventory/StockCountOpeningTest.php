@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Inventory\Application\BeginStockCountFinalization\{BeginStockCountFinalization, BeginStockCountFinalizationHandler};
 use Zandu\Modules\Inventory\Application\RecordStockCount\{RecordStockCount, RecordStockCountBatch, RecordStockCountHandler, StockCountEntry};
 use Zandu\Modules\Inventory\Application\StartStockCount\{StartStockCount, StartStockCountHandler};
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
@@ -188,6 +189,21 @@ final class StockCountOpeningTest extends KernelTestCase
             self::assertSame('STOCK_COUNT_LINE_VERSION_CONFLICT', $exception->errorCode());
         }
         self::assertSame('8.000000000000', $this->transactions->transactional($organizationId, fn(): ?string => $lines->findByProduct($organizationId, $count->id(), $this->productId(self::PRODUCT_WITH_STOCK))?->countedQuantity()?->toString()));
+
+        $finalizationOutbox = new OpeningOutbox();
+        $finalize = new BeginStockCountFinalizationHandler($counts, $lines, $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $finalizationOutbox, new SymfonyUuidV7Generator(), new FrozenClock(new DateTimeImmutable('2026-08-31T20:20:00Z')));
+        $finalizing = $finalize(new BeginStockCountFinalization($count->id(), $this->actor()));
+        self::assertSame(StockCountStatus::Finalizing, $finalizing->status());
+        self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        $finalize(new BeginStockCountFinalization($count->id(), $this->actor()));
+        self::assertCount(1, $finalizationOutbox->messages);
+
+        try {
+            $record(new RecordStockCount($count->id(), $this->productId(self::PRODUCT_WITH_STOCK), Quantity::fromString('6', $this->decimals), 4, $this->actor()));
+            self::fail('Entries must be frozen while finalizing.');
+        } catch (InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_NOT_OPEN', $exception->errorCode());
+        }
     }
 
     private function persistDraft(string $id): void

@@ -92,6 +92,20 @@ final class StockCount
         ++$this->version;
     }
 
+    public function beginFinalization(ActorId $actorId, DateTimeImmutable $at): void
+    {
+        if (StockCountStatus::Open !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_NOT_OPEN', 'Only an open stock count can begin finalization.');
+        }
+        if ($this->countedLineCount !== $this->totalLineCount) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_HAS_UNCOUNTED_LINES', 'Every stock count line must be counted before finalization.');
+        }
+        $this->status = StockCountStatus::Finalizing;
+        $this->finalizationStartedBy = $actorId;
+        $this->finalizationStartedAt = self::utc($at);
+        ++$this->version;
+    }
+
     private static function utc(DateTimeImmutable $date): DateTimeImmutable
     {
         return $date->setTimezone(new DateTimeZone('UTC'));

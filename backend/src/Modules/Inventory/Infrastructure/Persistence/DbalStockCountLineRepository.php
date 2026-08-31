@@ -52,6 +52,13 @@ final readonly class DbalStockCountLineRepository implements StockCountLineRepos
         return $this->aggregate($row);
     }
 
+    public function countUncountedForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): int
+    {
+        $rows = $this->db->fetchAllAssociative('SELECT counted_quantity FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? ORDER BY product_id FOR UPDATE', [$organizationId->toString(), $stockCountId->toString()]);
+
+        return count(array_filter($rows, static fn(array $row): bool => null === $row['counted_quantity']));
+    }
+
     /** @param array<string, mixed> $row */
     private function aggregate(array $row): StockCountLine
     {

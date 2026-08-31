@@ -88,6 +88,7 @@ Epic 7.10   TERMINÉ   Création DRAFT, périmètre, permissions, PostgreSQL et 
 Epic 7.11   TERMINÉ   Ouverture atomique et snapshot des quantités théoriques
 Epic 7.12   TERMINÉ   Scopes produits exclusifs et mouvements bloqués
 Epic 7.13   TERMINÉ   Saisie simple/batch, zéro, corrections et versions de ligne
+Epic 7.14   TERMINÉ   Gel atomique OPEN vers FINALIZING après contrôle complet
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -125,7 +126,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260831170000 appliquée en dernier
-Tests                 716 tests, 3 455 assertions
+Tests                 717 tests, 3 464 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9430,7 +9431,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.13 — StockTransfer stabilisé et saisie StockCount
+### Epics 7.1 à 7.14 — StockTransfer stabilisé et StockCount figé
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9519,12 +9520,21 @@ CI lors de la prochaine publication manuelle.
   annule toutes les lignes déjà traitées ;
 - `countedLineCount` n'augmente que lors de la première saisie d'une ligne ; une
   correction ne gonfle pas artificiellement la progression.
+- `BeginStockCountFinalization` verrouille le document puis toutes ses lignes,
+  exige à la fois un compteur complet et l'absence réelle de
+  `countedQuantity IS NULL`, puis passe atomiquement de `OPEN` à `FINALIZING` ;
+- le démarrage de finalisation est rejouable sans deuxième outbox, reste une
+  opération de remédiation sur un magasin suspendu et conserve tous les scopes
+  produits ;
+- le verrou partagé avec `RecordStockCount` sérialise une dernière saisie face
+  à la finalisation ; dès `FINALIZING`, toute nouvelle correction reçoit
+  `STOCK_COUNT_NOT_OPEN`.
 
-Validation ciblée StockCount : 12 tests, 59 assertions. Suite complète : 716
-tests, 3 455 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
+Validation ciblée StockCount : 13 tests, 68 assertions. Suite complète : 717
+tests, 3 464 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
 Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.14 : vérifier que toutes les lignes sont comptées puis
-figer atomiquement le document en `FINALIZING`.
+Implémenter l'Epic 7.15 : réconcilier les lignes `PENDING` par batch, vérifier
+les snapshots et créer les corrections physiques IN/OUT nécessaires.

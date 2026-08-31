@@ -92,4 +92,28 @@ final class StockCountTest extends TestCase
         self::assertSame(1, $count->countedLineCount());
         self::assertSame(3, $count->version());
     }
+
+    public function testFinalizationRequiresCompleteProgressAndFreezesTheLifecycle(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000054', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000051', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000052', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000053', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+        $count->start($actor, new DateTimeImmutable(), 1);
+
+        try {
+            $count->beginFinalization($actor, new DateTimeImmutable());
+            self::fail('An incomplete count must not begin finalization.');
+        } catch (\Zandu\Modules\Inventory\Domain\InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_HAS_UNCOUNTED_LINES', $exception->errorCode());
+        }
+
+        $count->registerCountedLines(1);
+        $count->beginFinalization($actor, new DateTimeImmutable('2026-08-31T22:00:00+01:00'));
+        self::assertSame(StockCountStatus::Finalizing, $count->status());
+        self::assertSame('2026-08-31T21:00:00+00:00', $count->finalizationStartedAt()?->format(DATE_ATOM));
+        self::assertSame(4, $count->version());
+
+        $this->expectException(\Zandu\Modules\Inventory\Domain\InventoryRuleViolation::class);
+        $count->registerCountedLines(0);
+    }
 }

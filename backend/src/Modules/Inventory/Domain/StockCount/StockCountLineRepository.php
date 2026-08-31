@@ -16,4 +16,7 @@ interface StockCountLineRepository
     public function findByProduct(OrganizationId $organizationId, StockCountId $stockCountId, ProductId $productId): ?StockCountLine;
 
     public function getForUpdateByProduct(OrganizationId $organizationId, StockCountId $stockCountId, ProductId $productId): StockCountLine;
+
+    /** Locks every line so no entry can change until the surrounding transaction ends. */
+    public function countUncountedForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): int;
 }

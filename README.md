@@ -23,9 +23,9 @@ validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | Terminé — Gate CI validé |
-| 7 | StockTransfer et StockCount | En cours — saisie StockCount opérationnelle |
+| 7 | StockTransfer et StockCount | En cours — finalisation StockCount engagée |
 
-Dernière validation consolidée le 31 août 2026 : **716 tests et 3 455
+Dernière validation consolidée le 31 août 2026 : **717 tests et 3 464
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -42,7 +42,9 @@ la quantité théorique, y compris zéro sans créer de Stock vide, et les scope
 PostgreSQL exclusifs bloquent désormais centralement tout nouveau mouvement du
 produit pendant le comptage. Les quantités peuvent être saisies ou corrigées,
 individuellement ou par batch atomique, avec zéro explicite, révision et
-contrôle optimiste par ligne. La finalisation suit.
+contrôle optimiste par ligne. Une fois toutes les lignes comptées, le document
+passe atomiquement à `FINALIZING`, conserve ses scopes et fige toute nouvelle
+correction. La réconciliation physique par batch suit.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions
