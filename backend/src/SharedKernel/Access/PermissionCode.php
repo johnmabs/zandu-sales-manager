@@ -82,6 +82,12 @@ enum PermissionCode: string
     case InventoryRead = 'INVENTORY_READ';
     case InventoryInitialize = 'INVENTORY_INITIALIZE';
     case InventoryAdjust = 'INVENTORY_ADJUST';
+    case StockTransferCreate = 'STOCK_TRANSFER_CREATE';
+    case StockTransferRead = 'STOCK_TRANSFER_READ';
+    case StockTransferUpdate = 'STOCK_TRANSFER_UPDATE';
+    case StockTransferCancel = 'STOCK_TRANSFER_CANCEL';
+    case StockTransferShip = 'STOCK_TRANSFER_SHIP';
+    case StockTransferReceive = 'STOCK_TRANSFER_RECEIVE';
     case StockMovementRead = 'STOCK_MOVEMENT_READ';
     case InventoryCostingInitialize = 'INVENTORY_COSTING_INITIALIZE';
 

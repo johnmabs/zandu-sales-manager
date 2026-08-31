@@ -23,6 +23,12 @@ final class StockTransfer
         return new self($id, $organizationId, $sourceStoreId, $destinationStoreId, StockTransferStatus::Draft, $createdBy, $createdAt->setTimezone(new DateTimeZone('UTC')), null, null, null, null, null, 1, []);
     }
 
+    /** @param list<StockTransferLine> $lines */
+    public static function reconstitute(StockTransferId $id, OrganizationId $organizationId, StoreId $sourceStoreId, StoreId $destinationStoreId, StockTransferStatus $status, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $shippedBy, ?DateTimeImmutable $shippedAt, ?string $cancellationReason, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version, array $lines): self
+    {
+        return new self($id, $organizationId, $sourceStoreId, $destinationStoreId, $status, $createdBy, $createdAt, $shippedBy, $shippedAt, $cancellationReason, $cancelledBy, $cancelledAt, $version, $lines);
+    }
+
     public function addLine(StockTransferLine $line): void
     {
         if (StockTransferStatus::Draft !== $this->status) {

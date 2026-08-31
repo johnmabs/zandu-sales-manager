@@ -150,6 +150,8 @@ services:
         alias: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\DoctrineStockRepository
     Zandu\Modules\Inventory\Domain\StockMovement\StockMovementRepository:
         alias: Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\DoctrineStockMovementRepository
+    Zandu\Modules\Inventory\Domain\StockTransfer\StockTransferRepository:
+        alias: Zandu\Modules\Inventory\Infrastructure\Persistence\DbalStockTransferRepository
     Zandu\Modules\Inventory\Application\Contract\StockAvailabilityProvider:
         alias: Zandu\Modules\Inventory\Application\RepositoryStockAvailabilityProvider
     Zandu\Modules\Inventory\Application\Contract\CostingStockPositionProvider:
