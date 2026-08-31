@@ -105,7 +105,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260831100000 appliquée en dernier
-Tests                 670 tests, 3 192 assertions
+Tests                 671 tests, 3 197 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9381,9 +9381,9 @@ retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
 - `CancelPurchaseReturn` annule uniquement un brouillon, reste idempotent au
   rejeu, refuse un retour expédié et écrit audit/outbox sans effet Inventory ou
   Costing.
-- l’API `PurchaseReturn` expose création par magasin, consultation, expédition
-  et annulation ; ses lectures sont tenant-scopées et autorisées par la
-  permission `PURCHASE_RETURN_READ`.
+- l’API `PurchaseReturn` expose création par magasin, ajout de ligne,
+  consultation, expédition et annulation ; ses lectures sont tenant-scopées et
+  autorisées par la permission `PURCHASE_RETURN_READ`.
 
 Commit atomique :
 
@@ -9394,10 +9394,11 @@ Commit atomique :
 ebaaf6c feat(purchasing): ship purchase returns
 eb79b36 feat(purchasing): cancel purchase returns
 971ad06 feat(api): expose purchase returns
+68e2147 feat(purchasing): add purchase return lines
 ```
 
-Validation locale : suite complète OK (670 tests, 3 192 assertions), qualité
-et architecture vertes.
+Validation locale : tests ciblés OK (25 tests, 187 assertions), PHPStan et
+architecture vertes ; la suite complète CI couvre désormais 671 tests et 3 197 assertions.
 
 ### Prochaine sous-étape
 
