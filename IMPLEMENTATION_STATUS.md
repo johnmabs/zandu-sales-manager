@@ -100,12 +100,12 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 29 août 2026 :
+État consolidé au 31 août 2026 :
 
 ```text
 Branche              main
-Migrations           Version20260829150000 appliquée en dernier
-Tests                 657 tests, 3 105 assertions
+Migrations           Version20260831100000 appliquée en dernier
+Tests                 666 tests, 3 168 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9352,7 +9352,7 @@ retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
 
 ### Epic 6.14 — Fondation PurchaseReturn
 
-**Statut : EN COURS — domaine et persistence terminés**
+**Statut : EN COURS — création et expédition métier terminées**
 
 - `PurchaseReturn` porte magasin source, fournisseur, réception/commande
   facultatives, raison obligatoire et cycle `DRAFT → SHIPPED/CANCELLED` ;
@@ -9367,17 +9367,32 @@ retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
   expédiées par produit/réception ;
 - le round-trip PostgreSQL démontre une expédition persistée et un reliquat
   agrégé sans modifier la commande source.
+- `CreatePurchaseReturn` verrouille la réception publiée, impose le magasin
+  source et calcule le reliquat depuis la quantité reçue, les corrections
+  publiées et les retours déjà expédiés ;
+- Inventory verrouille et décrémente le stock via un mouvement idempotent
+  `PURCHASE_RETURN`, tandis que Costing valorise la sortie au coût moyen
+  courant sans coût entrant ;
+- `Version20260831100000` ajoute les types et sources physiques/valorisés et
+  répare la contrainte de valeur totale qui omettait les corrections IN/OUT ;
+- `ShipPurchaseReturn` revalide le reliquat et le stock dans la transaction,
+  rend le rejeu sans effet, conserve la quantité reçue de la commande source,
+  puis écrit audit et outbox.
 
 Commit atomique :
 
 ```text
 46c4d61 feat(purchasing): add purchase return foundation
+1805484 feat(purchasing): create purchase returns
+4020e91 feat(costing): value purchase returns
+ebaaf6c feat(purchasing): ship purchase returns
 ```
 
-Validation locale : suite complète OK (657 tests, 3 105 assertions), qualité
+Validation locale : suite complète OK (666 tests, 3 168 assertions), qualité
 et architecture vertes.
 
 ### Prochaine sous-étape
 
-Créer les cas d’usage de brouillon puis `ShipPurchaseReturn`, avec validation du
-reliquat retournable et sortie atomique Inventory/Costing au coût moyen courant.
+Ajouter le cas d’usage d’annulation, exposer l’API `PurchaseReturn`, puis prouver
+sur PostgreSQL réel l’atomicité, l’idempotence et la concurrence de
+`ShipPurchaseReturn` avant de fermer l’Epic 6.14.
