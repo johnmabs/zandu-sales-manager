@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Post;
 
 #[ApiResource(operations: [
     new Post(name: 'purchase_return_create', uriTemplate: '/stores/{storeId}/purchase-returns', read: false, input: PurchaseReturnCreateInput::class, processor: PurchaseReturnProcessor::class),
+    new Post(name: 'purchase_return_add_line', uriTemplate: '/purchase-returns/{id}/lines', read: false, input: PurchaseReturnLineInput::class, processor: PurchaseReturnProcessor::class),
     new Post(name: 'purchase_return_ship', uriTemplate: '/purchase-returns/{id}/ship', read: false, input: false, processor: PurchaseReturnProcessor::class),
     new Post(name: 'purchase_return_cancel', uriTemplate: '/purchase-returns/{id}/cancel', read: false, input: false, processor: PurchaseReturnProcessor::class),
     new Get(name: 'purchase_return_get', uriTemplate: '/purchase-returns/{id}', provider: PurchaseReturnProvider::class),

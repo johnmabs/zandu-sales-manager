@@ -9,6 +9,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Purchasing\Application\AddPurchaseReturnLine\AddPurchaseReturnLine;
+use Zandu\Modules\Purchasing\Application\AddPurchaseReturnLine\AddPurchaseReturnLineHandler;
 use Zandu\Modules\Purchasing\Application\CreatePurchaseReturn\CreatePurchaseReturn;
 use Zandu\Modules\Purchasing\Application\CreatePurchaseReturn\CreatePurchaseReturnHandler;
 use Zandu\Modules\Purchasing\Application\CreatePurchaseReturn\PurchaseReturnInput;
@@ -34,6 +36,7 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\PurchaseOrderId;
 use Zandu\SharedKernel\Identity\PurchaseOrderLineId;
+use Zandu\SharedKernel\Identity\PurchaseReturnId;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\SupplierId;
 use Zandu\SharedKernel\Identity\Uuid;
@@ -140,6 +143,30 @@ final class CreatePurchaseReturnTest extends TestCase
         }
     }
 
+    public function testItAddsALineToAnExistingDraftUsingTheReceiptBalance(): void
+    {
+        $return = PurchaseReturn::create(
+            PurchaseReturnId::fromString('0198e400-0000-7000-8000-000000000020', $this->ids),
+            $this->organizationId(),
+            $this->storeId(),
+            $this->supplierId(),
+            $this->receipt->id(),
+            $this->purchaseOrderId(),
+            'Damaged packages',
+            $this->actorId(),
+            $this->clock->now(),
+        );
+        $this->returns->expects(self::once())->method('getForUpdate')->with($this->organizationId(), $return->id())->willReturn($return);
+        $this->corrections->expects(self::once())->method('postedDifferenceByProduct')->willReturn([]);
+        $this->returns->expects(self::once())->method('shippedQuantityByProduct')->willReturn([]);
+        $this->returns->expects(self::once())->method('save')->with($return);
+
+        $updated = $this->addLineHandler()(new AddPurchaseReturnLine($return->id(), $this->receiptLineId(), $this->quantity('4'), $this->context()));
+
+        self::assertCount(1, $updated->lines());
+        self::assertSame('4', $updated->lines()[0]->baseQuantity()->toString());
+    }
+
     private function handler(): CreatePurchaseReturnHandler
     {
         return new CreatePurchaseReturnHandler(
@@ -148,6 +175,19 @@ final class CreatePurchaseReturnTest extends TestCase
             $this->returns,
             new PurchaseReturnIdSequence($this->ids),
             $this->clock,
+            new PurchaseReturnTransaction(),
+            $this->authorization,
+            $this->createStub(OperationalGuard::class),
+        );
+    }
+
+    private function addLineHandler(): AddPurchaseReturnLineHandler
+    {
+        return new AddPurchaseReturnLineHandler(
+            $this->returns,
+            $this->receipts,
+            $this->corrections,
+            new PurchaseReturnIdSequence($this->ids),
             new PurchaseReturnTransaction(),
             $this->authorization,
             $this->createStub(OperationalGuard::class),

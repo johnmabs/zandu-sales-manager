@@ -7,6 +7,8 @@ namespace Zandu\Modules\Purchasing\Presentation\Api;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use InvalidArgumentException;
+use Zandu\Modules\Purchasing\Application\AddPurchaseReturnLine\AddPurchaseReturnLine;
+use Zandu\Modules\Purchasing\Application\AddPurchaseReturnLine\AddPurchaseReturnLineHandler;
 use Zandu\Modules\Purchasing\Application\CancelPurchaseReturn\CancelPurchaseReturn;
 use Zandu\Modules\Purchasing\Application\CancelPurchaseReturn\CancelPurchaseReturnHandler;
 use Zandu\Modules\Purchasing\Application\CreatePurchaseReturn\CreatePurchaseReturn;
@@ -32,6 +34,7 @@ final readonly class PurchaseReturnProcessor implements ProcessorInterface
         private UuidFactory $uuids,
         private DecimalFactory $decimals,
         private CreatePurchaseReturnHandler $create,
+        private AddPurchaseReturnLineHandler $addLine,
         private ShipPurchaseReturnHandler $ship,
         private CancelPurchaseReturnHandler $cancel,
         private PurchaseReturnViewFactory $views,
@@ -54,6 +57,14 @@ final readonly class PurchaseReturnProcessor implements ProcessorInterface
         }
 
         $returnId = PurchaseReturnId::fromString((string) ($uriVariables['id'] ?? throw new InvalidArgumentException('Purchase return identifier is required.')), $this->uuids);
+        if ('purchase_return_add_line' === $operation->getName() && $data instanceof PurchaseReturnLineInput) {
+            return $this->mapper->map($this->views->create(($this->addLine)(new AddPurchaseReturnLine(
+                $returnId,
+                GoodsReceiptLineId::fromString($data->goodsReceiptLineId, $this->uuids),
+                Quantity::fromString($data->baseQuantity, $this->decimals),
+                $actor,
+            ))));
+        }
         if ('purchase_return_ship' === $operation->getName()) {
             return $this->mapper->map($this->views->create(($this->ship)(new ShipPurchaseReturn($returnId, $actor))));
         }

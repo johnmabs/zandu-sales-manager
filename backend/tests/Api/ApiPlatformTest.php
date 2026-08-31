@@ -298,6 +298,7 @@ final class ApiPlatformTest extends KernelTestCase
 
         self::assertNotNull($paths->getPath('/api/stores/{storeId}/purchase-returns')->getPost());
         self::assertNotNull($paths->getPath('/api/purchase-returns/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/lines')->getPost());
         self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/ship')->getPost());
         self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/cancel')->getPost());
     }
