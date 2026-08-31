@@ -6,8 +6,10 @@ namespace Zandu\Tests\Integration\Purchasing;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Throwable;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\Contract\InventoryPurchaseReturnShipper;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
@@ -62,6 +64,7 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
     private const PURCHASE_RETURN_LINE = '0198da20-0000-7000-8000-000000000012';
     private const STOCK = '0198da20-0000-7000-8000-000000000013';
     private const VALUATION = '0198da20-0000-7000-8000-000000000014';
+    private const OTHER_ORGANIZATION = '0198da20-0000-7000-8000-000000000099';
 
     private Connection $db;
     private GoodsReceiptRepository $repository;
@@ -247,6 +250,46 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM messaging.outbox_messages WHERE organization_id = ? AND type = 'purchasing.purchase_return_shipped.v1'", [self::ORGANIZATION]));
     }
 
+    public function testPurchaseReturnLockSerializesConcurrentShipmentAttempts(): void
+    {
+        $this->db->executeStatement("INSERT INTO purchasing.purchase_return (id,organization_id,source_store_id,supplier_id,status,reason,created_by,created_at,version) VALUES (?,?,?,?,'DRAFT','Concurrent shipment',?,NOW(),1)", [self::PURCHASE_RETURN, self::ORGANIZATION, self::STORE, self::SUPPLIER, self::ACTOR]);
+        $second = DriverManager::getConnection($this->db->getParams());
+        $this->db->beginTransaction();
+        $this->tenantContext($this->db);
+        self::assertSame(self::PURCHASE_RETURN, $this->db->fetchOne('SELECT id FROM purchasing.purchase_return WHERE id = ? FOR UPDATE', [self::PURCHASE_RETURN]));
+
+        $second->beginTransaction();
+        $this->tenantContext($second);
+        $second->executeStatement("SET LOCAL lock_timeout = '100ms'");
+        $blocked = false;
+        try {
+            $second->fetchOne('SELECT id FROM purchasing.purchase_return WHERE id = ? FOR UPDATE', [self::PURCHASE_RETURN]);
+        } catch (Throwable) {
+            $blocked = true;
+        } finally {
+            $second->rollBack();
+        }
+        self::assertTrue($blocked, 'A concurrent shipment must wait for the purchase return lock.');
+        $this->db->commit();
+
+        $second->beginTransaction();
+        $this->tenantContext($second);
+        self::assertSame(self::PURCHASE_RETURN, $second->fetchOne('SELECT id FROM purchasing.purchase_return WHERE id = ? FOR UPDATE', [self::PURCHASE_RETURN]));
+        $second->rollBack();
+        $second->close();
+    }
+
+    public function testRuntimeRoleCannotReadPurchaseReturnFromAnotherTenant(): void
+    {
+        $this->db->executeStatement("INSERT INTO purchasing.purchase_return (id,organization_id,source_store_id,supplier_id,status,reason,created_by,created_at,version) VALUES (?,?,?,?,'DRAFT','Tenant isolation',?,NOW(),1)", [self::PURCHASE_RETURN, self::ORGANIZATION, self::STORE, self::SUPPLIER, self::ACTOR]);
+        $this->db->beginTransaction();
+        $this->tenantContext($this->db, self::OTHER_ORGANIZATION);
+
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM purchasing.purchase_return WHERE id = ?', [self::PURCHASE_RETURN]));
+
+        $this->db->rollBack();
+    }
+
     private function prepareShippablePurchaseReturn(): PurchaseReturn
     {
         $organizationId = OrganizationId::fromString(self::ORGANIZATION, $this->ids);
@@ -296,6 +339,12 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
             \Zandu\SharedKernel\Messaging\CorrelationId::fromString('0198da20-0000-7000-8000-000000000099', $this->ids),
             new DateTimeImmutable('2026-08-31T12:03:00Z'),
         );
+    }
+
+    private function tenantContext(Connection $connection, string $organizationId = self::ORGANIZATION): void
+    {
+        $connection->executeStatement('SET LOCAL ROLE zandu_runtime');
+        $connection->executeStatement("SELECT set_config('app.organization_id', ?, true)", [$organizationId]);
     }
 
     private function fixtures(): void
