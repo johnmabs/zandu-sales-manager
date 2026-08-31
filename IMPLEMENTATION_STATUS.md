@@ -50,7 +50,7 @@ Gate Lot 4 TERMINÉ   M2 — première vente cash de bout en bout
 Gate Lot 5 TERMINÉ   Inventory Costing & Returns, première partie de M3
 ```
 
-Le Lot 6 est ouvert en backlog :
+Le Lot 6 est terminé :
 
 ```text
 Phase 0     TERMINÉ   Planning Purchasing & Goods Receipts analysé et aligné
@@ -69,6 +69,17 @@ Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
 Epic 6.13   TERMINÉ   Corrections immuables de réception
 Epic 6.14   TERMINÉ   Retours fournisseur, preuves PostgreSQL incluses
 Gate Lot 6  TERMINÉ   Deuxième partie de M3 — approvisionnements fournisseurs
+```
+
+Le Lot 7 est en cours :
+
+```text
+Epic 7.1    TERMINÉ   StockTransfer aggregate et invariants
+Epic 7.2    TERMINÉ   Brouillon, persistence PostgreSQL, RLS et permissions
+Epic 7.3    TERMINÉ   Expédition physique atomique TRANSFER_OUT
+Epic 7.4    À FAIRE   Stock en transit
+Epic 7.5    À FAIRE   Réception finale TRANSFER_IN
+Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9410,7 +9421,28 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
+### Epic 7.1 à 7.3 — StockTransfer et expédition source
+
+**Statut : TERMINÉ — fondation, brouillon et expédition physique**
+
+- `StockTransfer` impose deux magasins distincts, un produit unique par ligne
+  et le cycle `DRAFT → SHIPPED → RECEIVED` ou `DRAFT → CANCELLED` ;
+- le brouillon permet ajout, modification, suppression et annulation, avec
+  permissions atomiques et scopes Store ;
+- `Version20260831110000` persiste documents et lignes avec contraintes, verrou
+  optimiste, repository DBAL et RLS forcée ;
+- `ShipStockTransfer` verrouille le document puis les stocks source dans
+  l’ordre des produits, accepte `0 <= shipped <= requested` et ignore les
+  mouvements nuls ;
+- chaque quantité positive produit une sortie idempotente `TRANSFER_OUT` liée à
+  `TRANSFER / StockTransferId`, puis un événement outbox transactionnel ;
+- `Version20260831120000` étend le ledger et distingue `TRANSFER_OUT` de
+  `TRANSFER_IN` dans la clé d’idempotence, condition nécessaire à la réception.
+
+Validation ciblée : 11 tests, 39 assertions ; PHPStan, conteneur Symfony et
+Deptrac layers/modules verts.
+
 ### Prochaine sous-étape
 
-Démarrer le Lot 7 avec l’agrégat `StockTransfer`, son cycle de vie et sa
-persistence tenant-scopée, avant d’implémenter son expédition.
+Implémenter le stock en transit puis `ReceiveStockTransfer`, avant la
+valorisation économique dédiée du transfert.

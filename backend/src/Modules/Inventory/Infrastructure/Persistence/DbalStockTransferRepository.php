@@ -28,12 +28,19 @@ final readonly class DbalStockTransferRepository implements StockTransferReposit
                 throw new LogicException('Stock transfer was modified concurrently.');
             }
         }
-        if (StockTransferStatus::Draft !== $transfer->status()) {
+        if (StockTransferStatus::Draft === $transfer->status()) {
+            $this->db->delete('inventory.stock_transfer_line', ['organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id']]);
+            foreach ($transfer->lines() as $line) {
+                $this->db->insert('inventory.stock_transfer_line', ['id' => $line->id()->toString(), 'organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id'], 'product_id' => $line->productId()->toString(), 'requested_quantity' => $line->requestedQuantity()->toString(), 'shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString()]);
+            }
+
             return;
         }
-        $this->db->delete('inventory.stock_transfer_line', ['organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id']]);
         foreach ($transfer->lines() as $line) {
-            $this->db->insert('inventory.stock_transfer_line', ['id' => $line->id()->toString(), 'organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id'], 'product_id' => $line->productId()->toString(), 'requested_quantity' => $line->requestedQuantity()->toString(), 'shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString()]);
+            $affected = $this->db->update('inventory.stock_transfer_line', ['shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString()], ['id' => $line->id()->toString(), 'organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id']]);
+            if (1 !== $affected) {
+                throw new LogicException('Stock transfer line was modified concurrently.');
+            }
         }
     }
 
