@@ -69,6 +69,25 @@ final class StockTransferTest extends TestCase
         self::assertSame('Store closed for emergency maintenance', $transfer->cancellationReason());
     }
 
+    public function testItShipsEveryLineAtomicallyWithinRequestedQuantities(): void
+    {
+        $transfer = $this->transfer();
+        $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
+        $transfer->ship($this->actorId(), new DateTimeImmutable('2026-08-31T16:00:00Z'), [$this->lineId()->toString() => $this->quantity('3')]);
+
+        self::assertSame(StockTransferStatus::Shipped, $transfer->status());
+        self::assertSame('3', $transfer->lines()[0]->shippedQuantity()?->toString());
+        self::assertTrue($this->actorId()->equals($transfer->shippedBy()));
+    }
+
+    public function testItRejectsShippingQuantityAboveRequested(): void
+    {
+        $transfer = $this->transfer();
+        $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
+        $this->expectException(InventoryRuleViolation::class);
+        $transfer->ship($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('5')]);
+    }
+
     private function transfer(): StockTransfer
     {
         return StockTransfer::create($this->transferId(), $this->organizationId(), $this->sourceStoreId(), $this->destinationStoreId(), $this->actorId(), new DateTimeImmutable('2026-08-31T14:00:00Z'));

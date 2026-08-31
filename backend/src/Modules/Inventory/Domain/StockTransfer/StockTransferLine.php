@@ -52,4 +52,13 @@ final readonly class StockTransferLine
     {
         return new self($this->id, $this->stockTransferId, $this->productId, $requestedQuantity, $this->shippedQuantity, $this->receivedQuantity);
     }
+
+    public function withShippedQuantity(Quantity $shippedQuantity): self
+    {
+        if ($shippedQuantity->isNegative() || $shippedQuantity->compareTo($this->requestedQuantity) > 0) {
+            throw InventoryRuleViolation::with('TRANSFER_SHIPPED_QUANTITY_EXCEEDS_REQUESTED', 'Shipped transfer quantity must be between zero and the requested quantity.');
+        }
+
+        return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $shippedQuantity, null);
+    }
 }
