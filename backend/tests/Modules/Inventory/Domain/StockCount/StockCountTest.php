@@ -79,4 +79,17 @@ final class StockCountTest extends TestCase
         $this->expectException(\Zandu\Modules\Inventory\Domain\InventoryRuleViolation::class);
         $count->start($actor, new DateTimeImmutable(), 2);
     }
+
+    public function testItCountsOnlyFirstEntriesInProgress(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000044', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000041', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000042', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000043', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+        $count->start($actor, new DateTimeImmutable(), 2);
+        $count->registerCountedLines(1);
+        $count->registerCountedLines(0);
+
+        self::assertSame(1, $count->countedLineCount());
+        self::assertSame(3, $count->version());
+    }
 }

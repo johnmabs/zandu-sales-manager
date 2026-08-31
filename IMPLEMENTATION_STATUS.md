@@ -87,6 +87,7 @@ Epic 7.9    TERMINÉ   StockCountLine séparée et snapshot théorique
 Epic 7.10   TERMINÉ   Création DRAFT, périmètre, permissions, PostgreSQL et RLS
 Epic 7.11   TERMINÉ   Ouverture atomique et snapshot des quantités théoriques
 Epic 7.12   TERMINÉ   Scopes produits exclusifs et mouvements bloqués
+Epic 7.13   TERMINÉ   Saisie simple/batch, zéro, corrections et versions de ligne
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -124,7 +125,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260831170000 appliquée en dernier
-Tests                 713 tests, 3 437 assertions
+Tests                 716 tests, 3 455 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9429,7 +9430,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.12 — StockTransfer stabilisé et StockCount ouvert
+### Epics 7.1 à 7.13 — StockTransfer stabilisé et saisie StockCount
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9507,12 +9508,23 @@ CI lors de la prochaine publication manuelle.
   nouvelle écriture et renvoie `STOCK_COUNT_PRODUCT_LOCKED` pour un produit
   compté, tout en autorisant les produits hors scope et les rejeux idempotents
   déjà enregistrés.
+- `RecordStockCount` accepte explicitement zéro, refuse les quantités négatives
+  et permet de corriger une saisie tant que le document reste `OPEN` ; chaque
+  écriture incrémente la révision et la version propres à la ligne ;
+- la version attendue est vérifiée sous verrou PostgreSQL et une lecture
+  obsolète produit `STOCK_COUNT_LINE_VERSION_CONFLICT` sans écraser la saisie
+  concurrente ;
+- le batch trie et verrouille les produits dans un ordre déterministe, rejette
+  les doublons et s'exécute dans une transaction unique : un conflit tardif
+  annule toutes les lignes déjà traitées ;
+- `countedLineCount` n'augmente que lors de la première saisie d'une ligne ; une
+  correction ne gonfle pas artificiellement la progression.
 
-Validation ciblée ouverture/verrous : 10 tests, 61 assertions. Suite complète :
-713 tests, 3 437 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
+Validation ciblée StockCount : 12 tests, 59 assertions. Suite complète : 716
+tests, 3 455 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
 Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.13 : saisir et corriger les quantités comptées avec version
-de ligne indépendante, révision et support du zéro explicite.
+Implémenter l'Epic 7.14 : vérifier que toutes les lignes sont comptées puis
+figer atomiquement le document en `FINALIZING`.

@@ -14,4 +14,6 @@ interface StockCountLineRepository
     public function findByStockCount(OrganizationId $organizationId, StockCountId $stockCountId): array;
 
     public function findByProduct(OrganizationId $organizationId, StockCountId $stockCountId, ProductId $productId): ?StockCountLine;
+
+    public function getForUpdateByProduct(OrganizationId $organizationId, StockCountId $stockCountId, ProductId $productId): StockCountLine;
 }

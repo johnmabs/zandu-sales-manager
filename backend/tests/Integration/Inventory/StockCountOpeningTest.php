@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Inventory\Application\RecordStockCount\{RecordStockCount, RecordStockCountBatch, RecordStockCountHandler, StockCountEntry};
 use Zandu\Modules\Inventory\Application\StartStockCount\{StartStockCount, StartStockCountHandler};
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, StockQuantity};
@@ -148,6 +149,45 @@ final class StockCountOpeningTest extends KernelTestCase
         $this->transactions->transactional($this->organizationId(), fn() => $movements->append($this->movement(self::PRODUCT_OUTSIDE_SCOPE, self::STOCK_OUTSIDE_SCOPE, '4', '0199fb00-0000-7000-8000-000000000014')));
         self::assertSame(1, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND product_id=?', [self::ORGANIZATION, self::PRODUCT_OUTSIDE_SCOPE]));
         self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND id=?', [self::ORGANIZATION, '0199fb00-0000-7000-8000-000000000013']));
+    }
+
+    public function testEntriesSupportExplicitZeroCorrectionBatchAndOptimisticConflict(): void
+    {
+        $organizationId = $this->organizationId();
+        $count = StockCount::create($this->countId(self::COUNT_A), $organizationId, $this->storeId(), StockCountScopeType::Partial, $this->actorId(), new DateTimeImmutable('2026-08-31T19:00:00Z'), requestedProductIds: [$this->productId(self::PRODUCT_WITH_STOCK), $this->productId(self::PRODUCT_WITHOUT_STOCK)]);
+        $counts = new DbalStockCountRepository($this->db, $this->ids);
+        $lines = new DbalStockCountLineRepository($this->db, $this->ids, $this->decimals);
+        $this->transactions->transactional($organizationId, fn() => $counts->save($count));
+        $start = new StartStockCountHandler($counts, $lines, new DbalOpenStockCountScopeRepository($this->db), self::getContainer()->get(StockRepository::class), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new OpeningOutbox(), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:00:00Z')));
+        $start(new StartStockCount($count->id(), $this->actor()));
+        $record = new RecordStockCountHandler($counts, $lines, $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new FrozenClock(new DateTimeImmutable('2026-08-31T20:10:00Z')));
+
+        $zero = $record(new RecordStockCount($count->id(), $this->productId(self::PRODUCT_WITH_STOCK), Quantity::fromString('0', $this->decimals), 1, $this->actor()));
+        self::assertSame('0', $zero->countedQuantity()?->toString());
+        self::assertSame(1, $zero->revision());
+        self::assertSame(1, $this->transactions->transactional($organizationId, fn(): int => $counts->get($organizationId, $count->id())->countedLineCount()));
+
+        $corrected = $record(new RecordStockCount($count->id(), $this->productId(self::PRODUCT_WITH_STOCK), Quantity::fromString('7', $this->decimals), 2, $this->actor()));
+        self::assertSame(2, $corrected->revision());
+        self::assertSame(1, $this->transactions->transactional($organizationId, fn(): int => $counts->get($organizationId, $count->id())->countedLineCount()));
+
+        $batch = $record->batch(new RecordStockCountBatch($count->id(), [
+            new StockCountEntry($this->productId(self::PRODUCT_WITH_STOCK), Quantity::fromString('8', $this->decimals), 3),
+            new StockCountEntry($this->productId(self::PRODUCT_WITHOUT_STOCK), Quantity::fromString('0', $this->decimals), 1),
+        ], $this->actor()));
+        self::assertCount(2, $batch);
+        self::assertSame(2, $this->transactions->transactional($organizationId, fn(): int => $counts->get($organizationId, $count->id())->countedLineCount()));
+
+        try {
+            $record->batch(new RecordStockCountBatch($count->id(), [
+                new StockCountEntry($this->productId(self::PRODUCT_WITH_STOCK), Quantity::fromString('9', $this->decimals), 4),
+                new StockCountEntry($this->productId(self::PRODUCT_WITHOUT_STOCK), Quantity::fromString('1', $this->decimals), 1),
+            ], $this->actor()));
+            self::fail('A stale line version must roll back the whole batch.');
+        } catch (InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_LINE_VERSION_CONFLICT', $exception->errorCode());
+        }
+        self::assertSame('8.000000000000', $this->transactions->transactional($organizationId, fn(): ?string => $lines->findByProduct($organizationId, $count->id(), $this->productId(self::PRODUCT_WITH_STOCK))?->countedQuantity()?->toString()));
     }
 
     private function persistDraft(string $id): void

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Zandu\Tests\Modules\Inventory\Domain\StockCount;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\Modules\Inventory\Domain\StockCount\{StockCountLine, StockCountReconciliationStatus};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
-use Zandu\SharedKernel\Identity\{OrganizationId, ProductId, StockCountId, StockCountLineId, StoreId};
+use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockCountId, StockCountLineId, StoreId};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final class StockCountLineTest extends TestCase
@@ -32,6 +33,24 @@ final class StockCountLineTest extends TestCase
         $this->expectException(InventoryRuleViolation::class);
         $this->expectExceptionMessage('Stock count expected quantity cannot be negative.');
         $this->line('-1');
+    }
+
+    public function testItRecordsExplicitZeroAndAllowsCorrectionWithIndependentRevision(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actorId = ActorId::fromString('0199f700-0000-7000-8000-000000000006', $ids);
+        $line = $this->line('5');
+        $line->record(Quantity::fromString('0', new BrickDecimalFactory()), $actorId, new DateTimeImmutable('2026-08-31T21:00:00+01:00'));
+
+        self::assertSame('0', $line->countedQuantity()?->toString());
+        self::assertSame(1, $line->revision());
+        self::assertSame(2, $line->version());
+        self::assertSame('2026-08-31T20:00:00+00:00', $line->countedAt()?->format(DATE_ATOM));
+
+        $line->record(Quantity::fromString('4', new BrickDecimalFactory()), $actorId, new DateTimeImmutable('2026-08-31T21:05:00Z'));
+        self::assertSame('4', $line->countedQuantity()?->toString());
+        self::assertSame(2, $line->revision());
+        self::assertSame(3, $line->version());
     }
 
     private function line(string $expectedQuantity): StockCountLine

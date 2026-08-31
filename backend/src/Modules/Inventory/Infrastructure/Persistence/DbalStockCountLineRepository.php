@@ -42,6 +42,16 @@ final readonly class DbalStockCountLineRepository implements StockCountLineRepos
         return false === $row ? null : $this->aggregate($row);
     }
 
+    public function getForUpdateByProduct(OrganizationId $organizationId, StockCountId $stockCountId, ProductId $productId): StockCountLine
+    {
+        $row = $this->db->fetchAssociative('SELECT * FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND product_id=? FOR UPDATE', [$organizationId->toString(), $stockCountId->toString(), $productId->toString()]);
+        if (false === $row) {
+            throw new LogicException('Stock count line was not found.');
+        }
+
+        return $this->aggregate($row);
+    }
+
     /** @param array<string, mixed> $row */
     private function aggregate(array $row): StockCountLine
     {

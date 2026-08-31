@@ -77,6 +77,21 @@ final class StockCount
         ++$this->version;
     }
 
+    public function registerCountedLines(int $newlyCountedLineCount): void
+    {
+        if (StockCountStatus::Open !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_NOT_OPEN', 'Stock count entries require an open stock count.');
+        }
+        if ($newlyCountedLineCount < 0 || $this->countedLineCount + $newlyCountedLineCount > $this->totalLineCount) {
+            throw new \InvalidArgumentException('Stock count progress is inconsistent.');
+        }
+        if (0 === $newlyCountedLineCount) {
+            return;
+        }
+        $this->countedLineCount += $newlyCountedLineCount;
+        ++$this->version;
+    }
+
     private static function utc(DateTimeImmutable $date): DateTimeImmutable
     {
         return $date->setTimezone(new DateTimeZone('UTC'));

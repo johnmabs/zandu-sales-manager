@@ -41,6 +41,21 @@ final class StockCountLine
         return new self($id, $stockCountId, $organizationId, $storeId, $productId, $expectedQuantity, $countedQuantity, $countedBy, $countedAt?->setTimezone(new DateTimeZone('UTC')), $revision, $reconciliationStatus, $version);
     }
 
+    public function record(Quantity $countedQuantity, ActorId $actorId, DateTimeImmutable $at): void
+    {
+        if ($countedQuantity->isNegative()) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_COUNTED_QUANTITY_INVALID', 'Stock count quantity cannot be negative.');
+        }
+        if (StockCountReconciliationStatus::Pending !== $this->reconciliationStatus) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_LINE_RECONCILED', 'A reconciled stock count line cannot be changed.');
+        }
+        $this->countedQuantity = $countedQuantity;
+        $this->countedBy = $actorId;
+        $this->countedAt = $at->setTimezone(new DateTimeZone('UTC'));
+        ++$this->revision;
+        ++$this->version;
+    }
+
     public function id(): StockCountLineId
     {
         return $this->id;
