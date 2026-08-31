@@ -85,6 +85,8 @@ Transverse  TERMINÉ   Idempotence, concurrence et fermeture StockTransfer
 Epic 7.8    TERMINÉ   StockCount aggregate, statuts, modes et scopes
 Epic 7.9    TERMINÉ   StockCountLine séparée et snapshot théorique
 Epic 7.10   TERMINÉ   Création DRAFT, périmètre, permissions, PostgreSQL et RLS
+Epic 7.11   TERMINÉ   Ouverture atomique et snapshot des quantités théoriques
+Epic 7.12   TERMINÉ   Scopes produits exclusifs et mouvements bloqués
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -121,8 +123,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260831160000 appliquée en dernier
-Tests                 708 tests, 3 397 assertions
+Migrations           Version20260831170000 appliquée en dernier
+Tests                 713 tests, 3 437 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9427,7 +9429,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.10 — StockTransfer stabilisé et création StockCount
+### Epics 7.1 à 7.12 — StockTransfer stabilisé et StockCount ouvert
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9489,12 +9491,28 @@ CI lors de la prochaine publication manuelle.
   l'Accountant ;
 - `Version20260831160000` persiste le brouillon et son périmètre demandé avec
   contraintes, index, verrou optimiste préparé et RLS forcée.
+- `StartStockCount` verrouille le document DRAFT, résout le périmètre FULL
+  depuis les positions du magasin ou réutilise le snapshot PARTIAL, trie les
+  produits puis passe atomiquement le document à `OPEN` ;
+- chaque produit produit une `StockCountLine` séparée avec sa quantité
+  théorique figée ; l'absence de position devient explicitement zéro sans créer
+  de Stock vide, puis l'outbox `inventory.stock_count_started.v1` est publiée ;
+- `Version20260831170000` persiste les lignes et les
+  `OpenStockCountScope` sous RLS, avec FKs tenant/store, unicité
+  `(organization, store, product)` et index de reprise de réconciliation ;
+- les acquisitions de scope utilisent un advisory lock transactionnel stable :
+  deux comptages concurrents d'un même produit sont sérialisés puis le second
+  reçoit `STOCK_COUNT_ALREADY_OPEN_FOR_PRODUCT` ;
+- le repository central des mouvements prend le même verrou avant toute
+  nouvelle écriture et renvoie `STOCK_COUNT_PRODUCT_LOCKED` pour un produit
+  compté, tout en autorisant les produits hors scope et les rejeux idempotents
+  déjà enregistrés.
 
-Validation ciblée StockCount : 9 tests, 110 assertions. Suite complète : 708
-tests, 3 397 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
+Validation ciblée ouverture/verrous : 10 tests, 61 assertions. Suite complète :
+713 tests, 3 437 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
 Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.11 : résoudre le périmètre, capturer les quantités
-théoriques, persister les lignes et ouvrir le comptage atomiquement.
+Implémenter l'Epic 7.13 : saisir et corriger les quantités comptées avec version
+de ligne indépendante, révision et support du zéro explicite.

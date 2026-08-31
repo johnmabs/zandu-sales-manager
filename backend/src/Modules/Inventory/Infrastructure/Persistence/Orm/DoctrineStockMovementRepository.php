@@ -6,6 +6,7 @@ namespace Zandu\Modules\Inventory\Infrastructure\Persistence\Orm;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
+use Zandu\Modules\Inventory\Domain\StockCount\OpenStockCountScopeRepository;
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementRepository,StockMovementSource,StockMovementType};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,ProductId,StockId,StoreId,UuidFactory};
@@ -13,14 +14,19 @@ use Zandu\SharedKernel\Quantity\Quantity;
 
 final readonly class DoctrineStockMovementRepository implements StockMovementRepository
 {
-    public function __construct(private EntityManagerInterface $em, private UuidFactory $uuids, private BrickDecimalFactory $decimals) {}
+    public function __construct(private EntityManagerInterface $em, private UuidFactory $uuids, private BrickDecimalFactory $decimals, private OpenStockCountScopeRepository $stockCountScopes) {}
     public function append(StockMovement $movement): void
     {
+        $this->stockCountScopes->assertMovementAllowed($movement->organizationId(), $movement->storeId(), $movement->productId());
         $this->em->persist(StockMovementRecord::fromAggregate($movement));
         $this->em->flush();
     }
     public function appendOnce(StockMovement $movement): bool
     {
+        if (null !== $movement->source()->referenceId() && false !== $this->em->getConnection()->fetchOne('SELECT 1 FROM inventory.stock_movement WHERE organization_id=? AND product_id=? AND type=? AND source_type=? AND source_reference_id=?', [$movement->organizationId()->toString(), $movement->productId()->toString(), $movement->type()->value, $movement->source()->type(), $movement->source()->referenceId()])) {
+            return false;
+        }
+        $this->stockCountScopes->assertMovementAllowed($movement->organizationId(), $movement->storeId(), $movement->productId());
         $affected = $this->em->getConnection()->executeStatement(
             'INSERT INTO inventory.stock_movement (id, organization_id, store_id, product_id, stock_id, type, quantity, previous_quantity, resulting_quantity, source_type, source_reference_id, reason, performed_by, occurred_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (organization_id, product_id, type, source_type, source_reference_id) WHERE source_reference_id IS NOT NULL DO NOTHING',
             [

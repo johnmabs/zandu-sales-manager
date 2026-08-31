@@ -23,9 +23,9 @@ validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | Terminé — Gate CI validé |
-| 7 | StockTransfer et StockCount | En cours — création StockCount opérationnelle |
+| 7 | StockTransfer et StockCount | En cours — StockCount ouvert et produits verrouillés |
 
-Dernière validation consolidée le 31 août 2026 : **708 tests et 3 397
+Dernière validation consolidée le 31 août 2026 : **713 tests et 3 437
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -37,9 +37,10 @@ transfert, son brouillon PostgreSQL/RLS, son transit, ses écarts, son cycle
 physique `TRANSFER_OUT → TRANSFER_IN`, le transport de sa valeur au coût source,
 son idempotence, sa concurrence et ses bloqueurs de fermeture sont
 opérationnels. Les agrégats `StockCount` et `StockCountLine`, les permissions,
-la création DRAFT, le snapshot du périmètre PARTIAL et sa persistance
-PostgreSQL/RLS sont également disponibles ; l'ouverture avec capture des
-quantités théoriques suit.
+la création DRAFT et l'ouverture atomique sont disponibles. Les lignes figent
+la quantité théorique, y compris zéro sans créer de Stock vide, et les scopes
+PostgreSQL exclusifs bloquent désormais centralement tout nouveau mouvement du
+produit pendant le comptage. La saisie révisable des quantités suit.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions
