@@ -105,7 +105,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```text
 Branche              main
 Migrations           Version20260831100000 appliquée en dernier
-Tests                 669 tests, 3 188 assertions
+Tests                 670 tests, 3 192 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9381,6 +9381,9 @@ retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
 - `CancelPurchaseReturn` annule uniquement un brouillon, reste idempotent au
   rejeu, refuse un retour expédié et écrit audit/outbox sans effet Inventory ou
   Costing.
+- l’API `PurchaseReturn` expose création par magasin, consultation, expédition
+  et annulation ; ses lectures sont tenant-scopées et autorisées par la
+  permission `PURCHASE_RETURN_READ`.
 
 Commit atomique :
 
@@ -9390,13 +9393,14 @@ Commit atomique :
 4020e91 feat(costing): value purchase returns
 ebaaf6c feat(purchasing): ship purchase returns
 eb79b36 feat(purchasing): cancel purchase returns
+971ad06 feat(api): expose purchase returns
 ```
 
-Validation locale : suite complète OK (669 tests, 3 188 assertions), qualité
+Validation locale : suite complète OK (670 tests, 3 192 assertions), qualité
 et architecture vertes.
 
 ### Prochaine sous-étape
 
-Exposer l’API `PurchaseReturn`, puis prouver sur PostgreSQL réel l’atomicité,
-l’idempotence et la concurrence de `ShipPurchaseReturn` avant de fermer
-l’Epic 6.14.
+Prouver sur PostgreSQL réel l’atomicité, l’idempotence et la concurrence de
+`ShipPurchaseReturn`, puis couvrir les scénarios inter-tenant et de rollback
+avant de fermer l’Epic 6.14.
