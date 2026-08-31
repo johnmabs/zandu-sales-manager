@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\Contract\{InventoryStockTransferShipper, ShipStockTransferStock, StockTransferStockResult, StockTransferStockUnavailable};
-use Zandu\Modules\Inventory\Application\RepositoryInventoryStockTransferShipper;
+use Zandu\Modules\Inventory\Application\{InMemoryStockTransferIdempotency, RepositoryInventoryStockTransferShipper};
 use Zandu\Modules\Inventory\Application\ShipStockTransfer\{ShipStockTransfer, ShipStockTransferHandler};
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\Modules\Inventory\Domain\Stock\{Stock, StockQuantity, StockRepository};
@@ -44,13 +44,13 @@ final class ShipStockTransferTest extends TestCase
     {
         $transfer = $this->transfer();
         $repository = $this->createMock(StockTransferRepository::class);
-        $repository->expects(self::once())->method('getForUpdate')->willReturn($transfer);
+        $repository->expects(self::exactly(2))->method('getForUpdate')->willReturn($transfer);
         $repository->expects(self::once())->method('save')->with($transfer);
         $inventory = $this->createMock(InventoryStockTransferShipper::class);
         $inventory->expects(self::once())->method('ship')->with(self::callback(fn(ShipStockTransferStock $request): bool => '3' === $request->items[0]['baseQuantity']->toString() && $this->transferId()->equals($request->transferId)))->willReturn(new StockTransferStockResult(1, [$this->productId()->toString() => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('6')]]));
         $authorization = $this->createMock(AuthorizationService::class);
         $authorizedStores = [];
-        $authorization->expects(self::exactly(2))->method('authorize')->willReturnCallback(function (ActorContext $actor, PermissionCode $permission, ResourceScope $scope) use (&$authorizedStores): void {
+        $authorization->expects(self::exactly(4))->method('authorize')->willReturnCallback(function (ActorContext $actor, PermissionCode $permission, ResourceScope $scope) use (&$authorizedStores): void {
             self::assertSame(PermissionCode::StockTransferShip, $permission);
             self::assertTrue($this->actorId()->equals($actor->actorId()));
             $authorizedStores[] = $scope->storeId?->toString();
@@ -59,12 +59,14 @@ final class ShipStockTransferTest extends TestCase
         $guard->expects(self::exactly(2))->method('assertStore');
         $outbox = $this->createMock(OutboxRepository::class);
         $outbox->expects(self::once())->method('append');
-        $handler = new ShipStockTransferHandler($repository, $inventory, new StockTransferTransaction(), $authorization, $guard, $outbox, new SymfonyUuidV7Generator(), $this->clock);
+        $handler = new ShipStockTransferHandler($repository, $inventory, new InMemoryStockTransferIdempotency(), new StockTransferTransaction(), $authorization, $guard, $outbox, new SymfonyUuidV7Generator(), $this->clock);
 
         $result = $handler(new ShipStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('3')], $this->actor(), 'ship-1'));
+        $replayed = $handler(new ShipStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('3')], $this->actor(), 'ship-1'));
 
-        self::assertSame([$this->sourceStoreId()->toString(), $this->destinationStoreId()->toString()], $authorizedStores);
+        self::assertSame([$this->sourceStoreId()->toString(), $this->destinationStoreId()->toString(), $this->sourceStoreId()->toString(), $this->destinationStoreId()->toString()], $authorizedStores);
         self::assertSame(StockTransferStatus::Shipped, $result->status());
+        self::assertSame($result, $replayed);
     }
 
     public function testHandlerMapsInsufficientStockAndDoesNotPersist(): void
@@ -75,7 +77,7 @@ final class ShipStockTransferTest extends TestCase
         $repository->expects(self::never())->method('save');
         $inventory = $this->createStub(InventoryStockTransferShipper::class);
         $inventory->method('ship')->willThrowException(new StockTransferStockUnavailable($this->productId()));
-        $handler = new ShipStockTransferHandler($repository, $inventory, new StockTransferTransaction(), $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $this->clock);
+        $handler = new ShipStockTransferHandler($repository, $inventory, new InMemoryStockTransferIdempotency(), new StockTransferTransaction(), $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $this->clock);
 
         try {
             $handler(new ShipStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('3')], $this->actor()));

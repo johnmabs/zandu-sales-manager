@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\Inventory\Domain\StockTransfer;
 
-use Zandu\SharedKernel\Identity\{OrganizationId, StockTransferId};
+use Zandu\SharedKernel\Identity\{OrganizationId, StockTransferId, StoreId};
 
 interface StockTransferRepository
 {
@@ -12,4 +12,5 @@ interface StockTransferRepository
     public function get(OrganizationId $organizationId, StockTransferId $transferId): StockTransfer;
     public function getForUpdate(OrganizationId $organizationId, StockTransferId $transferId): StockTransfer;
     public function find(OrganizationId $organizationId, StockTransferId $transferId): ?StockTransfer;
+    public function hasInTransitForStore(OrganizationId $organizationId, StoreId $storeId): bool;
 }

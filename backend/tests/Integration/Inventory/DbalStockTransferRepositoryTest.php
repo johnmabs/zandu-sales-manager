@@ -7,8 +7,10 @@ namespace Zandu\Tests\Integration\Inventory;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Zandu\Modules\Inventory\Application\Contract\StockTransferPhase;
+use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferLine, StockTransferRepository};
-use Zandu\Modules\Inventory\Infrastructure\Persistence\DbalStockTransferRepository;
+use Zandu\Modules\Inventory\Infrastructure\Persistence\{DbalStockTransferIdempotency, DbalStockTransferRepository};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
@@ -100,6 +102,48 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
         self::assertSame('2.000000', $restored->lines()[0]->transitLossValue()?->amount()->toString());
     }
 
+    public function testTransferCommandClaimIsDurableIdempotentAndPayloadSafe(): void
+    {
+        $organizationId = OrganizationId::fromString(self::ORGANIZATION, $this->ids);
+        $transfer = StockTransfer::create(StockTransferId::fromString(self::TRANSFER, $this->ids), $organizationId, StoreId::fromString(self::SOURCE_STORE, $this->ids), StoreId::fromString(self::DESTINATION_STORE, $this->ids), ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-31T12:00:00Z'));
+        $idempotency = new DbalStockTransferIdempotency($this->db);
+        $this->transactions->transactional($organizationId, fn() => $this->repository->save($transfer));
+
+        self::assertTrue($this->transactions->transactional($organizationId, fn(): bool => $idempotency->claim($transfer->id(), StockTransferPhase::TransferOut, 'ship-command', hash('sha256', 'quantity=3'))));
+        self::assertFalse($this->transactions->transactional($organizationId, fn(): bool => $idempotency->claim($transfer->id(), StockTransferPhase::TransferOut, 'ship-command', hash('sha256', 'quantity=3'))));
+
+        try {
+            $this->transactions->transactional($organizationId, fn(): bool => $idempotency->claim($transfer->id(), StockTransferPhase::TransferOut, 'ship-command', hash('sha256', 'quantity=4')));
+            self::fail('A conflicting transfer command must fail.');
+        } catch (InventoryRuleViolation $exception) {
+            self::assertSame('IDEMPOTENCY_CONFLICT', $exception->errorCode());
+        }
+    }
+
+    public function testShippedTransferBlocksClosureForBothStoresUntilReception(): void
+    {
+        $organizationId = OrganizationId::fromString(self::ORGANIZATION, $this->ids);
+        $transfer = StockTransfer::create(StockTransferId::fromString(self::TRANSFER, $this->ids), $organizationId, StoreId::fromString(self::SOURCE_STORE, $this->ids), StoreId::fromString(self::DESTINATION_STORE, $this->ids), ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-31T12:00:00Z'));
+        $line = new StockTransferLine(StockTransferLineId::fromString(self::LINE, $this->ids), $transfer->id(), ProductId::fromString(self::PRODUCT, $this->ids), $this->quantity('5'));
+        $transfer->addLine($line);
+        $this->transactions->transactional($organizationId, function () use ($transfer, $line): void {
+            $this->repository->save($transfer);
+            $transfer->ship(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-31T13:00:00Z'), [$line->id()->toString() => $this->quantity('4')]);
+            $transfer->attachShipmentCosts([self::PRODUCT => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('8')]]);
+            $this->repository->save($transfer);
+        });
+
+        $this->transactions->transactional($organizationId, function () use ($organizationId, $transfer): void {
+            self::assertTrue($this->repository->hasInTransitForStore($organizationId, $transfer->sourceStoreId()));
+            self::assertTrue($this->repository->hasInTransitForStore($organizationId, $transfer->destinationStoreId()));
+            $transfer->receive(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-31T14:00:00Z'), [$transfer->lines()[0]->id()->toString() => $this->quantity('4')]);
+            $transfer->attachReceivedValues([self::PRODUCT => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('8')]]);
+            $this->repository->save($transfer);
+            self::assertFalse($this->repository->hasInTransitForStore($organizationId, $transfer->sourceStoreId()));
+            self::assertFalse($this->repository->hasInTransitForStore($organizationId, $transfer->destinationStoreId()));
+        });
+    }
+
     private function fixtures(): void
     {
         $this->db->executeStatement("INSERT INTO organization.organizations (id,name,status,country_code,default_currency,default_time_zone,default_locale,created_by,created_at,updated_by,updated_at,version) VALUES (?, 'Transfer tenant','ACTIVE','CG','XAF','Africa/Brazzaville','fr_CG',?,NOW(),?,NOW(),1)", [self::ORGANIZATION, self::ACTOR, self::ACTOR]);
@@ -111,7 +155,7 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
 
     private function cleanup(): void
     {
-        foreach (['inventory.stock_transfer_line', 'inventory.stock_transfer', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
+        foreach (['inventory.stock_transfer_command', 'inventory.stock_transfer_line', 'inventory.stock_transfer', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
             $this->db->executeStatement(sprintf('DELETE FROM %s WHERE organization_id = ?', $table), [self::ORGANIZATION]);
         }
         $this->db->executeStatement('DELETE FROM organization.organizations WHERE id = ?', [self::ORGANIZATION]);

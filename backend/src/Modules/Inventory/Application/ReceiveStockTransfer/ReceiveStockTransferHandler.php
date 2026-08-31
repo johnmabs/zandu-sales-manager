@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\Inventory\Application\ReceiveStockTransfer;
 
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\Inventory\Application\Contract\{InventoryStockTransferReceiver, ReceiveStockTransferStock};
+use Zandu\Modules\Inventory\Application\Contract\{InventoryStockTransferReceiver, ReceiveStockTransferStock, StockTransferIdempotency, StockTransferPhase};
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferRepository, StockTransferStatus};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard, OperationalMode};
@@ -17,7 +17,7 @@ use Zandu\SharedKernel\Time\Clock;
 
 final readonly class ReceiveStockTransferHandler
 {
-    public function __construct(private StockTransferRepository $transfers, private InventoryStockTransferReceiver $inventory, private TenantTransaction $transaction, private AuthorizationService $authorization, private OperationalGuard $guard, private OutboxRepository $outbox, private IdGenerator $ids, private Clock $clock) {}
+    public function __construct(private StockTransferRepository $transfers, private InventoryStockTransferReceiver $inventory, private StockTransferIdempotency $idempotency, private TenantTransaction $transaction, private AuthorizationService $authorization, private OperationalGuard $guard, private OutboxRepository $outbox, private IdGenerator $ids, private Clock $clock) {}
 
     public function __invoke(ReceiveStockTransfer $command): StockTransfer
     {
@@ -25,6 +25,9 @@ final readonly class ReceiveStockTransferHandler
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): StockTransfer {
             $transfer = $this->transfers->getForUpdate($organizationId, $command->transferId);
             $this->authorization->authorize($command->actorContext, PermissionCode::StockTransferReceive, ResourceScope::store($organizationId, $transfer->destinationStoreId()));
+            if ('' !== $command->commandId) {
+                $this->idempotency->claim($transfer->id(), StockTransferPhase::TransferIn, $command->commandId, $this->payloadHash($command->receivedQuantities));
+            }
             if (StockTransferStatus::Received === $transfer->status()) {
                 return $transfer;
             }
@@ -54,5 +57,13 @@ final readonly class ReceiveStockTransferHandler
             $this->outbox->append(new OutboxMessage(OutboxMessageId::generate($this->ids), $organizationId, 'inventory.stock_transfer_received.v1', ['stockTransferId' => $transfer->id()->toString(), 'sourceStoreId' => $transfer->sourceStoreId()->toString(), 'destinationStoreId' => $transfer->destinationStoreId()->toString(), 'lineCount' => count($transfer->lines()), 'hasDiscrepancy' => $transfer->hasTransitDiscrepancy(), 'commandId' => $command->commandId], $command->actorContext->correlationId(), $command->actorContext->causationId(), $now));
             return $transfer;
         });
+    }
+
+    /** @param array<string, \Zandu\SharedKernel\Quantity\Quantity> $quantities */
+    private function payloadHash(array $quantities): string
+    {
+        ksort($quantities, SORT_STRING);
+
+        return hash('sha256', implode('|', array_map(static fn(string $lineId, $quantity): string => $lineId . '=' . $quantity->toString(), array_keys($quantities), $quantities)));
     }
 }

@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\Contract\{InventoryStockTransferReceiver, ReceiveStockTransferStock, StockTransferStockResult};
+use Zandu\Modules\Inventory\Application\{InMemoryStockTransferIdempotency, RepositoryInventoryStockTransferReceiver};
 use Zandu\Modules\Inventory\Application\ReceiveStockTransfer\{ReceiveStockTransfer, ReceiveStockTransferHandler};
-use Zandu\Modules\Inventory\Application\RepositoryInventoryStockTransferReceiver;
 use Zandu\Modules\Inventory\Domain\Stock\{Stock, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementType};
 use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferLine, StockTransferRepository, StockTransferStatus};
@@ -43,22 +43,24 @@ final class ReceiveStockTransferTest extends TestCase
     {
         $transfer = $this->shippedTransfer();
         $repository = $this->createMock(StockTransferRepository::class);
-        $repository->expects(self::once())->method('getForUpdate')->willReturn($transfer);
+        $repository->expects(self::exactly(2))->method('getForUpdate')->willReturn($transfer);
         $repository->expects(self::once())->method('save')->with($transfer);
         $inventory = $this->createMock(InventoryStockTransferReceiver::class);
         $inventory->expects(self::once())->method('receive')->with(self::callback(fn(ReceiveStockTransferStock $request): bool => '2' === $request->items[0]['baseQuantity']->toString() && $this->destinationStoreId()->equals($request->destinationStoreId)))->willReturn(new StockTransferStockResult(1, [$this->productId()->toString() => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('4')]]));
         $authorization = $this->createMock(AuthorizationService::class);
-        $authorization->expects(self::once())->method('authorize')->with($this->actor(), PermissionCode::StockTransferReceive, self::callback(fn(ResourceScope $scope): bool => $this->destinationStoreId()->equals($scope->storeId)));
+        $authorization->expects(self::exactly(2))->method('authorize')->with($this->actor(), PermissionCode::StockTransferReceive, self::callback(fn(ResourceScope $scope): bool => $this->destinationStoreId()->equals($scope->storeId)));
         $guard = $this->createMock(OperationalGuard::class);
         $guard->expects(self::once())->method('assertStore')->with($this->actor(), $this->destinationStoreId(), OperationalMode::Remediation);
         $outbox = $this->createMock(OutboxRepository::class);
         $outbox->expects(self::once())->method('append')->with(self::callback(static fn(OutboxMessage $message): bool => true === $message->payload['hasDiscrepancy']));
-        $handler = new ReceiveStockTransferHandler($repository, $inventory, new ReceiveTransferTransaction(), $authorization, $guard, $outbox, new SymfonyUuidV7Generator(), $this->clock);
+        $handler = new ReceiveStockTransferHandler($repository, $inventory, new InMemoryStockTransferIdempotency(), new ReceiveTransferTransaction(), $authorization, $guard, $outbox, new SymfonyUuidV7Generator(), $this->clock);
 
         $result = $handler(new ReceiveStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('2')], $this->actor(), 'receive-1'));
+        $replayed = $handler(new ReceiveStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('2')], $this->actor(), 'receive-1'));
 
         self::assertSame(StockTransferStatus::Received, $result->status());
         self::assertSame('2', $result->lines()[0]->receivedQuantity()?->toString());
+        self::assertSame($result, $replayed);
     }
 
     public function testReceiverCreatesInitializedDestinationStockAndWritesTransferIn(): void
@@ -84,7 +86,7 @@ final class ReceiveStockTransferTest extends TestCase
         $repository->expects(self::once())->method('save');
         $inventory = $this->createMock(InventoryStockTransferReceiver::class);
         $inventory->expects(self::once())->method('receive')->with(self::callback(static fn(ReceiveStockTransferStock $request): bool => [] === $request->items))->willReturn(new StockTransferStockResult(0, []));
-        $handler = new ReceiveStockTransferHandler($repository, $inventory, new ReceiveTransferTransaction(), $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $this->clock);
+        $handler = new ReceiveStockTransferHandler($repository, $inventory, new InMemoryStockTransferIdempotency(), new ReceiveTransferTransaction(), $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $this->clock);
 
         $result = $handler(new ReceiveStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('0')], $this->actor()));
 
