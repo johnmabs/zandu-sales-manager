@@ -62,10 +62,10 @@ Le retour fournisseur `PurchaseReturn` est désormais créé depuis une récepti
 publiée avec reliquat corrigé, puis expédié atomiquement après revalidation du
 reliquat et du stock. Inventory écrit une sortie idempotente `PURCHASE_RETURN`,
 Costing la valorise au coût moyen courant, et le coordinateur publie audit et
-outbox sans modifier la quantité reçue de la commande d’achat. L’API,
-l’annulation applicative est disponible pour les brouillons et produit elle
-aussi audit/outbox sans effet de stock. Les preuves PostgreSQL de concurrence
-restent à finaliser avant la fermeture de l’Epic 6.14. L’API expose désormais
+outbox sans modifier la quantité reçue de la commande d’achat. L’annulation
+applicative est disponible pour les brouillons et produit elle aussi audit/outbox
+sans effet de stock. Les preuves PostgreSQL couvrent le rejeu, le rollback, le
+verrou concurrent et l’isolation tenant de l’Epic 6.14. L’API expose désormais
 la création par magasin, l’ajout de ligne, la consultation, l’expédition et
 l’annulation des retours fournisseur dans Swagger UI et ReDoc en développement.
 

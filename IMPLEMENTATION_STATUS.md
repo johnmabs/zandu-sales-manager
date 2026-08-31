@@ -67,8 +67,8 @@ Epic 6.10   TERMINÉ   Valorisation Costing des achats
 Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
 Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
 Epic 6.13   TERMINÉ   Corrections immuables de réception
-Epic 6.14   EN COURS  Retours fournisseur
-Gate Lot 6  À FAIRE   Deuxième partie de M3 — approvisionnements fournisseurs
+Epic 6.14   TERMINÉ   Retours fournisseur, preuves PostgreSQL incluses
+Gate Lot 6  PRÊT CI   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9352,7 +9352,7 @@ retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
 
 ### Epic 6.14 — Fondation PurchaseReturn
 
-**Statut : EN COURS — création et expédition métier terminées**
+**Statut : TERMINÉ — workflow et preuves PostgreSQL terminés**
 
 - `PurchaseReturn` porte magasin source, fournisseur, réception/commande
   facultatives, raison obligatoire et cycle `DRAFT → SHIPPED/CANCELLED` ;
@@ -9384,6 +9384,12 @@ retournable, mouvement `PURCHASE_RETURN` et valorisation au coût moyen courant.
 - l’API `PurchaseReturn` expose création par magasin, ajout de ligne,
   consultation, expédition et annulation ; ses lectures sont tenant-scopées et
   autorisées par la permission `PURCHASE_RETURN_READ`.
+- l’intégration PostgreSQL prouve l’expédition physique et valorisée, son rejeu
+  sans doublon, ainsi que l’écriture unique de l’audit et de l’outbox ;
+- un échec injecté dans l’outbox annule intégralement document, stock,
+  mouvements, valorisation et audit ;
+- deux connexions PostgreSQL prouvent le verrou du retour contre une expédition
+  concurrente ; le rôle runtime ne peut lire le document depuis un autre tenant.
 
 Commit atomique :
 
@@ -9395,13 +9401,16 @@ ebaaf6c feat(purchasing): ship purchase returns
 eb79b36 feat(purchasing): cancel purchase returns
 971ad06 feat(api): expose purchase returns
 68e2147 feat(purchasing): add purchase return lines
+f662689 test(purchasing): verify purchase return shipment
+02d39bc test(purchasing): verify purchase return rollback
+13bddc9 test(purchasing): verify purchase return concurrency
 ```
 
-Validation locale : tests ciblés OK (25 tests, 187 assertions), PHPStan et
-architecture vertes ; la suite complète CI couvre désormais 671 tests et 3 197 assertions.
+Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
+PHPStan et architecture vertes. La suite complète doit être confirmée par la
+CI lors de la prochaine publication manuelle.
 
 ### Prochaine sous-étape
 
-Prouver sur PostgreSQL réel l’atomicité, l’idempotence et la concurrence de
-`ShipPurchaseReturn`, puis couvrir les scénarios inter-tenant et de rollback
-avant de fermer l’Epic 6.14.
+Démarrer le Lot 7 avec l’agrégat `StockTransfer`, son cycle de vie et sa
+persistence tenant-scopée, avant d’implémenter son expédition.
