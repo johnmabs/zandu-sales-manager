@@ -83,6 +83,8 @@ Epic 7.6    TERMINÉ   Écarts de transit dérivés et conservés par ligne
 Epic 7.7    TERMINÉ   Valeur transférée au coût source avec perte de transit
 Transverse  TERMINÉ   Idempotence, concurrence et fermeture StockTransfer
 Epic 7.8    TERMINÉ   StockCount aggregate, statuts, modes et scopes
+Epic 7.9    TERMINÉ   StockCountLine séparée et snapshot théorique
+Epic 7.10   TERMINÉ   Création DRAFT, périmètre, permissions, PostgreSQL et RLS
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -119,8 +121,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260831150000 appliquée en dernier
-Tests                 703 tests, 3 367 assertions
+Migrations           Version20260831160000 appliquée en dernier
+Tests                 708 tests, 3 397 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9425,7 +9427,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.8 — StockTransfer stabilisé et StockCount initié
+### Epics 7.1 à 7.10 — StockTransfer stabilisé et création StockCount
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9475,12 +9477,24 @@ CI lors de la prochaine publication manuelle.
   `DRAFT/OPEN/FINALIZING/COMPLETED/CANCELLED`, les modes `BLIND/GUIDED`, les
   scopes `FULL/PARTIAL` et les compteurs de progression, avec `BLIND` par
   défaut.
+- l'Epic 7.9 ajoute l'agrégat séparé `StockCountLine`, son identifiant typé, le
+  snapshot `expectedQuantity`, la distinction explicite entre quantité non
+  comptée et zéro, la révision et les états `PENDING/RECONCILED` ;
+- `CreateStockCount` crée atomiquement un brouillon autorisé dans le scope
+  Store, bloque les magasins suspendus, valide les produits physiques suivis
+  par Inventory pour un périmètre PARTIAL, puis publie l'outbox de création ;
+- le périmètre PARTIAL est snapshoté sans doublon dans le document, tandis que
+  FULL reste vide jusqu'à sa résolution serveur au démarrage ; les six
+  permissions StockCount sont attribuées au Store Manager et la lecture à
+  l'Accountant ;
+- `Version20260831160000` persiste le brouillon et son périmètre demandé avec
+  contraintes, index, verrou optimiste préparé et RLS forcée.
 
-Validation ciblée du nouveau bloc : 32 tests, 178 assertions. Suite complète :
-703 tests, 3 367 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
+Validation ciblée StockCount : 9 tests, 110 assertions. Suite complète : 708
+tests, 3 397 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
 Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.9, l'agrégat séparé `StockCountLine`, puis la création
-applicative de l'Epic 7.10.
+Implémenter l'Epic 7.11 : résoudre le périmètre, capturer les quantités
+théoriques, persister les lignes et ouvrir le comptage atomiquement.

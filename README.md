@@ -23,9 +23,9 @@ validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | Terminé — Gate CI validé |
-| 7 | StockTransfer et StockCount | En cours — StockTransfer stabilisé, StockCount initié |
+| 7 | StockTransfer et StockCount | En cours — création StockCount opérationnelle |
 
-Dernière validation consolidée le 31 août 2026 : **703 tests et 3 367
+Dernière validation consolidée le 31 août 2026 : **708 tests et 3 397
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -36,8 +36,10 @@ pilote désormais la tranche `StockTransfer & StockCount`. La fondation du
 transfert, son brouillon PostgreSQL/RLS, son transit, ses écarts, son cycle
 physique `TRANSFER_OUT → TRANSFER_IN`, le transport de sa valeur au coût source,
 son idempotence, sa concurrence et ses bloqueurs de fermeture sont
-opérationnels. L'agrégat `StockCount` de l'Epic 7.8 est également disponible ;
-ses lignes et ses cas d'usage suivent.
+opérationnels. Les agrégats `StockCount` et `StockCountLine`, les permissions,
+la création DRAFT, le snapshot du périmètre PARTIAL et sa persistance
+PostgreSQL/RLS sont également disponibles ; l'ouverture avec capture des
+quantités théoriques suit.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

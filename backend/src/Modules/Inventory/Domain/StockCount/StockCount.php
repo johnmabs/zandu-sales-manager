@@ -17,6 +17,8 @@ final class StockCount
         private StockCountStatus $status,
         private StockCountMode $mode,
         private StockCountScopeType $scopeType,
+        /** @var list<\Zandu\SharedKernel\Identity\ProductId> */
+        private array $requestedProductIds,
         private int $totalLineCount,
         private int $countedLineCount,
         private int $reconciledLineCount,
@@ -33,14 +35,30 @@ final class StockCount
         private int $version,
     ) {}
 
-    public static function create(StockCountId $id, OrganizationId $organizationId, StoreId $storeId, StockCountScopeType $scopeType, ActorId $createdBy, DateTimeImmutable $createdAt, StockCountMode $mode = StockCountMode::Blind): self
+    /** @param list<\Zandu\SharedKernel\Identity\ProductId> $requestedProductIds */
+    public static function create(StockCountId $id, OrganizationId $organizationId, StoreId $storeId, StockCountScopeType $scopeType, ActorId $createdBy, DateTimeImmutable $createdAt, StockCountMode $mode = StockCountMode::Blind, array $requestedProductIds = []): self
     {
-        return new self($id, $organizationId, $storeId, StockCountStatus::Draft, $mode, $scopeType, 0, 0, 0, $createdBy, self::utc($createdAt), null, null, null, null, null, null, null, null, 1);
+        if (StockCountScopeType::Full === $scopeType && [] !== $requestedProductIds) {
+            throw \Zandu\Modules\Inventory\Domain\InventoryRuleViolation::with('STOCK_COUNT_FULL_SCOPE_PRODUCTS_INVALID', 'A full stock count resolves its product scope when it starts.');
+        }
+        if (StockCountScopeType::Partial === $scopeType && [] === $requestedProductIds) {
+            throw \Zandu\Modules\Inventory\Domain\InventoryRuleViolation::with('STOCK_COUNT_PARTIAL_SCOPE_EMPTY', 'A partial stock count requires at least one product.');
+        }
+        $uniqueProducts = [];
+        foreach ($requestedProductIds as $productId) {
+            if (isset($uniqueProducts[$productId->toString()])) {
+                throw \Zandu\Modules\Inventory\Domain\InventoryRuleViolation::with('STOCK_COUNT_PRODUCT_DUPLICATE', 'A product can occur only once in a stock count scope.');
+            }
+            $uniqueProducts[$productId->toString()] = true;
+        }
+
+        return new self($id, $organizationId, $storeId, StockCountStatus::Draft, $mode, $scopeType, $requestedProductIds, 0, 0, 0, $createdBy, self::utc($createdAt), null, null, null, null, null, null, null, null, 1);
     }
 
-    public static function reconstitute(StockCountId $id, OrganizationId $organizationId, StoreId $storeId, StockCountStatus $status, StockCountMode $mode, StockCountScopeType $scopeType, int $totalLineCount, int $countedLineCount, int $reconciledLineCount, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $startedBy, ?DateTimeImmutable $startedAt, ?ActorId $finalizationStartedBy, ?DateTimeImmutable $finalizationStartedAt, ?ActorId $completedBy, ?DateTimeImmutable $completedAt, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version): self
+    /** @param list<\Zandu\SharedKernel\Identity\ProductId> $requestedProductIds */
+    public static function reconstitute(StockCountId $id, OrganizationId $organizationId, StoreId $storeId, StockCountStatus $status, StockCountMode $mode, StockCountScopeType $scopeType, array $requestedProductIds, int $totalLineCount, int $countedLineCount, int $reconciledLineCount, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $startedBy, ?DateTimeImmutable $startedAt, ?ActorId $finalizationStartedBy, ?DateTimeImmutable $finalizationStartedAt, ?ActorId $completedBy, ?DateTimeImmutable $completedAt, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version): self
     {
-        return new self($id, $organizationId, $storeId, $status, $mode, $scopeType, $totalLineCount, $countedLineCount, $reconciledLineCount, $createdBy, self::utc($createdAt), $startedBy, self::nullableUtc($startedAt), $finalizationStartedBy, self::nullableUtc($finalizationStartedAt), $completedBy, self::nullableUtc($completedAt), $cancelledBy, self::nullableUtc($cancelledAt), $version);
+        return new self($id, $organizationId, $storeId, $status, $mode, $scopeType, $requestedProductIds, $totalLineCount, $countedLineCount, $reconciledLineCount, $createdBy, self::utc($createdAt), $startedBy, self::nullableUtc($startedAt), $finalizationStartedBy, self::nullableUtc($finalizationStartedAt), $completedBy, self::nullableUtc($completedAt), $cancelledBy, self::nullableUtc($cancelledAt), $version);
     }
 
     private static function utc(DateTimeImmutable $date): DateTimeImmutable
@@ -76,6 +94,11 @@ final class StockCount
     public function scopeType(): StockCountScopeType
     {
         return $this->scopeType;
+    }
+    /** @return list<\Zandu\SharedKernel\Identity\ProductId> */
+    public function requestedProductIds(): array
+    {
+        return $this->requestedProductIds;
     }
     public function totalLineCount(): int
     {

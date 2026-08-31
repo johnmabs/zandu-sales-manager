@@ -47,9 +47,20 @@ final class StockCountTest extends TestCase
             ActorId::fromString('0199f600-0000-7000-8000-000000000014', $ids),
             new DateTimeImmutable('2026-08-31T14:00:00Z'),
             StockCountMode::Guided,
+            [\Zandu\SharedKernel\Identity\ProductId::fromString('0199f600-0000-7000-8000-000000000015', $ids)],
         );
 
         self::assertSame(StockCountMode::Guided, $count->mode());
         self::assertSame(StockCountScopeType::Partial, $count->scopeType());
+        self::assertCount(1, $count->requestedProductIds());
+    }
+
+    public function testPartialScopeMustBeNonEmptyAndUnique(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $productId = \Zandu\SharedKernel\Identity\ProductId::fromString('0199f600-0000-7000-8000-000000000025', $ids);
+
+        $this->expectException(\Zandu\Modules\Inventory\Domain\InventoryRuleViolation::class);
+        StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000021', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000022', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000023', $ids), StockCountScopeType::Partial, ActorId::fromString('0199f600-0000-7000-8000-000000000024', $ids), new DateTimeImmutable(), StockCountMode::Blind, [$productId, $productId]);
     }
 }

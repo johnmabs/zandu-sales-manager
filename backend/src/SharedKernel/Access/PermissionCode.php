@@ -88,6 +88,12 @@ enum PermissionCode: string
     case StockTransferCancel = 'STOCK_TRANSFER_CANCEL';
     case StockTransferShip = 'STOCK_TRANSFER_SHIP';
     case StockTransferReceive = 'STOCK_TRANSFER_RECEIVE';
+    case StockCountCreate = 'STOCK_COUNT_CREATE';
+    case StockCountRead = 'STOCK_COUNT_READ';
+    case StockCountStart = 'STOCK_COUNT_START';
+    case StockCountRecord = 'STOCK_COUNT_RECORD';
+    case StockCountFinalize = 'STOCK_COUNT_FINALIZE';
+    case StockCountCancel = 'STOCK_COUNT_CANCEL';
     case StockMovementRead = 'STOCK_MOVEMENT_READ';
     case InventoryCostingInitialize = 'INVENTORY_COSTING_INITIALIZE';
 
