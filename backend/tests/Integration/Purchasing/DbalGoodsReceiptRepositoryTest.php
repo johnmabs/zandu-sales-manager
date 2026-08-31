@@ -7,6 +7,11 @@ namespace Zandu\Tests\Integration\Purchasing;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\Inventory\Application\Contract\InventoryPurchaseReturnShipper;
+use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Purchasing\Application\ShipPurchaseReturn\ShipPurchaseReturn;
+use Zandu\Modules\Purchasing\Application\ShipPurchaseReturn\ShipPurchaseReturnHandler;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceipt;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptLine;
 use Zandu\Modules\Purchasing\Domain\GoodsReceipt\GoodsReceiptNumber;
@@ -21,6 +26,7 @@ use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalGoodsReceiptReposito
 use Zandu\Modules\Purchasing\Infrastructure\Persistence\DbalPurchaseReturnRepository;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\Platform\Identity\SymfonyUuidV7Generator;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId;
@@ -32,9 +38,12 @@ use Zandu\SharedKernel\Identity\ProductPackagingId;
 use Zandu\SharedKernel\Identity\{PurchaseReturnId, PurchaseReturnLineId};
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\SupplierId;
+use Zandu\SharedKernel\Messaging\OutboxRepository;
 use Zandu\SharedKernel\Money\Currency;
 use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\SecurityAudit\SecurityAuditTrail;
+use Zandu\Tests\SharedKernel\Time\FrozenClock;
 
 final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
 {
@@ -50,6 +59,8 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
     private const CORRECTION = '0198da20-0000-7000-8000-000000000010';
     private const PURCHASE_RETURN = '0198da20-0000-7000-8000-000000000011';
     private const PURCHASE_RETURN_LINE = '0198da20-0000-7000-8000-000000000012';
+    private const STOCK = '0198da20-0000-7000-8000-000000000013';
+    private const VALUATION = '0198da20-0000-7000-8000-000000000014';
 
     private Connection $db;
     private GoodsReceiptRepository $repository;
@@ -158,6 +169,93 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         self::assertSame('2.000000000000', $returnRepository->shippedQuantityByProduct($organizationId, $posted->id())[self::PRODUCT]->toString());
     }
 
+    public function testShippingPurchaseReturnIsAtomicAndIdempotentWithRealPostgresRepositories(): void
+    {
+        $organizationId = OrganizationId::fromString(self::ORGANIZATION, $this->ids);
+        $actorId = ActorId::fromString(self::ACTOR, $this->ids);
+        $receipt = GoodsReceipt::create(
+            GoodsReceiptId::fromString(self::RECEIPT, $this->ids),
+            $organizationId,
+            StoreId::fromString(self::STORE, $this->ids),
+            SupplierId::fromString(self::SUPPLIER, $this->ids),
+            null,
+            GoodsReceiptNumber::fromString('GR-SHIP-RETURN-001'),
+            null,
+            'Return shipping fixture',
+            $actorId,
+            new DateTimeImmutable('2026-08-31T12:00:00Z'),
+        );
+        $receipt->addLine(new GoodsReceiptLine(
+            GoodsReceiptLineId::fromString(self::LINE, $this->ids),
+            $receipt->id(),
+            ProductId::fromString(self::PRODUCT, $this->ids),
+            ProductPackagingId::fromString(self::PACKAGING, $this->ids),
+            $this->quantity('10'),
+            $this->quantity('1'),
+            $this->quantity('10'),
+            $this->money('4'),
+            $this->money('4'),
+            null,
+        ));
+        $this->transactions->transactional($organizationId, function () use ($receipt, $actorId): void {
+            $this->repository->save($receipt);
+            $receipt->post($actorId, new DateTimeImmutable('2026-08-31T12:01:00Z'));
+            $this->repository->save($receipt);
+        });
+
+        $returns = new DbalPurchaseReturnRepository($this->db, $this->ids, $this->decimals);
+        $return = PurchaseReturn::create(PurchaseReturnId::fromString(self::PURCHASE_RETURN, $this->ids), $organizationId, StoreId::fromString(self::STORE, $this->ids), SupplierId::fromString(self::SUPPLIER, $this->ids), $receipt->id(), null, 'Damaged goods', $actorId, new DateTimeImmutable('2026-08-31T12:02:00Z'));
+        $return->addLine(new PurchaseReturnLine(PurchaseReturnLineId::fromString(self::PURCHASE_RETURN_LINE, $this->ids), $return->id(), ProductId::fromString(self::PRODUCT, $this->ids), $this->quantity('4'), $receipt->lines()[0]->id()));
+        $this->transactions->transactional($organizationId, fn() => $returns->save($return));
+
+        $this->db->executeStatement('INSERT INTO inventory.stock (id,organization_id,store_id,product_id,quantity_on_hand,initialized,initialized_at,initialized_by,version) VALUES (?,?,?,?,10,TRUE,NOW(),?,1)', [self::STOCK, self::ORGANIZATION, self::STORE, self::PRODUCT, self::ACTOR]);
+        $this->db->executeStatement("INSERT INTO inventory_costing.stock_valuation (id,organization_id,store_id,product_id,stock_id,quantity_on_hand,total_value,currency,version) VALUES (?,?,?,?,?,10,40,'XAF',1)", [self::VALUATION, self::ORGANIZATION, self::STORE, self::PRODUCT, self::STOCK]);
+
+        $handler = $this->shipHandler();
+        $command = new ShipPurchaseReturn($return->id(), $this->actorContext(), 'purchase-return-retry');
+        $shipped = $handler($command);
+        $replayed = $handler($command);
+
+        self::assertSame(PurchaseReturnStatus::Shipped, $shipped->status());
+        self::assertSame(PurchaseReturnStatus::Shipped, $replayed->status());
+        self::assertSame('6.000000000000', (string) $this->db->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE id = ?', [self::STOCK]));
+        self::assertSame('24.000000', (string) $this->db->fetchOne('SELECT total_value FROM inventory_costing.stock_valuation WHERE id = ?', [self::VALUATION]));
+        self::assertSame(1, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id = ? AND type = 'PURCHASE_RETURN'", [self::ORGANIZATION]));
+        self::assertSame(1, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id = ? AND type = 'PURCHASE_RETURN'", [self::ORGANIZATION]));
+        self::assertSame(1, (int) $this->db->fetchOne("SELECT COUNT(*) FROM security.security_audit_entries WHERE organization_id = ? AND action = 'PURCHASE_RETURN_SHIPPED'", [self::ORGANIZATION]));
+        self::assertSame(1, (int) $this->db->fetchOne("SELECT COUNT(*) FROM messaging.outbox_messages WHERE organization_id = ? AND type = 'purchasing.purchase_return_shipped.v1'", [self::ORGANIZATION]));
+    }
+
+    private function shipHandler(): ShipPurchaseReturnHandler
+    {
+        $container = self::getContainer();
+
+        return new ShipPurchaseReturnHandler(
+            $container->get(\Zandu\Modules\Purchasing\Domain\PurchaseReturn\PurchaseReturnRepository::class),
+            $container->get(GoodsReceiptRepository::class),
+            $container->get(\Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection\GoodsReceiptCorrectionRepository::class),
+            $container->get(InventoryPurchaseReturnShipper::class),
+            new DoctrineTenantTransaction($this->db, 'zandu_runtime'),
+            $this->createStub(AuthorizationService::class),
+            $this->createStub(OperationalGuard::class),
+            $container->get(SecurityAuditTrail::class),
+            $container->get(OutboxRepository::class),
+            new SymfonyUuidV7Generator(),
+            new FrozenClock(new DateTimeImmutable('2026-08-31T12:03:00Z')),
+        );
+    }
+
+    private function actorContext(): \Zandu\SharedKernel\Context\ActorContext
+    {
+        return new \Zandu\SharedKernel\Context\ActorContext(
+            ActorId::fromString(self::ACTOR, $this->ids),
+            OrganizationId::fromString(self::ORGANIZATION, $this->ids),
+            \Zandu\SharedKernel\Context\ActorType::User,
+            \Zandu\SharedKernel\Messaging\CorrelationId::fromString('0198da20-0000-7000-8000-000000000099', $this->ids),
+            new DateTimeImmutable('2026-08-31T12:03:00Z'),
+        );
+    }
+
     private function fixtures(): void
     {
         $this->db->executeStatement("INSERT INTO organization.organizations (id,name,status,country_code,default_currency,default_time_zone,default_locale,created_by,created_at,updated_by,updated_at,version) VALUES (?, 'Receipt tenant','ACTIVE','CG','XAF','Africa/Brazzaville','fr_CG',?,NOW(),?,NOW(),1)", [self::ORGANIZATION, self::ACTOR, self::ACTOR]);
@@ -170,6 +268,9 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
 
     private function cleanup(): void
     {
+        foreach (['messaging.outbox_messages', 'security.security_audit_entries', 'inventory_costing.stock_valuation_movement', 'inventory_costing.stock_valuation', 'inventory.stock_movement', 'inventory.stock'] as $table) {
+            $this->db->executeStatement(sprintf('DELETE FROM %s WHERE organization_id = ?', $table), [self::ORGANIZATION]);
+        }
         $this->db->executeStatement("UPDATE purchasing.goods_receipt_correction SET status = 'DRAFT', posted_by = NULL, posted_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
         $this->db->executeStatement("UPDATE purchasing.purchase_return SET status = 'DRAFT', shipped_by = NULL, shipped_at = NULL, cancelled_by = NULL, cancelled_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
         $this->db->executeStatement("UPDATE purchasing.goods_receipt SET status = 'DRAFT', posted_by = NULL, posted_at = NULL, cancelled_by = NULL, cancelled_at = NULL WHERE organization_id = ?", [self::ORGANIZATION]);
