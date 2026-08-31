@@ -94,7 +94,7 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/categories/{id}/deactivate')->getPost());
         self::assertNotNull($paths->getPath('/api/categories/{id}/archive')->getPost());
 
-        $requestBody = $paths->getPath('/api/categories/{id}')->getPatch()?->getRequestBody();
+        $requestBody = $paths->getPath('/api/categories/{id}')->getPatch()->getRequestBody();
         self::assertNotNull($requestBody);
         self::assertArrayHasKey('application/json', $requestBody->getContent());
         self::assertArrayHasKey('application/merge-patch+json', $requestBody->getContent());
@@ -289,5 +289,16 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/returns/{id}/complete')->getPost());
         self::assertNotNull($paths->getPath('/api/returns/{id}/cancel')->getPost());
         self::assertNotNull($paths->getPath('/api/returns/{id}')->getGet());
+    }
+
+    public function testPurchaseReturnOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/purchase-returns')->getPost());
+        self::assertNotNull($paths->getPath('/api/purchase-returns/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/ship')->getPost());
+        self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/cancel')->getPost());
     }
 }
