@@ -6,6 +6,7 @@ namespace Zandu\Modules\Inventory\Domain\StockCount;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, StockCountId, StoreId};
 
 final class StockCount
@@ -59,6 +60,21 @@ final class StockCount
     public static function reconstitute(StockCountId $id, OrganizationId $organizationId, StoreId $storeId, StockCountStatus $status, StockCountMode $mode, StockCountScopeType $scopeType, array $requestedProductIds, int $totalLineCount, int $countedLineCount, int $reconciledLineCount, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $startedBy, ?DateTimeImmutable $startedAt, ?ActorId $finalizationStartedBy, ?DateTimeImmutable $finalizationStartedAt, ?ActorId $completedBy, ?DateTimeImmutable $completedAt, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version): self
     {
         return new self($id, $organizationId, $storeId, $status, $mode, $scopeType, $requestedProductIds, $totalLineCount, $countedLineCount, $reconciledLineCount, $createdBy, self::utc($createdAt), $startedBy, self::nullableUtc($startedAt), $finalizationStartedBy, self::nullableUtc($finalizationStartedAt), $completedBy, self::nullableUtc($completedAt), $cancelledBy, self::nullableUtc($cancelledAt), $version);
+    }
+
+    public function start(ActorId $actorId, DateTimeImmutable $at, int $totalLineCount): void
+    {
+        if (StockCountStatus::Draft !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_NOT_DRAFT', 'Only a draft stock count can be started.');
+        }
+        if ($totalLineCount < 0) {
+            throw new \InvalidArgumentException('Stock count line total cannot be negative.');
+        }
+        $this->status = StockCountStatus::Open;
+        $this->totalLineCount = $totalLineCount;
+        $this->startedBy = $actorId;
+        $this->startedAt = self::utc($at);
+        ++$this->version;
     }
 
     private static function utc(DateTimeImmutable $date): DateTimeImmutable

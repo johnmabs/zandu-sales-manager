@@ -63,4 +63,20 @@ final class StockCountTest extends TestCase
         $this->expectException(\Zandu\Modules\Inventory\Domain\InventoryRuleViolation::class);
         StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000021', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000022', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000023', $ids), StockCountScopeType::Partial, ActorId::fromString('0199f600-0000-7000-8000-000000000024', $ids), new DateTimeImmutable(), StockCountMode::Blind, [$productId, $productId]);
     }
+
+    public function testDraftCanStartOnlyOnceAndCapturesProgressAudit(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000034', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000031', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000032', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000033', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+        $count->start($actor, new DateTimeImmutable('2026-08-31T20:00:00+01:00'), 2);
+
+        self::assertSame(StockCountStatus::Open, $count->status());
+        self::assertSame(2, $count->totalLineCount());
+        self::assertSame('2026-08-31T19:00:00+00:00', $count->startedAt()?->format(DATE_ATOM));
+        self::assertSame(2, $count->version());
+
+        $this->expectException(\Zandu\Modules\Inventory\Domain\InventoryRuleViolation::class);
+        $count->start($actor, new DateTimeImmutable(), 2);
+    }
 }
