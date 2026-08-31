@@ -23,7 +23,7 @@ validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | Terminé — Gate CI validé |
-| 7 | StockTransfer et StockCount | En cours — expédition physique StockTransfer |
+| 7 | StockTransfer et StockCount | En cours — cycle physique StockTransfer complet |
 
 Dernière validation consolidée le 31 août 2026 : **671 tests et 3 197
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
@@ -33,8 +33,8 @@ workflow GitHub Actions `Backend CI` sont également validés.
 
 Le [planning du Lot 7](docs/planning/zandu-lot-7-stock-transfer-stock-count.md)
 pilote désormais la tranche `StockTransfer & StockCount`. La fondation du
-transfert, son brouillon PostgreSQL/RLS et son expédition physique
-`TRANSFER_OUT` sont opérationnels ; réception, costing et StockCount suivent.
+transfert, son brouillon PostgreSQL/RLS, son transit et son cycle physique
+`TRANSFER_OUT → TRANSFER_IN` sont opérationnels ; costing et StockCount suivent.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

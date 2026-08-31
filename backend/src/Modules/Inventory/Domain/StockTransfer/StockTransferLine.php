@@ -61,4 +61,16 @@ final readonly class StockTransferLine
 
         return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $shippedQuantity, null);
     }
+
+    public function withReceivedQuantity(Quantity $receivedQuantity): self
+    {
+        if (null === $this->shippedQuantity) {
+            throw InventoryRuleViolation::with('TRANSFER_NOT_SHIPPED', 'A stock transfer line must be shipped before it can be received.');
+        }
+        if ($receivedQuantity->isNegative() || $receivedQuantity->compareTo($this->shippedQuantity) > 0) {
+            throw InventoryRuleViolation::with('TRANSFER_RECEIVED_QUANTITY_EXCEEDS_SHIPPED', 'Received transfer quantity must be between zero and the shipped quantity.');
+        }
+
+        return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $this->shippedQuantity, $receivedQuantity);
+    }
 }

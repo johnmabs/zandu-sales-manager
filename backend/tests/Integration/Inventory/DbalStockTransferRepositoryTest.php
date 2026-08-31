@@ -50,7 +50,7 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
         parent::tearDown();
     }
 
-    public function testShippedQuantitiesRoundTripWithinTenant(): void
+    public function testShippedAndReceivedQuantitiesRoundTripWithinTenant(): void
     {
         $organizationId = OrganizationId::fromString(self::ORGANIZATION, $this->ids);
         $transfer = StockTransfer::create(
@@ -77,14 +77,21 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
                 [$line->id()->toString() => $this->quantity('4')],
             );
             $this->repository->save($transfer);
+            $transfer->receive(
+                ActorId::fromString(self::ACTOR, $this->ids),
+                new DateTimeImmutable('2026-08-31T14:00:00Z'),
+                [$line->id()->toString() => $this->quantity('3')],
+            );
+            $this->repository->save($transfer);
 
             return $this->repository->get($transfer->organizationId(), $transfer->id());
         });
 
-        self::assertSame('SHIPPED', $restored->status()->value);
+        self::assertSame('RECEIVED', $restored->status()->value);
         self::assertSame('4.000000000000', $restored->lines()[0]->shippedQuantity()?->toString());
-        self::assertSame(self::ACTOR, $restored->shippedBy()?->toString());
-        self::assertSame(3, $restored->version());
+        self::assertSame('3.000000000000', $restored->lines()[0]->receivedQuantity()?->toString());
+        self::assertSame(self::ACTOR, $restored->receivedBy()?->toString());
+        self::assertSame(4, $restored->version());
     }
 
     private function fixtures(): void

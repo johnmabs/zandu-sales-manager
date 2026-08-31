@@ -168,6 +168,8 @@ services:
         alias: Zandu\Modules\Inventory\Application\RepositoryInventoryPurchaseReturnShipper
     Zandu\Modules\Inventory\Application\Contract\InventoryStockTransferShipper:
         alias: Zandu\Modules\Inventory\Application\RepositoryInventoryStockTransferShipper
+    Zandu\Modules\Inventory\Application\Contract\InventoryStockTransferReceiver:
+        alias: Zandu\Modules\Inventory\Application\RepositoryInventoryStockTransferReceiver
     Zandu\Modules\InventoryCosting\Domain\Valuation\StockValuationRepository:
         alias: Zandu\Modules\InventoryCosting\Infrastructure\Persistence\Orm\DoctrineStockValuationRepository
     Zandu\Modules\InventoryCosting\Domain\ValuationMovement\StockValuationMovementRepository:

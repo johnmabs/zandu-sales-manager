@@ -77,8 +77,10 @@ Le Lot 7 est en cours :
 Epic 7.1    TERMINÉ   StockTransfer aggregate et invariants
 Epic 7.2    TERMINÉ   Brouillon, persistence PostgreSQL, RLS et permissions
 Epic 7.3    TERMINÉ   Expédition physique atomique TRANSFER_OUT
-Epic 7.4    À FAIRE   Stock en transit
-Epic 7.5    À FAIRE   Réception finale TRANSFER_IN
+Epic 7.4    TERMINÉ   Transit expliqué par le document SHIPPED, sans faux stock
+Epic 7.5    TERMINÉ   Réception finale atomique TRANSFER_IN
+Epic 7.6    À FAIRE   Écarts de transit
+Epic 7.7    À FAIRE   Costing des transferts
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -9421,9 +9423,9 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epic 7.1 à 7.3 — StockTransfer et expédition source
+### Epic 7.1 à 7.5 — StockTransfer, transit et réception
 
-**Statut : TERMINÉ — fondation, brouillon et expédition physique**
+**Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
 - `StockTransfer` impose deux magasins distincts, un produit unique par ligne
   et le cycle `DRAFT → SHIPPED → RECEIVED` ou `DRAFT → CANCELLED` ;
@@ -9438,11 +9440,20 @@ CI lors de la prochaine publication manuelle.
   `TRANSFER / StockTransferId`, puis un événement outbox transactionnel ;
 - `Version20260831120000` étend le ledger et distingue `TRANSFER_OUT` de
   `TRANSFER_IN` dans la clé d’idempotence, condition nécessaire à la réception.
+- le transit reste représenté par le document `SHIPPED` et ses quantités, sans
+  créer un stock physique artificiel ;
+- `ReceiveStockTransfer` fige toutes les quantités reçues en une fois, ignore
+  les mouvements nuls, crée ou verrouille le stock destination et produit les
+  `TRANSFER_IN` idempotents ;
+- la réception reste autorisable en remédiation pendant une suspension, exige
+  le scope du magasin destination et publie un résumé d’écart dans l’outbox ;
+- `Version20260831130000` persiste `receivedBy/receivedAt` et garantit leur
+  cohérence avec le statut `RECEIVED`.
 
-Validation ciblée : 11 tests, 39 assertions ; PHPStan, conteneur Symfony et
-Deptrac layers/modules verts.
+Validation ciblée : 17 tests, 71 assertions ; migrations aller/retour, PHPStan
+et conteneur Symfony verts, Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter le stock en transit puis `ReceiveStockTransfer`, avant la
-valorisation économique dédiée du transfert.
+Implémenter les écarts de transit puis la valorisation économique dédiée du
+transfert.

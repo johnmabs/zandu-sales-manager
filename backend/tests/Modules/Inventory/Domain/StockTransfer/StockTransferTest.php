@@ -88,6 +88,40 @@ final class StockTransferTest extends TestCase
         $transfer->ship($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('5')]);
     }
 
+    public function testItReceivesEveryLineOnceWithinShippedQuantities(): void
+    {
+        $transfer = $this->transfer();
+        $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
+        $transfer->ship($this->actorId(), new DateTimeImmutable('2026-08-31T16:00:00Z'), [$this->lineId()->toString() => $this->quantity('3')]);
+        $transfer->receive($this->actorId(), new DateTimeImmutable('2026-08-31T17:00:00Z'), [$this->lineId()->toString() => $this->quantity('2')]);
+
+        self::assertSame(StockTransferStatus::Received, $transfer->status());
+        self::assertSame('2', $transfer->lines()[0]->receivedQuantity()?->toString());
+        self::assertTrue($this->actorId()->equals($transfer->receivedBy()));
+        self::assertSame('2026-08-31T17:00:00+00:00', $transfer->receivedAt()?->format(DATE_ATOM));
+    }
+
+    public function testItRejectsReceptionAboveShippedQuantity(): void
+    {
+        $transfer = $this->transfer();
+        $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
+        $transfer->ship($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('3')]);
+
+        $this->expectException(InventoryRuleViolation::class);
+        $transfer->receive($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('4')]);
+    }
+
+    public function testItRejectsASecondFinalReception(): void
+    {
+        $transfer = $this->transfer();
+        $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
+        $transfer->ship($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('3')]);
+        $transfer->receive($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('2')]);
+
+        $this->expectException(InventoryRuleViolation::class);
+        $transfer->receive($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('2')]);
+    }
+
     private function transfer(): StockTransfer
     {
         return StockTransfer::create($this->transferId(), $this->organizationId(), $this->sourceStoreId(), $this->destinationStoreId(), $this->actorId(), new DateTimeImmutable('2026-08-31T14:00:00Z'));

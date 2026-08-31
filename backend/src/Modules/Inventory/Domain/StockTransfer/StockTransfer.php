@@ -12,7 +12,7 @@ use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, StockTransferId, Store
 final class StockTransfer
 {
     /** @param list<StockTransferLine> $lines */
-    private function __construct(private readonly StockTransferId $id, private readonly OrganizationId $organizationId, private readonly StoreId $sourceStoreId, private readonly StoreId $destinationStoreId, private StockTransferStatus $status, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?ActorId $shippedBy, private ?DateTimeImmutable $shippedAt, private ?string $cancellationReason, private ?ActorId $cancelledBy, private ?DateTimeImmutable $cancelledAt, private int $version, private array $lines) {}
+    private function __construct(private readonly StockTransferId $id, private readonly OrganizationId $organizationId, private readonly StoreId $sourceStoreId, private readonly StoreId $destinationStoreId, private StockTransferStatus $status, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?ActorId $shippedBy, private ?DateTimeImmutable $shippedAt, private ?ActorId $receivedBy, private ?DateTimeImmutable $receivedAt, private ?string $cancellationReason, private ?ActorId $cancelledBy, private ?DateTimeImmutable $cancelledAt, private int $version, private array $lines) {}
 
     public static function create(StockTransferId $id, OrganizationId $organizationId, StoreId $sourceStoreId, StoreId $destinationStoreId, ActorId $createdBy, DateTimeImmutable $createdAt): self
     {
@@ -20,13 +20,13 @@ final class StockTransfer
             throw InventoryRuleViolation::with('STOCK_TRANSFER_SAME_STORE', 'Stock transfer source and destination must differ.');
         }
 
-        return new self($id, $organizationId, $sourceStoreId, $destinationStoreId, StockTransferStatus::Draft, $createdBy, $createdAt->setTimezone(new DateTimeZone('UTC')), null, null, null, null, null, 1, []);
+        return new self($id, $organizationId, $sourceStoreId, $destinationStoreId, StockTransferStatus::Draft, $createdBy, $createdAt->setTimezone(new DateTimeZone('UTC')), null, null, null, null, null, null, null, 1, []);
     }
 
     /** @param list<StockTransferLine> $lines */
-    public static function reconstitute(StockTransferId $id, OrganizationId $organizationId, StoreId $sourceStoreId, StoreId $destinationStoreId, StockTransferStatus $status, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $shippedBy, ?DateTimeImmutable $shippedAt, ?string $cancellationReason, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version, array $lines): self
+    public static function reconstitute(StockTransferId $id, OrganizationId $organizationId, StoreId $sourceStoreId, StoreId $destinationStoreId, StockTransferStatus $status, ActorId $createdBy, DateTimeImmutable $createdAt, ?ActorId $shippedBy, ?DateTimeImmutable $shippedAt, ?ActorId $receivedBy, ?DateTimeImmutable $receivedAt, ?string $cancellationReason, ?ActorId $cancelledBy, ?DateTimeImmutable $cancelledAt, int $version, array $lines): self
     {
-        return new self($id, $organizationId, $sourceStoreId, $destinationStoreId, $status, $createdBy, $createdAt, $shippedBy, $shippedAt, $cancellationReason, $cancelledBy, $cancelledAt, $version, $lines);
+        return new self($id, $organizationId, $sourceStoreId, $destinationStoreId, $status, $createdBy, $createdAt, $shippedBy, $shippedAt, $receivedBy, $receivedAt, $cancellationReason, $cancelledBy, $cancelledAt, $version, $lines);
     }
 
     public function addLine(StockTransferLine $line): void
@@ -110,6 +110,29 @@ final class StockTransfer
         ++$this->version;
     }
 
+    /** @param array<string, \Zandu\SharedKernel\Quantity\Quantity> $receivedQuantities keyed by StockTransferLineId */
+    public function receive(ActorId $actorId, DateTimeImmutable $at, array $receivedQuantities): void
+    {
+        if (StockTransferStatus::Shipped !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_TRANSFER_NOT_SHIPPED', 'Only a shipped stock transfer can be received.');
+        }
+        $receivedLines = [];
+        foreach ($this->lines as $line) {
+            $key = $line->id()->toString();
+            $quantity = $receivedQuantities[$key] ?? throw InventoryRuleViolation::with('TRANSFER_RECEIVED_QUANTITY_REQUIRED', 'Every stock transfer line requires a received quantity.');
+            $receivedLines[] = $line->withReceivedQuantity($quantity);
+            unset($receivedQuantities[$key]);
+        }
+        if ([] !== $receivedQuantities) {
+            throw InventoryRuleViolation::with('TRANSFER_RECEIVED_LINE_UNKNOWN', 'Received quantities contain an unknown stock transfer line.');
+        }
+        $this->lines = $receivedLines;
+        $this->status = StockTransferStatus::Received;
+        $this->receivedBy = $actorId;
+        $this->receivedAt = $at->setTimezone(new DateTimeZone('UTC'));
+        ++$this->version;
+    }
+
     private function ensureDraft(): void
     {
         if (StockTransferStatus::Draft !== $this->status) {
@@ -152,6 +175,14 @@ final class StockTransfer
     public function shippedAt(): ?DateTimeImmutable
     {
         return $this->shippedAt;
+    }
+    public function receivedBy(): ?ActorId
+    {
+        return $this->receivedBy;
+    }
+    public function receivedAt(): ?DateTimeImmutable
+    {
+        return $this->receivedAt;
     }
     public function cancellationReason(): ?string
     {
