@@ -5,7 +5,7 @@ conçue pour administrer des organisations, leurs magasins, leurs membres et
 leurs droits d'accès, ainsi que le catalogue, la tarification, les stocks, les
 caisses et les ventes.
 
-Le projet est actuellement en développement. Les **Lots 0 à 5** sont terminés,
+Le projet est actuellement en développement. Les **Lots 0 à 6** sont terminés,
 le **Gate M2 — première vente cash de bout en bout** est validé et le **Lot 5 —
 Inventory Costing & Returns** clôt la première partie du jalon M3 consacré à la
 gestion complète du stock. L'état détaillé, le backlog et les preuves de
@@ -22,7 +22,7 @@ validation sont disponibles dans
 | 3 | Fondations Inventory et Cash | Terminé |
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
-| 6 | Purchasing et Goods Receipts | En cours — retours fournisseur métier opérationnels |
+| 6 | Purchasing et Goods Receipts | Terminé — Gate CI validé |
 
 Dernière validation consolidée le 31 août 2026 : **671 tests et 3 197
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux

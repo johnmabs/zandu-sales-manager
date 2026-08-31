@@ -68,7 +68,7 @@ Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
 Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
 Epic 6.13   TERMINÉ   Corrections immuables de réception
 Epic 6.14   TERMINÉ   Retours fournisseur, preuves PostgreSQL incluses
-Gate Lot 6  PRÊT CI   Deuxième partie de M3 — approvisionnements fournisseurs
+Gate Lot 6  TERMINÉ   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
 Le détail du Lot 5 clôturé :
