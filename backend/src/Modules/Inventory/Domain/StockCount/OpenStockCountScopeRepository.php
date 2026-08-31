@@ -13,7 +13,7 @@ interface OpenStockCountScopeRepository
 
     public function isLocked(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): bool;
 
-    public function assertMovementAllowed(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): void;
+    public function assertMovementAllowed(OrganizationId $organizationId, StoreId $storeId, ProductId $productId, ?StockCountId $ownerStockCountId = null): void;
 
     public function release(OrganizationId $organizationId, StockCountId $stockCountId): void;
 }

@@ -59,6 +59,20 @@ final readonly class DbalStockCountLineRepository implements StockCountLineRepos
         return count(array_filter($rows, static fn(array $row): bool => null === $row['counted_quantity']));
     }
 
+    public function findPendingForUpdate(OrganizationId $organizationId, StockCountId $stockCountId, int $limit): array
+    {
+        if ($limit < 1) {
+            throw new \InvalidArgumentException('Stock count reconciliation batch size must be positive.');
+        }
+        $rows = $this->db->fetchAllAssociative(
+            'SELECT * FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND reconciliation_status=? ORDER BY product_id LIMIT ? FOR UPDATE',
+            [$organizationId->toString(), $stockCountId->toString(), StockCountReconciliationStatus::Pending->value, $limit],
+            [\Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ParameterType::STRING, \Doctrine\DBAL\ParameterType::INTEGER],
+        );
+
+        return array_map(fn(array $row): StockCountLine => $this->aggregate($row), $rows);
+    }
+
     /** @param array<string, mixed> $row */
     private function aggregate(array $row): StockCountLine
     {

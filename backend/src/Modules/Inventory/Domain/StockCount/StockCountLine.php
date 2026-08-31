@@ -56,6 +56,18 @@ final class StockCountLine
         ++$this->version;
     }
 
+    public function markReconciled(): void
+    {
+        if (null === $this->countedQuantity) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_LINE_UNCOUNTED', 'An uncounted stock count line cannot be reconciled.');
+        }
+        if (StockCountReconciliationStatus::Pending !== $this->reconciliationStatus) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_LINE_RECONCILED', 'A stock count line can be reconciled only once.');
+        }
+        $this->reconciliationStatus = StockCountReconciliationStatus::Reconciled;
+        ++$this->version;
+    }
+
     public function id(): StockCountLineId
     {
         return $this->id;

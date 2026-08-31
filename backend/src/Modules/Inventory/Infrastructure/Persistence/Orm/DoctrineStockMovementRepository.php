@@ -9,7 +9,7 @@ use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity,StockQuantity};
 use Zandu\Modules\Inventory\Domain\StockCount\OpenStockCountScopeRepository;
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement,StockMovementRepository,StockMovementSource,StockMovementType};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
-use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,ProductId,StockId,StoreId,UuidFactory};
+use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,ProductId,StockCountId,StockId,StoreId,UuidFactory};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final readonly class DoctrineStockMovementRepository implements StockMovementRepository
@@ -17,7 +17,7 @@ final readonly class DoctrineStockMovementRepository implements StockMovementRep
     public function __construct(private EntityManagerInterface $em, private UuidFactory $uuids, private BrickDecimalFactory $decimals, private OpenStockCountScopeRepository $stockCountScopes) {}
     public function append(StockMovement $movement): void
     {
-        $this->stockCountScopes->assertMovementAllowed($movement->organizationId(), $movement->storeId(), $movement->productId());
+        $this->assertMovementAllowed($movement);
         $this->em->persist(StockMovementRecord::fromAggregate($movement));
         $this->em->flush();
     }
@@ -26,7 +26,7 @@ final readonly class DoctrineStockMovementRepository implements StockMovementRep
         if (null !== $movement->source()->referenceId() && false !== $this->em->getConnection()->fetchOne('SELECT 1 FROM inventory.stock_movement WHERE organization_id=? AND product_id=? AND type=? AND source_type=? AND source_reference_id=?', [$movement->organizationId()->toString(), $movement->productId()->toString(), $movement->type()->value, $movement->source()->type(), $movement->source()->referenceId()])) {
             return false;
         }
-        $this->stockCountScopes->assertMovementAllowed($movement->organizationId(), $movement->storeId(), $movement->productId());
+        $this->assertMovementAllowed($movement);
         $affected = $this->em->getConnection()->executeStatement(
             'INSERT INTO inventory.stock_movement (id, organization_id, store_id, product_id, stock_id, type, quantity, previous_quantity, resulting_quantity, source_type, source_reference_id, reason, performed_by, occurred_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (organization_id, product_id, type, source_type, source_reference_id) WHERE source_reference_id IS NOT NULL DO NOTHING',
             [
@@ -63,8 +63,18 @@ final readonly class DoctrineStockMovementRepository implements StockMovementRep
             'GOODS_RECEIPT_CORRECTION' => StockMovementSource::goodsReceiptCorrection(\Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId::fromString((string) $referenceId, $this->uuids)),
             'PURCHASE_RETURN' => StockMovementSource::purchaseReturn(\Zandu\SharedKernel\Identity\PurchaseReturnId::fromString((string) $referenceId, $this->uuids)),
             'TRANSFER' => StockMovementSource::stockTransfer(\Zandu\SharedKernel\Identity\StockTransferId::fromString((string) $referenceId, $this->uuids)),
+            'STOCK_COUNT' => StockMovementSource::stockCount(StockCountId::fromString((string) $referenceId, $this->uuids)),
             default => StockMovementSource::manualAdjustment(null === $referenceId ? null : $this->uuids->fromString($referenceId)),
         };
         return StockMovement::record(\Zandu\SharedKernel\Identity\StockMovementId::fromString($r->id(), $f), OrganizationId::fromString($r->organizationId(), $f), StoreId::fromString($r->storeId(), $f), ProductId::fromString($r->productId(), $f), StockId::fromString($r->stockId(), $f), StockMovementType::from($r->type()), new MovementQuantity($q($r->quantity())), new StockQuantity($q($r->previousQuantity())), $source, $r->reason(), null === $r->performedBy() ? null : ActorId::fromString($r->performedBy(), $f), $r->occurredAt());
+    }
+
+    private function assertMovementAllowed(StockMovement $movement): void
+    {
+        $owner = in_array($movement->type(), [StockMovementType::StockCountCorrectionIn, StockMovementType::StockCountCorrectionOut], true)
+            && 'STOCK_COUNT' === $movement->source()->type()
+            ? StockCountId::fromString((string) $movement->source()->referenceId(), $this->uuids)
+            : null;
+        $this->stockCountScopes->assertMovementAllowed($movement->organizationId(), $movement->storeId(), $movement->productId(), $owner);
     }
 }

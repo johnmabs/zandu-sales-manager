@@ -106,6 +106,21 @@ final class StockCount
         ++$this->version;
     }
 
+    public function registerReconciledLines(int $lineCount): void
+    {
+        if (StockCountStatus::Finalizing !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_NOT_FINALIZING', 'Stock count reconciliation requires a finalizing stock count.');
+        }
+        if ($lineCount < 0 || $this->reconciledLineCount + $lineCount > $this->totalLineCount) {
+            throw new \InvalidArgumentException('Stock count reconciliation progress is inconsistent.');
+        }
+        if (0 === $lineCount) {
+            return;
+        }
+        $this->reconciledLineCount += $lineCount;
+        ++$this->version;
+    }
+
     private static function utc(DateTimeImmutable $date): DateTimeImmutable
     {
         return $date->setTimezone(new DateTimeZone('UTC'));

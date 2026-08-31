@@ -19,4 +19,7 @@ interface StockCountLineRepository
 
     /** Locks every line so no entry can change until the surrounding transaction ends. */
     public function countUncountedForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): int;
+
+    /** @return list<StockCountLine> */
+    public function findPendingForUpdate(OrganizationId $organizationId, StockCountId $stockCountId, int $limit): array;
 }

@@ -44,7 +44,12 @@ produit pendant le comptage. Les quantités peuvent être saisies ou corrigées,
 individuellement ou par batch atomique, avec zéro explicite, révision et
 contrôle optimiste par ligne. Une fois toutes les lignes comptées, le document
 passe atomiquement à `FINALIZING`, conserve ses scopes et fige toute nouvelle
-correction. La réconciliation physique par batch suit.
+correction. La réconciliation physique reprend alors uniquement les lignes
+`PENDING` par batch transactionnel : le snapshot est revérifié sous verrou,
+les écarts produisent des mouvements `STOCK_COUNT_CORRECTION_IN/OUT` liés au
+comptage propriétaire, et une variance nulle ne produit aucun faux mouvement.
+Un conflit de snapshot annule tout le batch ; la valorisation de ces corrections
+reste la prochaine étape dédiée.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

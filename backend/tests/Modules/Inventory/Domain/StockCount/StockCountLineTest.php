@@ -53,6 +53,26 @@ final class StockCountLineTest extends TestCase
         self::assertSame(3, $line->version());
     }
 
+    public function testOnlyACountedPendingLineCanBeReconciled(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $line = $this->line('5');
+        try {
+            $line->markReconciled();
+            self::fail('An uncounted line must not be reconciled.');
+        } catch (InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_LINE_UNCOUNTED', $exception->errorCode());
+        }
+
+        $line->record(Quantity::fromString('4', new BrickDecimalFactory()), ActorId::fromString('0199f700-0000-7000-8000-000000000006', $ids), new DateTimeImmutable());
+        $line->markReconciled();
+        self::assertSame(StockCountReconciliationStatus::Reconciled, $line->reconciliationStatus());
+        self::assertSame(3, $line->version());
+
+        $this->expectException(InventoryRuleViolation::class);
+        $line->markReconciled();
+    }
+
     private function line(string $expectedQuantity): StockCountLine
     {
         $ids = new SymfonyUuidFactory();

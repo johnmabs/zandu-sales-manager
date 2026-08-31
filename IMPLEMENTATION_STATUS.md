@@ -89,6 +89,7 @@ Epic 7.11   TERMINÉ   Ouverture atomique et snapshot des quantités théoriques
 Epic 7.12   TERMINÉ   Scopes produits exclusifs et mouvements bloqués
 Epic 7.13   TERMINÉ   Saisie simple/batch, zéro, corrections et versions de ligne
 Epic 7.14   TERMINÉ   Gel atomique OPEN vers FINALIZING après contrôle complet
+Epic 7.15   TERMINÉ   Réconciliation physique PENDING par batch atomique
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -9431,7 +9432,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.14 — StockTransfer stabilisé et StockCount figé
+### Epics 7.1 à 7.15 — StockTransfer stabilisé et StockCount réconciliable
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9529,12 +9530,32 @@ CI lors de la prochaine publication manuelle.
 - le verrou partagé avec `RecordStockCount` sérialise une dernière saisie face
   à la finalisation ; dès `FINALIZING`, toute nouvelle correction reçoit
   `STOCK_COUNT_NOT_OPEN`.
+- `ReconcileStockCountBatch` verrouille le document `FINALIZING`, sélectionne
+  uniquement les lignes `PENDING` dans l'ordre produit et borne chaque lot à
+  500 lignes ; un appel sans ligne restante est un rejeu sans effet ;
+- chaque ligne compare sous verrou le Stock courant à son snapshot théorique ;
+  une divergence, y compris l'apparition inattendue d'une position absente au
+  démarrage, renvoie `STOCK_COUNT_SNAPSHOT_CONFLICT` et annule tout le batch ;
+- un écart positif crée ou corrige la position avec
+  `STOCK_COUNT_CORRECTION_IN`, un écart négatif produit
+  `STOCK_COUNT_CORRECTION_OUT`, et un écart nul marque seulement la ligne sans
+  mouvement artificiel ;
+- les mouvements portent la source `STOCK_COUNT / StockCountId` : le verrou de
+  scope les autorise uniquement pour le comptage propriétaire et continue de
+  refuser toute écriture concurrente étrangère ;
+- `Version20260831180000` étend les contraintes du ledger physique à ces deux
+  mouvements et à leur source ; le compteur `reconciledLineCount` progresse
+  dans la même transaction que les Stocks, mouvements et lignes ;
+- une preuve PostgreSQL injecte un conflit sur la deuxième ligne après une
+  première correction : quantité, ledger, états de ligne et compteur sont tous
+  restaurés. La valorisation correspondante reste volontairement affectée à
+  l'Epic 7.18.
 
-Validation ciblée StockCount : 13 tests, 68 assertions. Suite complète : 717
-tests, 3 464 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
-Deptrac layers/modules sans violation.
+Validation ciblée StockCount : 17 tests, 90 assertions. Suite complète : 721
+tests, 3 486 assertions. Migration aller/retour, PHPStan, conteneur Symfony et
+Deptrac layers/modules verts (0 violation, 10 uncovered).
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.15 : réconcilier les lignes `PENDING` par batch, vérifier
-les snapshots et créer les corrections physiques IN/OUT nécessaires.
+Implémenter l'Epic 7.16 : prouver la reprise après crash sur les seules lignes
+`PENDING`, sans rejeu des corrections déjà réconciliées.

@@ -34,9 +34,11 @@ final readonly class DbalOpenStockCountScopeRepository implements OpenStockCount
         return false !== $this->db->fetchOne('SELECT 1 FROM inventory.open_stock_count_scope WHERE organization_id=? AND store_id=? AND product_id=?', [$organizationId->toString(), $storeId->toString(), $productId->toString()]);
     }
 
-    public function assertMovementAllowed(OrganizationId $organizationId, StoreId $storeId, ProductId $productId): void
+    public function assertMovementAllowed(OrganizationId $organizationId, StoreId $storeId, ProductId $productId, ?StockCountId $ownerStockCountId = null): void
     {
-        if ($this->isLocked($organizationId, $storeId, $productId)) {
+        $this->lockPosition($organizationId, $storeId, $productId);
+        $stockCountId = $this->db->fetchOne('SELECT stock_count_id FROM inventory.open_stock_count_scope WHERE organization_id=? AND store_id=? AND product_id=?', [$organizationId->toString(), $storeId->toString(), $productId->toString()]);
+        if (false !== $stockCountId && (null === $ownerStockCountId || $stockCountId !== $ownerStockCountId->toString())) {
             throw InventoryRuleViolation::with('STOCK_COUNT_PRODUCT_LOCKED', 'Stock movements are forbidden while the product belongs to an open stock count.');
         }
     }

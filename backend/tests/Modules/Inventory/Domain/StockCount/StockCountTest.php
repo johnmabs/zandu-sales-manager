@@ -116,4 +116,21 @@ final class StockCountTest extends TestCase
         $this->expectException(\Zandu\Modules\Inventory\Domain\InventoryRuleViolation::class);
         $count->registerCountedLines(0);
     }
+
+    public function testFinalizingCountTracksReconciliationProgress(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000064', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000061', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000062', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000063', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+        $count->start($actor, new DateTimeImmutable(), 2);
+        $count->registerCountedLines(2);
+        $count->beginFinalization($actor, new DateTimeImmutable());
+        $count->registerReconciledLines(1);
+
+        self::assertSame(1, $count->reconciledLineCount());
+        self::assertSame(5, $count->version());
+
+        $this->expectException(\InvalidArgumentException::class);
+        $count->registerReconciledLines(2);
+    }
 }

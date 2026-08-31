@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
 use LogicException;
+use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
@@ -89,6 +90,19 @@ final class Stock
         $result = $this->quantityOnHand->subtract($quantity);
         self::assertQuantity($result);
         $this->quantityOnHand = $result;
+        ++$this->version;
+    }
+
+    public function reconcile(StockQuantity $expectedQuantity, StockQuantity $countedQuantity): void
+    {
+        $this->requireInitialized();
+        if (!$this->quantityOnHand->value()->equals($expectedQuantity->value())) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_SNAPSHOT_CONFLICT', 'Current stock no longer matches the stock count snapshot.');
+        }
+        if ($this->quantityOnHand->value()->equals($countedQuantity->value())) {
+            return;
+        }
+        $this->quantityOnHand = $countedQuantity;
         ++$this->version;
     }
 
