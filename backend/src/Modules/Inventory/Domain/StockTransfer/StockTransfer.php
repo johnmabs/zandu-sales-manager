@@ -144,6 +144,44 @@ final class StockTransfer
         return false;
     }
 
+    /** @param array<string, array{unitCost: \Zandu\SharedKernel\Money\Money,totalValue: \Zandu\SharedKernel\Money\Money}> $costs keyed by ProductId */
+    public function attachShipmentCosts(array $costs): void
+    {
+        if (StockTransferStatus::Shipped !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_TRANSFER_NOT_SHIPPED', 'Shipment costs require a shipped transfer.');
+        }
+        foreach ($this->lines as $index => $line) {
+            if (null === $line->shippedQuantity() || $line->shippedQuantity()->isZero()) {
+                continue;
+            }
+            $cost = $costs[$line->productId()->toString()] ?? throw InventoryRuleViolation::with('TRANSFER_COST_SNAPSHOT_REQUIRED', 'Every positive shipped line requires a cost snapshot.');
+            $this->lines[$index] = $line->withShipmentCost($cost['unitCost'], $cost['totalValue']);
+            unset($costs[$line->productId()->toString()]);
+        }
+        if ([] !== $costs) {
+            throw InventoryRuleViolation::with('TRANSFER_COST_PRODUCT_UNKNOWN', 'Shipment costs contain an unknown product.');
+        }
+    }
+
+    /** @param array<string, array{unitCost: \Zandu\SharedKernel\Money\Money,totalValue: \Zandu\SharedKernel\Money\Money}> $costs keyed by ProductId */
+    public function attachReceivedValues(array $costs): void
+    {
+        if (StockTransferStatus::Received !== $this->status) {
+            throw InventoryRuleViolation::with('STOCK_TRANSFER_NOT_RECEIVED', 'Received values require a received transfer.');
+        }
+        foreach ($this->lines as $index => $line) {
+            if (null === $line->receivedQuantity() || $line->receivedQuantity()->isZero()) {
+                continue;
+            }
+            $cost = $costs[$line->productId()->toString()] ?? throw InventoryRuleViolation::with('TRANSFER_RECEIVED_VALUE_REQUIRED', 'Every positive received line requires a value snapshot.');
+            $this->lines[$index] = $line->withReceivedValue($cost['totalValue']);
+            unset($costs[$line->productId()->toString()]);
+        }
+        if ([] !== $costs) {
+            throw InventoryRuleViolation::with('TRANSFER_COST_PRODUCT_UNKNOWN', 'Received values contain an unknown product.');
+        }
+    }
+
     /** @return array<string, \Zandu\SharedKernel\Quantity\Quantity> keyed by StockTransferLineId */
     public function transitDiscrepancies(): array
     {

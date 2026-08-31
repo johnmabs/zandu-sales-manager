@@ -44,13 +44,14 @@ final readonly class ShipStockTransferHandler
                 }
             }
             try {
-                $count = $this->inventory->ship(new ShipStockTransferStock($organizationId, $transfer->sourceStoreId(), $transfer->id(), $items, $command->actorContext, $now));
+                $result = $this->inventory->ship(new ShipStockTransferStock($organizationId, $transfer->sourceStoreId(), $transfer->id(), $items, $command->actorContext, $now));
             } catch (StockTransferStockUnavailable) {
                 throw InventoryRuleViolation::with('TRANSFER_INSUFFICIENT_STOCK', 'Stock transfer quantity exceeds the available source stock.');
             }
-            if ($count !== count($items)) {
+            if ($result->processedCount !== count($items)) {
                 throw InventoryRuleViolation::with('STOCK_TRANSFER_CONFLICT', 'Stock transfer shipment is incomplete.');
             }
+            $transfer->attachShipmentCosts($result->costs);
             $this->transfers->save($transfer);
             $this->outbox->append(new OutboxMessage(OutboxMessageId::generate($this->ids), $organizationId, 'inventory.stock_transfer_shipped.v1', ['stockTransferId' => $transfer->id()->toString(), 'sourceStoreId' => $transfer->sourceStoreId()->toString(), 'destinationStoreId' => $transfer->destinationStoreId()->toString(), 'lineCount' => count($transfer->lines()), 'commandId' => $command->commandId], $command->actorContext->correlationId(), $command->actorContext->causationId(), $now));
             return $transfer;

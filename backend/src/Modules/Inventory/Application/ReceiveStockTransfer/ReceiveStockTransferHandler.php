@@ -41,13 +41,15 @@ final readonly class ReceiveStockTransferHandler
                     throw new \LogicException('Received stock transfer line quantities are incomplete.');
                 }
                 if (!$quantity->isZero()) {
-                    $items[] = ['productId' => $line->productId(), 'baseQuantity' => $quantity];
+                    $unitCost = $line->shippedUnitCostSnapshot() ?? throw new \LogicException('Shipped transfer cost snapshot is missing.');
+                    $items[] = ['productId' => $line->productId(), 'baseQuantity' => $quantity, 'incomingUnitCost' => $unitCost->amount()];
                 }
             }
-            $count = $this->inventory->receive(new ReceiveStockTransferStock($organizationId, $transfer->destinationStoreId(), $transfer->id(), $items, $command->actorContext, $now));
-            if ($count !== count($items)) {
+            $result = $this->inventory->receive(new ReceiveStockTransferStock($organizationId, $transfer->destinationStoreId(), $transfer->id(), $items, $command->actorContext, $now));
+            if ($result->processedCount !== count($items)) {
                 throw InventoryRuleViolation::with('STOCK_TRANSFER_CONFLICT', 'Stock transfer reception is incomplete.');
             }
+            $transfer->attachReceivedValues($result->costs);
             $this->transfers->save($transfer);
             $this->outbox->append(new OutboxMessage(OutboxMessageId::generate($this->ids), $organizationId, 'inventory.stock_transfer_received.v1', ['stockTransferId' => $transfer->id()->toString(), 'sourceStoreId' => $transfer->sourceStoreId()->toString(), 'destinationStoreId' => $transfer->destinationStoreId()->toString(), 'lineCount' => count($transfer->lines()), 'hasDiscrepancy' => $transfer->hasTransitDiscrepancy(), 'commandId' => $command->commandId], $command->actorContext->correlationId(), $command->actorContext->causationId(), $now));
             return $transfer;

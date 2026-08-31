@@ -6,5 +6,5 @@ namespace Zandu\Modules\Inventory\Application\Contract;
 
 interface InventoryStockTransferShipper
 {
-    public function ship(ShipStockTransferStock $request): int;
+    public function ship(ShipStockTransferStock $request): StockTransferStockResult;
 }

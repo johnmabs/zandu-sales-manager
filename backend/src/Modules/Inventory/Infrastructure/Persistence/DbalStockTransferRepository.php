@@ -10,6 +10,7 @@ use LogicException;
 use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferLine, StockTransferRepository, StockTransferStatus};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockTransferId, StockTransferLineId, StoreId, UuidFactory};
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final readonly class DbalStockTransferRepository implements StockTransferRepository
@@ -31,13 +32,13 @@ final readonly class DbalStockTransferRepository implements StockTransferReposit
         if (StockTransferStatus::Draft === $transfer->status()) {
             $this->db->delete('inventory.stock_transfer_line', ['organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id']]);
             foreach ($transfer->lines() as $line) {
-                $this->db->insert('inventory.stock_transfer_line', ['id' => $line->id()->toString(), 'organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id'], 'product_id' => $line->productId()->toString(), 'requested_quantity' => $line->requestedQuantity()->toString(), 'shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString()]);
+                $this->db->insert('inventory.stock_transfer_line', $this->lineData($line, $data));
             }
 
             return;
         }
         foreach ($transfer->lines() as $line) {
-            $affected = $this->db->update('inventory.stock_transfer_line', ['shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString()], ['id' => $line->id()->toString(), 'organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id']]);
+            $affected = $this->db->update('inventory.stock_transfer_line', ['shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString(), 'shipped_unit_cost_snapshot' => $line->shippedUnitCostSnapshot()?->amount()->toString(), 'shipped_value_snapshot' => $line->shippedValueSnapshot()?->amount()->toString(), 'received_value_snapshot' => $line->receivedValueSnapshot()?->amount()->toString(), 'cost_currency' => $line->shippedUnitCostSnapshot()?->currency()->code()], ['id' => $line->id()->toString(), 'organization_id' => $data['organization_id'], 'stock_transfer_id' => $data['id']]);
             if (1 !== $affected) {
                 throw new LogicException('Stock transfer line was modified concurrently.');
             }
@@ -61,7 +62,7 @@ final readonly class DbalStockTransferRepository implements StockTransferReposit
         if (false === $row) {
             return null;
         }
-        $lines = array_map(fn(array $line): StockTransferLine => new StockTransferLine(StockTransferLineId::fromString((string) $line['id'], $this->ids), $transferId, ProductId::fromString((string) $line['product_id'], $this->ids), $this->quantity($line['requested_quantity']), null === $line['shipped_quantity'] ? null : $this->quantity($line['shipped_quantity']), null === $line['received_quantity'] ? null : $this->quantity($line['received_quantity'])), $this->db->fetchAllAssociative('SELECT * FROM inventory.stock_transfer_line WHERE organization_id = ? AND stock_transfer_id = ? ORDER BY id', [$organizationId->toString(), $transferId->toString()]));
+        $lines = array_map(fn(array $line): StockTransferLine => new StockTransferLine(StockTransferLineId::fromString((string) $line['id'], $this->ids), $transferId, ProductId::fromString((string) $line['product_id'], $this->ids), $this->quantity($line['requested_quantity']), null === $line['shipped_quantity'] ? null : $this->quantity($line['shipped_quantity']), null === $line['received_quantity'] ? null : $this->quantity($line['received_quantity']), $this->money($line['shipped_unit_cost_snapshot'], $line['cost_currency']), $this->money($line['shipped_value_snapshot'], $line['cost_currency']), $this->money($line['received_value_snapshot'], $line['cost_currency'])), $this->db->fetchAllAssociative('SELECT * FROM inventory.stock_transfer_line WHERE organization_id = ? AND stock_transfer_id = ? ORDER BY id', [$organizationId->toString(), $transferId->toString()]));
         return StockTransfer::reconstitute($transferId, $organizationId, StoreId::fromString((string) $row['source_store_id'], $this->ids), StoreId::fromString((string) $row['destination_store_id'], $this->ids), StockTransferStatus::from((string) $row['status']), ActorId::fromString((string) $row['created_by'], $this->ids), new DateTimeImmutable((string) $row['created_at']), $this->actor($row['shipped_by']), $this->date($row['shipped_at']), $this->actor($row['received_by']), $this->date($row['received_at']), null === $row['cancellation_reason'] ? null : (string) $row['cancellation_reason'], $this->actor($row['cancelled_by']), $this->date($row['cancelled_at']), (int) $row['version'], $lines);
     }
     /** @return array<string,mixed> */ private function data(StockTransfer $transfer): array
@@ -71,6 +72,18 @@ final readonly class DbalStockTransferRepository implements StockTransferReposit
     private function quantity(mixed $value): Quantity
     {
         return Quantity::fromString((string) $value, $this->decimals);
+    }
+    /**
+     * @param array<string, mixed> $transferData
+     * @return array<string, mixed>
+     */
+    private function lineData(StockTransferLine $line, array $transferData): array
+    {
+        return ['id' => $line->id()->toString(), 'organization_id' => $transferData['organization_id'], 'stock_transfer_id' => $transferData['id'], 'product_id' => $line->productId()->toString(), 'requested_quantity' => $line->requestedQuantity()->toString(), 'shipped_quantity' => $line->shippedQuantity()?->toString(), 'received_quantity' => $line->receivedQuantity()?->toString(), 'shipped_unit_cost_snapshot' => $line->shippedUnitCostSnapshot()?->amount()->toString(), 'shipped_value_snapshot' => $line->shippedValueSnapshot()?->amount()->toString(), 'received_value_snapshot' => $line->receivedValueSnapshot()?->amount()->toString(), 'cost_currency' => $line->shippedUnitCostSnapshot()?->currency()->code()];
+    }
+    private function money(mixed $amount, mixed $currency): ?Money
+    {
+        return null === $amount || null === $currency ? null : Money::fromString((string) $amount, Currency::fromCode((string) $currency), $this->decimals);
     }
     private function actor(mixed $value): ?ActorId
     {

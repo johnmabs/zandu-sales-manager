@@ -36,6 +36,10 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
             return $this->initialize($movement, $this->requiredIncomingCost($incomingUnitCost));
         }
 
+        if ($movement->initializeIfMissing && $movement->type->isIncoming() && null === $this->valuations->findByStock($organizationId, $movement->stockId)) {
+            return $this->initialize($movement, $this->requiredIncomingCost($incomingUnitCost));
+        }
+
         $valuation = $this->valuations->getByStockForUpdate($organizationId, $movement->stockId);
         if (!$valuation->quantityOnHand()->equals($movement->previousQuantity)) {
             throw InventoryCostingRuleViolation::with(
@@ -114,6 +118,8 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
             InventoryCostingMovementType::GoodsReceiptCorrectionIn => StockValuationMovementType::GoodsReceiptCorrectionIn,
             InventoryCostingMovementType::GoodsReceiptCorrectionOut => StockValuationMovementType::GoodsReceiptCorrectionOut,
             InventoryCostingMovementType::PurchaseReturn => StockValuationMovementType::PurchaseReturn,
+            InventoryCostingMovementType::TransferOut => StockValuationMovementType::TransferOut,
+            InventoryCostingMovementType::TransferIn => StockValuationMovementType::TransferIn,
         };
 
         return StockValuationMovement::record(

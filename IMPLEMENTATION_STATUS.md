@@ -80,7 +80,7 @@ Epic 7.3    TERMINÉ   Expédition physique atomique TRANSFER_OUT
 Epic 7.4    TERMINÉ   Transit expliqué par le document SHIPPED, sans faux stock
 Epic 7.5    TERMINÉ   Réception finale atomique TRANSFER_IN
 Epic 7.6    TERMINÉ   Écarts de transit dérivés et conservés par ligne
-Epic 7.7    À FAIRE   Costing des transferts
+Epic 7.7    TERMINÉ   Valeur transférée au coût source avec perte de transit
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -117,8 +117,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260831100000 appliquée en dernier
-Tests                 671 tests, 3 197 assertions
+Migrations           Version20260831140000 appliquée en dernier
+Tests                 695 tests, 3 319 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9452,10 +9452,18 @@ CI lors de la prochaine publication manuelle.
 - chaque ligne reçue expose l’écart immuable `shipped - received` ; le transfert
   fournit le drapeau et la collection des seuls écarts positifs, sans créer de
   mouvement compensatoire au magasin destination.
+- l’expédition retire la valeur au coût moyen source et fige coût unitaire et
+  valeur transportée sur la ligne ; la réception réutilise exclusivement ce
+  coût, initialise si nécessaire la valorisation destination et conserve la
+  différence comme perte de valeur en transit ;
+- `Version20260831140000` persiste les snapshots monétaires et autorise les
+  mouvements de valorisation `TRANSFER_OUT/TRANSFER_IN` liés au transfert.
 
-Validation ciblée : 18 tests, 78 assertions ; migrations aller/retour, PHPStan
-et conteneur Symfony verts, Deptrac layers/modules sans violation.
+Validation ciblée : 29 tests, 145 assertions. Suite complète : 695 tests,
+3 319 assertions. Migrations aller/retour, PHPStan et conteneur Symfony verts,
+Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter la valorisation économique dédiée du transfert.
+Prouver l’idempotence et la concurrence des transferts, puis démarrer
+`StockCount`.

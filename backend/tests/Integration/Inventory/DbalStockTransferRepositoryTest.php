@@ -13,6 +13,7 @@ use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockTransferId, StockTransferLineId, StoreId};
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final class DbalStockTransferRepositoryTest extends KernelTestCase
@@ -76,12 +77,14 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
                 new DateTimeImmutable('2026-08-31T13:00:00Z'),
                 [$line->id()->toString() => $this->quantity('4')],
             );
+            $transfer->attachShipmentCosts([self::PRODUCT => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('8')]]);
             $this->repository->save($transfer);
             $transfer->receive(
                 ActorId::fromString(self::ACTOR, $this->ids),
                 new DateTimeImmutable('2026-08-31T14:00:00Z'),
                 [$line->id()->toString() => $this->quantity('3')],
             );
+            $transfer->attachReceivedValues([self::PRODUCT => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('6')]]);
             $this->repository->save($transfer);
 
             return $this->repository->get($transfer->organizationId(), $transfer->id());
@@ -93,6 +96,8 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
         self::assertSame(self::ACTOR, $restored->receivedBy()?->toString());
         self::assertSame(4, $restored->version());
         self::assertSame('1.000000000000', $restored->transitDiscrepancies()[self::LINE]->toString());
+        self::assertSame('8.000000', $restored->lines()[0]->shippedValueSnapshot()?->amount()->toString());
+        self::assertSame('2.000000', $restored->lines()[0]->transitLossValue()?->amount()->toString());
     }
 
     private function fixtures(): void
@@ -115,5 +120,9 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, $this->decimals);
+    }
+    private function money(string $value): Money
+    {
+        return Money::fromString($value, Currency::fromCode('XAF'), $this->decimals);
     }
 }

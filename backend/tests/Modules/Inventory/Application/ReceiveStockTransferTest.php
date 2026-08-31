@@ -7,12 +7,13 @@ namespace Zandu\Tests\Modules\Inventory\Application;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
-use Zandu\Modules\Inventory\Application\Contract\{InventoryStockTransferReceiver, ReceiveStockTransferStock};
+use Zandu\Modules\Inventory\Application\Contract\{InventoryStockTransferReceiver, ReceiveStockTransferStock, StockTransferStockResult};
 use Zandu\Modules\Inventory\Application\ReceiveStockTransfer\{ReceiveStockTransfer, ReceiveStockTransferHandler};
 use Zandu\Modules\Inventory\Application\RepositoryInventoryStockTransferReceiver;
 use Zandu\Modules\Inventory\Domain\Stock\{Stock, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementType};
 use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferLine, StockTransferRepository, StockTransferStatus};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryMovementValuer, ValueInventoryMovement, ValuedInventoryMovement};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard, OperationalMode};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
@@ -20,6 +21,7 @@ use Zandu\SharedKernel\Access\{PermissionCode, ResourceScope};
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockTransferId, StockTransferLineId, StoreId};
 use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxMessage, OutboxRepository};
+use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
 use Zandu\Tests\SharedKernel\Time\FrozenClock;
@@ -44,7 +46,7 @@ final class ReceiveStockTransferTest extends TestCase
         $repository->expects(self::once())->method('getForUpdate')->willReturn($transfer);
         $repository->expects(self::once())->method('save')->with($transfer);
         $inventory = $this->createMock(InventoryStockTransferReceiver::class);
-        $inventory->expects(self::once())->method('receive')->with(self::callback(fn(ReceiveStockTransferStock $request): bool => '2' === $request->items[0]['baseQuantity']->toString() && $this->destinationStoreId()->equals($request->destinationStoreId)))->willReturn(1);
+        $inventory->expects(self::once())->method('receive')->with(self::callback(fn(ReceiveStockTransferStock $request): bool => '2' === $request->items[0]['baseQuantity']->toString() && $this->destinationStoreId()->equals($request->destinationStoreId)))->willReturn(new StockTransferStockResult(1, [$this->productId()->toString() => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('4')]]));
         $authorization = $this->createMock(AuthorizationService::class);
         $authorization->expects(self::once())->method('authorize')->with($this->actor(), PermissionCode::StockTransferReceive, self::callback(fn(ResourceScope $scope): bool => $this->destinationStoreId()->equals($scope->storeId)));
         $guard = $this->createMock(OperationalGuard::class);
@@ -67,9 +69,11 @@ final class ReceiveStockTransferTest extends TestCase
         $stocks->expects(self::once())->method('save')->with(self::callback(static fn(Stock $stock): bool => $stock->initialized() && '3' === $stock->quantityOnHand()->toString()));
         $movements = $this->createMock(StockMovementRepository::class);
         $movements->expects(self::once())->method('appendOnce')->with(self::callback(fn(StockMovement $movement): bool => StockMovementType::TransferIn === $movement->type() && 'TRANSFER' === $movement->source()->type() && $this->transferId()->toString() === $movement->source()->referenceId()))->willReturn(true);
-        $receiver = new RepositoryInventoryStockTransferReceiver($stocks, $movements, new SymfonyUuidV7Generator(), $this->decimals);
+        $costing = $this->createMock(InventoryMovementValuer::class);
+        $costing->expects(self::once())->method('value')->willReturnCallback(fn(ValueInventoryMovement $movement): ValuedInventoryMovement => new ValuedInventoryMovement($movement->stockId, $movement->stockMovementId, $movement->quantity, $this->money('2'), $this->money('6'), 1, $movement->occurredAt));
+        $receiver = new RepositoryInventoryStockTransferReceiver($stocks, $movements, $costing, new SymfonyUuidV7Generator(), $this->decimals);
 
-        self::assertSame(1, $receiver->receive(new ReceiveStockTransferStock($this->organizationId(), $this->destinationStoreId(), $this->transferId(), [['productId' => $this->productId(), 'baseQuantity' => $this->quantity('3')]], $this->actor(), $this->clock->now())));
+        self::assertSame(1, $receiver->receive(new ReceiveStockTransferStock($this->organizationId(), $this->destinationStoreId(), $this->transferId(), [['productId' => $this->productId(), 'baseQuantity' => $this->quantity('3'), 'incomingUnitCost' => $this->money('2')->amount()]], $this->actor(), $this->clock->now()))->processedCount);
     }
 
     public function testHandlerKeepsAZeroReceivedLineWithoutRequestingAStockMovement(): void
@@ -79,7 +83,7 @@ final class ReceiveStockTransferTest extends TestCase
         $repository->method('getForUpdate')->willReturn($transfer);
         $repository->expects(self::once())->method('save');
         $inventory = $this->createMock(InventoryStockTransferReceiver::class);
-        $inventory->expects(self::once())->method('receive')->with(self::callback(static fn(ReceiveStockTransferStock $request): bool => [] === $request->items))->willReturn(0);
+        $inventory->expects(self::once())->method('receive')->with(self::callback(static fn(ReceiveStockTransferStock $request): bool => [] === $request->items))->willReturn(new StockTransferStockResult(0, []));
         $handler = new ReceiveStockTransferHandler($repository, $inventory, new ReceiveTransferTransaction(), $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $this->createStub(OutboxRepository::class), new SymfonyUuidV7Generator(), $this->clock);
 
         $result = $handler(new ReceiveStockTransfer($transfer->id(), [$this->lineId()->toString() => $this->quantity('0')], $this->actor()));
@@ -92,6 +96,7 @@ final class ReceiveStockTransferTest extends TestCase
         $transfer = StockTransfer::create($this->transferId(), $this->organizationId(), $this->sourceStoreId(), $this->destinationStoreId(), $this->actorId(), $this->clock->now());
         $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
         $transfer->ship($this->actorId(), $this->clock->now(), [$this->lineId()->toString() => $this->quantity('3')]);
+        $transfer->attachShipmentCosts([$this->productId()->toString() => ['unitCost' => $this->money('2'), 'totalValue' => $this->money('6')]]);
         return $transfer;
     }
     private function actor(): ActorContext
@@ -129,6 +134,10 @@ final class ReceiveStockTransferTest extends TestCase
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, $this->decimals);
+    }
+    private function money(string $value): Money
+    {
+        return Money::fromString($value, Currency::fromCode('XAF'), $this->decimals);
     }
 }
 

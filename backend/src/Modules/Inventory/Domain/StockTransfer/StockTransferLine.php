@@ -6,6 +6,7 @@ namespace Zandu\Modules\Inventory\Domain\StockTransfer;
 
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\SharedKernel\Identity\{ProductId, StockTransferId, StockTransferLineId};
+use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
 
 final readonly class StockTransferLine
@@ -17,6 +18,9 @@ final readonly class StockTransferLine
         private Quantity $requestedQuantity,
         private ?Quantity $shippedQuantity = null,
         private ?Quantity $receivedQuantity = null,
+        private ?Money $shippedUnitCostSnapshot = null,
+        private ?Money $shippedValueSnapshot = null,
+        private ?Money $receivedValueSnapshot = null,
     ) {
         if ($requestedQuantity->isZero() || $requestedQuantity->isNegative()) {
             throw InventoryRuleViolation::with('STOCK_TRANSFER_QUANTITY_INVALID', 'Requested transfer quantity must be greater than zero.');
@@ -56,6 +60,22 @@ final readonly class StockTransferLine
 
         return $this->shippedQuantity->subtract($this->receivedQuantity);
     }
+    public function shippedUnitCostSnapshot(): ?Money
+    {
+        return $this->shippedUnitCostSnapshot;
+    }
+    public function shippedValueSnapshot(): ?Money
+    {
+        return $this->shippedValueSnapshot;
+    }
+    public function receivedValueSnapshot(): ?Money
+    {
+        return $this->receivedValueSnapshot;
+    }
+    public function transitLossValue(): ?Money
+    {
+        return null === $this->shippedValueSnapshot || null === $this->receivedValueSnapshot ? null : $this->shippedValueSnapshot->subtract($this->receivedValueSnapshot);
+    }
 
     public function hasTransitDiscrepancy(): bool
     {
@@ -66,7 +86,7 @@ final readonly class StockTransferLine
 
     public function withRequestedQuantity(Quantity $requestedQuantity): self
     {
-        return new self($this->id, $this->stockTransferId, $this->productId, $requestedQuantity, $this->shippedQuantity, $this->receivedQuantity);
+        return new self($this->id, $this->stockTransferId, $this->productId, $requestedQuantity, $this->shippedQuantity, $this->receivedQuantity, $this->shippedUnitCostSnapshot, $this->shippedValueSnapshot, $this->receivedValueSnapshot);
     }
 
     public function withShippedQuantity(Quantity $shippedQuantity): self
@@ -87,6 +107,22 @@ final readonly class StockTransferLine
             throw InventoryRuleViolation::with('TRANSFER_RECEIVED_QUANTITY_EXCEEDS_SHIPPED', 'Received transfer quantity must be between zero and the shipped quantity.');
         }
 
-        return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $this->shippedQuantity, $receivedQuantity);
+        return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $this->shippedQuantity, $receivedQuantity, $this->shippedUnitCostSnapshot, $this->shippedValueSnapshot);
+    }
+
+    public function withShipmentCost(Money $unitCost, Money $totalValue): self
+    {
+        if (null === $this->shippedQuantity || $this->shippedQuantity->isZero() || $unitCost->amount()->isNegative() || $totalValue->amount()->isNegative()) {
+            throw InventoryRuleViolation::with('TRANSFER_COST_SNAPSHOT_INVALID', 'Shipment cost snapshots require a positive shipped quantity and non-negative values.');
+        }
+        return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $this->shippedQuantity, $this->receivedQuantity, $unitCost, $totalValue, $this->receivedValueSnapshot);
+    }
+
+    public function withReceivedValue(Money $receivedValue): self
+    {
+        if (null === $this->receivedQuantity || null === $this->shippedValueSnapshot || $receivedValue->amount()->isNegative() || $receivedValue->compareTo($this->shippedValueSnapshot) > 0) {
+            throw InventoryRuleViolation::with('TRANSFER_RECEIVED_VALUE_INVALID', 'Received transfer value must be between zero and the shipped value.');
+        }
+        return new self($this->id, $this->stockTransferId, $this->productId, $this->requestedQuantity, $this->shippedQuantity, $this->receivedQuantity, $this->shippedUnitCostSnapshot, $this->shippedValueSnapshot, $receivedValue);
     }
 }

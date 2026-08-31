@@ -25,5 +25,6 @@ final readonly class ValueInventoryMovement
         public string $reason,
         public DateTimeImmutable $occurredAt,
         public ActorContext $actorContext,
+        public bool $initializeIfMissing = false,
     ) {}
 }

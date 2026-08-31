@@ -187,6 +187,50 @@ final class RepositoryInventoryMovementValuerTest extends TestCase
         self::assertSame('0198f70b-1111-7111-8111-111111111111', $ledger->source()->referenceId());
     }
 
+    public function testItTransfersOutAtSourceAverageCost(): void
+    {
+        $valuation = $this->valuation('10', '4000');
+        $valuations = $this->createStub(StockValuationRepository::class);
+        $valuations->method('getByStockForUpdate')->willReturn($valuation);
+        $ledger = null;
+        $movements = $this->createMock(StockValuationMovementRepository::class);
+        $movements->expects(self::once())->method('append')->willReturnCallback(static function (StockValuationMovement $movement) use (&$ledger): void {
+            $ledger = $movement;
+        });
+
+        $valued = $this->valuer($valuations, $movements)->value($this->movement(InventoryCostingMovementType::TransferOut, '3', '10', '7', null, 'transfer-id'));
+
+        self::assertSame('12000.000000', $valued->totalCost->amount()->toString());
+        self::assertSame('28000.000000', $valuation->totalValue()->amount()->toString());
+        self::assertInstanceOf(StockValuationMovement::class, $ledger);
+        self::assertSame(StockValuationMovementType::TransferOut, $ledger->type());
+        self::assertSame('TRANSFER', $ledger->source()->type());
+    }
+
+    public function testItInitializesDestinationValuationFromTransportedCost(): void
+    {
+        $saved = null;
+        $valuations = $this->createMock(StockValuationRepository::class);
+        $valuations->expects(self::exactly(2))->method('findByStock')->willReturn(null);
+        $valuations->method('save')->willReturnCallback(static function (StockValuation $valuation) use (&$saved): void {
+            $saved = $valuation;
+        });
+        $ledger = null;
+        $movements = $this->createMock(StockValuationMovementRepository::class);
+        $movements->expects(self::once())->method('append')->willReturnCallback(static function (StockValuationMovement $movement) use (&$ledger): void {
+            $ledger = $movement;
+        });
+
+        $movement = $this->movement(InventoryCostingMovementType::TransferIn, '2', '0', '2', '4000', 'transfer-id');
+        $movement = new ValueInventoryMovement($movement->storeId, $movement->productId, $movement->stockId, $movement->stockMovementId, $movement->type, $movement->quantity, $movement->previousQuantity, $movement->resultingQuantity, $movement->incomingUnitCost, $movement->reason, $movement->occurredAt, $movement->actorContext, true);
+        $valued = $this->valuer($valuations, $movements)->value($movement);
+
+        self::assertInstanceOf(StockValuation::class, $saved);
+        self::assertSame('8000.000000', $valued->totalCost->amount()->toString());
+        self::assertInstanceOf(StockValuationMovement::class, $ledger);
+        self::assertSame(StockValuationMovementType::TransferIn, $ledger->type());
+    }
+
     /** @return iterable<string, array{InventoryCostingMovementType, ?string, string}> */
     public static function invalidCostPolicy(): iterable
     {

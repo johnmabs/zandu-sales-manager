@@ -15,9 +15,11 @@ enum InventoryCostingMovementType: string
     case GoodsReceiptCorrectionIn = 'GOODS_RECEIPT_CORRECTION_IN';
     case GoodsReceiptCorrectionOut = 'GOODS_RECEIPT_CORRECTION_OUT';
     case PurchaseReturn = 'PURCHASE_RETURN';
+    case TransferOut = 'TRANSFER_OUT';
+    case TransferIn = 'TRANSFER_IN';
 
     public function isIncoming(): bool
     {
-        return !in_array($this, [self::AdjustmentOut, self::Sale, self::GoodsReceiptCorrectionOut, self::PurchaseReturn], true);
+        return !in_array($this, [self::AdjustmentOut, self::Sale, self::GoodsReceiptCorrectionOut, self::PurchaseReturn, self::TransferOut], true);
     }
 }
