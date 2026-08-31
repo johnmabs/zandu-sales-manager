@@ -35,14 +35,11 @@ final readonly class ReceiveStockTransferHandler
             $now = $this->clock->now();
             $transfer->receive($command->actorContext->actorId(), $now, $command->receivedQuantities);
             $items = [];
-            $hasDiscrepancy = false;
             foreach ($transfer->lines() as $line) {
                 $quantity = $line->receivedQuantity();
-                $shippedQuantity = $line->shippedQuantity();
-                if (null === $quantity || null === $shippedQuantity) {
+                if (null === $quantity) {
                     throw new \LogicException('Received stock transfer line quantities are incomplete.');
                 }
-                $hasDiscrepancy = $hasDiscrepancy || 0 !== $quantity->compareTo($shippedQuantity);
                 if (!$quantity->isZero()) {
                     $items[] = ['productId' => $line->productId(), 'baseQuantity' => $quantity];
                 }
@@ -52,7 +49,7 @@ final readonly class ReceiveStockTransferHandler
                 throw InventoryRuleViolation::with('STOCK_TRANSFER_CONFLICT', 'Stock transfer reception is incomplete.');
             }
             $this->transfers->save($transfer);
-            $this->outbox->append(new OutboxMessage(OutboxMessageId::generate($this->ids), $organizationId, 'inventory.stock_transfer_received.v1', ['stockTransferId' => $transfer->id()->toString(), 'sourceStoreId' => $transfer->sourceStoreId()->toString(), 'destinationStoreId' => $transfer->destinationStoreId()->toString(), 'lineCount' => count($transfer->lines()), 'hasDiscrepancy' => $hasDiscrepancy, 'commandId' => $command->commandId], $command->actorContext->correlationId(), $command->actorContext->causationId(), $now));
+            $this->outbox->append(new OutboxMessage(OutboxMessageId::generate($this->ids), $organizationId, 'inventory.stock_transfer_received.v1', ['stockTransferId' => $transfer->id()->toString(), 'sourceStoreId' => $transfer->sourceStoreId()->toString(), 'destinationStoreId' => $transfer->destinationStoreId()->toString(), 'lineCount' => count($transfer->lines()), 'hasDiscrepancy' => $transfer->hasTransitDiscrepancy(), 'commandId' => $command->commandId], $command->actorContext->correlationId(), $command->actorContext->causationId(), $now));
             return $transfer;
         });
     }

@@ -133,6 +133,31 @@ final class StockTransfer
         ++$this->version;
     }
 
+    public function hasTransitDiscrepancy(): bool
+    {
+        foreach ($this->lines as $line) {
+            if ($line->hasTransitDiscrepancy()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @return array<string, \Zandu\SharedKernel\Quantity\Quantity> keyed by StockTransferLineId */
+    public function transitDiscrepancies(): array
+    {
+        $discrepancies = [];
+        foreach ($this->lines as $line) {
+            $discrepancy = $line->transitDiscrepancy();
+            if (null !== $discrepancy && !$discrepancy->isZero()) {
+                $discrepancies[$line->id()->toString()] = $discrepancy;
+            }
+        }
+
+        return $discrepancies;
+    }
+
     private function ensureDraft(): void
     {
         if (StockTransferStatus::Draft !== $this->status) {

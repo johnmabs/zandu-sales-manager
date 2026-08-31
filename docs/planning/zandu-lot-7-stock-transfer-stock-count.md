@@ -392,21 +392,28 @@ test(inventory): verify stock count crash recovery
 Epic 7.1 — StockTransfer foundation
 Epic 7.2 — StockTransfer lifecycle
 Epic 7.3 — ShipStockTransfer
-Epic 7.4 — ReceiveStockTransfer
-Epic 7.5 — Transfer costing
-Epic 7.6 — Transfer idempotence & concurrency
+Epic 7.4 — Stock en transit
+Epic 7.5 — ReceiveStockTransfer
+Epic 7.6 — Transfer discrepancy
+Epic 7.7 — Transfer costing
 
-Epic 7.7 — StockCount foundation
-Epic 7.8 — StockCount scope & snapshot
-Epic 7.9 — Counting workflow
-Epic 7.10 — FINALIZING & batch reconciliation
-Epic 7.11 — StockCount costing
-Epic 7.12 — Locks & cross-workflow guards
+Epic 7.8 — StockCount aggregate
+Epic 7.9 — StockCountLine
+Epic 7.10 — CreateStockCount
+Epic 7.11 — StartStockCount
+Epic 7.12 — OpenStockCountScope
+Epic 7.13 — RecordStockCount
+Epic 7.14 — BeginStockCountFinalization
+Epic 7.15 — ReconcileStockCountBatch
+Epic 7.16 — Crash recovery
+Epic 7.17 — CompleteStockCountFinalization
+Epic 7.18 — StockCount costing
 
-Epic 7.13 — StoreClosure integration
-Epic 7.14 — Authorization & audit
-Epic 7.15 — APIs
-Epic 7.16 — PostgreSQL / RLS / recovery tests
+Transverse — Locks & cross-workflow guards
+Transverse — StoreClosure integration
+Transverse — Authorization & audit
+Transverse — APIs
+Transverse — PostgreSQL / RLS / recovery tests
 
 Lot 7 Gate
 M3 Gate

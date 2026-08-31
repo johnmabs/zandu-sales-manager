@@ -33,8 +33,9 @@ workflow GitHub Actions `Backend CI` sont également validés.
 
 Le [planning du Lot 7](docs/planning/zandu-lot-7-stock-transfer-stock-count.md)
 pilote désormais la tranche `StockTransfer & StockCount`. La fondation du
-transfert, son brouillon PostgreSQL/RLS, son transit et son cycle physique
-`TRANSFER_OUT → TRANSFER_IN` sont opérationnels ; costing et StockCount suivent.
+transfert, son brouillon PostgreSQL/RLS, son transit, ses écarts et son cycle
+physique `TRANSFER_OUT → TRANSFER_IN` sont opérationnels ; costing et StockCount
+suivent.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

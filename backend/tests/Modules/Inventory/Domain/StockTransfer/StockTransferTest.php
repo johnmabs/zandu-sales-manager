@@ -99,6 +99,8 @@ final class StockTransferTest extends TestCase
         self::assertSame('2', $transfer->lines()[0]->receivedQuantity()?->toString());
         self::assertTrue($this->actorId()->equals($transfer->receivedBy()));
         self::assertSame('2026-08-31T17:00:00+00:00', $transfer->receivedAt()?->format(DATE_ATOM));
+        self::assertTrue($transfer->hasTransitDiscrepancy());
+        self::assertSame('1', $transfer->transitDiscrepancies()[$this->lineId()->toString()]->toString());
     }
 
     public function testItRejectsReceptionAboveShippedQuantity(): void
@@ -120,6 +122,20 @@ final class StockTransferTest extends TestCase
 
         $this->expectException(InventoryRuleViolation::class);
         $transfer->receive($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('2')]);
+    }
+
+    public function testExactReceptionHasNoTransitDiscrepancy(): void
+    {
+        $transfer = $this->transfer();
+        $transfer->addLine(new StockTransferLine($this->lineId(), $transfer->id(), $this->productId(), $this->quantity('4')));
+        $transfer->ship($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('3')]);
+
+        self::assertNull($transfer->lines()[0]->transitDiscrepancy());
+        $transfer->receive($this->actorId(), new DateTimeImmutable(), [$this->lineId()->toString() => $this->quantity('3')]);
+
+        self::assertFalse($transfer->hasTransitDiscrepancy());
+        self::assertSame([], $transfer->transitDiscrepancies());
+        self::assertSame('0', $transfer->lines()[0]->transitDiscrepancy()?->toString());
     }
 
     private function transfer(): StockTransfer

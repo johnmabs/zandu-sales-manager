@@ -79,7 +79,7 @@ Epic 7.2    TERMINÉ   Brouillon, persistence PostgreSQL, RLS et permissions
 Epic 7.3    TERMINÉ   Expédition physique atomique TRANSFER_OUT
 Epic 7.4    TERMINÉ   Transit expliqué par le document SHIPPED, sans faux stock
 Epic 7.5    TERMINÉ   Réception finale atomique TRANSFER_IN
-Epic 7.6    À FAIRE   Écarts de transit
+Epic 7.6    TERMINÉ   Écarts de transit dérivés et conservés par ligne
 Epic 7.7    À FAIRE   Costing des transferts
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
@@ -9449,11 +9449,13 @@ CI lors de la prochaine publication manuelle.
   le scope du magasin destination et publie un résumé d’écart dans l’outbox ;
 - `Version20260831130000` persiste `receivedBy/receivedAt` et garantit leur
   cohérence avec le statut `RECEIVED`.
+- chaque ligne reçue expose l’écart immuable `shipped - received` ; le transfert
+  fournit le drapeau et la collection des seuls écarts positifs, sans créer de
+  mouvement compensatoire au magasin destination.
 
-Validation ciblée : 17 tests, 71 assertions ; migrations aller/retour, PHPStan
+Validation ciblée : 18 tests, 78 assertions ; migrations aller/retour, PHPStan
 et conteneur Symfony verts, Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Implémenter les écarts de transit puis la valorisation économique dédiée du
-transfert.
+Implémenter la valorisation économique dédiée du transfert.

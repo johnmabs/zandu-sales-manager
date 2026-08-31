@@ -48,6 +48,22 @@ final readonly class StockTransferLine
         return $this->receivedQuantity;
     }
 
+    public function transitDiscrepancy(): ?Quantity
+    {
+        if (null === $this->shippedQuantity || null === $this->receivedQuantity) {
+            return null;
+        }
+
+        return $this->shippedQuantity->subtract($this->receivedQuantity);
+    }
+
+    public function hasTransitDiscrepancy(): bool
+    {
+        $discrepancy = $this->transitDiscrepancy();
+
+        return null !== $discrepancy && !$discrepancy->isZero();
+    }
+
     public function withRequestedQuantity(Quantity $requestedQuantity): self
     {
         return new self($this->id, $this->stockTransferId, $this->productId, $requestedQuantity, $this->shippedQuantity, $this->receivedQuantity);

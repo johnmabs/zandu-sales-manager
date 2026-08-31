@@ -92,6 +92,7 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
         self::assertSame('3.000000000000', $restored->lines()[0]->receivedQuantity()?->toString());
         self::assertSame(self::ACTOR, $restored->receivedBy()?->toString());
         self::assertSame(4, $restored->version());
+        self::assertSame('1.000000000000', $restored->transitDiscrepancies()[self::LINE]->toString());
     }
 
     private function fixtures(): void
