@@ -54,6 +54,8 @@ final readonly class DoctrineStockMovementRepository implements StockMovementRep
             'SALE' => StockMovementSource::sale(\Zandu\SharedKernel\Identity\SaleId::fromString((string) $referenceId, $this->uuids)),
             'RETURN' => StockMovementSource::saleReturn(\Zandu\SharedKernel\Identity\ReturnSaleId::fromString((string) $referenceId, $this->uuids)),
             'GOODS_RECEIPT' => StockMovementSource::goodsReceipt(\Zandu\SharedKernel\Identity\GoodsReceiptId::fromString((string) $referenceId, $this->uuids)),
+            'GOODS_RECEIPT_CORRECTION' => StockMovementSource::goodsReceiptCorrection(\Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId::fromString((string) $referenceId, $this->uuids)),
+            'PURCHASE_RETURN' => StockMovementSource::purchaseReturn(\Zandu\SharedKernel\Identity\PurchaseReturnId::fromString((string) $referenceId, $this->uuids)),
             default => StockMovementSource::manualAdjustment(null === $referenceId ? null : $this->uuids->fromString($referenceId)),
         };
         return StockMovement::record(\Zandu\SharedKernel\Identity\StockMovementId::fromString($r->id(), $f), OrganizationId::fromString($r->organizationId(), $f), StoreId::fromString($r->storeId(), $f), ProductId::fromString($r->productId(), $f), StockId::fromString($r->stockId(), $f), StockMovementType::from($r->type()), new MovementQuantity($q($r->quantity())), new StockQuantity($q($r->previousQuantity())), $source, $r->reason(), null === $r->performedBy() ? null : ActorId::fromString($r->performedBy(), $f), $r->occurredAt());

@@ -162,6 +162,8 @@ services:
         alias: Zandu\Modules\Inventory\Application\RepositoryInventoryGoodsReceiver
     Zandu\Modules\Inventory\Application\Contract\InventoryGoodsReceiptCorrector:
         alias: Zandu\Modules\Inventory\Application\RepositoryInventoryGoodsReceiptCorrector
+    Zandu\Modules\Inventory\Application\Contract\InventoryPurchaseReturnShipper:
+        alias: Zandu\Modules\Inventory\Application\RepositoryInventoryPurchaseReturnShipper
     Zandu\Modules\InventoryCosting\Domain\Valuation\StockValuationRepository:
         alias: Zandu\Modules\InventoryCosting\Infrastructure\Persistence\Orm\DoctrineStockValuationRepository
     Zandu\Modules\InventoryCosting\Domain\ValuationMovement\StockValuationMovementRepository:

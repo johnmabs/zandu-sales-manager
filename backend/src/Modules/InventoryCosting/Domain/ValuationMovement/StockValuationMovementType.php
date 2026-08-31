@@ -15,6 +15,7 @@ enum StockValuationMovementType: string
     case PurchaseReceipt = 'PURCHASE_RECEIPT';
     case GoodsReceiptCorrectionIn = 'GOODS_RECEIPT_CORRECTION_IN';
     case GoodsReceiptCorrectionOut = 'GOODS_RECEIPT_CORRECTION_OUT';
+    case PurchaseReturn = 'PURCHASE_RETURN';
 
     public function isIncrease(): bool
     {
@@ -36,6 +37,7 @@ enum StockValuationMovementType: string
             self::SaleReturn => 'RETURN',
             self::PurchaseReceipt => 'GOODS_RECEIPT',
             self::GoodsReceiptCorrectionIn, self::GoodsReceiptCorrectionOut => 'GOODS_RECEIPT_CORRECTION',
+            self::PurchaseReturn => 'PURCHASE_RETURN',
         };
     }
 }
