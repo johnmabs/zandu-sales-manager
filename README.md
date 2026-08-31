@@ -23,9 +23,9 @@ validation sont disponibles dans
 | 4 | Sales et `CompleteSale` cash | Terminé — Gate M2 validé |
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | Terminé — Gate CI validé |
-| 7 | StockTransfer et StockCount | En cours — StockTransfer physique et valorisé |
+| 7 | StockTransfer et StockCount | En cours — StockTransfer stabilisé, StockCount initié |
 
-Dernière validation consolidée le 31 août 2026 : **695 tests et 3 319
+Dernière validation consolidée le 31 août 2026 : **703 tests et 3 367
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -34,8 +34,10 @@ workflow GitHub Actions `Backend CI` sont également validés.
 Le [planning du Lot 7](docs/planning/zandu-lot-7-stock-transfer-stock-count.md)
 pilote désormais la tranche `StockTransfer & StockCount`. La fondation du
 transfert, son brouillon PostgreSQL/RLS, son transit, ses écarts, son cycle
-physique `TRANSFER_OUT → TRANSFER_IN` et le transport de sa valeur au coût source
-sont opérationnels ; les preuves de concurrence puis StockCount suivent.
+physique `TRANSFER_OUT → TRANSFER_IN`, le transport de sa valeur au coût source,
+son idempotence, sa concurrence et ses bloqueurs de fermeture sont
+opérationnels. L'agrégat `StockCount` de l'Epic 7.8 est également disponible ;
+ses lignes et ses cas d'usage suivent.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

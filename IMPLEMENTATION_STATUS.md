@@ -81,6 +81,8 @@ Epic 7.4    TERMINÉ   Transit expliqué par le document SHIPPED, sans faux stoc
 Epic 7.5    TERMINÉ   Réception finale atomique TRANSFER_IN
 Epic 7.6    TERMINÉ   Écarts de transit dérivés et conservés par ligne
 Epic 7.7    TERMINÉ   Valeur transférée au coût source avec perte de transit
+Transverse  TERMINÉ   Idempotence, concurrence et fermeture StockTransfer
+Epic 7.8    TERMINÉ   StockCount aggregate, statuts, modes et scopes
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -117,8 +119,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 
 ```text
 Branche              main
-Migrations           Version20260831140000 appliquée en dernier
-Tests                 695 tests, 3 319 assertions
+Migrations           Version20260831150000 appliquée en dernier
+Tests                 703 tests, 3 367 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9423,7 +9425,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epic 7.1 à 7.5 — StockTransfer, transit et réception
+### Epics 7.1 à 7.8 — StockTransfer stabilisé et StockCount initié
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9458,12 +9460,27 @@ CI lors de la prochaine publication manuelle.
   différence comme perte de valeur en transit ;
 - `Version20260831140000` persiste les snapshots monétaires et autorise les
   mouvements de valorisation `TRANSFER_OUT/TRANSFER_IN` liés au transfert.
+- `Version20260831150000` persiste sous RLS les commandes de transfert par
+  phase et refuse un même `commandId` réutilisé avec un payload différent ; un
+  rejeu identique retourne le document existant sans mouvement ni outbox en
+  double ;
+- deux connexions PostgreSQL prouvent qu'une expédition concurrente avec une
+  vente, ou deux expéditions incompatibles, se sérialisent sur le Stock source :
+  la quantité ne devient jamais négative et aucune mise à jour n'est perdue ;
+- une réception déjà expédiée reste une remédiation autorisable pendant la
+  suspension, tandis que création et expédition restent des opérations
+  standard ; un transfert `SHIPPED` bloque la fermeture des magasins source et
+  destination via `STOCK_TRANSFER_IN_TRANSIT` jusqu'à sa réception ;
+- l'Epic 7.8 introduit `StockCount`, `StockCountId`, les statuts
+  `DRAFT/OPEN/FINALIZING/COMPLETED/CANCELLED`, les modes `BLIND/GUIDED`, les
+  scopes `FULL/PARTIAL` et les compteurs de progression, avec `BLIND` par
+  défaut.
 
-Validation ciblée : 29 tests, 145 assertions. Suite complète : 695 tests,
-3 319 assertions. Migrations aller/retour, PHPStan et conteneur Symfony verts,
+Validation ciblée du nouveau bloc : 32 tests, 178 assertions. Suite complète :
+703 tests, 3 367 assertions. Migration aller/retour, PHPStan et conteneur Symfony verts,
 Deptrac layers/modules sans violation.
 
 ### Prochaine sous-étape
 
-Prouver l’idempotence et la concurrence des transferts, puis démarrer
-`StockCount`.
+Implémenter l'Epic 7.9, l'agrégat séparé `StockCountLine`, puis la création
+applicative de l'Epic 7.10.
