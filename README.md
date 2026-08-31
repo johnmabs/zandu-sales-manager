@@ -24,7 +24,7 @@ validation sont disponibles dans
 | 5 | Inventory Costing et Returns | Terminé — Gate CI validé |
 | 6 | Purchasing et Goods Receipts | En cours — retours fournisseur métier opérationnels |
 
-Dernière validation consolidée le 31 août 2026 : **666 tests et 3 168
+Dernière validation consolidée le 31 août 2026 : **669 tests et 3 188
 assertions**, PHPStan et PHP-CS-Fixer sans erreur, zéro violation dans les deux
 configurations Deptrac et aucune vulnérabilité connue dans les dépendances
 Composer verrouillées. L’image production, la restauration PostgreSQL et le
@@ -63,8 +63,9 @@ publiée avec reliquat corrigé, puis expédié atomiquement après revalidation
 reliquat et du stock. Inventory écrit une sortie idempotente `PURCHASE_RETURN`,
 Costing la valorise au coût moyen courant, et le coordinateur publie audit et
 outbox sans modifier la quantité reçue de la commande d’achat. L’API,
-l’annulation applicative et les preuves PostgreSQL de concurrence restent à
-finaliser avant la fermeture de l’Epic 6.14.
+l’annulation applicative est disponible pour les brouillons et produit elle
+aussi audit/outbox sans effet de stock. Les preuves PostgreSQL de concurrence
+restent à finaliser avant la fermeture de l’Epic 6.14.
 
 ## Stack technique
 
