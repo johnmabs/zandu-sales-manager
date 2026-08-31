@@ -6,6 +6,7 @@ namespace Zandu\Tests\Integration\Purchasing;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\Contract\InventoryPurchaseReturnShipper;
@@ -38,7 +39,7 @@ use Zandu\SharedKernel\Identity\ProductPackagingId;
 use Zandu\SharedKernel\Identity\{PurchaseReturnId, PurchaseReturnLineId};
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\SupplierId;
-use Zandu\SharedKernel\Messaging\OutboxRepository;
+use Zandu\SharedKernel\Messaging\{OutboxMessage, OutboxRepository};
 use Zandu\SharedKernel\Money\Currency;
 use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
@@ -226,7 +227,48 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         self::assertSame(1, (int) $this->db->fetchOne("SELECT COUNT(*) FROM messaging.outbox_messages WHERE organization_id = ? AND type = 'purchasing.purchase_return_shipped.v1'", [self::ORGANIZATION]));
     }
 
-    private function shipHandler(): ShipPurchaseReturnHandler
+    public function testShippingPurchaseReturnRollsBackEveryEffectWhenOutboxFails(): void
+    {
+        $return = $this->prepareShippablePurchaseReturn();
+
+        try {
+            ($this->shipHandler(new FailingPurchaseReturnOutbox()))(new ShipPurchaseReturn($return->id(), $this->actorContext(), 'purchase-return-failure'));
+            self::fail('The injected outbox failure must abort the purchase return shipment.');
+        } catch (RuntimeException $exception) {
+            self::assertSame('Injected purchase return outbox failure.', $exception->getMessage());
+        }
+
+        self::assertSame(PurchaseReturnStatus::Draft, (new DbalPurchaseReturnRepository($this->db, $this->ids, $this->decimals))->get(OrganizationId::fromString(self::ORGANIZATION, $this->ids), $return->id())->status());
+        self::assertSame('10.000000000000', (string) $this->db->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE id = ?', [self::STOCK]));
+        self::assertSame('40.000000', (string) $this->db->fetchOne('SELECT total_value FROM inventory_costing.stock_valuation WHERE id = ?', [self::VALUATION]));
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id = ? AND type = 'PURCHASE_RETURN'", [self::ORGANIZATION]));
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id = ? AND type = 'PURCHASE_RETURN'", [self::ORGANIZATION]));
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM security.security_audit_entries WHERE organization_id = ? AND action = 'PURCHASE_RETURN_SHIPPED'", [self::ORGANIZATION]));
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM messaging.outbox_messages WHERE organization_id = ? AND type = 'purchasing.purchase_return_shipped.v1'", [self::ORGANIZATION]));
+    }
+
+    private function prepareShippablePurchaseReturn(): PurchaseReturn
+    {
+        $organizationId = OrganizationId::fromString(self::ORGANIZATION, $this->ids);
+        $actorId = ActorId::fromString(self::ACTOR, $this->ids);
+        $receipt = GoodsReceipt::create(GoodsReceiptId::fromString(self::RECEIPT, $this->ids), $organizationId, StoreId::fromString(self::STORE, $this->ids), SupplierId::fromString(self::SUPPLIER, $this->ids), null, GoodsReceiptNumber::fromString('GR-RETURN-ROLLBACK-001'), null, 'Return rollback fixture', $actorId, new DateTimeImmutable('2026-08-31T12:00:00Z'));
+        $receipt->addLine(new GoodsReceiptLine(GoodsReceiptLineId::fromString(self::LINE, $this->ids), $receipt->id(), ProductId::fromString(self::PRODUCT, $this->ids), ProductPackagingId::fromString(self::PACKAGING, $this->ids), $this->quantity('10'), $this->quantity('1'), $this->quantity('10'), $this->money('4'), $this->money('4'), null));
+        $this->transactions->transactional($organizationId, function () use ($receipt, $actorId): void {
+            $this->repository->save($receipt);
+            $receipt->post($actorId, new DateTimeImmutable('2026-08-31T12:01:00Z'));
+            $this->repository->save($receipt);
+        });
+
+        $return = PurchaseReturn::create(PurchaseReturnId::fromString(self::PURCHASE_RETURN, $this->ids), $organizationId, StoreId::fromString(self::STORE, $this->ids), SupplierId::fromString(self::SUPPLIER, $this->ids), $receipt->id(), null, 'Damaged goods', $actorId, new DateTimeImmutable('2026-08-31T12:02:00Z'));
+        $return->addLine(new PurchaseReturnLine(PurchaseReturnLineId::fromString(self::PURCHASE_RETURN_LINE, $this->ids), $return->id(), ProductId::fromString(self::PRODUCT, $this->ids), $this->quantity('4'), $receipt->lines()[0]->id()));
+        $this->transactions->transactional($organizationId, fn() => (new DbalPurchaseReturnRepository($this->db, $this->ids, $this->decimals))->save($return));
+        $this->db->executeStatement('INSERT INTO inventory.stock (id,organization_id,store_id,product_id,quantity_on_hand,initialized,initialized_at,initialized_by,version) VALUES (?,?,?,?,10,TRUE,NOW(),?,1)', [self::STOCK, self::ORGANIZATION, self::STORE, self::PRODUCT, self::ACTOR]);
+        $this->db->executeStatement("INSERT INTO inventory_costing.stock_valuation (id,organization_id,store_id,product_id,stock_id,quantity_on_hand,total_value,currency,version) VALUES (?,?,?,?,?,10,40,'XAF',1)", [self::VALUATION, self::ORGANIZATION, self::STORE, self::PRODUCT, self::STOCK]);
+
+        return $return;
+    }
+
+    private function shipHandler(?OutboxRepository $outbox = null): ShipPurchaseReturnHandler
     {
         $container = self::getContainer();
 
@@ -239,7 +281,7 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
             $this->createStub(AuthorizationService::class),
             $this->createStub(OperationalGuard::class),
             $container->get(SecurityAuditTrail::class),
-            $container->get(OutboxRepository::class),
+            $outbox ?? $container->get(OutboxRepository::class),
             new SymfonyUuidV7Generator(),
             new FrozenClock(new DateTimeImmutable('2026-08-31T12:03:00Z')),
         );
@@ -288,5 +330,13 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
     private function quantity(string $value): Quantity
     {
         return Quantity::fromString($value, $this->decimals);
+    }
+}
+
+final class FailingPurchaseReturnOutbox implements OutboxRepository
+{
+    public function append(OutboxMessage $message): void
+    {
+        throw new RuntimeException('Injected purchase return outbox failure.');
     }
 }
