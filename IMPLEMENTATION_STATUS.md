@@ -90,6 +90,7 @@ Epic 7.12   TERMINÉ   Scopes produits exclusifs et mouvements bloqués
 Epic 7.13   TERMINÉ   Saisie simple/batch, zéro, corrections et versions de ligne
 Epic 7.14   TERMINÉ   Gel atomique OPEN vers FINALIZING après contrôle complet
 Epic 7.15   TERMINÉ   Réconciliation physique PENDING par batch atomique
+Epic 7.16   TERMINÉ   Reprise après crash sans rejeu des lignes réconciliées
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -9432,7 +9433,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.15 — StockTransfer stabilisé et StockCount réconciliable
+### Epics 7.1 à 7.16 — StockTransfer stabilisé et StockCount reprenable
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9550,12 +9551,19 @@ CI lors de la prochaine publication manuelle.
   première correction : quantité, ledger, états de ligne et compteur sont tous
   restaurés. La valorisation correspondante reste volontairement affectée à
   l'Epic 7.18.
+- l'Epic 7.16 traite chaque transaction de batch comme un checkpoint durable :
+  une preuve vide l'EntityManager et recrée le handler et les repositories après
+  un premier lot commité, puis reprend exclusivement les lignes `PENDING` ;
+- le Stock déjà corrigé, l'identifiant de son mouvement et son état
+  `RECONCILED` restent inchangés pendant les lots suivants ; le batch à variance
+  zéro n'ajoute aucun mouvement et un appel après épuisement retourne `0/0`
+  sans effet secondaire.
 
-Validation ciblée StockCount : 17 tests, 90 assertions. Suite complète : 721
-tests, 3 486 assertions. Migration aller/retour, PHPStan, conteneur Symfony et
-Deptrac layers/modules verts (0 violation, 10 uncovered).
+Validation ciblée StockCount : 18 tests, 107 assertions. Suite complète : 722
+tests, 3 503 assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
+layers/modules verts (0 violation, 10 uncovered).
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.16 : prouver la reprise après crash sur les seules lignes
-`PENDING`, sans rejeu des corrections déjà réconciliées.
+Implémenter l'Epic 7.17 : terminer le document lorsqu'il ne reste aucune ligne
+`PENDING`, publier l'outbox de fin et libérer atomiquement ses scopes produits.

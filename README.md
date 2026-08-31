@@ -49,7 +49,9 @@ correction. La réconciliation physique reprend alors uniquement les lignes
 les écarts produisent des mouvements `STOCK_COUNT_CORRECTION_IN/OUT` liés au
 comptage propriétaire, et une variance nulle ne produit aucun faux mouvement.
 Un conflit de snapshot annule tout le batch ; la valorisation de ces corrections
-reste la prochaine étape dédiée.
+reste la prochaine étape dédiée. Chaque batch validé constitue un checkpoint
+durable : après redémarrage, la réconciliation reprend seulement les lignes
+`PENDING`, sans retoucher les Stocks ni rejouer les mouvements déjà commis.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

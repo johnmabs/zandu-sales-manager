@@ -246,6 +246,42 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertSame(3, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND reconciliation_status='PENDING'", [self::ORGANIZATION, self::COUNT_A]));
     }
 
+    public function testReconciliationResumesOnlyPendingLinesAfterACommittedBatchAndRestart(): void
+    {
+        [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
+        $firstBatch = ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+
+        self::assertSame(1, $firstBatch->processedCount);
+        self::assertSame(2, $firstBatch->remainingCount);
+        self::assertSame('7.000000000000', (string) $this->db->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id=? AND product_id=?', [self::ORGANIZATION, self::PRODUCT_WITH_STOCK]));
+        $committedMovementId = (string) $this->db->fetchOne('SELECT id FROM inventory.stock_movement WHERE organization_id=? AND product_id=? AND source_type=?', [self::ORGANIZATION, self::PRODUCT_WITH_STOCK, 'STOCK_COUNT']);
+
+        self::getContainer()->get(EntityManagerInterface::class)->clear();
+        $restartedCounts = new DbalStockCountRepository($this->db, $this->ids);
+        $restartedLines = new DbalStockCountLineRepository($this->db, $this->ids, $this->decimals);
+        $restartedHandler = $this->reconciliationHandler($restartedCounts, $restartedLines);
+
+        $secondBatch = $restartedHandler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        self::assertSame(1, $secondBatch->processedCount);
+        self::assertSame(1, $secondBatch->remainingCount);
+        self::assertSame('7.000000000000', (string) $this->db->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id=? AND product_id=?', [self::ORGANIZATION, self::PRODUCT_WITH_STOCK]));
+        self::assertSame($committedMovementId, (string) $this->db->fetchOne('SELECT id FROM inventory.stock_movement WHERE organization_id=? AND product_id=? AND source_type=?', [self::ORGANIZATION, self::PRODUCT_WITH_STOCK, 'STOCK_COUNT']));
+        self::assertSame('RECONCILED', (string) $this->db->fetchOne('SELECT reconciliation_status FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND product_id=?', [self::ORGANIZATION, self::COUNT_A, self::PRODUCT_WITH_STOCK]));
+        self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
+
+        $thirdBatch = $restartedHandler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        self::assertSame(1, $thirdBatch->processedCount);
+        self::assertSame(0, $thirdBatch->remainingCount);
+        self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']), 'The zero-variance resumed line must not create a movement.');
+        self::assertSame(3, $this->transactions->transactional($this->organizationId(), fn(): int => $restartedCounts->get($this->organizationId(), $this->countId(self::COUNT_A))->reconciledLineCount()));
+        self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND reconciliation_status='PENDING'", [self::ORGANIZATION, self::COUNT_A]));
+
+        $finishedReplay = $restartedHandler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        self::assertSame(0, $finishedReplay->processedCount);
+        self::assertSame(0, $finishedReplay->remainingCount);
+        self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
+    }
+
     /** @return array{DbalStockCountRepository, DbalStockCountLineRepository} */
     private function prepareFinalizingCount(string $existingCount, string $missingCount): array
     {
