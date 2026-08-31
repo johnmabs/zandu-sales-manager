@@ -140,6 +140,7 @@ final readonly class TransactionalSecurityAuditTrail implements SecurityAuditTra
             SecurityAction::OverReceiptAuthorized => 'purchasing.over_receipt_authorized.v1',
             SecurityAction::GoodsReceiptCorrected => 'purchasing.goods_receipt_corrected_audit.v1',
             SecurityAction::PurchaseReturnShipped => 'purchasing.purchase_return_shipped_audit.v1',
+            SecurityAction::PurchaseReturnCancelled => 'purchasing.purchase_return_cancelled_audit.v1',
         };
     }
 }

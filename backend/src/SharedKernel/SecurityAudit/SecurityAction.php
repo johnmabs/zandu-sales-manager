@@ -48,4 +48,5 @@ enum SecurityAction: string
     case OverReceiptAuthorized = 'OVER_RECEIPT_AUTHORIZED';
     case GoodsReceiptCorrected = 'GOODS_RECEIPT_CORRECTED';
     case PurchaseReturnShipped = 'PURCHASE_RETURN_SHIPPED';
+    case PurchaseReturnCancelled = 'PURCHASE_RETURN_CANCELLED';
 }
