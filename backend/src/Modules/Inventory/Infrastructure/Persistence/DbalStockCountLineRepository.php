@@ -73,6 +73,14 @@ final readonly class DbalStockCountLineRepository implements StockCountLineRepos
         return array_map(fn(array $row): StockCountLine => $this->aggregate($row), $rows);
     }
 
+    public function countPendingForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): int
+    {
+        return count($this->db->fetchFirstColumn(
+            'SELECT id FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND reconciliation_status=? ORDER BY product_id FOR UPDATE',
+            [$organizationId->toString(), $stockCountId->toString(), StockCountReconciliationStatus::Pending->value],
+        ));
+    }
+
     /** @param array<string, mixed> $row */
     private function aggregate(array $row): StockCountLine
     {

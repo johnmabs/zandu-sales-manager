@@ -133,4 +133,28 @@ final class StockCountTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $count->registerReconciledLines(2);
     }
+
+    public function testReconciledFinalizingCountCanCompleteWithAudit(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000074', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000071', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000072', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000073', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+        $count->start($actor, new DateTimeImmutable(), 1);
+        $count->registerCountedLines(1);
+        $count->beginFinalization($actor, new DateTimeImmutable());
+
+        try {
+            $count->complete($actor, new DateTimeImmutable());
+            self::fail('A count with pending lines must not complete.');
+        } catch (\Zandu\Modules\Inventory\Domain\InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_HAS_PENDING_LINES', $exception->errorCode());
+        }
+
+        $count->registerReconciledLines(1);
+        $count->complete($actor, new DateTimeImmutable('2026-08-31T22:30:00+01:00'));
+        self::assertSame(StockCountStatus::Completed, $count->status());
+        self::assertSame($actor->toString(), $count->completedBy()?->toString());
+        self::assertSame('2026-08-31T21:30:00+00:00', $count->completedAt()?->format(DATE_ATOM));
+        self::assertSame(6, $count->version());
+    }
 }

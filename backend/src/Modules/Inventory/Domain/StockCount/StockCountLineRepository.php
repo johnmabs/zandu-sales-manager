@@ -22,4 +22,7 @@ interface StockCountLineRepository
 
     /** @return list<StockCountLine> */
     public function findPendingForUpdate(OrganizationId $organizationId, StockCountId $stockCountId, int $limit): array;
+
+    /** Locks every pending line until the surrounding transaction ends. */
+    public function countPendingForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): int;
 }

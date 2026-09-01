@@ -91,6 +91,7 @@ Epic 7.13   TERMINÉ   Saisie simple/batch, zéro, corrections et versions de li
 Epic 7.14   TERMINÉ   Gel atomique OPEN vers FINALIZING après contrôle complet
 Epic 7.15   TERMINÉ   Réconciliation physique PENDING par batch atomique
 Epic 7.16   TERMINÉ   Reprise après crash sans rejeu des lignes réconciliées
+Epic 7.17   TERMINÉ   Clôture atomique, outbox et libération des scopes
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -9433,7 +9434,7 @@ Validation locale : tests PostgreSQL Purchasing OK (5 tests, 35 assertions),
 PHPStan et architecture vertes. La suite complète doit être confirmée par la
 CI lors de la prochaine publication manuelle.
 
-### Epics 7.1 à 7.16 — StockTransfer stabilisé et StockCount reprenable
+### Epics 7.1 à 7.17 — StockTransfer stabilisé et StockCount clôturable
 
 **Statut : TERMINÉ — cycle physique DRAFT → SHIPPED → RECEIVED**
 
@@ -9558,12 +9559,28 @@ CI lors de la prochaine publication manuelle.
   `RECONCILED` restent inchangés pendant les lots suivants ; le batch à variance
   zéro n'ajoute aucun mouvement et un appel après épuisement retourne `0/0`
   sans effet secondaire.
+- `CompleteStockCountFinalization` verrouille le document, exige le statut
+  `FINALIZING`, un compteur entièrement réconcilié et l'absence réelle de ligne
+  `PENDING` sous verrou PostgreSQL ; une tentative prématurée renvoie
+  `STOCK_COUNT_HAS_PENDING_LINES` ;
+- la transition vers `COMPLETED` fige `completedBy/completedAt`, libère les
+  `OpenStockCountScope` et publie `inventory.stock_count_completed.v1` dans une
+  transaction unique, tout en conservant toutes les lignes comme preuve ;
+- `Version20260831190000` impose en base la cohérence des paires d'audit, des
+  statuts DRAFT/OPEN/FINALIZING/COMPLETED/CANCELLED et des trois compteurs lors
+  de la complétion ;
+- un rejeu d'un document déjà terminé ne republie pas l'outbox ; une preuve
+  d'échec de publication confirme le rollback du statut, de l'audit et de la
+  libération des scopes.
 
-Validation ciblée StockCount : 18 tests, 107 assertions. Suite complète : 722
-tests, 3 503 assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
-layers/modules verts (0 violation, 10 uncovered).
+Validation StockCount ciblée : 22 tests, 131 assertions. Migration
+`Version20260831190000` validée en aller/retour et appliquée aux environnements
+test et développement. Suite complète : 726 tests, 3 527 assertions. PHPStan,
+PHP-CS-Fixer, conteneur Symfony et Deptrac layers/modules verts (0 violation,
+10 uncovered).
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.17 : terminer le document lorsqu'il ne reste aucune ligne
-`PENDING`, publier l'outbox de fin et libérer atomiquement ses scopes produits.
+Implémenter `CancelStockCount` : autoriser l'annulation DRAFT/OPEN, conserver
+les lignes historiques, libérer les scopes OPEN et refuser toute annulation
+depuis `FINALIZING`.

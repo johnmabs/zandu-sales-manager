@@ -52,6 +52,9 @@ Un conflit de snapshot annule tout le batch ; la valorisation de ces corrections
 reste la prochaine étape dédiée. Chaque batch validé constitue un checkpoint
 durable : après redémarrage, la réconciliation reprend seulement les lignes
 `PENDING`, sans retoucher les Stocks ni rejouer les mouvements déjà commis.
+Lorsque toutes les lignes sont réconciliées, la clôture passe le document à
+`COMPLETED`, publie son événement et libère les scopes dans une même transaction,
+tout en conservant les lignes comme preuve historique.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

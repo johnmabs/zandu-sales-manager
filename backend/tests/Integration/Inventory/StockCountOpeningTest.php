@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\BeginStockCountFinalization\{BeginStockCountFinalization, BeginStockCountFinalizationHandler};
+use Zandu\Modules\Inventory\Application\CompleteStockCountFinalization\{CompleteStockCountFinalization, CompleteStockCountFinalizationHandler};
 use Zandu\Modules\Inventory\Application\ReconcileStockCount\{ReconcileStockCountBatch, ReconcileStockCountBatchHandler};
 use Zandu\Modules\Inventory\Application\RecordStockCount\{RecordStockCount, RecordStockCountBatch, RecordStockCountHandler, StockCountEntry};
 use Zandu\Modules\Inventory\Application\StartStockCount\{StartStockCount, StartStockCountHandler};
@@ -282,6 +283,65 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
     }
 
+    public function testCompletionReleasesScopesPublishesOnceAndPreservesLines(): void
+    {
+        [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
+        ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+        $outbox = new OpeningOutbox();
+        $handler = $this->completionHandler($counts, $lines, $outbox);
+
+        $completed = $handler(new CompleteStockCountFinalization($this->countId(self::COUNT_A), $this->actor()));
+
+        self::assertSame(StockCountStatus::Completed, $completed->status());
+        self::assertSame(self::ACTOR, $completed->completedBy()?->toString());
+        self::assertSame('2026-08-31T20:40:00+00:00', $completed->completedAt()?->format(DATE_ATOM));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertCount(1, $outbox->messages);
+        self::assertSame('inventory.stock_count_completed.v1', $outbox->messages[0]->type);
+        self::assertSame(self::COUNT_A, $outbox->messages[0]->payload['stockCountId']);
+
+        self::assertSame(StockCountStatus::Completed, $handler(new CompleteStockCountFinalization($this->countId(self::COUNT_A), $this->actor()))->status());
+        self::assertCount(1, $outbox->messages);
+    }
+
+    public function testCompletionRefusesPendingLinesAndKeepsScopes(): void
+    {
+        [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
+        ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        $outbox = new OpeningOutbox();
+
+        try {
+            ($this->completionHandler($counts, $lines, $outbox))(new CompleteStockCountFinalization($this->countId(self::COUNT_A), $this->actor()));
+            self::fail('A stock count with pending lines must remain finalizing.');
+        } catch (InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_HAS_PENDING_LINES', $exception->errorCode());
+        }
+
+        self::assertSame(StockCountStatus::Finalizing, $this->transactions->transactional($this->organizationId(), fn(): StockCountStatus => $counts->get($this->organizationId(), $this->countId(self::COUNT_A))->status()));
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertCount(0, $outbox->messages);
+    }
+
+    public function testCompletionRollsBackStatusAndScopeReleaseWhenOutboxFails(): void
+    {
+        [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
+        ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+
+        try {
+            ($this->completionHandler($counts, $lines, new FailingOpeningOutbox()))(new CompleteStockCountFinalization($this->countId(self::COUNT_A), $this->actor()));
+            self::fail('An outbox failure must abort stock count completion.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Simulated stock count outbox failure.', $exception->getMessage());
+        }
+
+        $persisted = $this->transactions->transactional($this->organizationId(), fn(): StockCount => $counts->get($this->organizationId(), $this->countId(self::COUNT_A)));
+        self::assertSame(StockCountStatus::Finalizing, $persisted->status());
+        self::assertNull($persisted->completedBy());
+        self::assertNull($persisted->completedAt());
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+    }
+
     /** @return array{DbalStockCountRepository, DbalStockCountLineRepository} */
     private function prepareFinalizingCount(string $existingCount, string $missingCount): array
     {
@@ -305,6 +365,11 @@ final class StockCountOpeningTest extends KernelTestCase
     private function reconciliationHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines): ReconcileStockCountBatchHandler
     {
         return new ReconcileStockCountBatchHandler($counts, $lines, self::getContainer()->get(StockRepository::class), self::getContainer()->get(StockMovementRepository::class), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:30:00Z')));
+    }
+
+    private function completionHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines, OutboxRepository $outbox): CompleteStockCountFinalizationHandler
+    {
+        return new CompleteStockCountFinalizationHandler($counts, $lines, new DbalOpenStockCountScopeRepository($this->db), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $outbox, new SymfonyUuidV7Generator(), new FrozenClock(new DateTimeImmutable('2026-08-31T20:40:00Z')));
     }
 
     private function persistDraft(string $id): void
@@ -383,5 +448,13 @@ final class OpeningOutbox implements OutboxRepository
     public function append(OutboxMessage $message): void
     {
         $this->messages[] = $message;
+    }
+}
+
+final class FailingOpeningOutbox implements OutboxRepository
+{
+    public function append(OutboxMessage $message): void
+    {
+        throw new \RuntimeException('Simulated stock count outbox failure.');
     }
 }
