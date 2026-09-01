@@ -314,6 +314,10 @@ final class PurchaseOrderUseCaseRepository implements PurchaseOrderRepository
 
         return $order instanceof PurchaseOrder && $order->organizationId()->equals($organizationId) ? $order : null;
     }
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
+    {
+        return false;
+    }
 }
 
 final class SupplierUseCaseRepositoryForOrders implements SupplierRepository

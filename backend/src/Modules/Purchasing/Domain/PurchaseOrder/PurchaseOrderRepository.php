@@ -6,6 +6,7 @@ namespace Zandu\Modules\Purchasing\Domain\PurchaseOrder;
 
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\PurchaseOrderId;
+use Zandu\SharedKernel\Identity\StoreId;
 
 interface PurchaseOrderRepository
 {
@@ -17,4 +18,6 @@ interface PurchaseOrderRepository
     public function getForUpdate(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): PurchaseOrder;
 
     public function find(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): ?PurchaseOrder;
+
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool;
 }

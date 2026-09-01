@@ -6,6 +6,7 @@ namespace Zandu\Modules\Purchasing\Domain\GoodsReceipt;
 
 use Zandu\SharedKernel\Identity\GoodsReceiptId;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\StoreId;
 
 interface GoodsReceiptRepository
 {
@@ -13,4 +14,5 @@ interface GoodsReceiptRepository
     public function get(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): GoodsReceipt;
     public function getForUpdate(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): GoodsReceipt;
     public function find(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): ?GoodsReceipt;
+    public function hasDraftForStore(OrganizationId $organizationId, StoreId $storeId): bool;
 }

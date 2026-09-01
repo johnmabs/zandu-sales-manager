@@ -144,6 +144,11 @@ final readonly class DbalPurchaseOrderRepository implements PurchaseOrderReposit
         );
     }
 
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
+    {
+        return false !== $this->connection->fetchOne("SELECT 1 FROM purchasing.purchase_order WHERE organization_id=? AND destination_store_id=? AND status IN ('DRAFT','CONFIRMED','PARTIALLY_RECEIVED') LIMIT 1", [$organizationId->toString(), $storeId->toString()]);
+    }
+
     /** @return array<string, mixed> */
     private function orderData(PurchaseOrder $order): array
     {

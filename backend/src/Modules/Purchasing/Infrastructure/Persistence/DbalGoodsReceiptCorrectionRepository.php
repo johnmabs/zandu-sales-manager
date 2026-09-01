@@ -18,6 +18,7 @@ use Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId;
 use Zandu\SharedKernel\Identity\GoodsReceiptId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
+use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\UuidFactory;
 use Zandu\SharedKernel\Quantity\Quantity;
 
@@ -109,6 +110,11 @@ final readonly class DbalGoodsReceiptCorrectionRepository implements GoodsReceip
             $result[(string) $row['product_id']] = $this->quantity($row['difference']);
         }
         return $result;
+    }
+
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
+    {
+        return false !== $this->connection->fetchOne("SELECT 1 FROM purchasing.goods_receipt_correction c JOIN purchasing.goods_receipt r ON r.organization_id=c.organization_id AND r.id=c.goods_receipt_id WHERE c.organization_id=? AND r.store_id=? AND c.status='DRAFT' LIMIT 1", [$organizationId->toString(), $storeId->toString()]);
     }
 
     /** @return array<string, mixed> */

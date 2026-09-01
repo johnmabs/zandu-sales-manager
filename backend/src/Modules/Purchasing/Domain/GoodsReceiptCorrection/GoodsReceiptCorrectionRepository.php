@@ -7,6 +7,7 @@ namespace Zandu\Modules\Purchasing\Domain\GoodsReceiptCorrection;
 use Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId;
 use Zandu\SharedKernel\Identity\GoodsReceiptId;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Quantity\Quantity;
 
 interface GoodsReceiptCorrectionRepository
@@ -17,4 +18,5 @@ interface GoodsReceiptCorrectionRepository
     public function find(OrganizationId $organizationId, GoodsReceiptCorrectionId $correctionId): ?GoodsReceiptCorrection;
     /** @return array<string, Quantity> keyed by ProductId string */
     public function postedDifferenceByProduct(OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId): array;
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool;
 }

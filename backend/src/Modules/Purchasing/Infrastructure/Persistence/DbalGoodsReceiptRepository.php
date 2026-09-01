@@ -133,6 +133,11 @@ final readonly class DbalGoodsReceiptRepository implements GoodsReceiptRepositor
         );
     }
 
+    public function hasDraftForStore(OrganizationId $organizationId, StoreId $storeId): bool
+    {
+        return false !== $this->connection->fetchOne("SELECT 1 FROM purchasing.goods_receipt WHERE organization_id=? AND store_id=? AND status='DRAFT' LIMIT 1", [$organizationId->toString(), $storeId->toString()]);
+    }
+
     /** @return array<string, mixed> */
     private function receiptData(GoodsReceipt $receipt): array
     {

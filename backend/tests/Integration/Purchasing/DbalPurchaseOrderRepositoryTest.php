@@ -100,6 +100,7 @@ final class DbalPurchaseOrderRepositoryTest extends KernelTestCase
         self::assertSame('600.000000', $restored->expectedTotal()->amount()->toString());
         self::assertSame('60.000000000000', $restored->lines()[0]->orderedBaseQuantity()->toString());
         self::assertSame(2, $restored->version());
+        self::assertTrue($this->transactions->transactional($organizationId, fn(): bool => $this->repository->hasOpenForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
 
         $received = $this->transactions->transactional($organizationId, function () use ($restored): PurchaseOrder {
             $restored->confirm(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-28T13:00:00Z'));
@@ -124,6 +125,7 @@ final class DbalPurchaseOrderRepositoryTest extends KernelTestCase
         self::assertSame('FULLY_RECEIVED', $overReceived->status()->value);
         self::assertSame('65.000000000000', $overReceived->lines()[0]->receivedQuantity()->toString());
         self::assertSame(5, $overReceived->version());
+        self::assertFalse($this->transactions->transactional($organizationId, fn(): bool => $this->repository->hasOpenForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
     }
 
     private function fixtures(): void

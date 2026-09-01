@@ -130,6 +130,7 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         self::assertSame('120.000000000000', $restored->lines()[0]->actualUnitCost()?->amount()->toString());
         self::assertSame('10.000000000000', $restored->lines()[0]->inventoryUnitCost()->amount()->toString());
         self::assertSame(2, $restored->version());
+        self::assertTrue($this->transactions->transactional($organizationId, fn(): bool => $this->repository->hasDraftForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
 
         $posted = $this->transactions->transactional($organizationId, function () use ($restored): GoodsReceipt {
             $restored->post(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T09:00:00Z'));
@@ -142,6 +143,7 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
         self::assertSame('2026-08-29T09:00:00+00:00', $posted->postedAt()?->format(DATE_ATOM));
         self::assertCount(1, $posted->lines());
         self::assertSame(3, $posted->version());
+        self::assertFalse($this->transactions->transactional($organizationId, fn(): bool => $this->repository->hasDraftForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
 
         $correctionRepository = new DbalGoodsReceiptCorrectionRepository($this->db, $this->ids, $this->decimals);
         $correction = GoodsReceiptCorrection::create(GoodsReceiptCorrectionId::fromString(self::CORRECTION, $this->ids), $organizationId, $posted->id(), 'Damaged unit found during recount', ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T10:00:00Z'));
@@ -152,12 +154,14 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
             return $correctionRepository->get($correction->organizationId(), $correction->id());
         });
         self::assertSame('-5.000000000000', $restoredCorrection->lines()[0]->difference()->toString());
+        self::assertTrue($this->transactions->transactional($organizationId, fn(): bool => $correctionRepository->hasOpenForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
 
         $this->transactions->transactional($organizationId, function () use ($correctionRepository, $restoredCorrection): void {
             $restoredCorrection->post(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T11:00:00Z'));
             $correctionRepository->save($restoredCorrection);
         });
         self::assertSame(GoodsReceiptCorrectionStatus::Posted, $restoredCorrection->status());
+        self::assertFalse($this->transactions->transactional($organizationId, fn(): bool => $correctionRepository->hasOpenForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
         self::assertSame('-5.000000000000', $correctionRepository->postedDifferenceByProduct($organizationId, $posted->id())[self::PRODUCT]->toString());
 
         $returnRepository = new DbalPurchaseReturnRepository($this->db, $this->ids, $this->decimals);
@@ -167,9 +171,11 @@ final class DbalGoodsReceiptRepositoryTest extends KernelTestCase
             $returnRepository->save($purchaseReturn);
             return $returnRepository->get($purchaseReturn->organizationId(), $purchaseReturn->id());
         });
+        self::assertTrue($this->transactions->transactional($organizationId, fn(): bool => $returnRepository->hasOpenForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
         $restoredReturn->ship(ActorId::fromString(self::ACTOR, $this->ids), new DateTimeImmutable('2026-08-29T13:00:00Z'));
         $this->transactions->transactional($organizationId, fn() => $returnRepository->save($restoredReturn));
         self::assertSame(PurchaseReturnStatus::Shipped, $restoredReturn->status());
+        self::assertFalse($this->transactions->transactional($organizationId, fn(): bool => $returnRepository->hasOpenForStore($organizationId, StoreId::fromString(self::STORE, $this->ids))));
         self::assertSame('2.000000000000', $returnRepository->shippedQuantityByProduct($organizationId, $posted->id())[self::PRODUCT]->toString());
     }
 

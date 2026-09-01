@@ -63,6 +63,10 @@ final readonly class DbalPurchaseReturnRepository implements PurchaseReturnRepos
             $result[(string) $row['product_id']] = $this->quantity($row['quantity']);
         } return $result;
     }
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
+    {
+        return false !== $this->db->fetchOne("SELECT 1 FROM purchasing.purchase_return WHERE organization_id=? AND source_store_id=? AND status='DRAFT' LIMIT 1", [$organizationId->toString(), $storeId->toString()]);
+    }
     /** @return array<string,mixed> */ private function data(PurchaseReturn $r): array
     {
         return ['id' => $r->id()->toString(),'organization_id' => $r->organizationId()->toString(),'source_store_id' => $r->sourceStoreId()->toString(),'supplier_id' => $r->supplierId()->toString(),'goods_receipt_id' => $r->goodsReceiptId()?->toString(),'purchase_order_id' => $r->purchaseOrderId()?->toString(),'status' => $r->status()->value,'reason' => $r->reason(),'created_by' => $r->createdBy()->toString(),'created_at' => $r->createdAt()->format(DATE_ATOM),'shipped_by' => $r->shippedBy()?->toString(),'shipped_at' => $r->shippedAt()?->format(DATE_ATOM),'cancelled_by' => $r->cancelledBy()?->toString(),'cancelled_at' => $r->cancelledAt()?->format(DATE_ATOM),'version' => $r->version()];
