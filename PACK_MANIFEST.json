@@ -1,0 +1,1597 @@
+{
+  "version": "2.0",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 3413
+    },
+    {
+      "path": "README.md",
+      "bytes": 1683
+    },
+    {
+      "path": "docs/ai/ADR_INDEX.md",
+      "bytes": 3118
+    },
+    {
+      "path": "docs/ai/ARCHITECTURE_RULES.md",
+      "bytes": 2802
+    },
+    {
+      "path": "docs/ai/HOW_TO_ADD_A_LOT.md",
+      "bytes": 2340
+    },
+    {
+      "path": "docs/ai/LOT_REGISTRY.md",
+      "bytes": 1126
+    },
+    {
+      "path": "docs/ai/PROJECT_CONTEXT.md",
+      "bytes": 2469
+    },
+    {
+      "path": "docs/ai/SPEC_ROUTING.md",
+      "bytes": 1514
+    },
+    {
+      "path": "docs/ai/lots/_TEMPLATE/CONTEXT.md",
+      "bytes": 452
+    },
+    {
+      "path": "docs/ai/lots/_TEMPLATE/EPIC_TEMPLATE.md",
+      "bytes": 482
+    },
+    {
+      "path": "docs/ai/lots/_TEMPLATE/INDEX.md",
+      "bytes": 566
+    },
+    {
+      "path": "docs/ai/lots/_TEMPLATE/SUPPORT_TEMPLATE.md",
+      "bytes": 193
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/CONTEXT.md",
+      "bytes": 4970
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.1-workspace.md",
+      "bytes": 722
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.10-error-contract.md",
+      "bytes": 462
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.11-authentication.md",
+      "bytes": 343
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.12-organizationcontext.md",
+      "bytes": 403
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.13-storecontext.md",
+      "bytes": 452
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.14-authorization-frontend.md",
+      "bytes": 318
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.15-server-state.md",
+      "bytes": 404
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.16-forms.md",
+      "bytes": 376
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.17-tables-admin.md",
+      "bytes": 383
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.18-routing-admin.md",
+      "bytes": 313
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.19-admin-shell.md",
+      "bytes": 283
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.2-admin-bootstrap.md",
+      "bytes": 366
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.20-pos-shell.md",
+      "bytes": 302
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.21-notifications.md",
+      "bytes": 304
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.22-idempotency-key-frontend.md",
+      "bytes": 475
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.23-network-abstraction.md",
+      "bytes": 285
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.24-feature-organization.md",
+      "bytes": 555
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.25-testing-pyramid.md",
+      "bytes": 443
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.26-observability-frontend.md",
+      "bytes": 369
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.27-ci.md",
+      "bytes": 248
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.3-pos-bootstrap.md",
+      "bytes": 399
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.4-typescript-conventions.md",
+      "bytes": 452
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.5-lint-format-imports.md",
+      "bytes": 382
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.6-design-tokens.md",
+      "bytes": 452
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.7-ui-primitives.md",
+      "bytes": 383
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.8-formatting-metier.md",
+      "bytes": 436
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/EPIC-F0.9-api-client.md",
+      "bytes": 306
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/INDEX.md",
+      "bytes": 8054
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-15-ui-admin-vs-pos.md",
+      "bytes": 278
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-17-decimal-transport.md",
+      "bytes": 477
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-19-openapi.md",
+      "bytes": 420
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-20-api-boundary.md",
+      "bytes": 385
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-21-correlation-id.md",
+      "bytes": 324
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-23-errormapper.md",
+      "bytes": 351
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-25-auth-state.md",
+      "bytes": 362
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-26-session-bootstrap.md",
+      "bytes": 279
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-27-refresh-concurrency.md",
+      "bytes": 329
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-30-store-selector.md",
+      "bytes": 318
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-32-permission-model.md",
+      "bytes": 281
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-33-effectiveaccess.md",
+      "bytes": 312
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-34-can-component-hook.md",
+      "bytes": 282
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-35-navigation-authorization.md",
+      "bytes": 364
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-37-query-keys.md",
+      "bytes": 331
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-38-tenant-cache-isolation.md",
+      "bytes": 367
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-39-ui-state.md",
+      "bytes": 267
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-40-pos-cart.md",
+      "bytes": 306
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-42-schema-validation.md",
+      "bytes": 300
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-44-server-driven-pagination.md",
+      "bytes": 226
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-46-routing-pos.md",
+      "bytes": 203
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-49-keyboard-first-pos.md",
+      "bytes": 370
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-50-accessibility.md",
+      "bytes": 250
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-51-responsive-strategy.md",
+      "bytes": 322
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-53-confirmations.md",
+      "bytes": 305
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-55-mutation-lifecycle.md",
+      "bytes": 382
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-57-environment-configuration.md",
+      "bytes": 310
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-59-pos-feature-organization.md",
+      "bytes": 444
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-60-tauri-boundary.md",
+      "bytes": 325
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-61-offline-readiness-sans-offline.md",
+      "bytes": 336
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-63-e2e-foundation-scenarios.md",
+      "bytes": 317
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-64-admin-first-vertical-slice.md",
+      "bytes": 522
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-65-pos-first-vertical-slice.md",
+      "bytes": 283
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-67-frontend-version.md",
+      "bytes": 246
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-69-dependency-policy.md",
+      "bytes": 380
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-70-security-baseline-frontend.md",
+      "bytes": 313
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-71-xss-rendering.md",
+      "bytes": 209
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-72-file-handling-future.md",
+      "bytes": 278
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-73-frontend-architecture-tests.md",
+      "bytes": 280
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-74-naming.md",
+      "bytes": 280
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-75-internationalization-readiness.md",
+      "bytes": 379
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-76-dates.md",
+      "bytes": 314
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-77-loading-strategy.md",
+      "bytes": 296
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-78-empty-states.md",
+      "bytes": 232
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-79-operational-status-ui.md",
+      "bytes": 312
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-80-feature-flags.md",
+      "bytes": 243
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-81-admin-dashboard.md",
+      "bytes": 346
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-82-pos-persistence-avant-offline.md",
+      "bytes": 340
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-83-questions-ouvertes-a-trancher-avant-implementation-complete.md",
+      "bytes": 1235
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-84-spikes-frontend-recommandes.md",
+      "bytes": 880
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-85-ordre-dimplementation-recommande.md",
+      "bytes": 568
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-86-commits-atomiques-initiaux.md",
+      "bytes": 725
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-87-definition-of-done-frontend-foundation.md",
+      "bytes": 2581
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-88-gate-de-demonstration.md",
+      "bytes": 826
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-89-premier-vertical-slice-apres-foundation.md",
+      "bytes": 435
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-90-deuxieme-vertical-slice-admin.md",
+      "bytes": 146
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-91-premier-vertical-slice-pos.md",
+      "bytes": 241
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-92-sequence-produit-recommandee.md",
+      "bytes": 542
+    },
+    {
+      "path": "docs/ai/lots/frontend-foundation/SUPPORT-93-principe-directeur.md",
+      "bytes": 451
+    },
+    {
+      "path": "docs/ai/lots/lot-0/CONTEXT.md",
+      "bytes": 2942
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.1-initialisation-du-repository-backend.md",
+      "bytes": 3489
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.2-architecture-fitness-tests.md",
+      "bytes": 1507
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.3-persistence-foundation.md",
+      "bytes": 2071
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.4-sharedkernel-foundation.md",
+      "bytes": 2438
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.5-api-foundation.md",
+      "bytes": 1683
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.6-authentication-foundation.md",
+      "bytes": 1574
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.7-spikes-architecturaux.md",
+      "bytes": 2645
+    },
+    {
+      "path": "docs/ai/lots/lot-0/EPIC-0.8-operations-observability.md",
+      "bytes": 1701
+    },
+    {
+      "path": "docs/ai/lots/lot-0/INDEX.md",
+      "bytes": 1820
+    },
+    {
+      "path": "docs/ai/lots/lot-0/SUPPORT-12-ci-minimale-du-lot-0.md",
+      "bytes": 620
+    },
+    {
+      "path": "docs/ai/lots/lot-0/SUPPORT-13-gate-de-sortie-du-lot-0.md",
+      "bytes": 1012
+    },
+    {
+      "path": "docs/ai/lots/lot-0/SUPPORT-14-principe-de-travail-pour-la-suite.md",
+      "bytes": 558
+    },
+    {
+      "path": "docs/ai/lots/lot-1/CONTEXT.md",
+      "bytes": 4823
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.1-organization-foundation.md",
+      "bytes": 4367
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.2-store-foundation.md",
+      "bytes": 3602
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.3-organization-invitations.md",
+      "bytes": 2843
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.4-membership-lifecycle.md",
+      "bytes": 2072
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.5-bis-user-accounts-onboarding.md",
+      "bytes": 1748
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.5-roles-permissions-scopes.md",
+      "bytes": 3172
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.5-ter-authentication-security-hardening.md",
+      "bytes": 957
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.6-authorization-operational-guards.md",
+      "bytes": 2208
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.7-security-audit-event-integration.md",
+      "bytes": 2162
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.8-administration-api.md",
+      "bytes": 2761
+    },
+    {
+      "path": "docs/ai/lots/lot-1/EPIC-1.9-integration-tenant-isolation-tests.md",
+      "bytes": 3134
+    },
+    {
+      "path": "docs/ai/lots/lot-1/INDEX.md",
+      "bytes": 2505
+    },
+    {
+      "path": "docs/ai/lots/lot-1/SUPPORT-14-scenario-de-demonstration-du-lot-1.md",
+      "bytes": 1084
+    },
+    {
+      "path": "docs/ai/lots/lot-1/SUPPORT-15-ci-minimale-du-lot-1.md",
+      "bytes": 630
+    },
+    {
+      "path": "docs/ai/lots/lot-1/SUPPORT-16-gate-de-sortie-du-lot-1.md",
+      "bytes": 1904
+    },
+    {
+      "path": "docs/ai/lots/lot-1/SUPPORT-17-hors-perimetre-du-lot-1.md",
+      "bytes": 394
+    },
+    {
+      "path": "docs/ai/lots/lot-1/SUPPORT-18-preparation-du-lot-2.md",
+      "bytes": 550
+    },
+    {
+      "path": "docs/ai/lots/lot-1/SUPPORT-19-principe-de-travail-pour-la-suite.md",
+      "bytes": 667
+    },
+    {
+      "path": "docs/ai/lots/lot-2/CONTEXT.md",
+      "bytes": 7610
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.1-catalog-foundation.md",
+      "bytes": 1602
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.2-unit-of-measure.md",
+      "bytes": 2175
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.3-categories.md",
+      "bytes": 1891
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.4-product-lifecycle.md",
+      "bytes": 4406
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.5-product-packaging-barcode.md",
+      "bytes": 4363
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.6-basic-pricing.md",
+      "bytes": 4731
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.7-authorization-audit-integration.md",
+      "bytes": 3276
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.8-catalog-pricing-api.md",
+      "bytes": 4503
+    },
+    {
+      "path": "docs/ai/lots/lot-2/EPIC-2.9-integration-postgresql-tenant-isolation-tests.md",
+      "bytes": 4845
+    },
+    {
+      "path": "docs/ai/lots/lot-2/INDEX.md",
+      "bytes": 2444
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-12-fiscalite-dans-le-lot-2.md",
+      "bytes": 1125
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-16-demonstration-metier-consolidee-du-lot-2.md",
+      "bytes": 1447
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-17-ci-minimale-du-lot-2.md",
+      "bytes": 741
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-18-gate-de-sortie-du-lot-2.md",
+      "bytes": 2820
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-19-hors-perimetre-du-lot-2.md",
+      "bytes": 912
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-20-transition-vers-le-lot-3.md",
+      "bytes": 840
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-21-principe-de-travail-pour-limplementation.md",
+      "bytes": 1029
+    },
+    {
+      "path": "docs/ai/lots/lot-2/SUPPORT-22-premier-point-dentree-dimplementation.md",
+      "bytes": 413
+    },
+    {
+      "path": "docs/ai/lots/lot-3/CONTEXT.md",
+      "bytes": 7343
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.1-inventory-foundation.md",
+      "bytes": 2256
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.10-storeclosure-integration.md",
+      "bytes": 1623
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.11-authorization-audit-permissions.md",
+      "bytes": 2135
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.12-application-contracts-pour-lot-4.md",
+      "bytes": 1677
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.13-inventory-cash-api.md",
+      "bytes": 3659
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.14-integration-postgresql-rls-tests.md",
+      "bytes": 4496
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.2-stock-aggregate-persistence.md",
+      "bytes": 3233
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.3-stockmovement-ledger.md",
+      "bytes": 2271
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.4-stock-initialization-adjustment.md",
+      "bytes": 3093
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.5-stock-concurrency-idempotence.md",
+      "bytes": 2089
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.6-cash-management-foundation.md",
+      "bytes": 965
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.7-cashregister.md",
+      "bytes": 1719
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.8-cashsession-lifecycle.md",
+      "bytes": 4357
+    },
+    {
+      "path": "docs/ai/lots/lot-3/EPIC-3.9-cashmovement-ledger.md",
+      "bytes": 2990
+    },
+    {
+      "path": "docs/ai/lots/lot-3/INDEX.md",
+      "bytes": 3017
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-21-observabilite-lot-3.md",
+      "bytes": 604
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-22-demonstration-consolidee-du-lot-3.md",
+      "bytes": 1783
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-23-ci-minimale-du-lot-3.md",
+      "bytes": 741
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-24-gate-de-sortie-du-lot-3.md",
+      "bytes": 3531
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-25-hors-perimetre-du-lot-3.md",
+      "bytes": 677
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-26-transition-vers-le-lot-4.md",
+      "bytes": 1074
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-27-principe-de-travail-pour-limplementation.md",
+      "bytes": 845
+    },
+    {
+      "path": "docs/ai/lots/lot-3/SUPPORT-28-premier-point-dentree-dimplementation.md",
+      "bytes": 766
+    },
+    {
+      "path": "docs/ai/lots/lot-4/CONTEXT.md",
+      "bytes": 6504
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.1-sales-foundation.md",
+      "bytes": 818
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.10-authorization-audit.md",
+      "bytes": 876
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.11-sales-api.md",
+      "bytes": 1707
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.12-persistence-rls.md",
+      "bytes": 563
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.2-sale-aggregate-lifecycle.md",
+      "bytes": 1442
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.3-saleline-snapshots.md",
+      "bytes": 1456
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.4-sale-pricing.md",
+      "bytes": 1046
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.5-minimal-payment-cash.md",
+      "bytes": 846
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.6-inventory-integration.md",
+      "bytes": 859
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.7-cash-integration.md",
+      "bytes": 686
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.8-completesale.md",
+      "bytes": 1564
+    },
+    {
+      "path": "docs/ai/lots/lot-4/EPIC-4.9-idempotence-concurrency.md",
+      "bytes": 917
+    },
+    {
+      "path": "docs/ai/lots/lot-4/INDEX.md",
+      "bytes": 2597
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-20-tests-domain.md",
+      "bytes": 575
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-21-completesale-integration-tests.md",
+      "bytes": 1188
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-22-tenant-scope-tests.md",
+      "bytes": 379
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-23-demonstration-consolidee-m2.md",
+      "bytes": 903
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-24-gate-de-sortie-du-lot-4.md",
+      "bytes": 3028
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-25-hors-perimetre.md",
+      "bytes": 458
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-26-transition-vers-la-suite.md",
+      "bytes": 475
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-27-principe-de-travail.md",
+      "bytes": 627
+    },
+    {
+      "path": "docs/ai/lots/lot-4/SUPPORT-28-premier-point-dentree.md",
+      "bytes": 908
+    },
+    {
+      "path": "docs/ai/lots/lot-5/CONTEXT.md",
+      "bytes": 7489
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.1-inventory-costing-foundation.md",
+      "bytes": 502
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.10-inventory-restock.md",
+      "bytes": 479
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.11-return-costing.md",
+      "bytes": 487
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.12-montants-de-retour.md",
+      "bytes": 472
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.13-refund-cash-essentiel.md",
+      "bytes": 804
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.2-stockvaluation.md",
+      "bytes": 589
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.3-stockvaluationmovement.md",
+      "bytes": 641
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.4-moving-weighted-average.md",
+      "bytes": 571
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.5-costing-bootstrap.md",
+      "bytes": 554
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.6-integration-vente-costing.md",
+      "bytes": 468
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.7-salelinecostsnapshot.md",
+      "bytes": 507
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.8-atomicite-completesale-avec-costing.md",
+      "bytes": 535
+    },
+    {
+      "path": "docs/ai/lots/lot-5/EPIC-5.9-returnsale-foundation.md",
+      "bytes": 776
+    },
+    {
+      "path": "docs/ai/lots/lot-5/INDEX.md",
+      "bytes": 3877
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-17-invariants-returnsale.md",
+      "bytes": 403
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-22-coordination-return-refund.md",
+      "bytes": 746
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-23-cas-sans-restock.md",
+      "bytes": 245
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-24-permissions-lot-5.md",
+      "bytes": 283
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-25-audit-events.md",
+      "bytes": 328
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-26-api-costing.md",
+      "bytes": 361
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-27-api-returns.md",
+      "bytes": 368
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-28-api-cash-refund.md",
+      "bytes": 371
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-29-error-contract.md",
+      "bytes": 422
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-30-persistence-rls.md",
+      "bytes": 357
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-31-tests-costing.md",
+      "bytes": 352
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-32-tests-returnsale.md",
+      "bytes": 333
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-33-test-cout-original-restaure.md",
+      "bytes": 404
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-34-tests-refund.md",
+      "bytes": 290
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-35-atomicite-returnsale.md",
+      "bytes": 452
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-36-idempotence-concurrence.md",
+      "bytes": 409
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-37-tenant-isolation.md",
+      "bytes": 234
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-38-demonstration-consolidee.md",
+      "bytes": 708
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-39-gate-de-sortie-du-lot-5.md",
+      "bytes": 2682
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-40-hors-perimetre.md",
+      "bytes": 331
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-41-transition-vers-le-lot-6.md",
+      "bytes": 581
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-42-premier-point-dentree.md",
+      "bytes": 1349
+    },
+    {
+      "path": "docs/ai/lots/lot-5/SUPPORT-43-principe-de-travail.md",
+      "bytes": 718
+    },
+    {
+      "path": "docs/ai/lots/lot-6/CONTEXT.md",
+      "bytes": 6984
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.1-purchasing-foundation.md",
+      "bytes": 759
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.10-costing-integration.md",
+      "bytes": 764
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.11-partial-receipts.md",
+      "bytes": 381
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.12-over-receipt.md",
+      "bytes": 515
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.13-goodsreceiptcorrection.md",
+      "bytes": 983
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.14-purchasereturn.md",
+      "bytes": 905
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.2-supplier.md",
+      "bytes": 805
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.3-purchasingpolicy.md",
+      "bytes": 601
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.4-purchaseorder.md",
+      "bytes": 1415
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.5-use-cases-purchaseorder.md",
+      "bytes": 582
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.6-goodsreceipt.md",
+      "bytes": 1201
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.7-direct-goodsreceipt.md",
+      "bytes": 388
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.8-postgoodsreceipt.md",
+      "bytes": 921
+    },
+    {
+      "path": "docs/ai/lots/lot-6/EPIC-6.9-inventory-integration.md",
+      "bytes": 506
+    },
+    {
+      "path": "docs/ai/lots/lot-6/INDEX.md",
+      "bytes": 5231
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-20-costing-des-corrections.md",
+      "bytes": 558
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-21-atomicite-goodsreceiptcorrection.md",
+      "bytes": 429
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-23-shippurchasereturn.md",
+      "bytes": 551
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-24-costing-purchasereturn.md",
+      "bytes": 324
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-25-idempotence-purchasing.md",
+      "bytes": 443
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-26-concurrence.md",
+      "bytes": 528
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-27-catalog-contract-pour-purchasing.md",
+      "bytes": 565
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-28-permissions.md",
+      "bytes": 533
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-29-roles-systeme.md",
+      "bytes": 264
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-30-guards-operationnels.md",
+      "bytes": 217
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-31-storeclosure-integration.md",
+      "bytes": 377
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-32-audit.md",
+      "bytes": 212
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-33-events.md",
+      "bytes": 411
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-34-api-supplier.md",
+      "bytes": 231
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-35-api-purchaseorder.md",
+      "bytes": 391
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-36-api-goodsreceipt.md",
+      "bytes": 342
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-37-api-goodsreceiptcorrection.md",
+      "bytes": 180
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-38-api-purchasereturn.md",
+      "bytes": 233
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-39-error-contract.md",
+      "bytes": 626
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-40-persistence.md",
+      "bytes": 522
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-41-tests-purchaseorder.md",
+      "bytes": 347
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-42-tests-goodsreceipt.md",
+      "bytes": 299
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-43-test-reception-inventory-costing.md",
+      "bytes": 387
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-44-tests-over-receipt.md",
+      "bytes": 295
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-45-tests-goodsreceiptcorrection.md",
+      "bytes": 298
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-46-tests-purchasereturn.md",
+      "bytes": 313
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-47-failure-matrix-postgoodsreceipt.md",
+      "bytes": 475
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-48-failure-matrix-correction-return.md",
+      "bytes": 268
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-49-idempotence-tests.md",
+      "bytes": 342
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-50-concurrency-tests.md",
+      "bytes": 541
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-51-tenant-rls-tests.md",
+      "bytes": 270
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-52-observabilite.md",
+      "bytes": 313
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-53-demonstration-consolidee-lot-6.md",
+      "bytes": 1225
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-54-gate-de-sortie-lot-6.md",
+      "bytes": 3412
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-55-hors-perimetre.md",
+      "bytes": 452
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-56-transition-vers-lot-7.md",
+      "bytes": 439
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-57-premier-point-dentree-dimplementation.md",
+      "bytes": 955
+    },
+    {
+      "path": "docs/ai/lots/lot-6/SUPPORT-58-principe-de-travail.md",
+      "bytes": 843
+    },
+    {
+      "path": "docs/ai/lots/lot-7/CONTEXT.md",
+      "bytes": 8298
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.1-stocktransfer-aggregate.md",
+      "bytes": 934
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.10-createstockcount.md",
+      "bytes": 587
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.11-startstockcount.md",
+      "bytes": 490
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.12-openstockcountscope.md",
+      "bytes": 465
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.13-recordstockcount.md",
+      "bytes": 582
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.14-beginstockcountfinalization.md",
+      "bytes": 504
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.15-reconcilestockcountbatch.md",
+      "bytes": 655
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.16-crash-recovery.md",
+      "bytes": 569
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.17-completestockcountfinalization.md",
+      "bytes": 389
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.18-stockcount-costing.md",
+      "bytes": 718
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.2-create-edit-transfer.md",
+      "bytes": 681
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.3-shipstocktransfer.md",
+      "bytes": 955
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.4-stock-en-transit.md",
+      "bytes": 550
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.5-receivestocktransfer.md",
+      "bytes": 941
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.6-transfer-discrepancy.md",
+      "bytes": 540
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.7-transfer-costing.md",
+      "bytes": 1223
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.8-stockcount-aggregate.md",
+      "bytes": 734
+    },
+    {
+      "path": "docs/ai/lots/lot-7/EPIC-7.9-stockcountline.md",
+      "bytes": 630
+    },
+    {
+      "path": "docs/ai/lots/lot-7/INDEX.md",
+      "bytes": 6669
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-14-sortie-finale-source.md",
+      "bytes": 207
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-15-transfer-idempotence.md",
+      "bytes": 390
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-16-transfer-concurrency.md",
+      "bytes": 437
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-17-store-suspension-transfer.md",
+      "bytes": 503
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-23-mouvement-interdit-pendant-comptage.md",
+      "bytes": 555
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-25-blind-vs-guided.md",
+      "bytes": 356
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-28-conflit-de-snapshot.md",
+      "bytes": 382
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-31-cancelstockcount.md",
+      "bytes": 388
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-33-confidentialite-des-couts.md",
+      "bytes": 441
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-34-permissions-stocktransfer.md",
+      "bytes": 257
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-35-permissions-stockcount.md",
+      "bytes": 244
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-36-roles-systeme.md",
+      "bytes": 407
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-37-scope-multi-store.md",
+      "bytes": 462
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-38-audit.md",
+      "bytes": 381
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-39-events-stocktransfer.md",
+      "bytes": 288
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-40-events-stockcount.md",
+      "bytes": 279
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-41-storeclosure-integration.md",
+      "bytes": 711
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-42-api-stocktransfer.md",
+      "bytes": 702
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-43-api-stockcount.md",
+      "bytes": 422
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-44-api-lecture-blind.md",
+      "bytes": 255
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-45-error-contract.md",
+      "bytes": 620
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-46-persistence-stocktransfer.md",
+      "bytes": 328
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-47-persistence-stockcount.md",
+      "bytes": 402
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-48-tests-domain-stocktransfer.md",
+      "bytes": 448
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-49-tests-transfer-inventory.md",
+      "bytes": 347
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-50-tests-transfer-costing.md",
+      "bytes": 536
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-51-tests-stockcount-lifecycle.md",
+      "bytes": 439
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-52-tests-lock.md",
+      "bytes": 399
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-53-tests-reconciliation.md",
+      "bytes": 433
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-54-tests-costing-stockcount.md",
+      "bytes": 412
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-55-failure-matrix-shipstocktransfer.md",
+      "bytes": 303
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-56-failure-matrix-receivestocktransfer.md",
+      "bytes": 182
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-57-failure-matrix-stockcount-start.md",
+      "bytes": 217
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-58-failure-matrix-reconciliation-batch.md",
+      "bytes": 316
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-59-crash-recovery-test.md",
+      "bytes": 286
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-60-concurrency-stockcountline.md",
+      "bytes": 272
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-61-tenant-scope-tests.md",
+      "bytes": 416
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-62-observabilite.md",
+      "bytes": 508
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-63-demonstration-stocktransfer.md",
+      "bytes": 705
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-64-demonstration-stockcount.md",
+      "bytes": 957
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-65-gate-de-sortie-lot-7.md",
+      "bytes": 3714
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-66-gate-m3-gestion-complete-du-stock.md",
+      "bytes": 686
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-67-ce-que-m3-permet-cote-produit.md",
+      "bytes": 785
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-68-hors-perimetre-lot-7.md",
+      "bytes": 353
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-69-transition-apres-lot-7.md",
+      "bytes": 343
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-70-premier-point-dentree-dimplementation.md",
+      "bytes": 1244
+    },
+    {
+      "path": "docs/ai/lots/lot-7/SUPPORT-71-principe-de-travail.md",
+      "bytes": 885
+    },
+    {
+      "path": "docs/specs/api/inventory-cash-errors.md",
+      "bytes": 845
+    },
+    {
+      "path": "docs/specs/api/inventory-cash-openapi.md",
+      "bytes": 792
+    },
+    {
+      "path": "docs/specs/architecture/adr/0001-modular-monolith-and-ddd-boundaries.md",
+      "bytes": 1576
+    },
+    {
+      "path": "docs/specs/architecture/adr/0002-php-symfony-backend.md",
+      "bytes": 1254
+    },
+    {
+      "path": "docs/specs/architecture/adr/0003-postgresql-transactional-database.md",
+      "bytes": 875
+    },
+    {
+      "path": "docs/specs/architecture/adr/0004-doctrine-persistence-strategy.md",
+      "bytes": 890
+    },
+    {
+      "path": "docs/specs/architecture/adr/0005-rest-api-platform-openapi.md",
+      "bytes": 825
+    },
+    {
+      "path": "docs/specs/architecture/adr/0006-jwt-authentication.md",
+      "bytes": 1066
+    },
+    {
+      "path": "docs/specs/architecture/adr/0007-uuid-v7-identifiers.md",
+      "bytes": 1061
+    },
+    {
+      "path": "docs/specs/architecture/adr/0008-exact-decimal-arithmetic.md",
+      "bytes": 1243
+    },
+    {
+      "path": "docs/specs/architecture/adr/0009-web-frontend.md",
+      "bytes": 563
+    },
+    {
+      "path": "docs/specs/architecture/adr/0010-tauri-pos-runtime.md",
+      "bytes": 837
+    },
+    {
+      "path": "docs/specs/architecture/adr/0011-sqlite-pos-local-storage.md",
+      "bytes": 1020
+    },
+    {
+      "path": "docs/specs/architecture/adr/0012-docker-deployment-artifact.md",
+      "bytes": 840
+    },
+    {
+      "path": "docs/specs/architecture/adr/0013-opentelemetry-observability.md",
+      "bytes": 853
+    },
+    {
+      "path": "docs/specs/architecture/adr/0014-postgresql-numeric-precision.md",
+      "bytes": 971
+    },
+    {
+      "path": "docs/specs/architecture/adr/0015-stock-concurrency-strategy.md",
+      "bytes": 794
+    },
+    {
+      "path": "docs/specs/architecture/adr/0016-transactional-outbox-processing.md",
+      "bytes": 802
+    },
+    {
+      "path": "docs/specs/architecture/adr/0017-postgresql-row-level-security.md",
+      "bytes": 4223
+    },
+    {
+      "path": "docs/specs/architecture/adr/0018-global-user-and-active-organization.md",
+      "bytes": 3228
+    },
+    {
+      "path": "docs/specs/architecture/adr/0019-tenant-owned-units-of-measure.md",
+      "bytes": 1790
+    },
+    {
+      "path": "docs/specs/architecture/adr/0020-pilot-sales-tax-policy.md",
+      "bytes": 1439
+    },
+    {
+      "path": "docs/specs/architecture/adr/0021-inventory-costing-activation-policy.md",
+      "bytes": 4538
+    },
+    {
+      "path": "docs/specs/architecture/adr/0022-cash-refund-ownership-and-workflow.md",
+      "bytes": 3225
+    },
+    {
+      "path": "docs/specs/architecture/adr/0023-purchasing-receipt-policy.md",
+      "bytes": 2190
+    },
+    {
+      "path": "docs/specs/architecture/adr/README.md",
+      "bytes": 3803
+    },
+    {
+      "path": "docs/specs/architecture/ddd/zandu-sales-manager-ddd-v1.1.docx",
+      "bytes": 99778
+    },
+    {
+      "path": "docs/specs/architecture/fitness-tests.md",
+      "bytes": 13961
+    },
+    {
+      "path": "docs/specs/planning/zandu-frontend-foundation.md",
+      "bytes": 39685
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-0-architecture-executable.md",
+      "bytes": 21887
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-1-administration-operationnelle.md",
+      "bytes": 38726
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-2-catalog-basic-pricing.md",
+      "bytes": 48386
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-3-inventory-cash-foundations.md",
+      "bytes": 53585
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-4-sales-complete-sale-cash.md",
+      "bytes": 27485
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-5-inventory-costing-returns.md",
+      "bytes": 27275
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-6-purchasing-goods-receipts.md",
+      "bytes": 36810
+    },
+    {
+      "path": "docs/specs/planning/zandu-lot-7-stock-transfer-stock-count.md",
+      "bytes": 44749
+    },
+    {
+      "path": "docs/specs/spikes/lot-0-architecture-spikes.md",
+      "bytes": 1935
+    },
+    {
+      "path": "docs/specs/spikes/lot-0-infrastructure-spike.md",
+      "bytes": 1740
+    },
+    {
+      "path": "tasks/TASK_TEMPLATE.md",
+      "bytes": 886
+    },
+    {
+      "path": "tools/add_lot.py",
+      "bytes": 972
+    }
+  ]
+}

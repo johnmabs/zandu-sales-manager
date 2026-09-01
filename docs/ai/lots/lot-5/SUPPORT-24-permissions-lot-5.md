@@ -1,0 +1,18 @@
+# 24. Permissions Lot 5
+
+```text
+INVENTORY_COSTING_READ
+INVENTORY_COSTING_INITIALIZE
+
+SALE_RETURN_CREATE
+SALE_RETURN_READ
+SALE_RETURN_COMPLETE
+SALE_RETURN_CANCEL
+
+PAYMENT_REFUND_CREATE
+PAYMENT_REFUND_READ
+```
+
+Les overrides éventuels exigent permissions spécifiques et audit.
+
+---
