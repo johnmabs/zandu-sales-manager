@@ -24,7 +24,7 @@ use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRe
 use Zandu\Modules\Inventory\Infrastructure\Persistence\{DbalOpenStockCountScopeRepository, DbalStockCountLineRepository, DbalStockCountRepository};
 use Zandu\Modules\InventoryCosting\Application\Contract\InventoryMovementValuer;
 use Zandu\Modules\InventoryCosting\Domain\InventoryCostingRuleViolation;
-use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
+use Zandu\Modules\Organization\Application\Contract\{OperationalGuard, StoreClosureBlockerProvider};
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
@@ -321,6 +321,7 @@ final class StockCountOpeningTest extends KernelTestCase
     public function testCompletionReleasesScopesPublishesOnceAndPreservesLines(): void
     {
         [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
+        self::assertTrue($this->hasOpenCount($counts));
         ($this->reconciliationHandler($counts, $lines))($this->reconcileCommand(50));
         $outbox = new OpeningOutbox();
         $handler = $this->completionHandler($counts, $lines, $outbox);
@@ -335,6 +336,7 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertCount(1, $outbox->messages);
         self::assertSame('inventory.stock_count_completed.v1', $outbox->messages[0]->type);
         self::assertSame(self::COUNT_A, $outbox->messages[0]->payload['stockCountId']);
+        self::assertFalse($this->hasOpenCount($counts));
 
         self::assertSame(StockCountStatus::Completed, $handler(new CompleteStockCountFinalization($this->countId(self::COUNT_A), $this->actor()))->status());
         self::assertCount(1, $outbox->messages);
@@ -383,6 +385,7 @@ final class StockCountOpeningTest extends KernelTestCase
         $counts = new DbalStockCountRepository($this->db, $this->ids);
         $outbox = new OpeningOutbox();
         $handler = $this->cancellationHandler($counts, $outbox);
+        self::assertFalse($this->hasOpenCount($counts), 'A draft stock count must not block store closure.');
 
         $cancelled = $handler(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
 
@@ -402,6 +405,8 @@ final class StockCountOpeningTest extends KernelTestCase
     {
         [$counts] = $this->prepareOpenCount();
         $outbox = new OpeningOutbox();
+        self::assertTrue($this->hasOpenCount($counts));
+        self::assertContains('OPEN_STOCK_COUNT', $this->closureBlockers());
 
         $cancelled = ($this->cancellationHandler($counts, $outbox))(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
 
@@ -411,12 +416,15 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND counted_quantity IS NULL', [self::ORGANIZATION, self::COUNT_A]));
         self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
         self::assertSame('OPEN', $outbox->messages[0]->payload['previousStatus']);
+        self::assertFalse($this->hasOpenCount($counts));
+        self::assertNotContains('OPEN_STOCK_COUNT', $this->closureBlockers());
     }
 
     public function testFinalizingCancellationIsRejectedWithoutReleasingScopes(): void
     {
         [$counts] = $this->prepareFinalizingCount('7', '2');
         $outbox = new OpeningOutbox();
+        self::assertTrue($this->hasOpenCount($counts));
 
         try {
             ($this->cancellationHandler($counts, $outbox))(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
@@ -487,6 +495,25 @@ final class StockCountOpeningTest extends KernelTestCase
         return new ReconcileStockCountBatch($this->countId(self::COUNT_A), $batchSize, $this->actor(), [
             new StockCountCostAssignment($this->productId(self::PRODUCT_WITHOUT_STOCK), $this->decimals->fromString('6000'), 'Initial cost established during stock count'),
         ]);
+    }
+
+    private function hasOpenCount(DbalStockCountRepository $counts): bool
+    {
+        return $this->transactions->transactional(
+            $this->organizationId(),
+            fn(): bool => $counts->hasOpenForStore($this->organizationId(), $this->storeId()),
+        );
+    }
+
+    /** @return list<string> */
+    private function closureBlockers(): array
+    {
+        $provider = self::getContainer()->get(StoreClosureBlockerProvider::class);
+
+        return $this->transactions->transactional(
+            $this->organizationId(),
+            fn(): array => $provider->blockers($this->organizationId(), $this->storeId()),
+        );
     }
 
     private function completionHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines, OutboxRepository $outbox): CompleteStockCountFinalizationHandler

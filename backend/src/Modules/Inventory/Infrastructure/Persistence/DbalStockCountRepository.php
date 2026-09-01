@@ -74,6 +74,14 @@ final readonly class DbalStockCountRepository implements StockCountRepository
         );
     }
 
+    public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
+    {
+        return false !== $this->db->fetchOne(
+            "SELECT 1 FROM inventory.stock_count WHERE organization_id=? AND store_id=? AND status IN ('OPEN','FINALIZING') LIMIT 1",
+            [$organizationId->toString(), $storeId->toString()],
+        );
+    }
+
     /** @return array<string, mixed> */
     private function data(StockCount $stockCount): array
     {

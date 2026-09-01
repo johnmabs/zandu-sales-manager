@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Zandu\Modules\Inventory\Application\InventoryStoreClosureBlockerProvider;
 use Zandu\Modules\Inventory\Domain\Stock\{Stock, StockQuantity, StockRepository};
+use Zandu\Modules\Inventory\Domain\StockCount\StockCountRepository;
 use Zandu\Modules\Inventory\Domain\StockTransfer\StockTransferRepository;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
@@ -26,7 +27,9 @@ final class InventoryStoreClosureBlockerProviderTest extends TestCase
         $stocks->expects(self::once())->method('findByStore')->with($organizationId, $storeId)->willReturn([$stock]);
         $transfers = $this->createMock(StockTransferRepository::class);
         $transfers->expects(self::once())->method('hasInTransitForStore')->with($organizationId, $storeId)->willReturn(true);
+        $stockCounts = $this->createMock(StockCountRepository::class);
+        $stockCounts->expects(self::once())->method('hasOpenForStore')->with($organizationId, $storeId)->willReturn(true);
 
-        self::assertSame(['STOCK_TRANSFER_IN_TRANSIT', 'STOCK_REMAINING'], (new InventoryStoreClosureBlockerProvider($stocks, $transfers))->blockers($organizationId, $storeId));
+        self::assertSame(['STOCK_TRANSFER_IN_TRANSIT', 'OPEN_STOCK_COUNT', 'STOCK_REMAINING'], (new InventoryStoreClosureBlockerProvider($stocks, $transfers, $stockCounts))->blockers($organizationId, $storeId));
     }
 }

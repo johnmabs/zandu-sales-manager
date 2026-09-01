@@ -68,6 +68,7 @@ Epic 6.11   TERMINÉ   Réceptions partielles liées aux commandes
 Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
 Epic 6.13   TERMINÉ   Corrections immuables de réception
 Epic 6.14   TERMINÉ   Retours fournisseur, preuves PostgreSQL incluses
+Epic 6.15   TERMINÉ   Blockers Purchasing composés dans StoreClosure
 Gate Lot 6  TERMINÉ   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
@@ -81,7 +82,7 @@ Epic 7.4    TERMINÉ   Transit expliqué par le document SHIPPED, sans faux stoc
 Epic 7.5    TERMINÉ   Réception finale atomique TRANSFER_IN
 Epic 7.6    TERMINÉ   Écarts de transit dérivés et conservés par ligne
 Epic 7.7    TERMINÉ   Valeur transférée au coût source avec perte de transit
-Transverse  TERMINÉ   Idempotence, concurrence et fermeture StockTransfer
+Transverse  TERMINÉ   Idempotence, concurrence et blockers StoreClosure composés
 Epic 7.8    TERMINÉ   StockCount aggregate, statuts, modes et scopes
 Epic 7.9    TERMINÉ   StockCountLine séparée et snapshot théorique
 Epic 7.10   TERMINÉ   Création DRAFT, périmètre, permissions, PostgreSQL et RLS
@@ -9597,12 +9598,26 @@ CI lors de la prochaine publication manuelle.
   variation de valeur aux corrections de comptage. Les preuves couvrent OUT au
   coût moyen, IN au coût moyen, refus sans coût, reprise autorisée avec coût et
   rollback intégral avant reprise.
+- `StockCountRepository::hasOpenForStore` exploite l'index tenant/store/statut
+  et expose `OPEN_STOCK_COUNT` pour les statuts `OPEN` et `FINALIZING` seulement ;
+  DRAFT, COMPLETED et CANCELLED ne bloquent pas la fermeture ;
+- le câblage direct historique d'Inventory masquait le provider Cash. Un
+  `CompositeStoreClosureBlockerProvider` fusionne désormais sans doublon les
+  providers tagués Cash, Purchasing et Inventory ;
+- Purchasing fournit enfin les blockers documentés du Lot 6 :
+  `OPEN_PURCHASE_ORDER`, `DRAFT_GOODS_RECEIPT`, `OPEN_PURCHASE_RETURN` et
+  `OPEN_GOODS_RECEIPT_CORRECTION`. Les requêtes PostgreSQL tenant-scoped
+  distinguent les documents réellement ouverts de leurs états terminaux ;
+- une preuve avec le composite Symfony réel vérifie que l'annulation d'un
+  comptage retire immédiatement `OPEN_STOCK_COUNT`, tandis que les tests
+  PostgreSQL Purchasing vérifient l'apparition puis le retrait de chaque
+  blocker au changement d'état.
 
-Validation StockCount/Costing ciblée verte. Suite complète : 737 tests, 3 587
+Validation StockCount/Costing ciblée verte. Suite complète : 739 tests, 3 620
 assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
 layers/modules verts (0 violation, 10 uncovered).
 
 ### Prochaine sous-étape
 
-Brancher le blocker `STOCK_COUNT_OPEN` à `StoreClosure`, puis exposer les API
-StockTransfer et StockCount prévues par le Lot 7.
+Exposer les API StockTransfer puis StockCount prévues par le Lot 7, avec le
+filtrage serveur requis pour le mode BLIND.

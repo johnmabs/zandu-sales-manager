@@ -87,7 +87,20 @@ services:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreRepository
 
     Zandu\Modules\Organization\Application\Contract\StoreClosureBlockerProvider:
-        alias: Zandu\Modules\Inventory\Application\InventoryStoreClosureBlockerProvider
+        alias: Zandu\Modules\Organization\Application\CompositeStoreClosureBlockerProvider
+
+    Zandu\Modules\Organization\Application\CompositeStoreClosureBlockerProvider:
+        arguments:
+            $providers: !tagged_iterator zandu.store_closure_blocker
+
+    Zandu\Modules\Inventory\Application\InventoryStoreClosureBlockerProvider:
+        tags: [zandu.store_closure_blocker]
+
+    Zandu\Modules\CashManagement\Application\CashStoreClosureBlockerProvider:
+        tags: [zandu.store_closure_blocker]
+
+    Zandu\Modules\Purchasing\Application\PurchasingStoreClosureBlockerProvider:
+        tags: [zandu.store_closure_blocker]
 
     Zandu\Modules\Organization\Application\Contract\MemberInvitationPolicy:
         alias: Zandu\Modules\Organization\Application\CreatorMemberInvitationPolicy

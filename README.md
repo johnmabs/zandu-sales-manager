@@ -60,7 +60,10 @@ Lorsque toutes les lignes sont réconciliées, la clôture passe le document à
 tout en conservant les lignes comme preuve historique. Un comptage DRAFT ou
 OPEN peut également être annulé sans mouvement ; l'annulation OPEN libère ses
 scopes mais conserve son snapshot pour l'audit, tandis qu'un document déjà en
-finalisation ne peut plus être abandonné.
+finalisation ne peut plus être abandonné. `StoreClosure` agrège maintenant les
+blockers Cash, Purchasing et Inventory : transferts en transit, comptages OPEN
+ou FINALIZING, stock restant et documents fournisseurs ouverts sont tous
+réévalués par le même contrat avant fermeture.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions
