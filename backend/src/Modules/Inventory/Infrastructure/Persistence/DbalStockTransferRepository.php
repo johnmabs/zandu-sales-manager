@@ -7,7 +7,7 @@ namespace Zandu\Modules\Inventory\Infrastructure\Persistence;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use LogicException;
-use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferLine, StockTransferRepository, StockTransferStatus};
+use Zandu\Modules\Inventory\Domain\StockTransfer\{StockTransfer, StockTransferLine, StockTransferNotFound, StockTransferRepository, StockTransferStatus};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockTransferId, StockTransferLineId, StoreId, UuidFactory};
 use Zandu\SharedKernel\Money\{Currency, Money};
@@ -47,12 +47,12 @@ final readonly class DbalStockTransferRepository implements StockTransferReposit
 
     public function get(OrganizationId $organizationId, StockTransferId $transferId): StockTransfer
     {
-        return $this->find($organizationId, $transferId) ?? throw new LogicException('Stock transfer was not found.');
+        return $this->find($organizationId, $transferId) ?? throw StockTransferNotFound::withId($transferId);
     }
     public function getForUpdate(OrganizationId $organizationId, StockTransferId $transferId): StockTransfer
     {
         if (false === $this->db->fetchOne('SELECT id FROM inventory.stock_transfer WHERE organization_id = ? AND id = ? FOR UPDATE', [$organizationId->toString(), $transferId->toString()])) {
-            throw new LogicException('Stock transfer was not found.');
+            throw StockTransferNotFound::withId($transferId);
         }
         return $this->get($organizationId, $transferId);
     }
@@ -64,6 +64,13 @@ final readonly class DbalStockTransferRepository implements StockTransferReposit
         }
         $lines = array_map(fn(array $line): StockTransferLine => new StockTransferLine(StockTransferLineId::fromString((string) $line['id'], $this->ids), $transferId, ProductId::fromString((string) $line['product_id'], $this->ids), $this->quantity($line['requested_quantity']), null === $line['shipped_quantity'] ? null : $this->quantity($line['shipped_quantity']), null === $line['received_quantity'] ? null : $this->quantity($line['received_quantity']), $this->money($line['shipped_unit_cost_snapshot'], $line['cost_currency']), $this->money($line['shipped_value_snapshot'], $line['cost_currency']), $this->money($line['received_value_snapshot'], $line['cost_currency'])), $this->db->fetchAllAssociative('SELECT * FROM inventory.stock_transfer_line WHERE organization_id = ? AND stock_transfer_id = ? ORDER BY id', [$organizationId->toString(), $transferId->toString()]));
         return StockTransfer::reconstitute($transferId, $organizationId, StoreId::fromString((string) $row['source_store_id'], $this->ids), StoreId::fromString((string) $row['destination_store_id'], $this->ids), StockTransferStatus::from((string) $row['status']), ActorId::fromString((string) $row['created_by'], $this->ids), new DateTimeImmutable((string) $row['created_at']), $this->actor($row['shipped_by']), $this->date($row['shipped_at']), $this->actor($row['received_by']), $this->date($row['received_at']), null === $row['cancellation_reason'] ? null : (string) $row['cancellation_reason'], $this->actor($row['cancelled_by']), $this->date($row['cancelled_at']), (int) $row['version'], $lines);
+    }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_map(
+            fn(string $id): StockTransfer => $this->get($organizationId, StockTransferId::fromString($id, $this->ids)),
+            $this->db->fetchFirstColumn('SELECT id FROM inventory.stock_transfer WHERE organization_id=? ORDER BY created_at DESC,id DESC', [$organizationId->toString()]),
+        );
     }
     public function hasInTransitForStore(OrganizationId $organizationId, StoreId $storeId): bool
     {

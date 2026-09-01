@@ -36,6 +36,22 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/organizations/{id}/closure-request')->getPost());
     }
 
+    public function testStockTransferWorkflowIsDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/stock-transfers')->getGet());
+        self::assertNotNull($paths->getPath('/api/stock-transfers')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/lines')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/lines/{lineId}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/lines/{lineId}')->getDelete());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/ship')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/receive')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/cancel')->getPost());
+    }
+
     public function testOrganizationPatchAcceptsJsonAndMergePatchJson(): void
     {
         self::bootKernel();

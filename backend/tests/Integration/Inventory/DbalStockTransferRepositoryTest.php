@@ -100,6 +100,9 @@ final class DbalStockTransferRepositoryTest extends KernelTestCase
         self::assertSame('1.000000000000', $restored->transitDiscrepancies()[self::LINE]->toString());
         self::assertSame('8.000000', $restored->lines()[0]->shippedValueSnapshot()?->amount()->toString());
         self::assertSame('2.000000', $restored->lines()[0]->transitLossValue()?->amount()->toString());
+        $listed = $this->transactions->transactional($organizationId, fn(): array => $this->repository->findAll($organizationId));
+        self::assertCount(1, $listed);
+        self::assertSame(self::TRANSFER, $listed[0]->id()->toString());
     }
 
     public function testTransferCommandClaimIsDurableIdempotentAndPayloadSafe(): void

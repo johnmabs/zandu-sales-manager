@@ -95,6 +95,7 @@ Epic 7.16   TERMINÉ   Reprise après crash sans rejeu des lignes réconciliées
 Epic 7.17   TERMINÉ   Clôture atomique, outbox et libération des scopes
 Epic 7.18   TERMINÉ   Valorisation des corrections et coût manuel protégé
 Workflow    TERMINÉ   Annulation DRAFT/OPEN, historique et rollback atomique
+API Transfer TERMINÉ  Workflow StockTransfer complet, tenant/scopes et OpenAPI
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
 
@@ -127,12 +128,12 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 31 août 2026 :
+État consolidé au 1er septembre 2026 :
 
 ```text
 Branche              main
 Migrations           Version20260831170000 appliquée en dernier
-Tests                 717 tests, 3 464 assertions
+Tests                 742 tests, 3 698 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -9619,5 +9620,41 @@ layers/modules verts (0 violation, 10 uncovered).
 
 ### Prochaine sous-étape
 
-Exposer les API StockTransfer puis StockCount prévues par le Lot 7, avec le
-filtrage serveur requis pour le mode BLIND.
+Exposer l'API StockCount prévue par le Lot 7, avec le filtrage serveur requis
+pour le mode BLIND.
+
+### API StockTransfer — workflow complet exposé
+
+**Statut : TERMINÉ — brouillon, expédition, réception et annulation**
+
+- API Platform expose la collection, le détail et la création des transferts,
+  ainsi que l'ajout, la modification et la suppression des lignes, puis les
+  commandes `ship`, `receive` et `cancel` ; les neuf opérations figurent dans
+  Swagger UI et ReDoc en développement ;
+- les lectures restent tenant-scopées et appliquent une autorisation en OU sur
+  les magasins source et destination : un transfert inaccessible est retiré
+  de la collection et le détail inconnu produit le contrat `NOT_FOUND` ;
+- les mutations réutilisent les handlers applicatifs et leurs transactions ;
+  expédition et réception exigent l'en-tête `Idempotency-Key`, refusent les
+  lignes dupliquées et rejouent une commande identique sans mouvement ni
+  événement supplémentaire ;
+- l'ajout d'une ligne revalide côté serveur que le produit est physique et
+  suivi en inventaire, sans faire confiance au payload client ;
+- la représentation publique expose quantités demandées, expédiées, reçues et
+  écarts de transit, mais ne divulgue ni coût unitaire ni valeur transportée ;
+- le parcours API prouve les rollbacks sur expédition et réception invalides,
+  le rejeu, les mouvements `TRANSFER_OUT/TRANSFER_IN`, la consultation, la
+  suppression d'une ligne et l'annulation d'un second brouillon ;
+- la réception vers une position destination inexistante persiste désormais
+  le Stock avant son mouvement, respectant la clé étrangère PostgreSQL sans
+  compromettre l'atomicité de la transaction.
+
+Validation locale complète : 742 tests, 3 698 assertions. Composer, conteneur
+Symfony, PHPStan et PHP-CS-Fixer sont verts. Deptrac layers/modules reste à
+0 violation et 10 dépendances non classées.
+
+### Prochaine sous-étape
+
+Exposer l'API StockCount en un bloc cohérent : création et lecture, ouverture,
+saisie simple/batch, finalisation/reprise, clôture et annulation. Le mode BLIND
+doit masquer les quantités théoriques tant que la saisie n'est pas gelée.

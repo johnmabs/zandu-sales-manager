@@ -30,11 +30,11 @@ final readonly class RepositoryInventoryStockTransferReceiver implements Invento
             }
             $quantity = new MovementQuantity($item['baseQuantity']);
             $movement = StockMovement::record(StockMovementId::generate($this->ids), $request->organizationId, $request->destinationStoreId, $item['productId'], $stock->id(), StockMovementType::TransferIn, $quantity, $stock->quantityOnHand(), StockMovementSource::stockTransfer($request->transferId), null, $request->actorContext->actorId(), $request->occurredAt);
+            $stock->increase($quantity);
+            $this->stocks->save($stock);
             if (!$this->movements->appendOnce($movement)) {
                 throw new LogicException('Stock transfer was already received.');
             }
-            $stock->increase($quantity);
-            $this->stocks->save($stock);
             $valued = $this->costing->value(new ValueInventoryMovement($request->destinationStoreId, $item['productId'], $stock->id(), $movement->id(), InventoryCostingMovementType::TransferIn, $quantity->value(), $movement->previousQuantity()->value(), $movement->resultingQuantity()->value(), $item['incomingUnitCost'], $request->transferId->toString(), $request->occurredAt, $request->actorContext, true));
             $costs[$item['productId']->toString()] = ['unitCost' => $valued->unitCost, 'totalValue' => $valued->totalCost];
         }

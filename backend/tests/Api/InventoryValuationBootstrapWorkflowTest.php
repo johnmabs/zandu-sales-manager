@@ -52,6 +52,7 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
         $store = $this->createStore($client, $ownerToken);
         [$organizationId, $actorId] = $this->ownerIdentity();
         $this->catalogFixture($organizationId, $actorId);
+
         $this->historicalStockFixture($organizationId, $store['id'], $actorId);
 
         $managerToken = $this->inviteManager($client, $ownerToken, $store['id']);
@@ -147,6 +148,90 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
         self::assertSame(3, (int) $connection->fetchOne('SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id = ?', [$organizationId]));
     }
 
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testStockTransferApiCoversDraftShipmentReceptionReplayAndCancellation(): void
+    {
+        $client = self::createClient();
+        $token = $this->registerOwnerAndLogin($client);
+        $source = $this->createStore($client, $token, 'TRANSFER-SOURCE', 'Transfer source');
+        $destination = $this->createStore($client, $token, 'TRANSFER-DEST', 'Transfer destination');
+        [$organizationId, $actorId] = $this->ownerIdentity();
+        $this->catalogFixture($organizationId, $actorId);
+
+        $client->jsonRequest('POST', '/api/stock-transfers', ['sourceStoreId' => $source['id'], 'destinationStoreId' => $source['id']], $this->headers($token));
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('STOCK_TRANSFER_SAME_STORE', $this->payload($client)['code']);
+        $client->request('GET', '/api/stock-transfers/019a0400-0000-7000-8000-000000000001', server: $this->headers($token));
+        self::assertResponseStatusCodeSame(404);
+        self::assertSame('NOT_FOUND', $this->payload($client)['code']);
+
+        $client->jsonRequest('POST', sprintf('/api/stores/%s/stocks/%s/initialize', $source['id'], self::PRODUCT), ['quantity' => '10', 'unitCost' => '400'], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+
+        $client->jsonRequest('POST', '/api/stock-transfers', ['sourceStoreId' => $source['id'], 'destinationStoreId' => $destination['id']], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+        $transfer = $this->payload($client);
+        self::assertSame('DRAFT', $transfer['status']);
+
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/lines', ['productId' => self::PRODUCT, 'requestedQuantity' => '5'], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+        $line = $this->payload($client)['lines'][0];
+        self::assertIsArray($line);
+
+        $client->jsonRequest('PATCH', sprintf('/api/stock-transfers/%s/lines/%s', $transfer['id'], $line['id']), ['requestedQuantity' => '4'], [...$this->headers($token), 'CONTENT_TYPE' => 'application/merge-patch+json']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('4', $this->payload($client)['lines'][0]['requestedQuantity']);
+
+        $ship = ['lines' => [['lineId' => $line['id'], 'shippedQuantity' => '3']]];
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/ship', ['lines' => [['lineId' => $line['id'], 'shippedQuantity' => '5']]], [...$this->headers($token), 'HTTP_IDEMPOTENCY_KEY' => 'api-transfer-invalid-ship']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('TRANSFER_SHIPPED_QUANTITY_EXCEEDS_REQUESTED', $this->payload($client)['code']);
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/ship', $ship, [...$this->headers($token), 'HTTP_IDEMPOTENCY_KEY' => 'api-transfer-ship']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('SHIPPED', $this->payload($client)['status']);
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/ship', $ship, [...$this->headers($token), 'HTTP_IDEMPOTENCY_KEY' => 'api-transfer-ship']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('SHIPPED', $this->payload($client)['status']);
+
+        $receive = ['lines' => [['lineId' => $line['id'], 'receivedQuantity' => '2']]];
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/receive', ['lines' => [['lineId' => $line['id'], 'receivedQuantity' => '4']]], [...$this->headers($token), 'HTTP_IDEMPOTENCY_KEY' => 'api-transfer-invalid-receive']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('TRANSFER_RECEIVED_QUANTITY_EXCEEDS_SHIPPED', $this->payload($client)['code']);
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/receive', $receive, [...$this->headers($token), 'HTTP_IDEMPOTENCY_KEY' => 'api-transfer-receive']);
+        self::assertResponseIsSuccessful();
+        $received = $this->payload($client);
+        self::assertSame('RECEIVED', $received['status']);
+        self::assertTrue($received['hasTransitDiscrepancy']);
+        self::assertSame('1.000000000000', $received['lines'][0]['transitDiscrepancy']);
+        self::assertArrayNotHasKey('shippedUnitCostSnapshot', $received['lines'][0], 'The operational transfer API must not leak inventory costs.');
+
+        $client->request('GET', '/api/stock-transfers/' . $transfer['id'], server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame('RECEIVED', $this->payload($client)['status']);
+        $client->request('GET', '/api/stock-transfers', server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $this->payload($client));
+
+        $client->jsonRequest('POST', '/api/stock-transfers', ['sourceStoreId' => $source['id'], 'destinationStoreId' => $destination['id']], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+        $cancelledTransfer = $this->payload($client);
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $cancelledTransfer['id'] . '/lines', ['productId' => self::PRODUCT, 'requestedQuantity' => '1'], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+        $removableLineId = $this->payload($client)['lines'][0]['id'];
+        $client->request('DELETE', sprintf('/api/stock-transfers/%s/lines/%s', $cancelledTransfer['id'], $removableLineId), server: $this->headers($token));
+        self::assertResponseStatusCodeSame(204);
+        $client->jsonRequest('POST', '/api/stock-transfers/' . $cancelledTransfer['id'] . '/cancel', ['reason' => 'API cancellation test'], $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame('CANCELLED', $this->payload($client)['status']);
+
+        $connection = $this->entityManager->getConnection();
+        self::assertSame('7.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id=? AND store_id=? AND product_id=?', [$organizationId, $source['id'], self::PRODUCT]));
+        self::assertSame('2.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id=? AND store_id=? AND product_id=?', [$organizationId, $destination['id'], self::PRODUCT]));
+        self::assertSame(2, (int) $connection->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [$organizationId, 'TRANSFER']));
+        self::assertSame(2, (int) $connection->fetchOne('SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id=? AND source_type=?', [$organizationId, 'TRANSFER']));
+    }
+
     private function registerOwnerAndLogin(KernelBrowser $client): string
     {
         $client->jsonRequest('POST', '/api/auth/register', [
@@ -164,11 +249,11 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
     }
 
     /** @return array<string, mixed> */
-    private function createStore(KernelBrowser $client, string $token): array
+    private function createStore(KernelBrowser $client, string $token, string $code = 'COSTING', string $name = 'Costing Store'): array
     {
         $client->jsonRequest('POST', '/api/stores', [
-            'code' => 'COSTING',
-            'name' => 'Costing Store',
+            'code' => $code,
+            'name' => $name,
             'address' => null,
             'timeZone' => 'Africa/Brazzaville',
             'currency' => 'XAF',
@@ -289,6 +374,9 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
         if (is_string($organizationId)) {
             $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation_movement WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory_costing.stock_valuation WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory.stock_transfer_command WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory.stock_transfer_line WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory.stock_transfer WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock_movement WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM catalog.product_packagings WHERE organization_id = ?', [$organizationId]);
