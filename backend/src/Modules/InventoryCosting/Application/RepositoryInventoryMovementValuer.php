@@ -36,6 +36,19 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
             return $this->initialize($movement, $this->requiredIncomingCost($incomingUnitCost));
         }
 
+        if (InventoryCostingMovementType::StockCountCorrectionIn === $movement->type) {
+            if (null === $this->valuations->findByStock($organizationId, $movement->stockId)) {
+                if (null === $incomingUnitCost) {
+                    throw InventoryCostingRuleViolation::with(
+                        'INVENTORY_COST_REQUIRED',
+                        'A manual unit cost is required because this stock has no existing valuation.',
+                    );
+                }
+
+                return $this->initialize($movement, $incomingUnitCost);
+            }
+        }
+
         if ($movement->initializeIfMissing && $movement->type->isIncoming() && null === $this->valuations->findByStock($organizationId, $movement->stockId)) {
             return $this->initialize($movement, $this->requiredIncomingCost($incomingUnitCost));
         }
@@ -50,6 +63,9 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
 
         $previousTotal = $valuation->totalValue();
         $previousAverage = $valuation->averageUnitCost();
+        if (InventoryCostingMovementType::StockCountCorrectionIn === $movement->type) {
+            $incomingUnitCost = $previousAverage;
+        }
         $result = $movement->type->isIncoming()
             ? $valuation->receive($movement->quantity, $this->requiredIncomingCost($incomingUnitCost), $this->calculator)
             : $valuation->issue($movement->quantity, $this->calculator);
@@ -120,6 +136,8 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
             InventoryCostingMovementType::PurchaseReturn => StockValuationMovementType::PurchaseReturn,
             InventoryCostingMovementType::TransferOut => StockValuationMovementType::TransferOut,
             InventoryCostingMovementType::TransferIn => StockValuationMovementType::TransferIn,
+            InventoryCostingMovementType::StockCountCorrectionIn => StockValuationMovementType::StockCountCorrectionIn,
+            InventoryCostingMovementType::StockCountCorrectionOut => StockValuationMovementType::StockCountCorrectionOut,
         };
 
         return StockValuationMovement::record(
@@ -146,7 +164,7 @@ final readonly class RepositoryInventoryMovementValuer implements InventoryMovem
 
     private function assertCostPolicy(InventoryCostingMovementType $type, ?Money $incomingUnitCost): void
     {
-        if ($type->isIncoming() && null === $incomingUnitCost) {
+        if ($type->isIncoming() && InventoryCostingMovementType::StockCountCorrectionIn !== $type && null === $incomingUnitCost) {
             throw InventoryCostingRuleViolation::with(
                 'VALUATION_UNIT_COST_REQUIRED',
                 'An explicit unit cost is required for an incoming inventory movement.',

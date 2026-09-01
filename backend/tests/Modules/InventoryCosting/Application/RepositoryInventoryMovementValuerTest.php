@@ -207,6 +207,74 @@ final class RepositoryInventoryMovementValuerTest extends TestCase
         self::assertSame('TRANSFER', $ledger->source()->type());
     }
 
+    public function testItValuesStockCountOutAtCurrentAverageCost(): void
+    {
+        $valuation = $this->valuation('10', '4000');
+        $valuations = $this->createStub(StockValuationRepository::class);
+        $valuations->method('getByStockForUpdate')->willReturn($valuation);
+        $ledger = null;
+        $movements = $this->createMock(StockValuationMovementRepository::class);
+        $movements->expects(self::once())->method('append')->willReturnCallback(static function (StockValuationMovement $movement) use (&$ledger): void {
+            $ledger = $movement;
+        });
+
+        $this->valuer($valuations, $movements)->value($this->movement(InventoryCostingMovementType::StockCountCorrectionOut, '3', '10', '7', null, 'stock-count-id'));
+
+        self::assertSame('28000.000000', $valuation->totalValue()->amount()->toString());
+        self::assertInstanceOf(StockValuationMovement::class, $ledger);
+        self::assertSame(StockValuationMovementType::StockCountCorrectionOut, $ledger->type());
+        self::assertSame('4000.000000000000', $ledger->unitCost()->amount()->toString());
+        self::assertSame('STOCK_COUNT', $ledger->source()->type());
+    }
+
+    public function testItValuesStockCountInAtExistingAverageAndIgnoresManualOverride(): void
+    {
+        $valuation = $this->valuation('10', '4000');
+        $valuations = $this->createStub(StockValuationRepository::class);
+        $valuations->method('findByStock')->willReturn($valuation);
+        $valuations->method('getByStockForUpdate')->willReturn($valuation);
+        $ledger = null;
+        $movements = $this->createMock(StockValuationMovementRepository::class);
+        $movements->expects(self::once())->method('append')->willReturnCallback(static function (StockValuationMovement $movement) use (&$ledger): void {
+            $ledger = $movement;
+        });
+
+        $this->valuer($valuations, $movements)->value($this->movement(InventoryCostingMovementType::StockCountCorrectionIn, '2', '10', '12', '9999', 'stock-count-id'));
+
+        self::assertSame('48000.000000', $valuation->totalValue()->amount()->toString());
+        self::assertInstanceOf(StockValuationMovement::class, $ledger);
+        self::assertSame(StockValuationMovementType::StockCountCorrectionIn, $ledger->type());
+        self::assertSame('4000.000000000000', $ledger->unitCost()->amount()->toString());
+    }
+
+    public function testItRequiresManualCostForStockCountInWithoutValuation(): void
+    {
+        $valuations = $this->createMock(StockValuationRepository::class);
+        $valuations->expects(self::once())->method('findByStock')->willReturn(null);
+
+        try {
+            $this->valuer($valuations)->value($this->movement(InventoryCostingMovementType::StockCountCorrectionIn, '2', '0', '2', null, 'stock-count-id'));
+            self::fail('A missing valuation must require a manual cost.');
+        } catch (InventoryCostingRuleViolation $violation) {
+            self::assertSame('INVENTORY_COST_REQUIRED', $violation->errorCode());
+        }
+    }
+
+    public function testItInitializesStockCountInFromAuthorizedManualCost(): void
+    {
+        $saved = null;
+        $valuations = $this->createMock(StockValuationRepository::class);
+        $valuations->expects(self::exactly(2))->method('findByStock')->willReturn(null);
+        $valuations->expects(self::once())->method('save')->willReturnCallback(static function (StockValuation $valuation) use (&$saved): void {
+            $saved = $valuation;
+        });
+
+        $this->valuer($valuations)->value($this->movement(InventoryCostingMovementType::StockCountCorrectionIn, '2', '0', '2', '6000', 'stock-count-id'));
+
+        self::assertInstanceOf(StockValuation::class, $saved);
+        self::assertSame('12000.000000', $saved->totalValue()->amount()->toString());
+    }
+
     public function testItInitializesDestinationValuationFromTransportedCost(): void
     {
         $saved = null;

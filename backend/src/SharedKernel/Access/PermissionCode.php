@@ -96,6 +96,7 @@ enum PermissionCode: string
     case StockCountCancel = 'STOCK_COUNT_CANCEL';
     case StockMovementRead = 'STOCK_MOVEMENT_READ';
     case InventoryCostingInitialize = 'INVENTORY_COSTING_INITIALIZE';
+    case InventoryCostAssign = 'INVENTORY_COST_ASSIGN';
 
     case CashRegisterCreate = 'CASH_REGISTER_CREATE';
     case CashRegisterRead = 'CASH_REGISTER_READ';

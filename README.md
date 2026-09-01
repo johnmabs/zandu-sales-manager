@@ -48,8 +48,11 @@ correction. La réconciliation physique reprend alors uniquement les lignes
 `PENDING` par batch transactionnel : le snapshot est revérifié sous verrou,
 les écarts produisent des mouvements `STOCK_COUNT_CORRECTION_IN/OUT` liés au
 comptage propriétaire, et une variance nulle ne produit aucun faux mouvement.
-Un conflit de snapshot annule tout le batch ; la valorisation de ces corrections
-reste la prochaine étape dédiée. Chaque batch validé constitue un checkpoint
+Les sorties sont valorisées au coût moyen courant ; les entrées réutilisent ce
+coût lorsqu'il existe, sinon un coût manuel motivé et protégé par
+`INVENTORY_COST_ASSIGN` est obligatoire. Chaque correction écrit son mouvement
+de valorisation lié au mouvement physique dans la même transaction. Un conflit
+de snapshot ou de coût annule tout le batch. Chaque batch validé constitue un checkpoint
 durable : après redémarrage, la réconciliation reprend seulement les lignes
 `PENDING`, sans retoucher les Stocks ni rejouer les mouvements déjà commis.
 Lorsque toutes les lignes sont réconciliées, la clôture passe le document à

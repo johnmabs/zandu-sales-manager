@@ -92,6 +92,7 @@ Epic 7.14   TERMINÉ   Gel atomique OPEN vers FINALIZING après contrôle comple
 Epic 7.15   TERMINÉ   Réconciliation physique PENDING par batch atomique
 Epic 7.16   TERMINÉ   Reprise après crash sans rejeu des lignes réconciliées
 Epic 7.17   TERMINÉ   Clôture atomique, outbox et libération des scopes
+Epic 7.18   TERMINÉ   Valorisation des corrections et coût manuel protégé
 Workflow    TERMINÉ   Annulation DRAFT/OPEN, historique et rollback atomique
 Gate Lot 7  À FAIRE   M3 — gestion complète du stock
 ```
@@ -9550,9 +9551,8 @@ CI lors de la prochaine publication manuelle.
   mouvements et à leur source ; le compteur `reconciledLineCount` progresse
   dans la même transaction que les Stocks, mouvements et lignes ;
 - une preuve PostgreSQL injecte un conflit sur la deuxième ligne après une
-  première correction : quantité, ledger, états de ligne et compteur sont tous
-  restaurés. La valorisation correspondante reste volontairement affectée à
-  l'Epic 7.18.
+  première correction : quantité, ledgers physique et de valorisation, états
+  de ligne et compteur sont tous restaurés ;
 - l'Epic 7.16 traite chaque transaction de batch comme un checkpoint durable :
   une preuve vide l'EntityManager et recrée le handler et les repositories après
   un premier lot commité, puis reprend exclusivement les lignes `PENDING` ;
@@ -9583,13 +9583,26 @@ CI lors de la prochaine publication manuelle.
 - une panne d'outbox restaure atomiquement le statut OPEN, les champs d'audit
   et tous les scopes. La contrainte de cycle de vie de
   `Version20260831190000` couvre les annulations issues de DRAFT comme de OPEN.
+- chaque `STOCK_COUNT_CORRECTION_OUT` est désormais valorisé au coût moyen
+  courant ; un `STOCK_COUNT_CORRECTION_IN` réutilise strictement le coût moyen
+  existant et ignore toute tentative de surcharge arbitraire ;
+- si aucune valorisation n'existe, le batch renvoie
+  `INVENTORY_COST_REQUIRED`. La reprise exige un `manualUnitCost`, un motif de
+  1 à 500 caractères et la permission sensible `INVENTORY_COST_ASSIGN`,
+  réservée par défaut au propriétaire de l'organisation ;
+- le motif manuel est audité sur le mouvement physique et chaque correction
+  produit dans la même transaction un `StockValuationMovement` source
+  `STOCK_COUNT`, relié à la fois au `StockCountId` et au `StockMovement` ;
+- `Version20260901000000` étend les contraintes PostgreSQL de type, source et
+  variation de valeur aux corrections de comptage. Les preuves couvrent OUT au
+  coût moyen, IN au coût moyen, refus sans coût, reprise autorisée avec coût et
+  rollback intégral avant reprise.
 
-Validation StockCount ciblée : 28 tests, 162 assertions. Suite complète : 732
-tests, 3 558 assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
+Validation StockCount/Costing ciblée verte. Suite complète : 737 tests, 3 587
+assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
 layers/modules verts (0 violation, 10 uncovered).
 
 ### Prochaine sous-étape
 
-Implémenter l'Epic 7.18 : valoriser les corrections de comptage IN/OUT selon le
-coût moyen courant et exiger un coût manuel lorsque aucune base de valorisation
-n'existe.
+Brancher le blocker `STOCK_COUNT_OPEN` à `StoreClosure`, puis exposer les API
+StockTransfer et StockCount prévues par le Lot 7.

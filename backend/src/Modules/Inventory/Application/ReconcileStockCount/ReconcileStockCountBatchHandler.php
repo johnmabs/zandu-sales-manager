@@ -9,6 +9,7 @@ use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\Modules\Inventory\Domain\Stock\{MovementQuantity, Stock, StockQuantity, StockRepository};
 use Zandu\Modules\Inventory\Domain\StockCount\{StockCountLine, StockCountLineRepository, StockCountRepository, StockCountStatus};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementSource, StockMovementType};
+use Zandu\Modules\InventoryCosting\Application\Contract\{InventoryCostingMovementType, InventoryMovementValuer, ValueInventoryMovement};
 use Zandu\Modules\Organization\Application\Contract\{OperationalGuard, OperationalMode};
 use Zandu\SharedKernel\Access\{PermissionCode, ResourceScope};
 use Zandu\SharedKernel\Decimal\DecimalFactory;
@@ -24,6 +25,7 @@ final readonly class ReconcileStockCountBatchHandler
         private StockCountLineRepository $lines,
         private StockRepository $stocks,
         private StockMovementRepository $movements,
+        private InventoryMovementValuer $costing,
         private TenantTransaction $transaction,
         private AuthorizationService $authorization,
         private OperationalGuard $guard,
@@ -80,6 +82,15 @@ final readonly class ReconcileStockCountBatchHandler
             if (0 !== $comparison) {
                 $quantity = new MovementQuantity($comparison > 0 ? $counted->subtract($expected) : $expected->subtract($counted));
                 $type = $comparison > 0 ? StockMovementType::StockCountCorrectionIn : StockMovementType::StockCountCorrectionOut;
+                $costAssignment = $comparison > 0 ? $command->costAssignmentFor($line->productId()) : null;
+                if (null !== $costAssignment) {
+                    $this->authorization->authorize(
+                        $command->actorContext,
+                        PermissionCode::InventoryCostAssign,
+                        ResourceScope::store($line->organizationId(), $line->storeId()),
+                    );
+                }
+                $movementReason = null === $costAssignment ? 'Stock count reconciliation' : $costAssignment->reason;
                 $movement = StockMovement::record(
                     StockMovementId::generate($this->ids),
                     $line->organizationId(),
@@ -90,7 +101,7 @@ final readonly class ReconcileStockCountBatchHandler
                     $quantity,
                     $previous,
                     StockMovementSource::stockCount($line->stockCountId()),
-                    'Stock count reconciliation',
+                    $movementReason,
                     $command->actorContext->actorId(),
                     $occurredAt,
                 );
@@ -98,6 +109,20 @@ final readonly class ReconcileStockCountBatchHandler
                 if (!$this->movements->appendOnce($movement)) {
                     throw InventoryRuleViolation::with('STOCK_COUNT_RECONCILIATION_REPLAY_CONFLICT', 'A stock count correction already exists for a pending line.');
                 }
+                $this->costing->value(new ValueInventoryMovement(
+                    $line->storeId(),
+                    $line->productId(),
+                    $stock->id(),
+                    $movement->id(),
+                    $comparison > 0 ? InventoryCostingMovementType::StockCountCorrectionIn : InventoryCostingMovementType::StockCountCorrectionOut,
+                    $quantity->value(),
+                    $movement->previousQuantity()->value(),
+                    $movement->resultingQuantity()->value(),
+                    $costAssignment?->manualUnitCost,
+                    $line->stockCountId()->toString(),
+                    $occurredAt,
+                    $command->actorContext,
+                ));
             }
         }
         $line->markReconciled();

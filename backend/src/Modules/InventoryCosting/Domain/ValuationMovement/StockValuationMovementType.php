@@ -18,10 +18,12 @@ enum StockValuationMovementType: string
     case PurchaseReturn = 'PURCHASE_RETURN';
     case TransferOut = 'TRANSFER_OUT';
     case TransferIn = 'TRANSFER_IN';
+    case StockCountCorrectionIn = 'STOCK_COUNT_CORRECTION_IN';
+    case StockCountCorrectionOut = 'STOCK_COUNT_CORRECTION_OUT';
 
     public function isIncrease(): bool
     {
-        return in_array($this, [self::Opening, self::InitialStock, self::AdjustmentIn, self::SaleReturn, self::PurchaseReceipt, self::GoodsReceiptCorrectionIn, self::TransferIn], true);
+        return in_array($this, [self::Opening, self::InitialStock, self::AdjustmentIn, self::SaleReturn, self::PurchaseReceipt, self::GoodsReceiptCorrectionIn, self::TransferIn, self::StockCountCorrectionIn], true);
     }
 
     public function requiresStockMovement(): bool
@@ -41,6 +43,7 @@ enum StockValuationMovementType: string
             self::GoodsReceiptCorrectionIn, self::GoodsReceiptCorrectionOut => 'GOODS_RECEIPT_CORRECTION',
             self::PurchaseReturn => 'PURCHASE_RETURN',
             self::TransferOut, self::TransferIn => 'TRANSFER',
+            self::StockCountCorrectionIn, self::StockCountCorrectionOut => 'STOCK_COUNT',
         };
     }
 }

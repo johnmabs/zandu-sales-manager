@@ -13,7 +13,7 @@ use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\BeginStockCountFinalization\{BeginStockCountFinalization, BeginStockCountFinalizationHandler};
 use Zandu\Modules\Inventory\Application\CancelStockCount\{CancelStockCount, CancelStockCountHandler};
 use Zandu\Modules\Inventory\Application\CompleteStockCountFinalization\{CompleteStockCountFinalization, CompleteStockCountFinalizationHandler};
-use Zandu\Modules\Inventory\Application\ReconcileStockCount\{ReconcileStockCountBatch, ReconcileStockCountBatchHandler};
+use Zandu\Modules\Inventory\Application\ReconcileStockCount\{ReconcileStockCountBatch, ReconcileStockCountBatchHandler, StockCountCostAssignment};
 use Zandu\Modules\Inventory\Application\RecordStockCount\{RecordStockCount, RecordStockCountBatch, RecordStockCountHandler, StockCountEntry};
 use Zandu\Modules\Inventory\Application\StartStockCount\{StartStockCount, StartStockCountHandler};
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
@@ -22,10 +22,13 @@ use Zandu\Modules\Inventory\Domain\Stock\StockRepository;
 use Zandu\Modules\Inventory\Domain\StockCount\{StockCount, StockCountLineRepository, StockCountReconciliationStatus, StockCountRepository, StockCountScopeType, StockCountStatus};
 use Zandu\Modules\Inventory\Domain\StockMovement\{StockMovement, StockMovementRepository, StockMovementSource, StockMovementType};
 use Zandu\Modules\Inventory\Infrastructure\Persistence\{DbalOpenStockCountScopeRepository, DbalStockCountLineRepository, DbalStockCountRepository};
+use Zandu\Modules\InventoryCosting\Application\Contract\InventoryMovementValuer;
+use Zandu\Modules\InventoryCosting\Domain\InventoryCostingRuleViolation;
 use Zandu\Modules\Organization\Application\Contract\OperationalGuard;
 use Zandu\Platform\Decimal\BrickDecimalFactory;
 use Zandu\Platform\Identity\{SymfonyUuidFactory, SymfonyUuidV7Generator};
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
+use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Context\{ActorContext, ActorType};
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockCountId, StockId, StockMovementId, StoreId};
 use Zandu\SharedKernel\Messaging\{CorrelationId, OutboxMessage, OutboxRepository};
@@ -45,6 +48,7 @@ final class StockCountOpeningTest extends KernelTestCase
     private const ACTOR = '0199fb00-0000-7000-8000-000000000009';
     private const PRODUCT_OUTSIDE_SCOPE = '0199fb00-0000-7000-8000-000000000011';
     private const STOCK_OUTSIDE_SCOPE = '0199fb00-0000-7000-8000-000000000012';
+    private const VALUATION = '0199fb00-0000-7000-8000-000000000018';
 
     private Connection $db;
     private SymfonyUuidFactory $ids;
@@ -214,7 +218,7 @@ final class StockCountOpeningTest extends KernelTestCase
         [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
         $handler = $this->reconciliationHandler($counts, $lines);
 
-        $result = $handler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+        $result = $handler($this->reconcileCommand(50));
 
         self::assertSame(3, $result->processedCount);
         self::assertSame(0, $result->remainingCount);
@@ -225,9 +229,39 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertSame(3, $this->transactions->transactional($this->organizationId(), fn(): int => $counts->get($this->organizationId(), $this->countId(self::COUNT_A))->reconciledLineCount()));
         self::assertSame([StockCountReconciliationStatus::Reconciled, StockCountReconciliationStatus::Reconciled, StockCountReconciliationStatus::Reconciled], array_map(static fn($line): StockCountReconciliationStatus => $line->reconciliationStatus(), $this->transactions->transactional($this->organizationId(), fn(): array => $lines->findByStockCount($this->organizationId(), $this->countId(self::COUNT_A)))));
 
-        $replay = $handler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+        $replay = $handler($this->reconcileCommand(50));
         self::assertSame(0, $replay->processedCount);
         self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
+        self::assertSame(['STOCK_COUNT_CORRECTION_OUT', 'STOCK_COUNT_CORRECTION_IN'], $this->db->fetchFirstColumn('SELECT type FROM inventory_costing.stock_valuation_movement WHERE organization_id=? AND source_type=? ORDER BY product_id', [self::ORGANIZATION, 'STOCK_COUNT']));
+        self::assertSame(['5000.000000000000', '6000.000000000000'], $this->db->fetchFirstColumn('SELECT unit_cost FROM inventory_costing.stock_valuation_movement WHERE organization_id=? AND source_type=? ORDER BY product_id', [self::ORGANIZATION, 'STOCK_COUNT']));
+    }
+
+    public function testPositiveCorrectionWithoutValuationRequiresAuthorizedManualCost(): void
+    {
+        [$counts, $lines] = $this->prepareFinalizingCount('10', '2');
+        $authorizedPermissions = [];
+        $authorization = $this->createMock(AuthorizationService::class);
+        $authorization->expects(self::exactly(3))->method('authorize')->willReturnCallback(static function (ActorContext $actor, PermissionCode $permission) use (&$authorizedPermissions): void {
+            $authorizedPermissions[] = $permission;
+        });
+        $handler = $this->reconciliationHandler($counts, $lines, $authorization);
+
+        try {
+            $handler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+            self::fail('A positive correction without valuation must require a cost.');
+        } catch (InventoryCostingRuleViolation $exception) {
+            self::assertSame('INVENTORY_COST_REQUIRED', $exception->errorCode());
+        }
+
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock WHERE organization_id=? AND product_id=?', [self::ORGANIZATION, self::PRODUCT_WITHOUT_STOCK]));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
+
+        $result = $handler($this->reconcileCommand(50));
+
+        self::assertSame(3, $result->processedCount);
+        self::assertSame([PermissionCode::StockCountFinalize, PermissionCode::StockCountFinalize, PermissionCode::InventoryCostAssign], $authorizedPermissions);
+        self::assertSame('12000.000000', (string) $this->db->fetchOne('SELECT total_value FROM inventory_costing.stock_valuation WHERE organization_id=? AND product_id=?', [self::ORGANIZATION, self::PRODUCT_WITHOUT_STOCK]));
+        self::assertSame('Initial cost established during stock count', (string) $this->db->fetchOne('SELECT reason FROM inventory.stock_movement WHERE organization_id=? AND product_id=? AND source_type=?', [self::ORGANIZATION, self::PRODUCT_WITHOUT_STOCK, 'STOCK_COUNT']));
     }
 
     public function testSnapshotConflictRollsBackAnEntireReconciliationBatch(): void
@@ -236,7 +270,7 @@ final class StockCountOpeningTest extends KernelTestCase
         $this->db->executeStatement('INSERT INTO inventory.stock (id,organization_id,store_id,product_id,quantity_on_hand,initialized,initialized_at,initialized_by,version) VALUES (?,?,?,?,1,TRUE,NOW(),?,1)', ['0199fb00-0000-7000-8000-000000000017', self::ORGANIZATION, self::STORE, self::PRODUCT_WITHOUT_STOCK, self::ACTOR]);
 
         try {
-            ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+            ($this->reconciliationHandler($counts, $lines))($this->reconcileCommand(50));
             self::fail('A changed physical position must reject the snapshot batch.');
         } catch (InventoryRuleViolation $exception) {
             self::assertSame('STOCK_COUNT_SNAPSHOT_CONFLICT', $exception->errorCode());
@@ -251,7 +285,7 @@ final class StockCountOpeningTest extends KernelTestCase
     public function testReconciliationResumesOnlyPendingLinesAfterACommittedBatchAndRestart(): void
     {
         [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
-        $firstBatch = ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        $firstBatch = ($this->reconciliationHandler($counts, $lines))($this->reconcileCommand(1));
 
         self::assertSame(1, $firstBatch->processedCount);
         self::assertSame(2, $firstBatch->remainingCount);
@@ -263,7 +297,7 @@ final class StockCountOpeningTest extends KernelTestCase
         $restartedLines = new DbalStockCountLineRepository($this->db, $this->ids, $this->decimals);
         $restartedHandler = $this->reconciliationHandler($restartedCounts, $restartedLines);
 
-        $secondBatch = $restartedHandler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        $secondBatch = $restartedHandler($this->reconcileCommand(1));
         self::assertSame(1, $secondBatch->processedCount);
         self::assertSame(1, $secondBatch->remainingCount);
         self::assertSame('7.000000000000', (string) $this->db->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id=? AND product_id=?', [self::ORGANIZATION, self::PRODUCT_WITH_STOCK]));
@@ -271,14 +305,14 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertSame('RECONCILED', (string) $this->db->fetchOne('SELECT reconciliation_status FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND product_id=?', [self::ORGANIZATION, self::COUNT_A, self::PRODUCT_WITH_STOCK]));
         self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
 
-        $thirdBatch = $restartedHandler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        $thirdBatch = $restartedHandler($this->reconcileCommand(1));
         self::assertSame(1, $thirdBatch->processedCount);
         self::assertSame(0, $thirdBatch->remainingCount);
         self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']), 'The zero-variance resumed line must not create a movement.');
         self::assertSame(3, $this->transactions->transactional($this->organizationId(), fn(): int => $restartedCounts->get($this->organizationId(), $this->countId(self::COUNT_A))->reconciledLineCount()));
         self::assertSame(0, (int) $this->db->fetchOne("SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND reconciliation_status='PENDING'", [self::ORGANIZATION, self::COUNT_A]));
 
-        $finishedReplay = $restartedHandler(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        $finishedReplay = $restartedHandler($this->reconcileCommand(1));
         self::assertSame(0, $finishedReplay->processedCount);
         self::assertSame(0, $finishedReplay->remainingCount);
         self::assertSame(2, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
@@ -287,7 +321,7 @@ final class StockCountOpeningTest extends KernelTestCase
     public function testCompletionReleasesScopesPublishesOnceAndPreservesLines(): void
     {
         [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
-        ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+        ($this->reconciliationHandler($counts, $lines))($this->reconcileCommand(50));
         $outbox = new OpeningOutbox();
         $handler = $this->completionHandler($counts, $lines, $outbox);
 
@@ -309,7 +343,7 @@ final class StockCountOpeningTest extends KernelTestCase
     public function testCompletionRefusesPendingLinesAndKeepsScopes(): void
     {
         [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
-        ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 1, $this->actor()));
+        ($this->reconciliationHandler($counts, $lines))($this->reconcileCommand(1));
         $outbox = new OpeningOutbox();
 
         try {
@@ -327,7 +361,7 @@ final class StockCountOpeningTest extends KernelTestCase
     public function testCompletionRollsBackStatusAndScopeReleaseWhenOutboxFails(): void
     {
         [$counts, $lines] = $this->prepareFinalizingCount('7', '2');
-        ($this->reconciliationHandler($counts, $lines))(new ReconcileStockCountBatch($this->countId(self::COUNT_A), 50, $this->actor()));
+        ($this->reconciliationHandler($counts, $lines))($this->reconcileCommand(50));
 
         try {
             ($this->completionHandler($counts, $lines, new FailingOpeningOutbox()))(new CompleteStockCountFinalization($this->countId(self::COUNT_A), $this->actor()));
@@ -443,9 +477,16 @@ final class StockCountOpeningTest extends KernelTestCase
         return [$counts, $lines, $count];
     }
 
-    private function reconciliationHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines): ReconcileStockCountBatchHandler
+    private function reconciliationHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines, ?AuthorizationService $authorization = null): ReconcileStockCountBatchHandler
     {
-        return new ReconcileStockCountBatchHandler($counts, $lines, self::getContainer()->get(StockRepository::class), self::getContainer()->get(StockMovementRepository::class), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:30:00Z')));
+        return new ReconcileStockCountBatchHandler($counts, $lines, self::getContainer()->get(StockRepository::class), self::getContainer()->get(StockMovementRepository::class), self::getContainer()->get(InventoryMovementValuer::class), $this->transactions, $authorization ?? $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:30:00Z')));
+    }
+
+    private function reconcileCommand(int $batchSize): ReconcileStockCountBatch
+    {
+        return new ReconcileStockCountBatch($this->countId(self::COUNT_A), $batchSize, $this->actor(), [
+            new StockCountCostAssignment($this->productId(self::PRODUCT_WITHOUT_STOCK), $this->decimals->fromString('6000'), 'Initial cost established during stock count'),
+        ]);
     }
 
     private function completionHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines, OutboxRepository $outbox): CompleteStockCountFinalizationHandler
@@ -480,11 +521,12 @@ final class StockCountOpeningTest extends KernelTestCase
         }
         $this->db->executeStatement('INSERT INTO inventory.stock (id,organization_id,store_id,product_id,quantity_on_hand,initialized,initialized_at,initialized_by,version) VALUES (?,?,?,?,10,TRUE,NOW(),?,1)', [self::STOCK, self::ORGANIZATION, self::STORE, self::PRODUCT_WITH_STOCK, self::ACTOR]);
         $this->db->executeStatement('INSERT INTO inventory.stock (id,organization_id,store_id,product_id,quantity_on_hand,initialized,initialized_at,initialized_by,version) VALUES (?,?,?,?,4,TRUE,NOW(),?,1)', [self::STOCK_OUTSIDE_SCOPE, self::ORGANIZATION, self::STORE, self::PRODUCT_OUTSIDE_SCOPE, self::ACTOR]);
+        $this->db->executeStatement("INSERT INTO inventory_costing.stock_valuation (id,organization_id,store_id,product_id,stock_id,quantity_on_hand,total_value,currency,version) VALUES (?,?,?,?,?,10,50000,'XAF',1)", [self::VALUATION, self::ORGANIZATION, self::STORE, self::PRODUCT_WITH_STOCK, self::STOCK]);
     }
 
     private function cleanup(): void
     {
-        foreach (['inventory.open_stock_count_scope', 'inventory.stock_count_line', 'inventory.stock_count', 'inventory.stock_movement', 'inventory.stock', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
+        foreach (['inventory.open_stock_count_scope', 'inventory.stock_count_line', 'inventory.stock_count', 'inventory_costing.stock_valuation_movement', 'inventory_costing.stock_valuation', 'inventory.stock_movement', 'inventory.stock', 'catalog.products', 'catalog.units_of_measure', 'organization.stores'] as $table) {
             $this->db->executeStatement(sprintf('DELETE FROM %s WHERE organization_id=?', $table), [self::ORGANIZATION]);
         }
         $this->db->executeStatement('DELETE FROM organization.organizations WHERE id=?', [self::ORGANIZATION]);

@@ -145,6 +145,7 @@ final class SystemRoleCatalogTest extends TestCase
             self::assertFalse($nonOwnerRole->grants(PermissionCode::PriceListUpdate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::ProductPriceUpdate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::InventoryCostingInitialize));
+            self::assertFalse($nonOwnerRole->grants(PermissionCode::InventoryCostAssign));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::SupplierCreate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::SupplierUpdate));
             self::assertFalse($nonOwnerRole->grants(PermissionCode::SupplierArchive));
