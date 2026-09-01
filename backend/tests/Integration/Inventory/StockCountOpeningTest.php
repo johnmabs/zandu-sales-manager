@@ -11,6 +11,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Throwable;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
 use Zandu\Modules\Inventory\Application\BeginStockCountFinalization\{BeginStockCountFinalization, BeginStockCountFinalizationHandler};
+use Zandu\Modules\Inventory\Application\CancelStockCount\{CancelStockCount, CancelStockCountHandler};
 use Zandu\Modules\Inventory\Application\CompleteStockCountFinalization\{CompleteStockCountFinalization, CompleteStockCountFinalizationHandler};
 use Zandu\Modules\Inventory\Application\ReconcileStockCount\{ReconcileStockCountBatch, ReconcileStockCountBatchHandler};
 use Zandu\Modules\Inventory\Application\RecordStockCount\{RecordStockCount, RecordStockCountBatch, RecordStockCountHandler, StockCountEntry};
@@ -342,15 +343,82 @@ final class StockCountOpeningTest extends KernelTestCase
         self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
     }
 
+    public function testDraftCancellationIsAuditedPublishedAndReplayable(): void
+    {
+        $this->persistDraft(self::COUNT_A);
+        $counts = new DbalStockCountRepository($this->db, $this->ids);
+        $outbox = new OpeningOutbox();
+        $handler = $this->cancellationHandler($counts, $outbox);
+
+        $cancelled = $handler(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
+
+        self::assertSame(StockCountStatus::Cancelled, $cancelled->status());
+        self::assertSame(self::ACTOR, $cancelled->cancelledBy()?->toString());
+        self::assertSame('2026-08-31T20:50:00+00:00', $cancelled->cancelledAt()?->format(DATE_ATOM));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
+        self::assertCount(1, $outbox->messages);
+        self::assertSame('DRAFT', $outbox->messages[0]->payload['previousStatus']);
+
+        self::assertSame(StockCountStatus::Cancelled, $handler(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()))->status());
+        self::assertCount(1, $outbox->messages);
+    }
+
+    public function testOpenCancellationReleasesScopesAndPreservesSnapshotLines(): void
+    {
+        [$counts] = $this->prepareOpenCount();
+        $outbox = new OpeningOutbox();
+
+        $cancelled = ($this->cancellationHandler($counts, $outbox))(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
+
+        self::assertSame(StockCountStatus::Cancelled, $cancelled->status());
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_count_line WHERE organization_id=? AND stock_count_id=? AND counted_quantity IS NULL', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertSame(0, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type=?', [self::ORGANIZATION, 'STOCK_COUNT']));
+        self::assertSame('OPEN', $outbox->messages[0]->payload['previousStatus']);
+    }
+
+    public function testFinalizingCancellationIsRejectedWithoutReleasingScopes(): void
+    {
+        [$counts] = $this->prepareFinalizingCount('7', '2');
+        $outbox = new OpeningOutbox();
+
+        try {
+            ($this->cancellationHandler($counts, $outbox))(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
+            self::fail('A finalizing stock count must not be cancelled.');
+        } catch (InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_CANNOT_CANCEL', $exception->errorCode());
+        }
+
+        self::assertSame(StockCountStatus::Finalizing, $this->transactions->transactional($this->organizationId(), fn(): StockCountStatus => $counts->get($this->organizationId(), $this->countId(self::COUNT_A))->status()));
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+        self::assertCount(0, $outbox->messages);
+    }
+
+    public function testOpenCancellationRollsBackStatusAndScopeReleaseWhenOutboxFails(): void
+    {
+        [$counts] = $this->prepareOpenCount();
+
+        try {
+            ($this->cancellationHandler($counts, new FailingOpeningOutbox()))(new CancelStockCount($this->countId(self::COUNT_A), $this->actor()));
+            self::fail('An outbox failure must abort stock count cancellation.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Simulated stock count outbox failure.', $exception->getMessage());
+        }
+
+        $persisted = $this->transactions->transactional($this->organizationId(), fn(): StockCount => $counts->get($this->organizationId(), $this->countId(self::COUNT_A)));
+        self::assertSame(StockCountStatus::Open, $persisted->status());
+        self::assertNull($persisted->cancelledBy());
+        self::assertNull($persisted->cancelledAt());
+        self::assertSame(3, (int) $this->db->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=? AND stock_count_id=?', [self::ORGANIZATION, self::COUNT_A]));
+    }
+
     /** @return array{DbalStockCountRepository, DbalStockCountLineRepository} */
     private function prepareFinalizingCount(string $existingCount, string $missingCount): array
     {
+        [$counts, $lines, $count] = $this->prepareOpenCount();
         $organizationId = $this->organizationId();
-        $count = StockCount::create($this->countId(self::COUNT_A), $organizationId, $this->storeId(), StockCountScopeType::Partial, $this->actorId(), new DateTimeImmutable('2026-08-31T19:00:00Z'), requestedProductIds: [$this->productId(self::PRODUCT_WITH_STOCK), $this->productId(self::PRODUCT_WITHOUT_STOCK), $this->productId(self::PRODUCT_OUTSIDE_SCOPE)]);
-        $counts = new DbalStockCountRepository($this->db, $this->ids);
-        $lines = new DbalStockCountLineRepository($this->db, $this->ids, $this->decimals);
-        $this->transactions->transactional($organizationId, fn() => $counts->save($count));
-        (new StartStockCountHandler($counts, $lines, new DbalOpenStockCountScopeRepository($this->db), self::getContainer()->get(StockRepository::class), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new OpeningOutbox(), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:00:00Z'))))(new StartStockCount($count->id(), $this->actor()));
         $record = new RecordStockCountHandler($counts, $lines, $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new FrozenClock(new DateTimeImmutable('2026-08-31T20:10:00Z')));
         $record->batch(new RecordStockCountBatch($count->id(), [
             new StockCountEntry($this->productId(self::PRODUCT_WITH_STOCK), Quantity::fromString($existingCount, $this->decimals), 1),
@@ -362,6 +430,19 @@ final class StockCountOpeningTest extends KernelTestCase
         return [$counts, $lines];
     }
 
+    /** @return array{DbalStockCountRepository, DbalStockCountLineRepository, StockCount} */
+    private function prepareOpenCount(): array
+    {
+        $organizationId = $this->organizationId();
+        $count = StockCount::create($this->countId(self::COUNT_A), $organizationId, $this->storeId(), StockCountScopeType::Partial, $this->actorId(), new DateTimeImmutable('2026-08-31T19:00:00Z'), requestedProductIds: [$this->productId(self::PRODUCT_WITH_STOCK), $this->productId(self::PRODUCT_WITHOUT_STOCK), $this->productId(self::PRODUCT_OUTSIDE_SCOPE)]);
+        $counts = new DbalStockCountRepository($this->db, $this->ids);
+        $lines = new DbalStockCountLineRepository($this->db, $this->ids, $this->decimals);
+        $this->transactions->transactional($organizationId, fn() => $counts->save($count));
+        (new StartStockCountHandler($counts, $lines, new DbalOpenStockCountScopeRepository($this->db), self::getContainer()->get(StockRepository::class), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new OpeningOutbox(), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:00:00Z'))))(new StartStockCount($count->id(), $this->actor()));
+
+        return [$counts, $lines, $count];
+    }
+
     private function reconciliationHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines): ReconcileStockCountBatchHandler
     {
         return new ReconcileStockCountBatchHandler($counts, $lines, self::getContainer()->get(StockRepository::class), self::getContainer()->get(StockMovementRepository::class), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), new SymfonyUuidV7Generator(), $this->decimals, new FrozenClock(new DateTimeImmutable('2026-08-31T20:30:00Z')));
@@ -370,6 +451,11 @@ final class StockCountOpeningTest extends KernelTestCase
     private function completionHandler(DbalStockCountRepository $counts, DbalStockCountLineRepository $lines, OutboxRepository $outbox): CompleteStockCountFinalizationHandler
     {
         return new CompleteStockCountFinalizationHandler($counts, $lines, new DbalOpenStockCountScopeRepository($this->db), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $outbox, new SymfonyUuidV7Generator(), new FrozenClock(new DateTimeImmutable('2026-08-31T20:40:00Z')));
+    }
+
+    private function cancellationHandler(DbalStockCountRepository $counts, OutboxRepository $outbox): CancelStockCountHandler
+    {
+        return new CancelStockCountHandler($counts, new DbalOpenStockCountScopeRepository($this->db), $this->transactions, $this->createStub(AuthorizationService::class), $this->createStub(OperationalGuard::class), $outbox, new SymfonyUuidV7Generator(), new FrozenClock(new DateTimeImmutable('2026-08-31T20:50:00Z')));
     }
 
     private function persistDraft(string $id): void

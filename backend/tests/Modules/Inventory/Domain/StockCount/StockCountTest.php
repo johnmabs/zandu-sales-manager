@@ -157,4 +157,37 @@ final class StockCountTest extends TestCase
         self::assertSame('2026-08-31T21:30:00+00:00', $count->completedAt()?->format(DATE_ATOM));
         self::assertSame(6, $count->version());
     }
+
+    public function testDraftCanBeCancelledWithAudit(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000084', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000081', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000082', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000083', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+
+        $count->cancel($actor, new DateTimeImmutable('2026-09-01T09:30:00+01:00'));
+
+        self::assertSame(StockCountStatus::Cancelled, $count->status());
+        self::assertSame($actor->toString(), $count->cancelledBy()?->toString());
+        self::assertSame('2026-09-01T08:30:00+00:00', $count->cancelledAt()?->format(DATE_ATOM));
+        self::assertSame(2, $count->version());
+    }
+
+    public function testFinalizingCountCannotBeCancelled(): void
+    {
+        $ids = new SymfonyUuidFactory();
+        $actor = ActorId::fromString('0199f600-0000-7000-8000-000000000094', $ids);
+        $count = StockCount::create(StockCountId::fromString('0199f600-0000-7000-8000-000000000091', $ids), OrganizationId::fromString('0199f600-0000-7000-8000-000000000092', $ids), StoreId::fromString('0199f600-0000-7000-8000-000000000093', $ids), StockCountScopeType::Full, $actor, new DateTimeImmutable());
+        $count->start($actor, new DateTimeImmutable(), 1);
+        $count->registerCountedLines(1);
+        $count->beginFinalization($actor, new DateTimeImmutable());
+
+        try {
+            $count->cancel($actor, new DateTimeImmutable());
+            self::fail('A finalizing count must not be cancelled.');
+        } catch (\Zandu\Modules\Inventory\Domain\InventoryRuleViolation $exception) {
+            self::assertSame('STOCK_COUNT_CANNOT_CANCEL', $exception->errorCode());
+        }
+        self::assertSame(StockCountStatus::Finalizing, $count->status());
+        self::assertNull($count->cancelledAt());
+    }
 }

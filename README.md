@@ -54,7 +54,10 @@ durable : après redémarrage, la réconciliation reprend seulement les lignes
 `PENDING`, sans retoucher les Stocks ni rejouer les mouvements déjà commis.
 Lorsque toutes les lignes sont réconciliées, la clôture passe le document à
 `COMPLETED`, publie son événement et libère les scopes dans une même transaction,
-tout en conservant les lignes comme preuve historique.
+tout en conservant les lignes comme preuve historique. Un comptage DRAFT ou
+OPEN peut également être annulé sans mouvement ; l'annulation OPEN libère ses
+scopes mais conserve son snapshot pour l'audit, tandis qu'un document déjà en
+finalisation ne peut plus être abandonné.
 
 Le module Purchasing fournit désormais les fournisseurs, la policy de
 réception et le workflow applicatif `PurchaseOrder` complet. Les permissions

@@ -135,6 +135,17 @@ final class StockCount
         ++$this->version;
     }
 
+    public function cancel(ActorId $actorId, DateTimeImmutable $at): void
+    {
+        if (!in_array($this->status, [StockCountStatus::Draft, StockCountStatus::Open], true)) {
+            throw InventoryRuleViolation::with('STOCK_COUNT_CANNOT_CANCEL', 'Only a draft or open stock count can be cancelled.');
+        }
+        $this->status = StockCountStatus::Cancelled;
+        $this->cancelledBy = $actorId;
+        $this->cancelledAt = self::utc($at);
+        ++$this->version;
+    }
+
     private static function utc(DateTimeImmutable $date): DateTimeImmutable
     {
         return $date->setTimezone(new DateTimeZone('UTC'));
