@@ -72,7 +72,7 @@ Epic 6.15   TERMINÉ   Blockers Purchasing composés dans StoreClosure
 Gate Lot 6  TERMINÉ   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 
-Le Lot 7 est en cours :
+Le Lot 7 est terminé :
 
 ```text
 Epic 7.1    TERMINÉ   StockTransfer aggregate et invariants
@@ -96,7 +96,7 @@ Epic 7.17   TERMINÉ   Clôture atomique, outbox et libération des scopes
 Epic 7.18   TERMINÉ   Valorisation des corrections et coût manuel protégé
 Workflow    TERMINÉ   Annulation DRAFT/OPEN, historique et rollback atomique
 API Transfer TERMINÉ  Workflow StockTransfer complet, tenant/scopes et OpenAPI
-Gate Lot 7  À FAIRE   M3 — gestion complète du stock
+Gate Lot 7  TERMINÉ   M3 — gestion complète du stock
 ```
 
 Le détail du Lot 5 clôturé :
