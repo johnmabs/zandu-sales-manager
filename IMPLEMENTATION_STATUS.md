@@ -109,6 +109,7 @@ Epic F0.3   TERMINÉ   POS React/Vite/Tauri et shell racine placeholder
 Epic F0.4   TERMINÉ   Conventions TypeScript strictes partagées
 Epic F0.5   TERMINÉ   Lint, formatage et frontières d’imports partagés
 Epic F0.6   TERMINÉ   Design tokens visuels partagés
+Epic F0.7   TERMINÉ   Primitives UI génériques et accessibles
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9827,3 +9828,25 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(ui): add shared design tokens`.
+
+## Epic F0.7 — UI primitives
+
+**Statut : TERMINÉ — bibliothèque de primitives génériques partagée**
+
+- le package workspace `@zandu/ui` fournit Button, IconButton, champs de
+  formulaire, choix, Dialog, Drawer, DropdownMenu, Tooltip, feedback states,
+  pagination et les autres primitives Foundation demandées ;
+- ses styles utilisent exclusivement les tokens visuels partagés et sont
+  consommés par Admin et POS via une dépendance workspace explicite ;
+- les composants restent génériques et ne connaissent aucun concept métier ;
+- les contrôles restent sémantiques, les focus sont visibles, et Dialog/Drawer
+  gèrent focus initial, cycle de tabulation et fermeture avec Échap ;
+- un test vérifie les exports, les contrats d’accessibilité et l’usage des
+  tokens ; le typecheck compile aussi directement le package UI.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (4 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(ui): add shared UI primitives`.

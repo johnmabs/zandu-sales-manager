@@ -1,4 +1,5 @@
 @import "@zandu/design-tokens/tokens.css";
+@import "@zandu/ui/styles.css";
 
 :root {
   color: var(--zandu-color-text-primary);

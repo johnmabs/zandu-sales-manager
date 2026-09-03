@@ -38,6 +38,9 @@ importers:
       '@zandu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@zandu/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       next:
         specifier: 16.1.6
         version: 16.1.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -72,6 +75,9 @@ importers:
       '@zandu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@zandu/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -106,6 +112,28 @@ importers:
   packages/design-tokens: {}
 
   packages/shared: {}
+
+  packages/ui:
+    dependencies:
+      '@zandu/design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
+      react:
+        specifier: ^19.2.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@types/react':
+        specifier: 19.2.13
+        version: 19.2.13
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.13)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
 packages:
 
