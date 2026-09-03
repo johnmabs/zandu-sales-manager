@@ -7,3 +7,5 @@ frontend/.pnpm-store/
 frontend/**/coverage/
 frontend/**/.next/
 frontend/**/*.tsbuildinfo
+frontend/**/dist/
+frontend/**/src-tauri/target/

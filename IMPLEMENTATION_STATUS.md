@@ -105,6 +105,7 @@ Le Frontend Foundation est démarré :
 Epic F0.1   TERMINÉ   Workspace pnpm, lockfile unique et résolution interne
 CI F0.1     TERMINÉ   Installation verrouillée et tests workspace automatisés
 Epic F0.2   TERMINÉ   Admin Next.js strict et shell racine placeholder
+Epic F0.3   TERMINÉ   POS React/Vite/Tauri et shell racine placeholder
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9713,8 +9714,6 @@ l'audit ne relève aucune vulnérabilité.
 Validations : installation pnpm avec lockfile gelé OK ; 2 tests workspace, 2
 réussis ; résolution récursive des cinq projets OK ; syntaxe YAML du workflow
 Frontend CI valide ; `git diff --check` OK.
-Le bootstrap Vite/Tauri du POS reste dans F0.3 ; il n'a pas été commencé.
-
 ## Epic F0.2 — Admin bootstrap
 
 **Statut : TERMINÉ — application Next.js initialisée**
@@ -9734,3 +9733,27 @@ localement retourne une page contenant `<h1>Zandu Admin</h1>` ;
 `git diff --check` OK.
 
 Commit recommandé : `build(admin): initialize Next.js application`.
+
+## Epic F0.3 — POS bootstrap
+
+**Statut : TERMINÉ — application React/Vite/Tauri initialisée**
+
+- `frontend/apps/pos` utilise React 19, TypeScript strict et Vite ;
+- le shell React rend le placeholder `Zandu POS` dans le navigateur ;
+- `src-tauri/` intègre le runtime Tauri v2, sa configuration de fenêtre, ses
+  capabilities minimales et son icône applicative, sans introduire de logique
+  métier ou de stockage local ;
+- les scripts `dev`, `build`, `preview`, `tauri`, `test` et `typecheck` couvrent
+  le cycle de développement du POS ;
+- les tests Node vérifient le placeholder POS et la résolution du package
+  workspace partagé ;
+- `Cargo.lock`, le lockfile pnpm et les artefacts générés sont gérés pour une
+  installation reproductible.
+
+Validations : `pnpm install --frozen-lockfile` OK ; tests POS : 2 réussis ;
+`tsc -b --pretty false` OK ; build Vite OK ; le serveur de développement sert
+l'entrée POS sur `http://127.0.0.1:1420/` ; `cargo check` Tauri OK ; `tauri
+dev` lance Vite puis le binaire desktop ; `cargo fmt -- --check` et `git diff
+--check` OK.
+
+Commit recommandé : `build(pos): initialize React Vite Tauri application`.

@@ -1,0 +1,16 @@
+[package]
+name = "zandu-pos"
+version = "0.0.0"
+description = "Zandu Sales Manager point of sale"
+authors = ["Zandu"]
+edition = "2024"
+
+[lib]
+name = "zandu_pos_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.5", features = [] }
