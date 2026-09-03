@@ -9926,3 +9926,32 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(auth): add frontend session lifecycle`.
+
+## Epic F0.13 — StoreContext
+
+**Statut : TERMINÉ — contexte de store distinct du tenant actif**
+
+- le package workspace `@zandu/store-context` fournit `StoreContextManager`,
+  `StoreContextState` et le contrat `AccessibleStore` rattaché explicitement à
+  une organisation déjà autorisée ; il ne choisit ni ne persiste
+  d’organisation ;
+- le contexte distingue `UNKNOWN`, aucun store accessible, aucun store
+  sélectionnable, sélection requise et store actif, au lieu de réduire le
+  périmètre à un simple `activeStoreId` ;
+- les stores actifs accessibles sont les seuls sélectionnables ; les états
+  `SUSPENDED`, `CLOSURE_PENDING` et `CLOSED` restent exposés afin que le
+  sélecteur puisse les gérer sans fabriquer une nouvelle autorisation côté
+  client ;
+- une mise à jour du périmètre conserve un store toujours valide, efface un
+  store révoqué ou devenu non opérationnel, puis sélectionne automatiquement
+  l’unique store valide ou demande une nouvelle sélection ;
+- les tests couvrent les cas 0/1/plusieurs stores, les statuts suspendu/fermé,
+  la révocation pendant une session active, ainsi que les incohérences de
+  tenant et de scope.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (8 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(store-context): add accessible store selection`.
