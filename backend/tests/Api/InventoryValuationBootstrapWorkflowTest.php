@@ -232,6 +232,97 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
         self::assertSame(2, (int) $connection->fetchOne('SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id=? AND source_type=?', [$organizationId, 'TRANSFER']));
     }
 
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testStockCountApiCoversBlindRecordingBatchFinalizationReplayAndCancellation(): void
+    {
+        $client = self::createClient();
+        $token = $this->registerOwnerAndLogin($client);
+        $store = $this->createStore($client, $token, 'COUNT-STORE', 'Count store');
+        [$organizationId, $actorId] = $this->ownerIdentity();
+        $this->catalogFixture($organizationId, $actorId);
+
+        $client->jsonRequest('POST', sprintf('/api/stores/%s/stocks/%s/initialize', $store['id'], self::PRODUCT), ['quantity' => '10', 'unitCost' => '400'], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+
+        $client->request('GET', '/api/stock-counts/019a0400-0000-7000-8000-000000000001', server: $this->headers($token));
+        self::assertResponseStatusCodeSame(404);
+        self::assertSame('NOT_FOUND', $this->payload($client)['code']);
+
+        $client->jsonRequest('POST', '/api/stores/' . $store['id'] . '/stock-counts', [
+            'scopeType' => 'PARTIAL',
+            'mode' => 'BLIND',
+            'productIds' => [self::PRODUCT],
+        ], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+        $count = $this->payload($client);
+        self::assertSame('DRAFT', $count['status']);
+
+        $client->request('POST', '/api/stock-counts/' . $count['id'] . '/start', server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        $started = $this->payload($client);
+        self::assertSame('OPEN', $started['status']);
+        self::assertSame(1, $started['totalLineCount']);
+        self::assertArrayNotHasKey('expectedQuantity', $started['lines'][0]);
+        self::assertArrayNotHasKey('variance', $started['lines'][0]);
+
+        $client->jsonRequest('POST', '/api/stock-counts/' . $count['id'] . '/counts', [
+            'productId' => self::PRODUCT,
+            'countedQuantity' => '9',
+            'expectedLineVersion' => 1,
+        ], $this->headers($token));
+        self::assertResponseIsSuccessful();
+        $recorded = $this->payload($client);
+        self::assertSame('9.000000000000', $recorded['lines'][0]['countedQuantity']);
+        self::assertArrayNotHasKey('expectedQuantity', $recorded['lines'][0]);
+
+        $client->jsonRequest('POST', '/api/stock-counts/' . $count['id'] . '/counts/batch', [
+            'entries' => [[
+                'productId' => self::PRODUCT,
+                'countedQuantity' => '8',
+                'expectedLineVersion' => 2,
+            ]],
+        ], $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame('8.000000000000', $this->payload($client)['lines'][0]['countedQuantity']);
+
+        $client->jsonRequest('POST', '/api/stock-counts/' . $count['id'] . '/finalization', ['batchSize' => 1], $this->headers($token));
+        self::assertResponseIsSuccessful();
+        $completed = $this->payload($client);
+        self::assertSame('COMPLETED', $completed['status']);
+        self::assertSame('10.000000000000', $completed['lines'][0]['expectedQuantity']);
+        self::assertSame('-2.000000000000', $completed['lines'][0]['variance']);
+        self::assertSame(1, $completed['reconciledLineCount']);
+
+        $client->jsonRequest('POST', '/api/stock-counts/' . $count['id'] . '/finalization', ['batchSize' => 1], $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame('COMPLETED', $this->payload($client)['status']);
+
+        $client->request('GET', '/api/stock-counts', server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $this->payload($client));
+
+        $client->jsonRequest('POST', '/api/stores/' . $store['id'] . '/stock-counts', [
+            'scopeType' => 'PARTIAL',
+            'mode' => 'GUIDED',
+            'productIds' => [self::PRODUCT],
+        ], $this->headers($token));
+        self::assertResponseStatusCodeSame(201);
+        $guided = $this->payload($client);
+        $client->request('POST', '/api/stock-counts/' . $guided['id'] . '/start', server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame('8.000000000000', $this->payload($client)['lines'][0]['expectedQuantity']);
+        $client->request('POST', '/api/stock-counts/' . $guided['id'] . '/cancel', server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame('CANCELLED', $this->payload($client)['status']);
+
+        $connection = $this->entityManager->getConnection();
+        self::assertSame('8.000000000000', $connection->fetchOne('SELECT quantity_on_hand FROM inventory.stock WHERE organization_id=? AND store_id=? AND product_id=?', [$organizationId, $store['id'], self::PRODUCT]));
+        self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory.stock_movement WHERE organization_id=? AND source_type='STOCK_COUNT'", [$organizationId]));
+        self::assertSame(1, (int) $connection->fetchOne("SELECT COUNT(*) FROM inventory_costing.stock_valuation_movement WHERE organization_id=? AND source_type='STOCK_COUNT'", [$organizationId]));
+        self::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM inventory.open_stock_count_scope WHERE organization_id=?', [$organizationId]));
+    }
+
     private function registerOwnerAndLogin(KernelBrowser $client): string
     {
         $client->jsonRequest('POST', '/api/auth/register', [
@@ -377,6 +468,9 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
             $connection->executeStatement('DELETE FROM inventory.stock_transfer_command WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock_transfer_line WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock_transfer WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory.open_stock_count_scope WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory.stock_count_line WHERE organization_id = ?', [$organizationId]);
+            $connection->executeStatement('DELETE FROM inventory.stock_count WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock_movement WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM inventory.stock WHERE organization_id = ?', [$organizationId]);
             $connection->executeStatement('DELETE FROM catalog.product_packagings WHERE organization_id = ?', [$organizationId]);

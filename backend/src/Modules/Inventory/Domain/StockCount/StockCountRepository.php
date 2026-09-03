@@ -12,5 +12,7 @@ interface StockCountRepository
     public function get(OrganizationId $organizationId, StockCountId $stockCountId): StockCount;
     public function getForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): StockCount;
     public function find(OrganizationId $organizationId, StockCountId $stockCountId): ?StockCount;
+    /** @return list<StockCount> */
+    public function findAll(OrganizationId $organizationId): array;
     public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool;
 }

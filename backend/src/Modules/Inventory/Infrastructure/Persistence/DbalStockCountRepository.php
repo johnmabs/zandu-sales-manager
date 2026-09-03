@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use LogicException;
 use Zandu\Modules\Inventory\Domain\StockCount\{StockCount, StockCountMode, StockCountRepository, StockCountScopeType, StockCountStatus};
+use Zandu\Modules\Inventory\Domain\StockCount\StockCountNotFound;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockCountId, StoreId, UuidFactory};
 
 final readonly class DbalStockCountRepository implements StockCountRepository
@@ -30,13 +31,13 @@ final readonly class DbalStockCountRepository implements StockCountRepository
 
     public function get(OrganizationId $organizationId, StockCountId $stockCountId): StockCount
     {
-        return $this->find($organizationId, $stockCountId) ?? throw new LogicException('Stock count was not found.');
+        return $this->find($organizationId, $stockCountId) ?? throw StockCountNotFound::withId($stockCountId);
     }
 
     public function getForUpdate(OrganizationId $organizationId, StockCountId $stockCountId): StockCount
     {
         if (false === $this->db->fetchOne('SELECT id FROM inventory.stock_count WHERE organization_id=? AND id=? FOR UPDATE', [$organizationId->toString(), $stockCountId->toString()])) {
-            throw new LogicException('Stock count was not found.');
+            throw StockCountNotFound::withId($stockCountId);
         }
 
         return $this->get($organizationId, $stockCountId);
@@ -79,6 +80,14 @@ final readonly class DbalStockCountRepository implements StockCountRepository
         return false !== $this->db->fetchOne(
             "SELECT 1 FROM inventory.stock_count WHERE organization_id=? AND store_id=? AND status IN ('OPEN','FINALIZING') LIMIT 1",
             [$organizationId->toString(), $storeId->toString()],
+        );
+    }
+
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_map(
+            fn(string $id): StockCount => $this->get($organizationId, StockCountId::fromString($id, $this->ids)),
+            $this->db->fetchFirstColumn('SELECT id FROM inventory.stock_count WHERE organization_id=? ORDER BY created_at DESC,id DESC', [$organizationId->toString()]),
         );
     }
 

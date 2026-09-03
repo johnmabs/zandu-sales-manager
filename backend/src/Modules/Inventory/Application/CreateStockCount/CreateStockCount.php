@@ -18,4 +18,20 @@ final readonly class CreateStockCount
         public ActorContext $actorContext,
         public StockCountMode $mode = StockCountMode::Blind,
     ) {}
+
+    /** @param list<ProductId> $productIds */
+    public static function fromStrings(StoreId $storeId, string $scopeType, array $productIds, ActorContext $actorContext, string $mode = 'BLIND'): self
+    {
+        try {
+            return new self(
+                $storeId,
+                StockCountScopeType::from($scopeType),
+                $productIds,
+                $actorContext,
+                StockCountMode::from($mode),
+            );
+        } catch (\ValueError $exception) {
+            throw new \InvalidArgumentException('Stock count scope type or mode is invalid.', previous: $exception);
+        }
+    }
 }

@@ -52,6 +52,21 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/stock-transfers/{id}/cancel')->getPost());
     }
 
+    public function testStockCountWorkflowIsDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/stock-counts')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/stock-counts')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-counts/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/stock-counts/{id}/start')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-counts/{id}/counts')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-counts/{id}/counts/batch')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-counts/{id}/finalization')->getPost());
+        self::assertNotNull($paths->getPath('/api/stock-counts/{id}/cancel')->getPost());
+    }
+
     public function testOrganizationPatchAcceptsJsonAndMergePatchJson(): void
     {
         self::bootKernel();

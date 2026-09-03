@@ -128,19 +128,19 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 1er septembre 2026 :
+État consolidé au 3 septembre 2026 :
 
 ```text
 Branche              main
 Migrations           Version20260831170000 appliquée en dernier
-Tests                 742 tests, 3 698 assertions
+Tests                 746 tests, 3 767 assertions
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
 Deptrac modules       0 violation, 10 dépendances non classées
 Composer audit        aucune vulnérabilité connue
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
-Worktree              propre après mise à jour du statut
+Worktree              changements API StockCount non commités
 ```
 
 ## Definition of Done globale
@@ -9653,8 +9653,29 @@ Validation locale complète : 742 tests, 3 698 assertions. Composer, conteneur
 Symfony, PHPStan et PHP-CS-Fixer sont verts. Deptrac layers/modules reste à
 0 violation et 10 dépendances non classées.
 
-### Prochaine sous-étape
+### API StockCount — workflow complet exposé
 
-Exposer l'API StockCount en un bloc cohérent : création et lecture, ouverture,
-saisie simple/batch, finalisation/reprise, clôture et annulation. Le mode BLIND
-doit masquer les quantités théoriques tant que la saisie n'est pas gelée.
+**Statut : TERMINÉ — workflow complet, confidentialité BLIND et PostgreSQL validés**
+
+- API Platform expose la collection, le détail et la création par magasin,
+  l'ouverture, la saisie simple et batch, la finalisation reprenable et
+  l'annulation ; les huit opérations sont présentes dans OpenAPI ;
+- les lectures utilisent une projection applicative tenant-scopée, appliquent
+  `STOCK_COUNT_READ` au scope Store et traduisent une ressource absente ou
+  cross-tenant en `NOT_FOUND` ;
+- la projection serveur masque complètement `expectedQuantity` et `variance`
+  pour un comptage `BLIND` en `DRAFT/OPEN`, puis les révèle lorsque la saisie
+  est gelée ; le mode `GUIDED` les expose pendant la saisie ;
+- le endpoint de finalisation démarre `FINALIZING`, réconcilie par checkpoints
+  transactionnels bornés à 500 lignes, reprend les seules lignes `PENDING`,
+  accepte les coûts manuels protégés déjà prévus par l'Epic 7.18, puis clôture
+  et libère les scopes ; un rejeu d'un comptage terminé reste sans effet ;
+- le repository DBAL sait lister les comptages dans le tenant actif et utilise
+  désormais le contrat public `NOT_FOUND` pour les lectures et verrous absents ;
+- un parcours API PostgreSQL couvre BLIND/GUIDED, saisie simple/batch,
+  finalisation, rejeu, mouvements physiques/valorisés et annulation.
+
+Validation ciblée PostgreSQL : 1 test, 55 assertions. Suite complète : 746
+tests, 3 767 assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
+layers/modules sont verts (0 violation, 10 uncovered). Composer est valide et
+l'audit ne relève aucune vulnérabilité.
