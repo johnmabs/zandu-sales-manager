@@ -4,7 +4,8 @@
   "private": true,
   "packageManager": "pnpm@11.25.0",
   "scripts": {
-    "test": "pnpm --recursive --if-present test",
+    "test": "pnpm --recursive --if-present test && pnpm test:typescript",
+    "test:typescript": "node --test test/typescript-conventions.test.js",
     "test:workspace": "pnpm --filter @zandu/admin --filter @zandu/pos test"
   }
 }

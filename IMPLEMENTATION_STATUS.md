@@ -106,6 +106,7 @@ Epic F0.1   TERMINÉ   Workspace pnpm, lockfile unique et résolution interne
 CI F0.1     TERMINÉ   Installation verrouillée et tests workspace automatisés
 Epic F0.2   TERMINÉ   Admin Next.js strict et shell racine placeholder
 Epic F0.3   TERMINÉ   POS React/Vite/Tauri et shell racine placeholder
+Epic F0.4   TERMINÉ   Conventions TypeScript strictes partagées
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9757,3 +9758,25 @@ dev` lance Vite puis le binaire desktop ; `cargo fmt -- --check` et `git diff
 --check` OK.
 
 Commit recommandé : `build(pos): initialize React Vite Tauri application`.
+
+## Epic F0.4 — TypeScript conventions
+
+**Statut : TERMINÉ — socle TypeScript strict partagé appliqué aux deux applications**
+
+- `frontend/tsconfig.base.json` centralise `strict`, `noImplicitAny`, les accès
+  indexés vérifiés, les variables `catch` en `unknown`, les propriétés
+  optionnelles exactes et les contrôles d’override/cohérence de casse ;
+- les configurations Admin et POS (navigateur et Vite) héritent de ce socle,
+  tout en conservant leurs options propres de runtime et de build ;
+- un test Node natif vérifie les garanties du socle et son héritage par les
+  trois configurations TypeScript ; il est inclus dans `pnpm test` à la racine
+  du workspace ;
+- le socle impose l’absence d’`any` implicite et privilégie les valeurs
+  inconnues contrôlées aux frontières ; la validation de contrats réseau et
+  l’usage des modèles générés restent réservés au futur API client.
+
+Validations : test des conventions TypeScript (2 sous-tests) OK ; `pnpm test`
+OK ; typecheck Admin et POS OK ; builds de production Next.js et Vite OK ;
+`git diff --check` OK.
+
+Commit recommandé : `build(frontend): configure strict TypeScript`.
