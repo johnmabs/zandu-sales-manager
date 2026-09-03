@@ -108,6 +108,7 @@ Epic F0.2   TERMINÉ   Admin Next.js strict et shell racine placeholder
 Epic F0.3   TERMINÉ   POS React/Vite/Tauri et shell racine placeholder
 Epic F0.4   TERMINÉ   Conventions TypeScript strictes partagées
 Epic F0.5   TERMINÉ   Lint, formatage et frontières d’imports partagés
+Epic F0.6   TERMINÉ   Design tokens visuels partagés
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9804,3 +9805,25 @@ tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `chore(frontend): add code quality tooling`.
+
+## Epic F0.6 — Design tokens
+
+**Statut : TERMINÉ — primitives visuelles stables partagées par Admin et POS**
+
+- le package workspace `@zandu/design-tokens` expose une feuille CSS de tokens
+  strictement visuels : couleurs sémantiques, espacement, rayons, typographie,
+  breakpoints et niveaux de superposition ;
+- Admin et POS dépendent explicitement de ce package et utilisent les mêmes
+  tokens pour leur canvas, texte, typographie, espacement et titre de shell ;
+- aucun composant ni règle métier n’est introduit : les futures densités et
+  composants de chaque interface peuvent rester distincts tout en partageant
+  l’identité visuelle ;
+- un test vérifie la présence des primitives stables et leur consommation par
+  les deux applications.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (3 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(ui): add shared design tokens`.

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@zandu/design-tokens": "workspace:*",
     "@zandu/shared": "workspace:*",
     "next": "16.1.6",
     "react": "19.2.4",

@@ -1,0 +1,48 @@
+:root {
+  --zandu-color-surface-canvas: #f7f8fb;
+  --zandu-color-surface-raised: #ffffff;
+  --zandu-color-text-primary: #172033;
+  --zandu-color-text-secondary: #4b5565;
+  --zandu-color-text-inverse: #ffffff;
+  --zandu-color-border-default: #d7dce5;
+  --zandu-color-action-primary: #275dad;
+  --zandu-color-action-primary-hover: #1d4b8f;
+  --zandu-color-focus: #1d4ed8;
+  --zandu-color-status-success: #167a46;
+  --zandu-color-status-warning: #a15c00;
+  --zandu-color-status-danger: #b42318;
+  --zandu-color-status-info: #275dad;
+
+  --zandu-space-0: 0;
+  --zandu-space-1: 0.25rem;
+  --zandu-space-2: 0.5rem;
+  --zandu-space-3: 0.75rem;
+  --zandu-space-4: 1rem;
+  --zandu-space-6: 1.5rem;
+  --zandu-space-8: 2rem;
+  --zandu-space-12: 3rem;
+
+  --zandu-radius-none: 0;
+  --zandu-radius-sm: 0.25rem;
+  --zandu-radius-md: 0.5rem;
+  --zandu-radius-lg: 0.75rem;
+  --zandu-radius-pill: 9999px;
+
+  --zandu-font-family-sans: Arial, Helvetica, sans-serif;
+  --zandu-font-size-sm: 0.875rem;
+  --zandu-font-size-md: 1rem;
+  --zandu-font-size-lg: 1.25rem;
+  --zandu-font-size-xl: 2rem;
+  --zandu-line-height-tight: 1.2;
+  --zandu-line-height-normal: 1.5;
+
+  --zandu-breakpoint-sm: 40rem;
+  --zandu-breakpoint-md: 48rem;
+  --zandu-breakpoint-lg: 64rem;
+
+  --zandu-z-index-base: 0;
+  --zandu-z-index-dropdown: 100;
+  --zandu-z-index-sticky: 200;
+  --zandu-z-index-modal: 300;
+  --zandu-z-index-toast: 400;
+}

@@ -1,7 +1,10 @@
+@import "@zandu/design-tokens/tokens.css";
+
 :root {
-  color: #172033;
-  background: #f7f8fb;
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--zandu-color-text-primary);
+  background: var(--zandu-color-surface-canvas);
+  font-family: var(--zandu-font-family-sans);
+  line-height: var(--zandu-line-height-normal);
 }
 
 * {
@@ -17,10 +20,11 @@ main {
   display: grid;
   min-height: 100vh;
   place-items: center;
-  padding: 2rem;
+  padding: var(--zandu-space-8);
 }
 
 h1 {
   margin: 0;
-  font-size: 2rem;
+  font-size: var(--zandu-font-size-xl);
+  line-height: var(--zandu-line-height-tight);
 }
