@@ -111,6 +111,7 @@ Epic F0.5   TERMINÉ   Lint, formatage et frontières d’imports partagés
 Epic F0.6   TERMINÉ   Design tokens visuels partagés
 Epic F0.7   TERMINÉ   Primitives UI génériques et accessibles
 Epic F0.8   TERMINÉ   Formatting métier exact et timezone-aware
+Epic F0.10  TERMINÉ   Contrat d’erreur et ErrorMapper frontend
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9876,3 +9877,26 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(formatting): add domain display helpers`.
+
+## Epic F0.10 — Error contract
+
+**Statut : TERMINÉ — contrat UX d’erreur partagé, sans client API**
+
+- le package workspace `@zandu/error-contract` définit `ApiError`, `UiError`,
+  `FieldErrors` et `ErrorMapper` ;
+- le mapper couvre validation, authentification, autorisation, ressource
+  absente, conflit métier, conflit d’idempotence, réseau et erreur serveur ;
+- les réponses backend actuelles `code`, `message`, `correlationId` sont
+  compatibles avec le contrat ; le code pilote le message UX et aucun statut
+  HTTP n’est montré directement à l’utilisateur ;
+- le mapper préserve erreurs de champ et correlation ID, fournit retry/action
+  quand pertinent, et accepte des mappings de code enrichis par les features ;
+- les tests couvrent les huit catégories, `INSUFFICIENT_STOCK`, la préservation
+  des métadonnées et une surcharge de feature.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (6 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(errors): add frontend error contract`.
