@@ -4,9 +4,22 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "build": "next build --webpack",
+    "dev": "next dev",
+    "start": "next start",
+    "test": "node --test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@zandu/shared": "workspace:*"
+    "@zandu/shared": "workspace:*",
+    "next": "16.1.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.13",
+    "@types/react": "19.2.13",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
   }
 }

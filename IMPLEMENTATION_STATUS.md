@@ -104,6 +104,7 @@ Le Frontend Foundation est démarré :
 ```text
 Epic F0.1   TERMINÉ   Workspace pnpm, lockfile unique et résolution interne
 CI F0.1     TERMINÉ   Installation verrouillée et tests workspace automatisés
+Epic F0.2   TERMINÉ   Admin Next.js strict et shell racine placeholder
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9712,5 +9713,24 @@ l'audit ne relève aucune vulnérabilité.
 Validations : installation pnpm avec lockfile gelé OK ; 2 tests workspace, 2
 réussis ; résolution récursive des cinq projets OK ; syntaxe YAML du workflow
 Frontend CI valide ; `git diff --check` OK.
-Les bootstraps Next.js et Vite/Tauri restent respectivement dans F0.2 et F0.3 ;
-ils n'ont pas été commencés.
+Le bootstrap Vite/Tauri du POS reste dans F0.3 ; il n'a pas été commencé.
+
+## Epic F0.2 — Admin bootstrap
+
+**Statut : TERMINÉ — application Next.js initialisée**
+
+- `frontend/apps/admin` est une application Next.js 16, React 19 et TypeScript ;
+- la configuration TypeScript active `strict` ;
+- l'App Router expose `GET /`, qui rend le placeholder de shell `Zandu Admin` ;
+- les scripts `dev`, `build`, `start`, `test` et `typecheck` permettent le cycle
+  de développement et les validations ciblées ;
+- le test Node de l'Admin vérifie le placeholder de la page racine, en plus du
+  test existant de résolution du package workspace partagé ;
+- les artefacts générés par Next.js et TypeScript sont ignorés par Git.
+
+Validations : `pnpm install --frozen-lockfile` OK ; tests Admin : 2 réussis ;
+`tsc --noEmit` OK ; build de production Next.js/Webpack OK ; `GET /` servi
+localement retourne une page contenant `<h1>Zandu Admin</h1>` ;
+`git diff --check` OK.
+
+Commit recommandé : `build(admin): initialize Next.js application`.
