@@ -99,6 +99,12 @@ API Transfer TERMINÉ  Workflow StockTransfer complet, tenant/scopes et OpenAPI
 Gate Lot 7  TERMINÉ   M3 — gestion complète du stock
 ```
 
+Le Frontend Foundation est démarré :
+
+```text
+Epic F0.1   TERMINÉ   Workspace pnpm, lockfile unique et résolution interne
+```
+
 Le détail du Lot 5 clôturé :
 
 ```text
@@ -9679,3 +9685,28 @@ Validation ciblée PostgreSQL : 1 test, 55 assertions. Suite complète : 746
 tests, 3 767 assertions. PHPStan, PHP-CS-Fixer, conteneur Symfony et Deptrac
 layers/modules sont verts (0 violation, 10 uncovered). Composer est valide et
 l'audit ne relève aucune vulnérabilité.
+
+# Frontend Foundation
+
+## Epic F0.1 — Workspace
+
+**Statut : TERMINÉ — workspace pnpm reproductible initialisé**
+
+- `frontend/` contient les membres `apps/admin`, `apps/pos`,
+  `packages/shared` et `packages/config` sous un workspace pnpm unique ;
+- `pnpm-workspace.yaml` découvre uniquement `apps/*` et `packages/*` ;
+- le manifeste racine épingle pnpm `11.25.0`, centralise les scripts de test et
+  ne requiert aucun orchestrateur supplémentaire ;
+- Admin et POS déclarent `@zandu/shared` via `workspace:*` ; deux tests Node
+  natifs prouvent la résolution locale depuis chaque application ;
+- `pnpm-lock.yaml` est l'unique lockfile frontend et une installation
+  `--frozen-lockfile` réussit sur les cinq projets ;
+- l'ADR-0024 accepte pnpm et réserve l'introduction future de Turborepo/Nx à un
+  besoin mesuré et une décision distincte ;
+- les dépendances générées, le store pnpm et les couvertures frontend sont
+  ignorés par Git.
+
+Validations : installation pnpm avec lockfile gelé OK ; 2 tests workspace, 2
+réussis ; résolution récursive des cinq projets OK ; `git diff --check` OK.
+Les bootstraps Next.js et Vite/Tauri restent respectivement dans F0.2 et F0.3 ;
+ils n'ont pas été commencés.

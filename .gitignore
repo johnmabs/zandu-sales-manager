@@ -1,1 +1,7 @@
 .env
+
+# Frontend workspace
+frontend/node_modules/
+frontend/**/node_modules/
+frontend/.pnpm-store/
+frontend/**/coverage/

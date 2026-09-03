@@ -1,0 +1,25 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  apps/admin:
+    dependencies:
+      '@zandu/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+
+  apps/pos:
+    dependencies:
+      '@zandu/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+
+  packages/config: {}
+
+  packages/shared: {}

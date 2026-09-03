@@ -27,6 +27,7 @@ Read **only** the ADR that governs the decision touched by the current task. All
 | `docs/architecture/adr/0021-inventory-costing-activation-policy.md` | ADR-0021 — Politique d’activation de la valorisation Inventory |
 | `docs/architecture/adr/0022-cash-refund-ownership-and-workflow.md` | ADR-0022 — Ownership et workflow du remboursement cash |
 | `docs/architecture/adr/0023-purchasing-receipt-policy.md` | ADR-0023 — Politique de réception fournisseur du MVP |
+| `docs/specs/architecture/adr/0024-pnpm-frontend-workspace.md` | ADR-0024 — pnpm et lockfile unique pour le workspace frontend |
 
 ## Open/proposed decisions in supplied register
 
