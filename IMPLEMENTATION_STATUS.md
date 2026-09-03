@@ -103,6 +103,7 @@ Le Frontend Foundation est démarré :
 
 ```text
 Epic F0.1   TERMINÉ   Workspace pnpm, lockfile unique et résolution interne
+CI F0.1     TERMINÉ   Installation verrouillée et tests workspace automatisés
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9701,12 +9702,15 @@ l'audit ne relève aucune vulnérabilité.
   natifs prouvent la résolution locale depuis chaque application ;
 - `pnpm-lock.yaml` est l'unique lockfile frontend et une installation
   `--frozen-lockfile` réussit sur les cinq projets ;
+- `.github/workflows/frontend-ci.yml` exécute cette installation verrouillée et
+  les tests de résolution Admin/POS sur chaque changement du workspace ;
 - l'ADR-0024 accepte pnpm et réserve l'introduction future de Turborepo/Nx à un
   besoin mesuré et une décision distincte ;
 - les dépendances générées, le store pnpm et les couvertures frontend sont
   ignorés par Git.
 
 Validations : installation pnpm avec lockfile gelé OK ; 2 tests workspace, 2
-réussis ; résolution récursive des cinq projets OK ; `git diff --check` OK.
+réussis ; résolution récursive des cinq projets OK ; syntaxe YAML du workflow
+Frontend CI valide ; `git diff --check` OK.
 Les bootstraps Next.js et Vite/Tauri restent respectivement dans F0.2 et F0.3 ;
 ils n'ont pas été commencés.
