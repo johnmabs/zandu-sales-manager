@@ -107,6 +107,7 @@ CI F0.1     TERMINÉ   Installation verrouillée et tests workspace automatisés
 Epic F0.2   TERMINÉ   Admin Next.js strict et shell racine placeholder
 Epic F0.3   TERMINÉ   POS React/Vite/Tauri et shell racine placeholder
 Epic F0.4   TERMINÉ   Conventions TypeScript strictes partagées
+Epic F0.5   TERMINÉ   Lint, formatage et frontières d’imports partagés
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9780,3 +9781,26 @@ OK ; typecheck Admin et POS OK ; builds de production Next.js et Vite OK ;
 `git diff --check` OK.
 
 Commit recommandé : `build(frontend): configure strict TypeScript`.
+
+## Epic F0.5 — Lint / Format / Imports
+
+**Statut : TERMINÉ — outillage de qualité partagé configuré**
+
+- ESLint en configuration plate applique les règles TypeScript communes : pas
+  d’`any` explicite, pas de cast `as` non vérifié, imports de types explicites
+  et code inutilisé refusé (sauf identifiants volontairement préfixés par `_`) ;
+- les imports sont ordonnés, séparés par groupes et dédupliqués ; Admin et POS
+  ne peuvent pas s’importer mutuellement, et les packages partagés ne peuvent
+  pas dépendre d’une application ;
+- Prettier fournit le formatage reproductible du workspace en excluant les
+  artefacts générés Next.js, Vite et Tauri ;
+- les commandes racine `lint`, `format`, `format:check`, `typecheck`, `test`
+  et `build` sont disponibles ; les tests Foundation vérifient leur présence et
+  les règles essentielles de qualité.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (tests Foundation et
+tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `chore(frontend): add code quality tooling`.

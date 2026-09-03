@@ -2,10 +2,26 @@
   "name": "@zandu/workspace",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.25.0",
   "scripts": {
-    "test": "pnpm --recursive --if-present test && pnpm test:typescript",
+    "build": "pnpm --filter @zandu/admin build && pnpm --filter @zandu/pos build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "pnpm --recursive --if-present test && pnpm test:foundation",
+    "test:foundation": "node --test test/*.test.js",
     "test:typescript": "node --test test/typescript-conventions.test.js",
-    "test:workspace": "pnpm --filter @zandu/admin --filter @zandu/pos test"
+    "test:workspace": "pnpm --filter @zandu/admin --filter @zandu/pos test",
+    "typecheck": "pnpm --recursive --if-present typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "eslint": "9.39.1",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-import": "2.32.0",
+    "globals": "16.5.0",
+    "prettier": "3.7.4",
+    "typescript-eslint": "8.48.1"
   }
 }
