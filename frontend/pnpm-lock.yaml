@@ -107,6 +107,12 @@ importers:
         specifier: 8.2.2
         version: 8.2.2(@types/node@24.10.13)
 
+  packages/auth:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/config: {}
 
   packages/design-tokens: {}

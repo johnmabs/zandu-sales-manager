@@ -9900,3 +9900,29 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(errors): add frontend error contract`.
+
+## Epic F0.11 — Authentication
+
+**Statut : TERMINÉ — cycle de session frontend en mémoire et extensible par transport**
+
+- le package workspace `@zandu/auth` expose un `AuthenticationManager`, un
+  `AuthState` explicite (`UNKNOWN`, `AUTHENTICATING`, `AUTHENTICATED`,
+  `UNAUTHENTICATED`, `REFRESHING`) et les contrats de transport et d’acteur ;
+- les access et refresh tokens sont conservés uniquement en mémoire ; aucun
+  adaptateur `localStorage`, `sessionStorage` ou stockage persistant de
+  credentials n’est introduit ;
+- login et bootstrap résolvent l’acteur avant de rendre l’état authentifié ; un
+  access token expiré est renouvelé au bootstrap ;
+- la rotation de refresh est single-flight, les opérations explicitement
+  compatibles peuvent être reprises via `refreshAndRetry`, et un échec vide la
+  session pour revenir au login ;
+- logout révoque le refresh token avant le nettoyage local ; le claim JWT
+  `authorizationVersion` est comparé à l’acteur résolu pour éliminer une
+  session devenue invalide.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (7 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(auth): add frontend session lifecycle`.
