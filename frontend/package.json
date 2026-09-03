@@ -10,7 +10,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "pnpm --recursive --if-present test && pnpm test:foundation",
-    "test:foundation": "node --test test/*.test.js",
+    "test:foundation": "node --experimental-strip-types --test test/*.test.js",
     "test:typescript": "node --test test/typescript-conventions.test.js",
     "test:workspace": "pnpm --filter @zandu/admin --filter @zandu/pos test",
     "typecheck": "pnpm --recursive --if-present typecheck"

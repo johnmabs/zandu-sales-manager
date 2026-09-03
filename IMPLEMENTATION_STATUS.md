@@ -110,6 +110,7 @@ Epic F0.4   TERMINÉ   Conventions TypeScript strictes partagées
 Epic F0.5   TERMINÉ   Lint, formatage et frontières d’imports partagés
 Epic F0.6   TERMINÉ   Design tokens visuels partagés
 Epic F0.7   TERMINÉ   Primitives UI génériques et accessibles
+Epic F0.8   TERMINÉ   Formatting métier exact et timezone-aware
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9850,3 +9851,28 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(ui): add shared UI primitives`.
+
+## Epic F0.8 — Formatting métier
+
+**Statut : TERMINÉ — formats partagés sans calcul métier frontend**
+
+- le package workspace `@zandu/domain-formatting` expose `formatMoney`,
+  `formatQuantity`, `formatBusinessDate`, `formatDateTime` et
+  `formatPercentage` ;
+- Money et Quantity restent des chaînes décimales : groupement, déplacement
+  décimal des ratios et localisation sont réalisés sans convertir la valeur API
+  en nombre JavaScript ;
+- BusinessDate est validée et formatée comme date de calendrier UTC, sans la
+  redériver depuis le fuseau navigateur ; les timestamps utilisent le fuseau
+  Store explicitement fourni ;
+- les tests couvrent une valeur monétaire supérieure à la précision numérique
+  JavaScript, pourcentages, dates/fuseaux et transports invalides ;
+- les tests Foundation exécutent les sources TypeScript sans transformation
+  sémantique, et le package est compilé par `pnpm typecheck`.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (5 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(formatting): add domain display helpers`.
