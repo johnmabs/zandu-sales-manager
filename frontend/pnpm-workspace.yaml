@@ -4,3 +4,6 @@ packages:
 
 linkWorkspacePackages: true
 preferWorkspacePackages: true
+
+allowBuilds:
+  sharp@0.34.5: true
