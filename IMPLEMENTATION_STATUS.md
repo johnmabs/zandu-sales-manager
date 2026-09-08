@@ -116,6 +116,7 @@ Epic F0.11  TERMINÉ   Cycle de session frontend en mémoire
 Epic F0.13  TERMINÉ   StoreContext distinct du tenant actif
 Epic F0.14  TERMINÉ   Modèle d’autorisation frontend et guards UX
 Epic F0.15  TERMINÉ   Cache serveur tenant/store-scoped
+Epic F0.16  TERMINÉ   Fondations formulaires et validation runtime
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10004,3 +10005,26 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(server-state): add tenant-scoped query cache`.
+
+## Epic F0.16 — Forms
+
+**Statut : TERMINÉ — formulaires standardisés, validation locale et erreurs serveur**
+
+- le package workspace `@zandu/forms` standardise les formulaires React avec
+  React Hook Form, des schémas Zod de validation runtime et une validation UX
+  au blur puis à la correction ;
+- `validateLocalPayload` limite les schémas runtime aux payloads locaux et
+  retourne les erreurs par champ, sans reproduire les invariants métier dont le
+  backend reste la source d’autorité ;
+- `applyServerFieldErrors` raccorde le contrat `FieldErrors` du mapper d’erreurs
+  à React Hook Form avec le type `server` ;
+- l’état de soumission expose séparément valeurs modifiées, désactivation et
+  soumission en cours ; `useUnsavedChangesWarning` protège la fermeture ou le
+  rechargement navigateur d’un formulaire modifié.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (11 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(forms): add validated form foundation`.
