@@ -115,6 +115,7 @@ Epic F0.10  TERMINÉ   Contrat d’erreur et ErrorMapper frontend
 Epic F0.11  TERMINÉ   Cycle de session frontend en mémoire
 Epic F0.13  TERMINÉ   StoreContext distinct du tenant actif
 Epic F0.14  TERMINÉ   Modèle d’autorisation frontend et guards UX
+Epic F0.15  TERMINÉ   Cache serveur tenant/store-scoped
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9981,3 +9982,25 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(authorization): add frontend permission guards`.
+
+## Epic F0.15 — Server state
+
+**Statut : TERMINÉ — cache spécialisé et isolé par tenant/store**
+
+- le package workspace `@zandu/server-state` introduit TanStack Query, un
+  `QueryClient` partagé et un provider React, sans copier les entités serveur
+  dans un store global maison ;
+- `queryKeys` centralise les clés organizations, stores, products, stock,
+  suppliers, purchaseOrders et sales ; chaque clé dépendante d’un tenant porte
+  `organizationId`, et celles dépendantes d’un magasin portent aussi `storeId` ;
+- les lectures utilisent un retry borné, les mutations ne sont jamais rejouées
+  automatiquement, et `transitionOrganizationCache` supprime les données des
+  autres tenants puis invalide celles du tenant activé ;
+- le package ne gère aucun state UI local, qui reste hors du cache serveur.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (10 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(server-state): add tenant-scoped query cache`.
