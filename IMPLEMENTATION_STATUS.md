@@ -112,6 +112,9 @@ Epic F0.6   TERMINÉ   Design tokens visuels partagés
 Epic F0.7   TERMINÉ   Primitives UI génériques et accessibles
 Epic F0.8   TERMINÉ   Formatting métier exact et timezone-aware
 Epic F0.10  TERMINÉ   Contrat d’erreur et ErrorMapper frontend
+Epic F0.11  TERMINÉ   Cycle de session frontend en mémoire
+Epic F0.13  TERMINÉ   StoreContext distinct du tenant actif
+Epic F0.14  TERMINÉ   Modèle d’autorisation frontend et guards UX
 ```
 
 Le détail du Lot 5 clôturé :
@@ -9955,3 +9958,26 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(store-context): add accessible store selection`.
+
+## Epic F0.14 — Authorization frontend
+
+**Statut : TERMINÉ — permissions et scopes serveur pour les guards UX**
+
+- le package workspace `@zandu/authorization` expose la projection
+  `EffectiveAccess` serveur, sa version d’autorisation, les permissions, le
+  scope organisation ou magasins sélectionnés et les magasins accessibles ;
+- `can`, `useCan` et `<Can>` vérifient permission, organisation et magasin, et
+  refusent par défaut un accès absent ou non résolu ; aucun rôle n’est utilisé
+  dans la logique frontend ;
+- `canViewNavigation` rend la navigation visible lorsqu’au moins une capacité
+  pertinente est autorisée ; ces helpers restent des guards UX, le backend
+  conserve explicitement la frontière de sécurité ;
+- le provider vérifie les projections de scope incohérentes avant de les
+  distribuer aux composants.
+
+Validations : `pnpm install --frozen-lockfile` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (9 tests Foundation,
+plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
+diff --check` OK.
+
+Commit recommandé : `feat(authorization): add frontend permission guards`.
