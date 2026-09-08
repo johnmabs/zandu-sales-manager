@@ -117,6 +117,7 @@ Epic F0.13  TERMINÉ   StoreContext distinct du tenant actif
 Epic F0.14  TERMINÉ   Modèle d’autorisation frontend et guards UX
 Epic F0.15  TERMINÉ   Cache serveur tenant/store-scoped
 Epic F0.16  TERMINÉ   Fondations formulaires et validation runtime
+Epic F0.17  TERMINÉ   Fondations de tables Admin paginées par serveur
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10028,3 +10029,27 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(forms): add validated form foundation`.
+
+## Epic F0.17 — Tables Admin
+
+**Statut : TERMINÉ — tables Admin composables et état URL partageable**
+
+- les modules Admin `tables/query-state` et `tables/AdminTable` séparent l’état
+  URL, les colonnes et actions propres à chaque feature, et le rendu d’une page
+  reçue du serveur ; aucune DataTable universelle ni filtre client massif n’est
+  introduit ;
+- `page`, `sort`, `direction`, `search` et les filtres nommés `filter.*` sont
+  lus et écrits dans l’URL ; chaque changement de recherche, filtre ou tri
+  revient à la première page, ce qui préserve refresh, partage et navigation
+  historique ;
+- `AdminTable` rend une page `items/page/pageSize/totalItems`, le tri accessible,
+  les actions par ligne, la pagination serveur et les états loading, error et
+  empty à partir des primitives UI existantes ;
+- les tests couvrent le round-trip de l’état URL, les réinitialisations de page
+  et les contrats sémantiques de table, tri, actions, pagination et états.
+
+Validations : `pnpm format:check` OK ; `pnpm lint` OK ; `pnpm typecheck` OK ;
+`pnpm test` OK (11 tests Foundation, plus 3 tests Admin et les tests POS) ;
+builds de production Next.js et Vite OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(admin): add server-paginated table foundation`.

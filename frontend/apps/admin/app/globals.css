@@ -29,3 +29,38 @@ h1 {
   font-size: var(--zandu-font-size-xl);
   line-height: var(--zandu-line-height-tight);
 }
+
+.zandu-admin-table__scroll {
+  overflow-x: auto;
+}
+
+.zandu-admin-table {
+  border-collapse: collapse;
+  min-width: 100%;
+}
+
+.zandu-admin-table th,
+.zandu-admin-table td {
+  border-bottom: 1px solid var(--zandu-color-border-default);
+  padding: var(--zandu-space-3);
+  text-align: start;
+}
+
+.zandu-admin-table th {
+  color: var(--zandu-color-text-primary);
+  font-weight: 600;
+}
+
+.zandu-admin-table__sort {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+}
+
+.zandu-admin-table__sort:focus-visible {
+  outline: 3px solid var(--zandu-color-focus);
+  outline-offset: 2px;
+}
