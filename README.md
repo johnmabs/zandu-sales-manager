@@ -32,7 +32,18 @@ Le projet suit une architecture en **monolithe modulaire inspirée du Domain-Dri
 | 4   | Sales et `CompleteSale` cash      | Terminé — Gate M2 validé |
 | 5   | Inventory Costing et Returns      | Terminé — Gate CI validé |
 | 6   | Purchasing et Goods Receipts      | Terminé — Gate CI validé |
-| 7   | StockTransfer et StockCount       | En cours                 |
+| 7   | StockTransfer et StockCount       | Terminé — Gate M3 validé |
+| F0  | Frontend Foundation              | En cours                 |
+
+Les Lots backend 0 à 7 sont clos. Le Frontend Foundation dispose des shells
+Admin et POS, des conventions TypeScript et qualité, des tokens et primitives UI,
+du formatting métier, du contrat d'erreur, du cycle de session en mémoire, du
+StoreContext, des guards d'autorisation et du cache serveur TanStack Query.
+
+Les Epics F0.1 à F0.8, F0.10, F0.11 et F0.13 à F0.15 sont déclarés terminés.
+F0.9 (API client) et F0.12 (OrganizationContext) ne sont pas déclarés terminés
+dans le suivi. Les interfaces restent des shells de fondation ; les parcours
+métier frontend et leur intégration API restent à construire.
 
 L'état détaillé de l'implémentation, les Epics terminés, les validations et les preuves de tests sont maintenus dans :
 
@@ -64,6 +75,15 @@ Les spécifications détaillées des Lots sont disponibles dans :
 - audit append-only ;
 - outbox transactionnelle.
 
+### Frontend
+
+- workspace pnpm avec lockfile unique ;
+- TypeScript strict et React 19 ;
+- Admin Web : Next.js 16 ;
+- POS : Vite 8 et shell desktop Tauri 2 ;
+- TanStack Query pour le cache des données serveur ;
+- packages partagés pour l'UI, le formatting, l'authentification et les contextes.
+
 ### Qualité
 
 - PHPUnit
@@ -72,6 +92,8 @@ Les spécifications détaillées des Lots sont disponibles dans :
 - Deptrac
 - Composer Audit
 - fitness tests d'architecture
+- ESLint, Prettier et vérification TypeScript côté frontend
+- tests Node natifs pour les applications et le socle frontend
 
 ### Infrastructure locale
 
@@ -122,6 +144,10 @@ La machine de développement doit disposer de :
 - Git.
 
 PHP, Composer et PostgreSQL n'ont pas besoin d'être installés directement sur la machine hôte.
+
+Pour le frontend, prévoir Node.js 24 (version utilisée en CI) et pnpm 11.25.0,
+épinglé dans `frontend/package.json`. Le lancement desktop du POS nécessite
+également Rust et les dépendances système de Tauri pour la plateforme hôte.
 
 ---
 
@@ -189,6 +215,36 @@ Une fois le backend accessible sur le port `8080` :
 | Metrics    | `http://localhost:8080/metrics`            |
 
 Swagger et ReDoc constituent la référence principale pour le contrat HTTP exposé par l'application.
+
+Ces interfaces de documentation sont actives uniquement en environnement de développement.
+
+---
+
+## Démarrer les interfaces frontend
+
+Installer les dépendances depuis le workspace :
+
+```bash
+cd frontend
+pnpm install --frozen-lockfile
+```
+
+Lancer l'Admin ou le POS dans des terminaux séparés, depuis `frontend/` :
+
+```bash
+pnpm --filter @zandu/admin dev
+pnpm --filter @zandu/pos dev
+```
+
+L'Admin est accessible par défaut sur `http://localhost:3000` et le POS navigateur
+sur `http://127.0.0.1:1420`. Pour lancer le POS desktop avec ses prérequis installés :
+
+```bash
+pnpm --filter @zandu/pos tauri dev
+```
+
+Ces applications affichent actuellement les placeholders `Zandu Admin` et
+`Zandu POS` ; le parcours utilisateur API ci-dessous s'effectue encore par HTTP.
 
 ---
 
@@ -316,6 +372,20 @@ make test
 make security
 ```
 
+Pour les contrôles frontend, depuis `frontend/` :
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+`pnpm test` inclut les tests Admin/POS et Foundation ; `pnpm build` produit les
+builds Next.js et Vite. Le workflow GitHub Frontend CI exécute actuellement
+l'installation verrouillée et `pnpm test:workspace` (tests Admin/POS).
+
 ---
 
 ## Organisation du dépôt
@@ -335,6 +405,16 @@ make security
 │   │   └── SharedKernel/
 │   │
 │   └── tests/
+│
+├── frontend/
+│   ├── apps/
+│   │   ├── admin/
+│   │   └── pos/
+│   ├── packages/
+│   ├── test/
+│   ├── package.json
+│   ├── pnpm-workspace.yaml
+│   └── pnpm-lock.yaml
 │
 ├── docs/
 │   ├── specs/
