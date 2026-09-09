@@ -126,6 +126,7 @@ Epic F0.22  TERMINÉ   Idempotency-Key frontend
 Epic F0.23  TERMINÉ   Abstraction réseau centralisée
 Epic F0.24  TERMINÉ   Organisation par features frontend
 Epic F0.25  TERMINÉ   Pyramide de tests frontend
+Epic F0.26  TERMINÉ   Observabilité frontend structurée
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10214,3 +10215,27 @@ impossible sur Ubuntu 26.04, non encore supporté par Playwright 1.57.0 ; la
 configuration et le scénario restent vérifiés par découverte.
 
 Commit recommandé : `test(frontend): establish testing pyramid`.
+
+## Epic F0.26 — Observability frontend
+
+**Statut : TERMINÉ — télémétrie client structurée et sûre**
+
+- le package `@zandu/observability` offre un port d’export indépendant du
+  fournisseur, aligné sur OpenTelemetry : erreurs techniques, chargements de
+  routes et échecs API sont des événements structurés ;
+- chaque événement porte version client, environnement et horodatage ; les
+  échecs API conservent méthode, route normalisée, statut, type de défaillance,
+  issue inconnue et `correlationId` lorsqu’il est disponible ;
+- les query strings et identifiants de routes sont supprimés ou normalisés, et
+  l’API d’observabilité ne reçoit ni headers, ni corps de requête, ni messages
+  d’erreur : tokens, mots de passe et données client ne peuvent donc pas être
+  exportés par cette couche ;
+- `@zandu/api-client` dépend uniquement du port `ApiFailureObserver` et publie
+  les échecs terminaux, y compris après un retry de refresh, sans introduire
+  d’exporteur concret ni de second backend.
+
+Validations : tests ciblés Observability/API OK (2 tests) ; typecheck des
+packages Observability et API client OK ; les validations frontend globales sont
+réexécutées avec succès avant clôture.
+
+Commit recommandé : `feat(observability): add safe frontend telemetry`.

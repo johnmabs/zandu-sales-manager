@@ -160,6 +160,9 @@ importers:
       '@zandu/idempotency':
         specifier: workspace:*
         version: link:../idempotency
+      '@zandu/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       typescript:
         specifier: 5.9.3
@@ -252,6 +255,12 @@ importers:
       react-dom:
         specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  packages/observability:
+    devDependencies:
       typescript:
         specifier: 5.9.3
         version: 5.9.3

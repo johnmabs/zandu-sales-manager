@@ -2,6 +2,7 @@ import { idempotencyHeaders } from "@zandu/idempotency";
 
 import type { PublicRuntimeConfig } from "@zandu/config";
 import type { ApiError, FieldErrors } from "@zandu/error-contract";
+import type { ApiFailureObserver } from "@zandu/observability";
 
 export const CORRELATION_ID_HEADER = "X-Correlation-ID";
 
@@ -34,6 +35,7 @@ export type ApiClientOptions = Readonly<{
   defaultTimeoutMs?: number;
   fetchImplementation?: FetchImplementation;
   generateCorrelationId?: () => string;
+  observability?: ApiFailureObserver;
   session?: SessionCredentials;
 }>;
 
@@ -58,6 +60,7 @@ export class ApiClient {
   private readonly defaultTimeoutMs: number;
   private readonly fetchImplementation: FetchImplementation;
   private readonly generateCorrelationId: () => string;
+  private readonly observability: ApiFailureObserver | undefined;
   private readonly session: SessionCredentials | undefined;
 
   constructor({
@@ -65,6 +68,7 @@ export class ApiClient {
     defaultTimeoutMs = 15_000,
     fetchImplementation = fetch,
     generateCorrelationId = generateRequestCorrelationId,
+    observability,
     session,
   }: ApiClientOptions) {
     if (defaultTimeoutMs <= 0) {
@@ -75,6 +79,7 @@ export class ApiClient {
     this.defaultTimeoutMs = defaultTimeoutMs;
     this.fetchImplementation = fetchImplementation;
     this.generateCorrelationId = generateCorrelationId;
+    this.observability = observability;
     this.session = session;
   }
 
@@ -90,12 +95,18 @@ export class ApiClient {
         request.requiresAuthentication === false ||
         this.session === undefined
       ) {
+        this.recordFailure(request, error);
         throw error;
       }
 
-      return this.session.refreshAndRetry((refreshedAccessToken) =>
-        this.execute(request, refreshedAccessToken),
-      );
+      try {
+        return await this.session.refreshAndRetry((refreshedAccessToken) =>
+          this.execute(request, refreshedAccessToken),
+        );
+      } catch (retryError: unknown) {
+        this.recordFailure(request, retryError);
+        throw retryError;
+      }
     }
   }
 
@@ -142,7 +153,11 @@ export class ApiClient {
 
       const timedOut = controller.signal.aborted;
       throw new ApiRequestError(
-        { ...(timedOut ? { message: "The request timed out." } : {}), kind: "network" },
+        {
+          ...(timedOut ? { message: "The request timed out." } : {}),
+          correlationId,
+          kind: "network",
+        },
         timedOut && request.idempotencyKey !== undefined,
       );
     } finally {
@@ -152,6 +167,23 @@ export class ApiClient {
 
   private urlFor(path: string): string {
     return new URL(path, this.config.apiBaseUrl).toString();
+  }
+
+  private recordFailure(request: ApiRequest, error: unknown): void {
+    if (!(error instanceof ApiRequestError)) {
+      return;
+    }
+
+    this.observability?.recordApiFailure({
+      ...(error.apiError.correlationId === undefined
+        ? {}
+        : { correlationId: error.apiError.correlationId }),
+      failureKind: error.apiError.kind,
+      method: request.method,
+      outcomeUnknown: error.outcomeUnknown,
+      path: request.path,
+      ...(error.apiError.kind === "response" ? { status: error.apiError.status } : {}),
+    });
   }
 }
 

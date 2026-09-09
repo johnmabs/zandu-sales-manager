@@ -10,7 +10,8 @@
   "dependencies": {
     "@zandu/config": "workspace:*",
     "@zandu/error-contract": "workspace:*",
-    "@zandu/idempotency": "workspace:*"
+    "@zandu/idempotency": "workspace:*",
+    "@zandu/observability": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3"
