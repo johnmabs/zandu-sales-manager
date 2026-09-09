@@ -1,11 +1,16 @@
 {
-  "name": "@zandu/config",
+  "name": "@zandu/api-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@zandu/config": "workspace:*",
+    "@zandu/error-contract": "workspace:*",
+    "@zandu/idempotency": "workspace:*"
   },
   "devDependencies": {
     "typescript": "5.9.3"

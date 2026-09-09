@@ -125,6 +125,22 @@ importers:
         specifier: 8.2.2
         version: 8.2.2(@types/node@24.10.13)
 
+  packages/api-client:
+    dependencies:
+      '@zandu/config':
+        specifier: workspace:*
+        version: link:../config
+      '@zandu/error-contract':
+        specifier: workspace:*
+        version: link:../error-contract
+      '@zandu/idempotency':
+        specifier: workspace:*
+        version: link:../idempotency
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/auth:
     devDependencies:
       typescript:
@@ -143,7 +159,11 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
-  packages/config: {}
+  packages/config:
+    devDependencies:
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
 
   packages/design-tokens: {}
 

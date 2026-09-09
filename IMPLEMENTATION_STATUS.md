@@ -123,6 +123,7 @@ Epic F0.19  TERMINÉ   Shell Admin desktop-first
 Epic F0.20  TERMINÉ   Shell POS opérationnel
 Epic F0.21  TERMINÉ   Notifications et confirmations
 Epic F0.22  TERMINÉ   Idempotency-Key frontend
+Epic F0.23  TERMINÉ   Abstraction réseau centralisée
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10152,3 +10153,21 @@ Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
 POS, 43 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(idempotency): add critical mutation key manager`.
+
+## Epic F0.23 — Network abstraction
+
+**Statut : TERMINÉ — transport HTTP partagé et configuration publique validée**
+
+- `@zandu/config` valide exclusivement `API_BASE_URL` et `APP_ENV`, sans
+  exposer de secret dans le bundle ;
+- `@zandu/api-client` centralise URL, cookies, Bearer token, corrélation,
+  idempotence, JSON, timeout, refresh JWT unique et décodage du contrat
+  d’erreur ;
+- un timeout de commande idempotente est explicitement marqué comme issue
+  inconnue, pour permettre le retry F0.22 avec la même clé.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (7 tests Admin, 3 tests
+POS, 47 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(api-client): add centralized HTTP transport`.

@@ -1,0 +1,124 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { ApiClient, ApiRequestError } from "../packages/api-client/src/index.ts";
+import { publicRuntimeConfig } from "../packages/config/src/index.ts";
+
+const config = publicRuntimeConfig({
+  API_BASE_URL: "https://api.zandu.test/",
+  APP_ENV: "test",
+});
+
+test("API client centralizes public configuration and critical request headers", async () => {
+  let request;
+  const client = new ApiClient({
+    config,
+    fetchImplementation: async (url, init) => {
+      request = { init, url };
+      return new Response(JSON.stringify({ id: "sale-1" }), {
+        headers: { "X-Correlation-ID": "correlation-from-server" },
+        status: 201,
+      });
+    },
+    generateCorrelationId: () => "correlation-from-client",
+    session: {
+      getAccessToken: () => "access-token",
+      refreshAndRetry: async (retry) => retry("refreshed-token"),
+    },
+  });
+
+  const response = await client.request({
+    body: { total: "1200.00" },
+    idempotencyKey: "sale-command-1",
+    method: "POST",
+    path: "/sales/complete",
+  });
+
+  assert.deepEqual(response, {
+    correlationId: "correlation-from-server",
+    data: { id: "sale-1" },
+    status: 201,
+  });
+  assert.equal(request.url, "https://api.zandu.test/sales/complete");
+  assert.equal(request.init.credentials, "include");
+  assert.equal(request.init.headers.Authorization, "Bearer access-token");
+  assert.equal(request.init.headers["Idempotency-Key"], "sale-command-1");
+  assert.equal(request.init.headers["X-Correlation-ID"], "correlation-from-client");
+});
+
+test("API client refreshes once after a 401 and decodes the resulting response", async () => {
+  const authorizationHeaders = [];
+  const client = new ApiClient({
+    config,
+    fetchImplementation: async (_url, init) => {
+      authorizationHeaders.push(init.headers.Authorization);
+      return authorizationHeaders.length === 1
+        ? new Response(JSON.stringify({ code: "TOKEN_EXPIRED" }), { status: 401 })
+        : new Response(JSON.stringify({ ok: true }), { status: 200 });
+    },
+    generateCorrelationId: () => "correlation",
+    session: {
+      getAccessToken: () => "expired-token",
+      refreshAndRetry: async (retry) => retry("refreshed-token"),
+    },
+  });
+
+  assert.deepEqual(await client.request({ method: "GET", path: "/me" }), {
+    data: { ok: true },
+    status: 200,
+  });
+  assert.deepEqual(authorizationHeaders, ["Bearer expired-token", "Bearer refreshed-token"]);
+});
+
+test("idempotent command timeout reports an unknown outcome and preserves server error context", async () => {
+  const timeoutClient = new ApiClient({
+    config,
+    defaultTimeoutMs: 1,
+    fetchImplementation: async (_url, init) =>
+      new Promise((_resolve, reject) => {
+        init.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      }),
+    generateCorrelationId: () => "correlation",
+  });
+
+  await assert.rejects(
+    () =>
+      timeoutClient.request({
+        idempotencyKey: "command-1",
+        method: "POST",
+        path: "/sales/complete",
+      }),
+    (error) => error instanceof ApiRequestError && error.outcomeUnknown,
+  );
+
+  const failingClient = new ApiClient({
+    config,
+    fetchImplementation: async () =>
+      new Response(
+        JSON.stringify({ code: "INSUFFICIENT_STOCK", correlationId: "server-reference" }),
+        {
+          status: 422,
+        },
+      ),
+    generateCorrelationId: () => "correlation",
+  });
+
+  await assert.rejects(
+    () => failingClient.request({ method: "POST", path: "/sales/complete" }),
+    (error) =>
+      error instanceof ApiRequestError &&
+      error.apiError.kind === "response" &&
+      error.apiError.code === "INSUFFICIENT_STOCK" &&
+      error.apiError.correlationId === "server-reference",
+  );
+});
+
+test("public configuration rejects absent, secret-bearing, or invalid API URLs", () => {
+  assert.throws(() => publicRuntimeConfig({ API_BASE_URL: undefined, APP_ENV: "test" }));
+  assert.throws(() =>
+    publicRuntimeConfig({ API_BASE_URL: "https://secret@example.test", APP_ENV: "test" }),
+  );
+  assert.throws(() =>
+    publicRuntimeConfig({ API_BASE_URL: "https://api.zandu.test", APP_ENV: "stage" }),
+  );
+});
