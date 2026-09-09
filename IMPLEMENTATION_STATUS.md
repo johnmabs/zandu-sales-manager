@@ -118,6 +118,7 @@ Epic F0.14  TERMINÉ   Modèle d’autorisation frontend et guards UX
 Epic F0.15  TERMINÉ   Cache serveur tenant/store-scoped
 Epic F0.16  TERMINÉ   Fondations formulaires et validation runtime
 Epic F0.17  TERMINÉ   Fondations de tables Admin paginées par serveur
+Epic F0.18  TERMINÉ   Routing Admin par capacités UX
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10053,3 +10054,21 @@ Validations : `pnpm format:check` OK ; `pnpm lint` OK ; `pnpm typecheck` OK ;
 builds de production Next.js et Vite OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(admin): add server-paginated table foundation`.
+
+## Epic F0.18 — Routing Admin
+
+**Statut : TERMINÉ — routes Admin par capacités UX**
+
+- les routes Next.js `/login` et `/app` sont matérialisées ;
+- `/app` expose séparément les capacités `organization`, `stores`, `members`,
+  `catalog`, `pricing`, `inventory`, `purchasing`, `cash` et `sales` ;
+- chaque route reste une page placeholder indépendante, sans introduire le shell
+  ou la navigation de l’Epic F0.19.
+
+Validations : `pnpm format:check` OK ; `pnpm lint` OK ; `pnpm typecheck` OK ;
+`pnpm test` OK (dont le test ciblé des routes Admin) ; build Vite OK ; build
+Next.js compilé et pages statiques générées. Dans cet environnement, le
+processus Next.js ne termine toutefois pas après cette étape et laisse son
+verrou temporaire `.next/lock` ; `git diff --check` OK.
+
+Commit recommandé : `feat(admin): add capability-based routes`.
