@@ -125,6 +125,7 @@ Epic F0.21  TERMINÉ   Notifications et confirmations
 Epic F0.22  TERMINÉ   Idempotency-Key frontend
 Epic F0.23  TERMINÉ   Abstraction réseau centralisée
 Epic F0.24  TERMINÉ   Organisation par features frontend
+Epic F0.25  TERMINÉ   Pyramide de tests frontend
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10189,3 +10190,27 @@ Validations : `pnpm format:check` OK ; `pnpm lint` OK ; `pnpm typecheck` OK ;
 POS OK ; `git diff --check` OK.
 
 Commit recommandé : `refactor(frontend): organize application features`.
+
+## Epic F0.25 — Testing pyramid
+
+**Statut : TERMINÉ — quatre niveaux de tests exécutables et ciblés**
+
+- Vitest distingue explicitement les tests unitaires Node, les tests de
+  composants React sous JSDOM et les tests d’intégration ; Testing Library
+  vérifie l’interaction accessible avec les composants ;
+- MSW intercepte la frontière `fetch` du client API : le scénario d’intégration
+  couvre les en-têtes Bearer/corrélation, la projection retournée et la
+  conservation des erreurs de champ du backend ;
+- Playwright déclare un E2E Chromium indépendant, démarre l’Admin et vérifie
+  son entrée publique ; il est découvert par le runner et s’exécute via
+  `pnpm test:e2e` dans un environnement Chromium compatible ;
+- les scripts ciblés `test:unit`, `test:component`, `test:integration` et
+  `test:e2e` sont disponibles ; les trois premiers sont inclus dans `pnpm test`.
+
+Validations : découverte Playwright OK (1 scénario Chromium) ; tests Vitest
+unit/component/integration OK (5 tests) ; `pnpm format:check`, `pnpm lint`,
+`pnpm typecheck` et `pnpm test` OK. L’exécution locale du navigateur E2E est
+impossible sur Ubuntu 26.04, non encore supporté par Playwright 1.57.0 ; la
+configuration et le scénario restent vérifiés par découverte.
+
+Commit recommandé : `test(frontend): establish testing pyramid`.

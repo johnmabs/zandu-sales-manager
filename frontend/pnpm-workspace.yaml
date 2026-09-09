@@ -6,4 +6,6 @@ linkWorkspacePackages: true
 preferWorkspacePackages: true
 
 allowBuilds:
+  esbuild: true
+  msw: true
   sharp@0.34.5: true

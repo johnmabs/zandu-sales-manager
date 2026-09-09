@@ -9,19 +9,31 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "test": "pnpm --recursive --if-present test && pnpm test:foundation",
+    "test": "pnpm --recursive --if-present test && pnpm test:foundation && pnpm test:unit && pnpm test:component && pnpm test:integration",
+    "test:component": "vitest run --project component",
+    "test:e2e": "playwright test",
     "test:foundation": "node --experimental-strip-types --test test/*.test.js",
+    "test:integration": "vitest run --project integration",
     "test:typescript": "node --test test/typescript-conventions.test.js",
+    "test:unit": "vitest run --project unit",
     "test:workspace": "pnpm --filter @zandu/admin --filter @zandu/pos test",
     "typecheck": "pnpm --recursive --if-present typecheck"
   },
   "devDependencies": {
     "@eslint/js": "9.39.1",
+    "@playwright/test": "1.57.0",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-import": "2.32.0",
     "globals": "16.5.0",
+    "jsdom": "27.4.0",
+    "msw": "2.12.7",
     "prettier": "3.7.4",
-    "typescript-eslint": "8.48.1"
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "typescript-eslint": "8.48.1",
+    "vitest": "4.0.18"
   }
 }
