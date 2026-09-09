@@ -24,6 +24,117 @@ main {
   padding: var(--zandu-space-8);
 }
 
+.zandu-admin-shell {
+  display: grid;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.zandu-admin-shell__sidebar {
+  background: var(--zandu-color-surface-raised);
+  border-right: 1px solid var(--zandu-color-border-default);
+  display: grid;
+  gap: var(--zandu-space-6);
+  padding: var(--zandu-space-6);
+}
+
+.zandu-admin-shell__brand,
+.zandu-admin-shell__navigation-list a,
+.zandu-admin-shell__breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.zandu-admin-shell__brand {
+  font-size: var(--zandu-font-size-lg);
+  font-weight: 700;
+}
+
+.zandu-admin-shell__navigation-list,
+.zandu-admin-shell__breadcrumbs ol {
+  display: grid;
+  gap: var(--zandu-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.zandu-admin-shell__navigation-list a {
+  border-radius: var(--zandu-radius-md);
+  display: block;
+  padding: var(--zandu-space-2) var(--zandu-space-3);
+}
+
+.zandu-admin-shell__navigation-list a[aria-current="page"] {
+  background: var(--zandu-color-action-primary);
+  color: var(--zandu-color-text-inverse);
+}
+
+.zandu-admin-shell__workspace {
+  min-width: 0;
+}
+
+.zandu-admin-shell__header {
+  align-items: end;
+  border-bottom: 1px solid var(--zandu-color-border-default);
+  display: flex;
+  gap: var(--zandu-space-4);
+  justify-content: space-between;
+  padding: var(--zandu-space-4) var(--zandu-space-6);
+}
+
+.zandu-admin-shell__selectors {
+  display: flex;
+  gap: var(--zandu-space-3);
+}
+
+.zandu-admin-shell__selectors label {
+  display: grid;
+  font-size: var(--zandu-font-size-sm);
+  gap: var(--zandu-space-1);
+  min-width: 12rem;
+}
+
+.zandu-admin-shell__breadcrumbs,
+.zandu-admin-shell__notifications {
+  padding: var(--zandu-space-3) var(--zandu-space-6);
+}
+
+.zandu-admin-shell__breadcrumbs ol {
+  display: flex;
+}
+
+.zandu-admin-shell__breadcrumbs li + li::before {
+  color: var(--zandu-color-text-secondary);
+  content: "/";
+  margin: 0 var(--zandu-space-2);
+}
+
+.zandu-admin-shell__content {
+  display: block;
+  min-height: auto;
+  padding: var(--zandu-space-6);
+}
+
+.zandu-admin-shell__skip-link {
+  background: var(--zandu-color-surface-raised);
+  color: var(--zandu-color-text-primary);
+  left: var(--zandu-space-3);
+  padding: var(--zandu-space-2) var(--zandu-space-3);
+  position: fixed;
+  top: calc(-1 * var(--zandu-space-12));
+  z-index: var(--zandu-z-index-toast);
+}
+
+.zandu-admin-shell__skip-link:focus {
+  top: var(--zandu-space-3);
+}
+
+.zandu-admin-session-state {
+  display: grid;
+  place-items: center;
+}
+
 h1 {
   margin: 0;
   font-size: var(--zandu-font-size-xl);

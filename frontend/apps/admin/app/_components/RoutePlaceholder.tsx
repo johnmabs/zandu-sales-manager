@@ -10,8 +10,8 @@ type RoutePlaceholderProperties = Readonly<{
  */
 export function RoutePlaceholder({ title }: RoutePlaceholderProperties) {
   return (
-    <main>
+    <section>
       <h1>{title}</h1>
-    </main>
+    </section>
   );
 }

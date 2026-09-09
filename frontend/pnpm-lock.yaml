@@ -32,12 +32,21 @@ importers:
 
   apps/admin:
     dependencies:
+      '@zandu/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@zandu/authorization':
+        specifier: workspace:*
+        version: link:../../packages/authorization
       '@zandu/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
       '@zandu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@zandu/store-context':
+        specifier: workspace:*
+        version: link:../../packages/store-context
       '@zandu/ui':
         specifier: workspace:*
         version: link:../../packages/ui

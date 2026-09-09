@@ -119,6 +119,7 @@ Epic F0.15  TERMINÉ   Cache serveur tenant/store-scoped
 Epic F0.16  TERMINÉ   Fondations formulaires et validation runtime
 Epic F0.17  TERMINÉ   Fondations de tables Admin paginées par serveur
 Epic F0.18  TERMINÉ   Routing Admin par capacités UX
+Epic F0.19  TERMINÉ   Shell Admin desktop-first
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10072,3 +10073,26 @@ processus Next.js ne termine toutefois pas après cette étape et laisse son
 verrou temporaire `.next/lock` ; `git diff --check` OK.
 
 Commit recommandé : `feat(admin): add capability-based routes`.
+
+## Epic F0.19 — Admin Shell
+
+**Statut : TERMINÉ — shell Admin desktop-first et session protégée**
+
+- un shell réutilisable compose navigation filtrée par capacités, sélecteurs
+  d’organisation et de magasin, menu acteur/logout, fil d’Ariane et région de
+  notifications accessible ;
+- les sélecteurs reçoivent les contextes résolus par le runtime et ne décident
+  ni des organisations ni des magasins accessibles ;
+- la frontière de session conserve les routes protégées masquées pendant le
+  bootstrap, le rafraîchissement ou l’absence de session, sans simuler de
+  transport HTTP ;
+- une frontière `error.tsx` localise les erreurs de routes ; l’intégration
+  concrète du runtime de session reste découplée de ce shell.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (7 tests Admin, 37 tests
+Foundation) ; `git diff --check` OK. Le build Next.js Admin compile et passe
+le typage, mais ne termine pas la génération statique dans cet environnement et
+laisse son verrou temporaire `.next/lock` ; le verrou est supprimé ensuite.
+
+Commit recommandé : `feat(admin): add desktop application shell`.
