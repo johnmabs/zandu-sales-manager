@@ -122,6 +122,7 @@ Epic F0.18  TERMINÉ   Routing Admin par capacités UX
 Epic F0.19  TERMINÉ   Shell Admin desktop-first
 Epic F0.20  TERMINÉ   Shell POS opérationnel
 Epic F0.21  TERMINÉ   Notifications et confirmations
+Epic F0.22  TERMINÉ   Idempotency-Key frontend
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10134,3 +10135,20 @@ Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
 POS, 40 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(notifications): add shared feedback center`.
+
+## Epic F0.22 — Idempotency-Key frontend
+
+**Statut : TERMINÉ — clé stable par intention de mutation critique**
+
+- le package `@zandu/idempotency` génère et valide des clés compatibles avec
+  l’en-tête backend `Idempotency-Key` ;
+- le gestionnaire mémorise la clé par intention, marque distinctement une issue
+  inconnue après timeout et ne régénère pas de clé au retry de cette intention ;
+- les états idle, submitting, unknown outcome, success, business failure et
+  technical failure sont matérialisés sans implémenter le transport F0.23.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (7 tests Admin, 3 tests
+POS, 43 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(idempotency): add critical mutation key manager`.
