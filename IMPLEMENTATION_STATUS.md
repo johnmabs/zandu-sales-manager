@@ -121,6 +121,7 @@ Epic F0.17  TERMINÉ   Fondations de tables Admin paginées par serveur
 Epic F0.18  TERMINÉ   Routing Admin par capacités UX
 Epic F0.19  TERMINÉ   Shell Admin desktop-first
 Epic F0.20  TERMINÉ   Shell POS opérationnel
+Epic F0.21  TERMINÉ   Notifications et confirmations
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10114,3 +10115,22 @@ Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
 POS, 37 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(pos): add operational shell`.
+
+## Epic F0.21 — Notifications
+
+**Statut : TERMINÉ — feedback transitoire et échecs métier différenciés**
+
+- le package partagé `@zandu/notifications` fournit un centre de toasts
+  dismissibles, son viewport React et une confirmation générique dont l’impact
+  métier est obligatoire ;
+- seuls les messages informationnels, de succès ou d’avertissement sont des
+  toasts ; les échecs métier critiques restent routés vers une erreur de page,
+  et les erreurs non critiques restent inline ;
+- les shells Admin et POS montent le provider et leur viewport global, sans
+  introduire de logique métier, d’offline ou de mutation.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (7 tests Admin, 3 tests
+POS, 40 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(notifications): add shared feedback center`.

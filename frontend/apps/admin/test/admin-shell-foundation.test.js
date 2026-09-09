@@ -39,7 +39,7 @@ test("Admin shell provides accessible desktop controls and protects unresolved s
   assert.match(shell, /aria-label="Organisation active"/);
   assert.match(shell, /aria-label="Magasin actif"/);
   assert.match(shell, /aria-label="Fil d’Ariane"/);
-  assert.match(shell, /aria-live="polite"/);
+  assert.match(shell, /NotificationViewport/);
   assert.match(shell, /Se déconnecter/);
   assert.match(shell, /Aller au contenu/);
   assert.match(protectedShell, /Chargement de la session/);

@@ -1,0 +1,31 @@
+.zandu-notification-viewport {
+  bottom: var(--zandu-space-4);
+  display: grid;
+  gap: var(--zandu-space-2);
+  list-style: none;
+  margin: 0;
+  max-width: 28rem;
+  padding: 0;
+  position: fixed;
+  right: var(--zandu-space-4);
+  width: calc(100% - var(--zandu-space-8));
+  z-index: var(--zandu-z-index-toast);
+}
+
+.zandu-notification-viewport .zandu-toast {
+  align-items: center;
+  background: var(--zandu-color-surface-raised);
+  border: 1px solid var(--zandu-color-border-default);
+  box-shadow: 0 var(--zandu-space-2) var(--zandu-space-6)
+    color-mix(in srgb, var(--zandu-color-text-primary) 15%, transparent);
+  display: flex;
+  gap: var(--zandu-space-3);
+  justify-content: space-between;
+}
+
+.zandu-confirmation-dialog__actions {
+  display: flex;
+  gap: var(--zandu-space-2);
+  justify-content: end;
+  margin-top: var(--zandu-space-4);
+}

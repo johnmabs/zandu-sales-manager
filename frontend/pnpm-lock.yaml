@@ -41,6 +41,9 @@ importers:
       '@zandu/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@zandu/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       '@zandu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -81,6 +84,9 @@ importers:
       '@zandu/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@zandu/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
       '@zandu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -174,6 +180,28 @@ importers:
       react:
         specifier: 19.2.4
         version: 19.2.4
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  packages/notifications:
+    dependencies:
+      '@zandu/ui':
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      '@types/react':
+        specifier: 19.2.13
+        version: 19.2.13
+      '@types/react-dom':
+        specifier: 19.2.3
+        version: 19.2.3(@types/react@19.2.13)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
       typescript:
         specifier: 5.9.3
         version: 5.9.3

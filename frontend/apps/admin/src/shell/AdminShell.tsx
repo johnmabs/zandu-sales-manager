@@ -1,5 +1,6 @@
 "use client";
 
+import { NotificationViewport } from "@zandu/notifications/react";
 import { Button, DropdownMenu, Select } from "@zandu/ui";
 import Link from "next/link";
 
@@ -125,7 +126,7 @@ export function AdminShell({
             ))}
           </ol>
         </nav>
-        <div aria-atomic="true" aria-live="polite" className="zandu-admin-shell__notifications" />
+        <NotificationViewport />
         <main className="zandu-admin-shell__content" id="admin-content">
           {children}
         </main>

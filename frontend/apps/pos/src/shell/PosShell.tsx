@@ -1,3 +1,4 @@
+import { NotificationViewport } from "@zandu/notifications/react";
 import { Badge } from "@zandu/ui";
 
 import {
@@ -67,6 +68,7 @@ export function PosShell({
         </dl>
       </header>
       <main className="zandu-pos-shell__content">{children}</main>
+      <NotificationViewport />
     </div>
   );
 }

@@ -1,7 +1,10 @@
+import { NotificationProvider } from "@zandu/notifications/react";
+
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 import "./globals.css";
+import "@zandu/notifications/styles.css";
 
 export const metadata: Metadata = {
   title: "Zandu Admin",
@@ -15,7 +18,9 @@ type RootLayoutProperties = Readonly<{
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NotificationProvider>{children}</NotificationProvider>
+      </body>
     </html>
   );
 }

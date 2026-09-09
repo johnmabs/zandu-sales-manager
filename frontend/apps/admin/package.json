@@ -14,6 +14,7 @@
     "@zandu/auth": "workspace:*",
     "@zandu/authorization": "workspace:*",
     "@zandu/design-tokens": "workspace:*",
+    "@zandu/notifications": "workspace:*",
     "@zandu/shared": "workspace:*",
     "@zandu/store-context": "workspace:*",
     "@zandu/ui": "workspace:*",
