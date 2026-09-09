@@ -40,10 +40,10 @@ Admin et POS, des conventions TypeScript et qualité, des tokens et primitives U
 du formatting métier, du contrat d'erreur, du cycle de session en mémoire, du
 StoreContext, des guards d'autorisation et du cache serveur TanStack Query.
 
-Les Epics F0.1 à F0.8, F0.10, F0.11 et F0.13 à F0.15 sont déclarés terminés.
-F0.9 (API client) et F0.12 (OrganizationContext) ne sont pas déclarés terminés
-dans le suivi. Les interfaces restent des shells de fondation ; les parcours
-métier frontend et leur intégration API restent à construire.
+Les Epics F0.1 à F0.15 sont déclarés terminés. Le premier parcours frontend
+intègre désormais l'authentification Symfony, la projection serveur de l'acteur
+et de ses permissions effectives, l'organisation et le magasin actifs, le cache
+tenant-aware et le shell Admin. Les parcours CRUD métier restent à construire.
 
 L'état détaillé de l'implémentation, les Epics terminés, les validations et les preuves de tests sont maintenus dans :
 
@@ -229,6 +229,11 @@ cd frontend
 pnpm install --frozen-lockfile
 ```
 
+Configurer ensuite l'Admin avec `frontend/apps/admin/.env.local` (le fichier
+`.env.example` documente les valeurs locales). L'URL publique reste same-origin ;
+Next.js relaie `/api/*` vers Symfony via `ZANDU_BACKEND_URL`, sans porter de
+logique métier.
+
 Lancer l'Admin ou le POS dans des terminaux séparés, depuis `frontend/` :
 
 ```bash
@@ -243,8 +248,9 @@ sur `http://127.0.0.1:1420`. Pour lancer le POS desktop avec ses prérequis inst
 pnpm --filter @zandu/pos tauri dev
 ```
 
-Ces applications affichent actuellement les placeholders `Zandu Admin` et
-`Zandu POS` ; le parcours utilisateur API ci-dessous s'effectue encore par HTTP.
+L'Admin expose désormais le premier parcours intégré : connexion, résolution de
+session et des permissions effectives, contexte organisation/magasin, shell et
+déconnexion. Le POS conserve son shell de fondation.
 
 ---
 

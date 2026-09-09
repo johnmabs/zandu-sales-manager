@@ -116,6 +116,12 @@ services:
     Zandu\Modules\Organization\Application\Contract\StoreBusinessContextProvider:
         alias: Zandu\Modules\Organization\Application\RepositoryStoreBusinessContextProvider
 
+    Zandu\Modules\Organization\Application\Contract\OrganizationStoreIds:
+        alias: Zandu\Modules\Organization\Application\RepositoryOrganizationStoreIds
+
+    Zandu\Modules\Organization\Application\Contract\OrganizationSummaryProvider:
+        alias: Zandu\Modules\Organization\Application\RepositoryOrganizationSummaryProvider
+
     Zandu\Modules\Organization\Domain\StoreClosure\StoreClosureRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineStoreClosureRepository
 

@@ -2,22 +2,15 @@
 
 import { createContext, createElement, useContext } from "react";
 
+import type { AuthAccessScope, AuthEffectiveAccess } from "@zandu/auth";
 import type { ReactNode } from "react";
 
 export type PermissionCode = string;
 
-export type AccessScope =
-  | Readonly<{ type: "ORGANIZATION" }>
-  | Readonly<{ storeIds: readonly string[]; type: "SELECTED_STORES" }>;
+export type AccessScope = AuthAccessScope;
 
 /** A server-provided projection of the current actor's effective access. */
-export type EffectiveAccess = Readonly<{
-  accessibleStoreIds: readonly string[];
-  authorizationVersion: number;
-  organizationId: string;
-  permissions: readonly PermissionCode[];
-  scope: AccessScope;
-}>;
+export type EffectiveAccess = AuthEffectiveAccess;
 
 export type CanOptions = Readonly<{
   organizationId?: string;

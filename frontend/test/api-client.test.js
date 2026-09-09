@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ApiClient, ApiRequestError } from "../packages/api-client/src/index.ts";
+import {
+  ApiClient,
+  ApiRequestError,
+  createAuthenticationTransport,
+} from "../packages/api-client/src/index.ts";
 import { publicRuntimeConfig } from "../packages/config/src/index.ts";
 
 const config = publicRuntimeConfig({
@@ -68,6 +72,42 @@ test("API client refreshes once after a 401 and decodes the resulting response",
     status: 200,
   });
   assert.deepEqual(authorizationHeaders, ["Bearer expired-token", "Bearer refreshed-token"]);
+});
+
+test("Symfony auth transport maps token to accessToken and accepts a 204 logout", async () => {
+  const requests = [];
+  const client = new ApiClient({
+    config,
+    fetchImplementation: async (url, init) => {
+      requests.push({ body: init.body, url });
+      if (url.endsWith("auth/logout")) {
+        return new Response(null, { status: 204 });
+      }
+      return new Response(
+        JSON.stringify({
+          refreshExpiresAt: "2026-12-01T00:00:00+00:00",
+          refreshToken: "refresh-token",
+          token: "symfony-jwt",
+        }),
+        { status: 200 },
+      );
+    },
+    generateCorrelationId: () => "correlation",
+  });
+  const auth = createAuthenticationTransport(client);
+
+  assert.deepEqual(await auth.login({ email: "owner@example.com", password: "password" }), {
+    accessToken: "symfony-jwt",
+    refreshExpiresAt: "2026-12-01T00:00:00+00:00",
+    refreshToken: "refresh-token",
+  });
+  assert.deepEqual(await auth.refresh("refresh-token"), {
+    accessToken: "symfony-jwt",
+    refreshExpiresAt: "2026-12-01T00:00:00+00:00",
+    refreshToken: "refresh-token",
+  });
+  await assert.doesNotReject(auth.logout("refresh-token"));
+  assert.equal(requests.length, 3);
 });
 
 test("idempotent command timeout reports an unknown outcome and preserves server error context", async () => {

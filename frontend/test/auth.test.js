@@ -9,8 +9,25 @@ import {
 
 const actor = {
   authorizationVersion: 4,
+  effectiveAccess: {
+    accessibleStoreIds: ["store-1"],
+    authorizationVersion: 4,
+    organizationId: "0198c728-8f2d-7f43-92d8-3f0c75b80187",
+    permissions: ["STORE_READ"],
+    scope: { type: "ORGANIZATION" },
+  },
   id: "0198c728-8f2d-7f43-92d8-3f0c75b80186",
   organizationId: "0198c728-8f2d-7f43-92d8-3f0c75b80187",
+  organizations: [
+    {
+      defaultCurrency: "XAF",
+      defaultLocale: "fr_CG",
+      defaultTimeZone: "Africa/Brazzaville",
+      id: "0198c728-8f2d-7f43-92d8-3f0c75b80187",
+      name: "Zandu Test",
+      status: "ACTIVE",
+    },
+  ],
   userId: "0198c728-8f2d-7f43-92d8-3f0c75b80188",
 };
 

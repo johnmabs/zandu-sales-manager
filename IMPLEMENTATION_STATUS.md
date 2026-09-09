@@ -111,8 +111,10 @@ Epic F0.5   TERMINÉ   Lint, formatage et frontières d’imports partagés
 Epic F0.6   TERMINÉ   Design tokens visuels partagés
 Epic F0.7   TERMINÉ   Primitives UI génériques et accessibles
 Epic F0.8   TERMINÉ   Formatting métier exact et timezone-aware
+Epic F0.9   TERMINÉ   Client API typé, transport Symfony et génération OpenAPI
 Epic F0.10  TERMINÉ   Contrat d’erreur et ErrorMapper frontend
 Epic F0.11  TERMINÉ   Cycle de session frontend en mémoire
+Epic F0.12  TERMINÉ   OrganizationContext explicite et projection de session serveur
 Epic F0.13  TERMINÉ   StoreContext distinct du tenant actif
 Epic F0.14  TERMINÉ   Modèle d’autorisation frontend et guards UX
 Epic F0.15  TERMINÉ   Cache serveur tenant/store-scoped
@@ -9894,6 +9896,25 @@ diff --check` OK.
 
 Commit recommandé : `feat(formatting): add domain display helpers`.
 
+## Epic F0.9 — API client
+
+**Statut : TERMINÉ — transport Symfony réel et contrat OpenAPI généré**
+
+- `@zandu/api-client` centralise le transport HTTP, expose une façade stable
+  pour le parcours Foundation et adapte les réponses Symfony au modèle
+  frontend, notamment `token` vers `accessToken` ;
+- les réponses sans contenu, dont le `204` de logout, ne sont plus décodées
+  comme du JSON ; les erreurs et correlation IDs restent gérés au même bord ;
+- login, refresh et logout sont documentés avec leurs payloads réels dans
+  l'OpenAPI backend ; les types générés sont isolés sous
+  `packages/api-client/src/generated/` et reproductibles avec
+  `make frontend-openapi` ;
+- le test d'intégration MSW branche `AuthenticationManager` sur le transport
+  réel et couvre session, accès effectif et magasins accessibles.
+
+Validations : génération OpenAPI, formatage, lint, typecheck, tests Foundation,
+unitaires, composants et intégration, ainsi que builds Admin/POS réussis.
+
 ## Epic F0.10 — Error contract
 
 **Statut : TERMINÉ — contrat UX d’erreur partagé, sans client API**
@@ -9942,6 +9963,27 @@ plus les tests Admin/POS) ; builds de production Next.js et Vite OK ; `git
 diff --check` OK.
 
 Commit recommandé : `feat(auth): add frontend session lifecycle`.
+
+## Epic F0.12 — OrganizationContext
+
+**Statut : TERMINÉ — sélection explicite issue de la session Symfony**
+
+- `@zandu/organization-context` fournit un état explicite, un manager, un
+  provider React et refuse les identifiants inconnus, dupliqués ou inactifs ;
+- `GET /api/session` projette atomiquement l'acteur, son organisation courante,
+  `authorizationVersion`, les permissions effectives, le scope et les magasins
+  accessibles, sans exposer ni recalculer les `RoleAssignment` côté frontend ;
+- IdentityAccess obtient les informations d'organisation et de magasins via
+  des contrats Application publics d'Organization, dans la transaction tenant ;
+- le runtime Admin compose session, OrganizationContext, StoreContext,
+  EffectiveAccess, cache TanStack Query et shell avant de rendre les routes
+  protégées ; le changement de tenant invalide/isole le cache ;
+- la liste backend des magasins est désormais filtrée par le scope effectif,
+  de sorte qu'un acteur `SELECTED_STORES` ne reçoit pas les autres magasins.
+
+Validations : 750 tests backend (3 800 assertions), PHPStan sans erreur,
+PHP CS Fixer vert, deux analyses Deptrac sans violation, validations frontend
+complètes et builds Admin/POS réussis.
 
 ## Epic F0.13 — StoreContext
 

@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint quality security architecture auth-keys staging-test staging-image-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-sql
+.PHONY: install start stop restart test lint quality security architecture auth-keys staging-test staging-image-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-sql frontend-openapi
 
 install:
 	docker compose build
@@ -7,6 +7,11 @@ install:
 
 auth-keys:
 	docker compose run --rm backend php bin/console lexik:jwt:generate-keypair --skip-if-exists
+
+frontend-openapi:
+	docker compose exec -T backend php bin/console api:openapi:export --output=/app/var/openapi.json
+	cd frontend && pnpm --filter @zandu/api-client generate:openapi ../../../backend/var/openapi.json --output src/generated/schema.ts
+	cd frontend && pnpm exec prettier --write packages/api-client/src/generated/schema.ts
 
 staging-test:
 	docker compose build backend

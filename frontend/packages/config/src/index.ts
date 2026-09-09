@@ -50,5 +50,5 @@ function parseApiBaseUrl(value: string): string {
     throw new PublicConfigurationError("API_BASE_URL must not include credentials.");
   }
 
-  return url.toString();
+  return url.toString().replace(/\/?$/, "/");
 }

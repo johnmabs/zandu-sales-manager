@@ -1,4 +1,4 @@
-import { ProtectedAdminShell } from "../../src/components/admin-shell/ProtectedAdminShell";
+import { AdminApplicationShell } from "../../src/runtime/AdminApplicationShell";
 
 import type { ReactNode } from "react";
 
@@ -7,9 +7,9 @@ type AdminLayoutProperties = Readonly<{
 }>;
 
 /**
- * The runtime session bridge supplies the authenticated AdminShell later.
- * Until it has resolved, protected route content must remain undisclosed.
+ * Session, tenant access, store selection and tenant-aware cache are resolved
+ * before protected route content is disclosed.
  */
 export default function AdminLayout({ children }: AdminLayoutProperties) {
-  return <ProtectedAdminShell authState={{ status: "UNKNOWN" }}>{children}</ProtectedAdminShell>;
+  return <AdminApplicationShell>{children}</AdminApplicationShell>;
 }

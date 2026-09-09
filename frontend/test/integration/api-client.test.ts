@@ -2,7 +2,12 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { ApiClient } from "../../packages/api-client/src/index";
+import {
+  ApiClient,
+  FoundationApi,
+  createAuthenticationTransport,
+} from "../../packages/api-client/src/index";
+import { AuthenticationManager } from "../../packages/auth/src/index";
 
 const server = setupServer(
   http.get("https://api.zandu.test/api/stores", ({ request }) => {
@@ -53,4 +58,88 @@ describe("ApiClient at the mocked API boundary", () => {
       apiError: { code: "VALIDATION_ERROR", fieldErrors: { name: ["Required"] }, status: 422 },
     });
   });
+
+  it("connects AuthenticationManager to Symfony session, access, and store projections", async () => {
+    const organizationId = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
+    const accessToken = jwt();
+    server.use(
+      http.post("https://api.zandu.test/api/auth/login", () =>
+        HttpResponse.json({
+          refreshExpiresAt: "2026-12-01T00:00:00+00:00",
+          refreshToken: "refresh-token",
+          token: accessToken,
+        }),
+      ),
+      http.get("https://api.zandu.test/api/session", ({ request }) => {
+        expect(request.headers.get("authorization")).toBe(`Bearer ${accessToken}`);
+        return HttpResponse.json({
+          authorizationVersion: 4,
+          effectiveAccess: {
+            accessibleStoreIds: ["store-1"],
+            authorizationVersion: 4,
+            organizationId,
+            permissions: ["STORE_READ"],
+            scope: { type: "ORGANIZATION" },
+          },
+          email: "owner@zandu.test",
+          id: "actor-1",
+          organizationId,
+          organizations: [
+            {
+              defaultCurrency: "XAF",
+              defaultLocale: "fr_CG",
+              defaultTimeZone: "Africa/Brazzaville",
+              id: organizationId,
+              name: "Zandu",
+              status: "ACTIVE",
+            },
+          ],
+          userId: "user-1",
+        });
+      }),
+      http.get("https://api.zandu.test/api/stores", () =>
+        HttpResponse.json([
+          {
+            currency: "XAF",
+            id: "store-1",
+            locale: "fr_CG",
+            name: "Centre-ville",
+            organizationId,
+            status: "ACTIVE",
+            timeZone: "Africa/Brazzaville",
+          },
+        ]),
+      ),
+    );
+    const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
+    const auth = new AuthenticationManager(
+      createAuthenticationTransport(
+        new ApiClient({ config, generateCorrelationId: () => "auth-correlation" }),
+      ),
+    );
+
+    const authState = await auth.login({ email: "owner@zandu.test", password: "password" });
+    expect(authState.actor?.effectiveAccess.permissions).toContain("STORE_READ");
+    expect(authState.actor?.organizations[0]?.name).toBe("Zandu");
+    if (authState.actor === undefined) {
+      throw new Error("The authenticated actor was not resolved.");
+    }
+
+    const api = new FoundationApi(
+      new ApiClient({
+        config,
+        generateCorrelationId: () => "resource-correlation",
+        session: auth,
+      }),
+    );
+    const stores = await api.listAccessibleStores(authState.actor.effectiveAccess);
+    expect(stores.map((store) => store.id)).toEqual(["store-1"]);
+  });
 });
+
+function jwt(): string {
+  const payload = Buffer.from(
+    JSON.stringify({ authorizationVersion: 4, exp: Math.floor(Date.now() / 1000) + 60 }),
+  ).toString("base64url");
+  return `header.${payload}.signature`;
+}

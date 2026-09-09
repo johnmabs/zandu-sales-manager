@@ -16,10 +16,34 @@ export type AuthTokens = Readonly<{
   refreshToken: string;
 }>;
 
+export type AuthAccessScope =
+  | Readonly<{ type: "ORGANIZATION" }>
+  | Readonly<{ storeIds: readonly string[]; type: "SELECTED_STORES" }>;
+
+export type AuthEffectiveAccess = Readonly<{
+  accessibleStoreIds: readonly string[];
+  authorizationVersion: number;
+  organizationId: string;
+  permissions: readonly string[];
+  scope: AuthAccessScope;
+}>;
+
+export type AuthOrganization = Readonly<{
+  defaultCurrency: string;
+  defaultLocale: string;
+  defaultTimeZone: string;
+  id: string;
+  name: string;
+  status: "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED";
+}>;
+
 export type AuthActor = Readonly<{
   authorizationVersion: number;
+  email?: string;
+  effectiveAccess: AuthEffectiveAccess;
   id: string;
   organizationId: string;
+  organizations: readonly AuthOrganization[];
   userId: string;
 }>;
 

@@ -14,6 +14,8 @@ const protectedShellUrl = new URL(
   import.meta.url,
 );
 const errorBoundaryUrl = new URL("../app/app/error.tsx", import.meta.url);
+const runtimeUrl = new URL("../src/runtime/AdminRuntime.tsx", import.meta.url);
+const applicationShellUrl = new URL("../src/runtime/AdminApplicationShell.tsx", import.meta.url);
 
 const access = {
   accessibleStoreIds: ["store-1"],
@@ -51,4 +53,20 @@ test("Admin shell provides accessible desktop controls and protects unresolved s
   assert.match(protectedShell, /Chargement de la session/);
   assert.match(protectedShell, /authState.status === "UNAUTHENTICATED"/);
   assert.match(errorBoundary, /Réessayer/);
+});
+
+test("Admin runtime composes Symfony auth, tenant cache, contexts, and the protected shell", async () => {
+  const [runtime, applicationShell] = await Promise.all([
+    readFile(runtimeUrl, "utf8"),
+    readFile(applicationShellUrl, "utf8"),
+  ]);
+
+  assert.match(runtime, /createAuthenticationTransport/);
+  assert.match(runtime, /AuthenticationManager/);
+  assert.match(runtime, /OrganizationContextManager/);
+  assert.match(runtime, /StoreContextManager/);
+  assert.match(runtime, /transitionOrganizationCache/);
+  assert.match(applicationShell, /EffectiveAccessProvider/);
+  assert.match(applicationShell, /ServerStateProvider/);
+  assert.match(applicationShell, /<AdminShell/);
 });

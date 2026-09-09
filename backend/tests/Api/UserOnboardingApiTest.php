@@ -97,6 +97,20 @@ final class UserOnboardingApiTest extends WebTestCase
         self::assertArrayHasKey('token', $login);
         self::assertArrayHasKey('refreshToken', $login);
 
+        $client->request('GET', '/api/session', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $login['token'],
+        ]);
+        self::assertResponseIsSuccessful();
+        $session = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame($registration['userId'], $session['userId']);
+        self::assertSame($registration['organizationId'], $session['organizationId']);
+        self::assertSame($session['organizationId'], $session['effectiveAccess']['organizationId']);
+        self::assertSame($session['authorizationVersion'], $session['effectiveAccess']['authorizationVersion']);
+        self::assertSame('ORGANIZATION', $session['effectiveAccess']['scope']['type']);
+        self::assertContains('ORGANIZATION_READ', $session['effectiveAccess']['permissions']);
+        self::assertSame([], $session['effectiveAccess']['accessibleStoreIds']);
+        self::assertSame('Onboarding API', $session['organizations'][0]['name']);
+
         $client->request('GET', '/api/organizations/' . $registration['organizationId'], server: [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $login['token'],
         ]);

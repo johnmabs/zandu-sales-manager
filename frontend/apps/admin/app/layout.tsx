@@ -1,5 +1,7 @@
 import { NotificationProvider } from "@zandu/notifications/react";
 
+import { AdminRuntimeProvider } from "../src/runtime/AdminRuntime";
+
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
@@ -19,7 +21,9 @@ export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="en">
       <body>
-        <NotificationProvider>{children}</NotificationProvider>
+        <NotificationProvider>
+          <AdminRuntimeProvider>{children}</AdminRuntimeProvider>
+        </NotificationProvider>
       </body>
     </html>
   );

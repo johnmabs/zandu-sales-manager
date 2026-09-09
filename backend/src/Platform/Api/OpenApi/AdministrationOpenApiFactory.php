@@ -8,6 +8,7 @@ use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
 use ApiPlatform\OpenApi\Model\MediaType;
 use ApiPlatform\OpenApi\Model\Operation;
 use ApiPlatform\OpenApi\Model\PathItem;
+use ApiPlatform\OpenApi\Model\RequestBody;
 use ApiPlatform\OpenApi\Model\Response;
 use ApiPlatform\OpenApi\OpenApi;
 
@@ -36,12 +37,81 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
             $openApi->getPaths()->addPath($path, $this->documentErrors($pathItem));
         }
 
+        $this->documentAuthentication($openApi);
+
         return $openApi;
+    }
+
+    private function documentAuthentication(OpenApi $openApi): void
+    {
+        $credentials = [
+            'type' => 'object',
+            'required' => ['email', 'password'],
+            'properties' => [
+                'email' => ['type' => 'string', 'format' => 'email'],
+                'password' => ['type' => 'string', 'format' => 'password'],
+            ],
+        ];
+        $refreshRequest = [
+            'type' => 'object',
+            'required' => ['refreshToken'],
+            'properties' => ['refreshToken' => ['type' => 'string']],
+        ];
+        $tokens = [
+            'type' => 'object',
+            'required' => ['token', 'refreshToken', 'refreshExpiresAt'],
+            'properties' => [
+                'token' => ['type' => 'string'],
+                'refreshToken' => ['type' => 'string'],
+                'refreshExpiresAt' => ['type' => 'string', 'format' => 'date-time'],
+            ],
+        ];
+
+        $openApi->getPaths()->addPath('/api/auth/login', new PathItem(post: new Operation(
+            operationId: 'auth_login',
+            tags: ['Authentication'],
+            responses: [
+                '200' => new Response('Authentication tokens.', $this->jsonContent($tokens)),
+                '401' => new Response('Invalid credentials.'),
+            ],
+            summary: 'Authenticates a user.',
+            requestBody: new RequestBody('Credentials.', $this->jsonContent($credentials), true),
+            security: [],
+        )));
+        $openApi->getPaths()->addPath('/api/auth/refresh', new PathItem(post: new Operation(
+            operationId: 'auth_refresh',
+            tags: ['Authentication'],
+            responses: [
+                '200' => new Response('Rotated authentication tokens.', $this->jsonContent($tokens)),
+                '401' => new Response('Invalid refresh token.'),
+            ],
+            summary: 'Rotates a refresh token.',
+            requestBody: new RequestBody('Current refresh token.', $this->jsonContent($refreshRequest), true),
+            security: [],
+        )));
+        $openApi->getPaths()->addPath('/api/auth/logout', new PathItem(post: new Operation(
+            operationId: 'auth_logout',
+            tags: ['Authentication'],
+            responses: ['204' => new Response('Refresh session revoked.')],
+            summary: 'Revokes a refresh session.',
+            requestBody: new RequestBody('Current refresh token.', $this->jsonContent($refreshRequest), true),
+            security: [],
+        )));
+    }
+
+    /**
+     * @param array<string, mixed> $schema
+     *
+     * @return \ArrayObject<string, MediaType>
+     */
+    private function jsonContent(array $schema): \ArrayObject
+    {
+        return new \ArrayObject(['application/json' => new MediaType(new \ArrayObject($schema))]);
     }
 
     private function isAdministrationPath(string $path): bool
     {
-        foreach (['/api/organizations', '/api/stores', '/api/member-invitations', '/api/invitations', '/api/members', '/api/roles', '/api/products', '/api/categories', '/api/product-prices', '/api/price-lists', '/api/catalog', '/api/stock', '/api/cash-registers', '/api/cash-sessions', '/api/cash-movements'] as $prefix) {
+        foreach (['/api/session', '/api/organizations', '/api/stores', '/api/member-invitations', '/api/invitations', '/api/members', '/api/roles', '/api/products', '/api/categories', '/api/product-prices', '/api/price-lists', '/api/catalog', '/api/stock', '/api/cash-registers', '/api/cash-sessions', '/api/cash-movements'] as $prefix) {
             if (str_starts_with($path, $prefix)) {
                 return true;
             }

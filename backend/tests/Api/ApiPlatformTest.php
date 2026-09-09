@@ -36,6 +36,31 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/organizations/{id}/closure-request')->getPost());
     }
 
+    public function testCurrentSessionProjectionIsDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/session')->getGet());
+    }
+
+    public function testAuthenticationLifecycleIsDocumentedWithItsActualWireContract(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        $login = $paths->getPath('/api/auth/login')->getPost();
+        $refresh = $paths->getPath('/api/auth/refresh')->getPost();
+        $logout = $paths->getPath('/api/auth/logout')->getPost();
+        self::assertNotNull($login);
+        self::assertNotNull($refresh);
+        self::assertNotNull($logout);
+        self::assertArrayHasKey('token', $login->getResponses()['200']->getContent()['application/json']->getSchema()['properties']);
+        self::assertArrayHasKey('token', $refresh->getResponses()['200']->getContent()['application/json']->getSchema()['properties']);
+        self::assertArrayHasKey('204', $logout->getResponses());
+        self::assertNull($logout->getResponses()['204']->getContent());
+    }
+
     public function testStockTransferWorkflowIsDocumented(): void
     {
         self::bootKernel();

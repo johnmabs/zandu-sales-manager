@@ -11,10 +11,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.102.8",
+    "@zandu/api-client": "workspace:*",
     "@zandu/auth": "workspace:*",
     "@zandu/authorization": "workspace:*",
+    "@zandu/config": "workspace:*",
     "@zandu/design-tokens": "workspace:*",
     "@zandu/notifications": "workspace:*",
+    "@zandu/organization-context": "workspace:*",
+    "@zandu/server-state": "workspace:*",
     "@zandu/shared": "workspace:*",
     "@zandu/store-context": "workspace:*",
     "@zandu/ui": "workspace:*",

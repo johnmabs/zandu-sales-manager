@@ -1,12 +1,30 @@
 import { idempotencyHeaders } from "@zandu/idempotency";
 
+import type {
+  components as GeneratedComponents,
+  operations as GeneratedOperations,
+  paths as GeneratedPaths,
+} from "./generated/schema";
 import type { PublicRuntimeConfig } from "@zandu/config";
 import type { ApiError, FieldErrors } from "@zandu/error-contract";
 import type { ApiFailureObserver } from "@zandu/observability";
 
+export type OpenApiComponents = GeneratedComponents;
+export type OpenApiOperations = GeneratedOperations;
+export type OpenApiPaths = GeneratedPaths;
+export type SymfonyLoginRequest =
+  GeneratedOperations["auth_login"]["requestBody"]["content"]["application/json"];
+export type SymfonyAuthenticationResponse =
+  GeneratedOperations["auth_login"]["responses"][200]["content"]["application/json"];
+export type SymfonyRefreshRequest =
+  GeneratedOperations["auth_refresh"]["requestBody"]["content"]["application/json"];
+export type SymfonyCurrentSessionResponse =
+  GeneratedComponents["schemas"]["CurrentSessionResource"];
+
 export const CORRELATION_ID_HEADER = "X-Correlation-ID";
 
 export type ApiRequest = Readonly<{
+  accessToken?: string;
   body?: unknown;
   correlationId?: string;
   idempotencyKey?: string;
@@ -85,7 +103,8 @@ export class ApiClient {
 
   async request(request: ApiRequest): Promise<ApiResponse> {
     const accessToken =
-      request.requiresAuthentication === false ? undefined : this.session?.getAccessToken();
+      request.accessToken ??
+      (request.requiresAuthentication === false ? undefined : this.session?.getAccessToken());
 
     try {
       return await this.execute(request, accessToken);
@@ -93,6 +112,7 @@ export class ApiClient {
       if (
         !isUnauthorizedResponse(error) ||
         request.requiresAuthentication === false ||
+        request.accessToken !== undefined ||
         this.session === undefined
       ) {
         this.recordFailure(request, error);
@@ -143,7 +163,7 @@ export class ApiClient {
 
       return {
         ...(responseCorrelationId === undefined ? {} : { correlationId: responseCorrelationId }),
-        data: await response.json(),
+        data: response.status === 204 ? undefined : await response.json(),
         status: response.status,
       };
     } catch (error: unknown) {
@@ -185,6 +205,271 @@ export class ApiClient {
       ...(error.apiError.kind === "response" ? { status: error.apiError.status } : {}),
     });
   }
+}
+
+export type SessionAccessScope =
+  | Readonly<{ type: "ORGANIZATION" }>
+  | Readonly<{ storeIds: readonly string[]; type: "SELECTED_STORES" }>;
+
+export type CurrentSession = Readonly<{
+  authorizationVersion: number;
+  email?: string;
+  effectiveAccess: Readonly<{
+    accessibleStoreIds: readonly string[];
+    authorizationVersion: number;
+    organizationId: string;
+    permissions: readonly string[];
+    scope: SessionAccessScope;
+  }>;
+  id: string;
+  organizationId: string;
+  organizations: readonly OrganizationResource[];
+  userId: string;
+}>;
+
+export type AuthenticationTokens = Readonly<{
+  accessToken: string;
+  refreshExpiresAt?: string;
+  refreshToken: string;
+}>;
+
+export type AuthenticationTransport = Readonly<{
+  login: (credentials: Readonly<SymfonyLoginRequest>) => Promise<AuthenticationTokens>;
+  logout: (refreshToken: string) => Promise<void>;
+  refresh: (refreshToken: string) => Promise<AuthenticationTokens>;
+  resolveActor: (accessToken: string) => Promise<CurrentSession>;
+}>;
+
+/** Adapts Symfony's wire payloads to AuthenticationManager's stable contract. */
+export function createAuthenticationTransport(client: ApiClient): AuthenticationTransport {
+  return {
+    async login(credentials) {
+      const response = await client.request({
+        body: credentials,
+        method: "POST",
+        path: "auth/login",
+        requiresAuthentication: false,
+      });
+      return decodeAuthenticationTokens(response.data);
+    },
+    async logout(refreshToken) {
+      await client.request({
+        body: { refreshToken },
+        method: "POST",
+        path: "auth/logout",
+        requiresAuthentication: false,
+      });
+    },
+    async refresh(refreshToken) {
+      const response = await client.request({
+        body: { refreshToken },
+        method: "POST",
+        path: "auth/refresh",
+        requiresAuthentication: false,
+      });
+      return decodeAuthenticationTokens(response.data);
+    },
+    async resolveActor(accessToken) {
+      const response = await client.request({ accessToken, method: "GET", path: "session" });
+      return decodeCurrentSession(response.data);
+    },
+  };
+}
+
+export type OrganizationResource = Readonly<{
+  defaultCurrency: string;
+  defaultLocale: string;
+  defaultTimeZone: string;
+  id: string;
+  name: string;
+  status: "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED";
+}>;
+
+export type StoreResource = Readonly<{
+  currency: string;
+  id: string;
+  locale: string;
+  name: string;
+  organizationId: string;
+  status: "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED";
+  timeZone: string;
+}>;
+
+export class FoundationApi {
+  private readonly client: ApiClient;
+
+  constructor(client: ApiClient) {
+    this.client = client;
+  }
+
+  async getOrganization(organizationId: string): Promise<OrganizationResource> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `organizations/${encodeURIComponent(organizationId)}`,
+    });
+    return decodeOrganization(response.data);
+  }
+
+  async listAccessibleStores(
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly StoreResource[]> {
+    const response = await this.client.request({ method: "GET", path: "stores" });
+    const stores = decodeStores(response.data);
+    const accessible = new Set(access.accessibleStoreIds);
+    return stores.filter(
+      (store) => store.organizationId === access.organizationId && accessible.has(store.id),
+    );
+  }
+}
+
+function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
+  if (
+    !isRecord(value) ||
+    typeof value.token !== "string" ||
+    typeof value.refreshToken !== "string"
+  ) {
+    throw new ApiContractError("The authentication response is invalid.");
+  }
+  if (value.refreshExpiresAt !== undefined && typeof value.refreshExpiresAt !== "string") {
+    throw new ApiContractError("The refresh expiry is invalid.");
+  }
+  return {
+    accessToken: value.token,
+    ...(value.refreshExpiresAt === undefined ? {} : { refreshExpiresAt: value.refreshExpiresAt }),
+    refreshToken: value.refreshToken,
+  };
+}
+
+function decodeCurrentSession(value: unknown): CurrentSession {
+  if (
+    !isRecord(value) ||
+    !isEffectiveAccess(value.effectiveAccess) ||
+    !Array.isArray(value.organizations)
+  ) {
+    throw new ApiContractError("The current session response is invalid.");
+  }
+  if (typeof value.authorizationVersion !== "number") {
+    throw new ApiContractError("The authorization version is invalid.");
+  }
+  const organizations = value.organizations.map(decodeOrganization);
+  const organizationId = requiredString(
+    value,
+    "organizationId",
+    "The current actor response is invalid.",
+  );
+  if (
+    value.effectiveAccess.organizationId !== organizationId ||
+    value.effectiveAccess.authorizationVersion !== value.authorizationVersion ||
+    !organizations.some((organization) => organization.id === organizationId)
+  ) {
+    throw new ApiContractError("The current session context is inconsistent.");
+  }
+  return {
+    authorizationVersion: value.authorizationVersion,
+    ...(typeof value.email === "string" ? { email: value.email } : {}),
+    effectiveAccess: value.effectiveAccess,
+    id: requiredString(value, "id", "The current actor response is invalid."),
+    organizationId,
+    organizations,
+    userId: requiredString(value, "userId", "The current actor response is invalid."),
+  };
+}
+
+function isEffectiveAccess(value: unknown): value is CurrentSession["effectiveAccess"] {
+  if (
+    !isRecord(value) ||
+    typeof value.organizationId !== "string" ||
+    typeof value.authorizationVersion !== "number" ||
+    !isStringArray(value.permissions) ||
+    !isStringArray(value.accessibleStoreIds) ||
+    !isRecord(value.scope)
+  ) {
+    return false;
+  }
+  return (
+    value.scope.type === "ORGANIZATION" ||
+    (value.scope.type === "SELECTED_STORES" && isStringArray(value.scope.storeIds))
+  );
+}
+
+function decodeOrganization(value: unknown): OrganizationResource {
+  if (!isRecord(value)) {
+    throw new ApiContractError("The organization response is invalid.");
+  }
+  if (!isOperationalStatus(value.status)) {
+    throw new ApiContractError("The organization response is invalid.");
+  }
+  return {
+    defaultCurrency: requiredString(
+      value,
+      "defaultCurrency",
+      "The organization response is invalid.",
+    ),
+    defaultLocale: requiredString(value, "defaultLocale", "The organization response is invalid."),
+    defaultTimeZone: requiredString(
+      value,
+      "defaultTimeZone",
+      "The organization response is invalid.",
+    ),
+    id: requiredString(value, "id", "The organization response is invalid."),
+    name: requiredString(value, "name", "The organization response is invalid."),
+    status: value.status,
+  };
+}
+
+function decodeStores(value: unknown): readonly StoreResource[] {
+  const items = Array.isArray(value)
+    ? value
+    : isRecord(value) && Array.isArray(value.member)
+      ? value.member
+      : undefined;
+  if (items === undefined) {
+    throw new ApiContractError("The store collection response is invalid.");
+  }
+  return items.map((item) => {
+    if (!isRecord(item)) {
+      throw new ApiContractError("A store response is invalid.");
+    }
+    if (!isOperationalStatus(item.status)) {
+      throw new ApiContractError("A store response is invalid.");
+    }
+    return {
+      currency: requiredString(item, "currency", "A store response is invalid."),
+      id: requiredString(item, "id", "A store response is invalid."),
+      locale: requiredString(item, "locale", "A store response is invalid."),
+      name: requiredString(item, "name", "A store response is invalid."),
+      organizationId: requiredString(item, "organizationId", "A store response is invalid."),
+      status: item.status,
+      timeZone: requiredString(item, "timeZone", "A store response is invalid."),
+    };
+  });
+}
+
+export class ApiContractError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ApiContractError";
+  }
+}
+
+function isStringArray(value: unknown): value is readonly string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function requiredString(value: Record<string, unknown>, property: string, message: string): string {
+  const propertyValue = value[property];
+  if (typeof propertyValue !== "string") {
+    throw new ApiContractError(message);
+  }
+  return propertyValue;
+}
+
+function isOperationalStatus(
+  value: unknown,
+): value is "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED" {
+  return (
+    value === "ACTIVE" || value === "SUSPENDED" || value === "CLOSURE_PENDING" || value === "CLOSED"
+  );
 }
 
 function generateRequestCorrelationId(): string {

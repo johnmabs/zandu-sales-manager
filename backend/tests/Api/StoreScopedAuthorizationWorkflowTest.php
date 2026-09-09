@@ -116,6 +116,9 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
 
         $cashierToken = $this->inviteAndRegister($client, $ownerToken, self::CASHIER_EMAIL, 'CASHIER', $storeA['id']);
+        $client->request('GET', '/api/stores', server: $this->headers($cashierToken));
+        self::assertResponseIsSuccessful();
+        self::assertSame([$storeA['id']], array_column($this->payload($client), 'id'));
         $client->request('POST', '/api/stores/' . $storeA['id'] . '/cash-registers/' . $registerA['id'] . '/activate', server: $this->headers($ownerToken));
         self::assertResponseIsSuccessful();
 

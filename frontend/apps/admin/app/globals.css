@@ -141,6 +141,31 @@ h1 {
   line-height: var(--zandu-line-height-tight);
 }
 
+.zandu-login {
+  background: var(--zandu-color-surface-canvas);
+}
+
+.zandu-login__form {
+  background: var(--zandu-color-surface-raised);
+  border: 1px solid var(--zandu-color-border-default);
+  border-radius: var(--zandu-radius-lg);
+  display: grid;
+  gap: var(--zandu-space-4);
+  max-width: 26rem;
+  padding: var(--zandu-space-8);
+  width: 100%;
+}
+
+.zandu-login__form label {
+  display: grid;
+  gap: var(--zandu-space-1);
+}
+
+.zandu-login__form [role="alert"] {
+  color: var(--zandu-color-text-danger);
+  margin: 0;
+}
+
 .zandu-admin-table__scroll {
   overflow-x: auto;
 }

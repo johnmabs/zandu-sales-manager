@@ -5,6 +5,7 @@
   "type": "module",
   "exports": "./src/index.ts",
   "scripts": {
+    "generate:openapi": "openapi-typescript",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "@zandu/observability": "workspace:*"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.13.0",
     "typescript": "5.9.3"
   }
 }
