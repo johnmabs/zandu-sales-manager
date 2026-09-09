@@ -29,3 +29,56 @@ h1 {
   font-size: var(--zandu-font-size-xl);
   line-height: var(--zandu-line-height-tight);
 }
+
+.zandu-pos-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.zandu-pos-shell__status {
+  background: var(--zandu-color-surface-raised);
+  border-bottom: 1px solid var(--zandu-color-border-default);
+  padding: var(--zandu-space-3) var(--zandu-space-4);
+  position: sticky;
+  top: 0;
+  z-index: var(--zandu-z-index-sticky);
+}
+
+.zandu-pos-shell__status dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zandu-space-3) var(--zandu-space-6);
+  margin: 0;
+}
+
+.zandu-pos-shell__status dl > div {
+  display: grid;
+  gap: var(--zandu-space-1);
+}
+
+.zandu-pos-shell__status dt {
+  color: var(--zandu-color-text-secondary);
+  font-size: var(--zandu-font-size-sm);
+}
+
+.zandu-pos-shell__status dd {
+  margin: 0;
+}
+
+.zandu-pos-shell__content {
+  display: block;
+  min-height: auto;
+  padding: var(--zandu-space-4);
+}
+
+.zandu-pos-shell__placeholder {
+  display: grid;
+  gap: var(--zandu-space-3);
+  max-width: 42rem;
+}
+
+.zandu-pos-shell__placeholder p {
+  color: var(--zandu-color-text-secondary);
+  margin: 0;
+}

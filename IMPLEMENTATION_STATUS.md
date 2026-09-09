@@ -120,6 +120,7 @@ Epic F0.16  TERMINÉ   Fondations formulaires et validation runtime
 Epic F0.17  TERMINÉ   Fondations de tables Admin paginées par serveur
 Epic F0.18  TERMINÉ   Routing Admin par capacités UX
 Epic F0.19  TERMINÉ   Shell Admin desktop-first
+Epic F0.20  TERMINÉ   Shell POS opérationnel
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10096,3 +10097,20 @@ le typage, mais ne termine pas la génération statique dans cet environnement e
 laisse son verrou temporaire `.next/lock` ; le verrou est supprimé ensuite.
 
 Commit recommandé : `feat(admin): add desktop application shell`.
+
+## Epic F0.20 — POS Shell
+
+**Statut : TERMINÉ — shell POS sans navigation profonde**
+
+- le shell POS maintient visibles le magasin, la caisse, le caissier et le
+  statut de session caisse ;
+- les statuts futurs de connectivité et synchronisation sont représentés sans
+  simuler une capacité offline ou une synchronisation effective ;
+- la zone de vente reste dégagée de sidebar profonde et laisse les futures
+  features gérer leurs propres raccourcis clavier et entrées scanner.
+
+Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (7 tests Admin, 3 tests
+POS, 37 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(pos): add operational shell`.

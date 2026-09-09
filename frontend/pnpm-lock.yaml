@@ -84,6 +84,9 @@ importers:
       '@zandu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@zandu/store-context':
+        specifier: workspace:*
+        version: link:../../packages/store-context
       '@zandu/ui':
         specifier: workspace:*
         version: link:../../packages/ui
