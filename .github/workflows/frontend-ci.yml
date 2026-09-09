@@ -18,8 +18,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  workspace:
-    name: Frontend workspace validation
+  quality:
+    name: Frontend quality and web builds
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -42,5 +42,90 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Test workspace resolution
-        run: pnpm test:workspace
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run unit, component, and integration tests
+        run: pnpm test
+
+      - name: Build Admin web application
+        run: pnpm --filter @zandu/admin build
+
+      - name: Build POS web application
+        run: pnpm --filter @zandu/pos build
+
+  tauri-check:
+    name: POS Tauri compilation check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2.1.0
+        with:
+          working-directory: frontend
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux Tauri build prerequisites
+        run: >
+          sudo apt-get update && sudo apt-get install --yes
+          build-essential
+          libayatana-appindicator3-dev
+          librsvg2-dev
+          libwebkit2gtk-4.1-dev
+          libxdo-dev
+          libssl-dev
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Check POS Tauri compilation
+        run: cargo check --manifest-path apps/pos/src-tauri/Cargo.toml --locked
+
+  e2e:
+    name: Frontend end-to-end tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm and Node.js
+        uses: pnpm/setup@v2.1.0
+        with:
+          working-directory: frontend
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: pnpm test:e2e

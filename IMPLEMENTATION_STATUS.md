@@ -127,6 +127,7 @@ Epic F0.23  TERMINÉ   Abstraction réseau centralisée
 Epic F0.24  TERMINÉ   Organisation par features frontend
 Epic F0.25  TERMINÉ   Pyramide de tests frontend
 Epic F0.26  TERMINÉ   Observabilité frontend structurée
+Epic F0.27  TERMINÉ   Pipeline CI frontend complet
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10239,3 +10240,28 @@ packages Observability et API client OK ; les validations frontend globales sont
 réexécutées avec succès avant clôture.
 
 Commit recommandé : `feat(observability): add safe frontend telemetry`.
+
+## Epic F0.27 — CI
+
+**Statut : TERMINÉ — validations frontend séparées et reproductibles**
+
+- le workflow GitHub Actions frontend conserve l’installation `pnpm` verrouillée
+  et sépare qualité/build web, compilation Tauri et E2E Chromium en jobs
+  indépendants avec délais bornés ;
+- le job qualité exécute formatage, lint, typecheck, tests unitaires/composants/
+  intégration, puis les builds Admin Next.js et POS Vite ;
+- le job Tauri installe les prérequis Linux, utilise Rust stable et exécute
+  `cargo check --locked`, sans prétendre produire un installateur Windows depuis
+  le runner Linux ;
+- le job E2E installe Chromium Playwright séparément et exécute `pnpm test:e2e` ;
+  un test Foundation protège la présence de tous les contrôles exigés dans le
+  workflow.
+
+Validations : test de contrat CI OK ; `pnpm format:check`, `pnpm lint`,
+`pnpm typecheck` et `pnpm test` OK (52 tests Foundation, 5 tests Vitest) ;
+`cargo check --manifest-path frontend/apps/pos/src-tauri/Cargo.toml --locked`
+OK ; format YAML du workflow et `git diff --check` OK. Le build Admin compile
+localement, mais Next.js ne termine pas sa génération statique dans cet
+environnement ; les builds Admin et POS restent donc deux étapes CI distinctes.
+
+Commit recommandé : `ci(frontend): add full validation pipeline`.
