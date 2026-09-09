@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { InventoryRoute } from "../../../src/features/inventory/InventoryRoute";
 
 export default function InventoryPage() {
-  return <RoutePlaceholder title="Stock" />;
+  return <InventoryRoute />;
 }

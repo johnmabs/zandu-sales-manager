@@ -124,6 +124,7 @@ Epic F0.20  TERMINÉ   Shell POS opérationnel
 Epic F0.21  TERMINÉ   Notifications et confirmations
 Epic F0.22  TERMINÉ   Idempotency-Key frontend
 Epic F0.23  TERMINÉ   Abstraction réseau centralisée
+Epic F0.24  TERMINÉ   Organisation par features frontend
 ```
 
 Le détail du Lot 5 clôturé :
@@ -10171,3 +10172,20 @@ Validations : `pnpm install --lockfile-only` OK ; `pnpm format:check` OK ;
 POS, 47 tests Foundation) ; build Vite POS OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(api-client): add centralized HTTP transport`.
+
+## Epic F0.24 — Feature organization
+
+**Statut : TERMINÉ — frontières applicatives par feature**
+
+- les routes Admin délèguent chacune à leur feature (`organization`, `stores`,
+  `access`, `catalog`, `pricing`, `inventory`, `purchasing`, `cash`, `sales`) ;
+- les éléments Admin transverses sont regroupés sous `components/` sans faire
+  remonter de logique propre aux features ;
+- le POS distingue la composition `app/` de la feature `terminal`, sans
+  pré-créer de faux modules pour les workflows non implémentés.
+
+Validations : `pnpm format:check` OK ; `pnpm lint` OK ; `pnpm typecheck` OK ;
+`pnpm test` OK (7 tests Admin, 3 tests POS, 49 tests Foundation) ; build Vite
+POS OK ; `git diff --check` OK.
+
+Commit recommandé : `refactor(frontend): organize application features`.

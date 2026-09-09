@@ -8,7 +8,10 @@ import { ESLint } from "eslint";
 const packageUrl = new URL("../package.json", import.meta.url);
 const eslintConfigUrl = new URL("../eslint.config.js", import.meta.url);
 const workspaceDirectory = fileURLToPath(new URL("../", import.meta.url));
-const boundaryFixtureUrl = new URL("../apps/admin/.lint-boundary-fixture.ts", import.meta.url);
+const boundaryFixtureUrl = new URL(
+  "../apps/admin/src/components/lint-boundary-fixture.ts",
+  import.meta.url,
+);
 
 test("workspace exposes the Foundation code-quality commands", async () => {
   const { scripts } = JSON.parse(await readFile(packageUrl, "utf8"));
@@ -32,7 +35,7 @@ test("lint configuration enforces shared imports, unused-code, and boundary rule
 
 test("Admin cannot import POS implementation files", async () => {
   const eslint = new ESLint({ cwd: workspaceDirectory });
-  await writeFile(boundaryFixtureUrl, 'import "../pos/src/App";\n');
+  await writeFile(boundaryFixtureUrl, 'import "../../../pos/src/app/App";\n');
 
   try {
     const [result] = await eslint.lintFiles([fileURLToPath(boundaryFixtureUrl)]);

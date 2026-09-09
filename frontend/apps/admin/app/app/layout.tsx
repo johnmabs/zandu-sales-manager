@@ -1,4 +1,4 @@
-import { ProtectedAdminShell } from "../../src/shell/ProtectedAdminShell";
+import { ProtectedAdminShell } from "../../src/components/admin-shell/ProtectedAdminShell";
 
 import type { ReactNode } from "react";
 

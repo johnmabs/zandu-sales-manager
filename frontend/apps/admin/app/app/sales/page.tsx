@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { SalesRoute } from "../../../src/features/sales/SalesRoute";
 
 export default function SalesPage() {
-  return <RoutePlaceholder title="Ventes" />;
+  return <SalesRoute />;
 }

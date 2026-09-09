@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { PurchasingRoute } from "../../../src/features/purchasing/PurchasingRoute";
 
 export default function PurchasingPage() {
-  return <RoutePlaceholder title="Approvisionnements" />;
+  return <PurchasingRoute />;
 }

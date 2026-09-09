@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { breadcrumbsForPath } from "../src/shell/breadcrumbs.ts";
-import { adminNavigation, visibleAdminNavigation } from "../src/shell/navigation.ts";
+import { breadcrumbsForPath } from "../src/components/admin-shell/breadcrumbs.ts";
+import {
+  adminNavigation,
+  visibleAdminNavigation,
+} from "../src/components/admin-shell/navigation.ts";
 
-const shellUrl = new URL("../src/shell/AdminShell.tsx", import.meta.url);
-const protectedShellUrl = new URL("../src/shell/ProtectedAdminShell.tsx", import.meta.url);
+const shellUrl = new URL("../src/components/admin-shell/AdminShell.tsx", import.meta.url);
+const protectedShellUrl = new URL(
+  "../src/components/admin-shell/ProtectedAdminShell.tsx",
+  import.meta.url,
+);
 const errorBoundaryUrl = new URL("../app/app/error.tsx", import.meta.url);
 
 const access = {

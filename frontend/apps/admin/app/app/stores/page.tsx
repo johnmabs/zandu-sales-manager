@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { StoresRoute } from "../../../src/features/stores/StoresRoute";
 
 export default function StoresPage() {
-  return <RoutePlaceholder title="Magasins" />;
+  return <StoresRoute />;
 }

@@ -8,9 +8,9 @@ import {
   toggleTableSort,
   withTableFilter,
   withTableSearch,
-} from "../src/tables/query-state.ts";
+} from "../src/components/tables/query-state.ts";
 
-const tableComponentUrl = new URL("../src/tables/AdminTable.ts", import.meta.url);
+const tableComponentUrl = new URL("../src/components/tables/AdminTable.ts", import.meta.url);
 
 test("table query state round-trips page, sort, search, and feature filters through the URL", () => {
   const parsed = parseAdminTableQuery(

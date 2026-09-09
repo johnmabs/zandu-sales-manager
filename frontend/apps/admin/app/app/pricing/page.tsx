@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { PricingRoute } from "../../../src/features/pricing/PricingRoute";
 
 export default function PricingPage() {
-  return <RoutePlaceholder title="Tarification" />;
+  return <PricingRoute />;
 }

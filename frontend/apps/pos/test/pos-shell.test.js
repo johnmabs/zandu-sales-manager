@@ -6,10 +6,10 @@ import {
   cashSessionStatusDisplay,
   connectivityStatusDisplay,
   syncStatusDisplay,
-} from "../src/shell/operational-status.ts";
+} from "../src/features/terminal/operational-status.ts";
 
-const appUrl = new URL("../src/App.tsx", import.meta.url);
-const shellUrl = new URL("../src/shell/PosShell.tsx", import.meta.url);
+const appUrl = new URL("../src/app/App.tsx", import.meta.url);
+const shellUrl = new URL("../src/features/terminal/PosShell.tsx", import.meta.url);
 
 test("POS shell renders persistent operational information without a sidebar", async () => {
   const [app, shell] = await Promise.all([readFile(appUrl, "utf8"), readFile(shellUrl, "utf8")]);

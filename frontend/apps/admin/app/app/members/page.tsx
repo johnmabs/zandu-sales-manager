@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { MembersRoute } from "../../../src/features/access/MembersRoute";
 
 export default function MembersPage() {
-  return <RoutePlaceholder title="Membres" />;
+  return <MembersRoute />;
 }

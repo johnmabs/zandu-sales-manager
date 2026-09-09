@@ -1,5 +1,5 @@
-import { RoutePlaceholder } from "../../_components/RoutePlaceholder";
+import { CashRoute } from "../../../src/features/cash/CashRoute";
 
 export default function CashPage() {
-  return <RoutePlaceholder title="Caisse" />;
+  return <CashRoute />;
 }

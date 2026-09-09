@@ -1,4 +1,4 @@
-import { PosShell } from "./shell/PosShell";
+import { PosShell } from "../features/terminal/PosShell";
 
 const unresolvedOperationalContext = {
   cashRegisterLabel: "Aucune caisse sélectionnée",
