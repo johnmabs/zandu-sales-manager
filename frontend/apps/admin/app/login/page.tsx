@@ -1,5 +1,6 @@
 "use client";
 
+import { ApiContractError, ApiRequestError } from "@zandu/api-client";
 import { Button, Input } from "@zandu/ui";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -25,7 +26,7 @@ export default function LoginPage() {
               password: String(form.get("password") ?? ""),
             })
             .then(() => router.replace("/app"))
-            .catch(() => setError("Adresse e-mail ou mot de passe incorrect."));
+            .catch((loginError: unknown) => setError(loginErrorMessage(loginError)));
         }}
       >
         <h1>Connexion</h1>
@@ -53,4 +54,28 @@ export default function LoginPage() {
       </form>
     </main>
   );
+}
+
+function loginErrorMessage(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    if (error.apiError.kind === "network") {
+      return "L’API est inaccessible. Vérifiez que Symfony est démarré et ouvrez l’Admin avec http://localhost:3000.";
+    }
+
+    if (error.apiError.status === 401) {
+      return "Adresse e-mail ou mot de passe incorrect.";
+    }
+
+    if (error.apiError.status === 429) {
+      return "Trop de tentatives de connexion. Réessayez dans une minute.";
+    }
+
+    return error.apiError.message ?? `La connexion a échoué (HTTP ${error.apiError.status}).`;
+  }
+
+  if (error instanceof ApiContractError) {
+    return "La réponse de l’API est incompatible avec l’Admin.";
+  }
+
+  return "La connexion a échoué pour une raison inattendue.";
 }

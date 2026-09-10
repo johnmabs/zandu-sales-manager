@@ -3,6 +3,8 @@ services:
     build:
       context: ./backend
     working_dir: /app
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
     volumes:
       - ./backend:/app
     depends_on:
@@ -20,7 +22,12 @@ services:
 
       DATABASE_URL: >-
         postgresql://${POSTGRES_USER:-zandu}:${POSTGRES_PASSWORD:-zandu}@postgres:5432/${POSTGRES_DB:-zandu}?serverVersion=18&charset=utf8
-    command: ["tail", "-f", "/dev/null"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   postgres:
     image: postgres:18-bookworm

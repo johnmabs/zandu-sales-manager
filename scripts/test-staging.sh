@@ -19,8 +19,7 @@ docker run --rm -d \
     -e APP_SECRET="ci-staging-app-secret-00000000000000000000000000000000" \
     -e JWT_PASSPHRASE="ci-staging-jwt-passphrase-000000000000000000000000000000" \
     -e DATABASE_URL="postgresql://zandu:zandu@postgres:5432/zandu?serverVersion=18&charset=utf8" \
-    zandu-sales-manager-backend:latest \
-    php -S 0.0.0.0:8080 -t public >/dev/null
+    zandu-sales-manager-backend:latest >/dev/null
 
 attempt=0
 until response="$(curl --fail --silent http://127.0.0.1:18080/health/ready)"; do

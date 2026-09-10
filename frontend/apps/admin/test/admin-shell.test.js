@@ -4,8 +4,8 @@ import test from "node:test";
 
 const pageUrl = new URL("../app/page.tsx", import.meta.url);
 
-test("admin root page renders the Zandu Admin shell placeholder", async () => {
+test("admin root page redirects to the login route", async () => {
   const page = await readFile(pageUrl, "utf8");
 
-  assert.match(page, /<h1>Zandu Admin<\/h1>/);
+  assert.match(page, /redirect\("\/login"\)/);
 });

@@ -1,7 +1,5 @@
-export default function HomePage() {
-  return (
-    <main>
-      <h1>Zandu Admin</h1>
-    </main>
-  );
+import { redirect } from "next/navigation";
+
+export default function HomePage(): never {
+  redirect("/login");
 }

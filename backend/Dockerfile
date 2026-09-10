@@ -1,4 +1,4 @@
-FROM php:8.5-cli-bookworm AS base
+FROM dunglas/frankenphp:1.12.7-php8.5-bookworm AS base
 
 ENV APP_ENV=prod \
     APP_DEBUG=0 \
@@ -9,14 +9,13 @@ WORKDIR /app
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 COPY docker/php-runtime.ini "$PHP_INI_DIR/conf.d/zz-zandu-runtime.ini"
+COPY docker/Caddyfile /etc/frankenphp/Caddyfile
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     git \
     unzip \
-    libicu-dev \
-    libpq-dev \
-    && docker-php-ext-install \
+    && install-php-extensions \
     intl \
     pdo_pgsql \
     && rm -rf /var/lib/apt/lists/*
@@ -38,5 +37,3 @@ COPY . .
 RUN composer dump-autoload \
     --no-dev \
     --classmap-authoritative
-
-CMD ["php", "bin/console", "about"]

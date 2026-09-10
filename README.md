@@ -164,6 +164,8 @@ make database-migrate
 ```
 
 `make install` construit l'image backend, installe les dépendances Composer et génère les clés nécessaires à l'authentification JWT.
+`make start` démarre PostgreSQL et l'API Symfony servie par FrankenPHP/Caddy sur
+le port `8080` ; aucun serveur PHP supplémentaire n'est nécessaire.
 
 Les données PostgreSQL sont conservées dans le volume Docker prévu à cet effet.
 
@@ -181,24 +183,15 @@ make database-status
 
 ## Démarrer l'API
 
-Après :
+L'API fait partie de la stack Compose et démarre avec :
 
 ```bash
 make start
 ```
 
-lancer le serveur HTTP de développement dans un terminal séparé :
-
-```bash
-docker compose run --rm -p 8080:8080 backend \
-  php -S 0.0.0.0:8080 -t public
-```
-
-Le serveur peut être arrêté avec :
-
-```text
-Ctrl+C
-```
+Elle est ensuite accessible sur `http://localhost:8080`. Les modifications du
+code backend monté dans le conteneur sont prises en compte sans reconstruire
+l'image. Utiliser `make logs` pour suivre le serveur et les erreurs applicatives.
 
 ---
 

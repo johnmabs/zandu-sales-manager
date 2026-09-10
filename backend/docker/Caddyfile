@@ -1,0 +1,17 @@
+{
+	auto_https off
+}
+
+:8080 {
+	root * /app/public
+	encode zstd br gzip
+	file_server
+
+	php_server {
+		try_files {path} index.php
+		resolve_root_symlink
+	}
+
+	@phpFile path *.php*
+	error @phpFile "Not found" 404
+}
