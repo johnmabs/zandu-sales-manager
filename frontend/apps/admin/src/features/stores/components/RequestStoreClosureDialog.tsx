@@ -5,6 +5,8 @@ import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog, Textarea } from "@zandu/ui";
 import { useState } from "react";
 
+import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
+
 type RequestStoreClosureDialogProperties = Readonly<{
   error?: unknown;
   isRequesting: boolean;
@@ -27,6 +29,7 @@ export function RequestStoreClosureDialog({
   const [reason, setReason] = useState("");
   const normalizedReason = reason.trim();
   const errorPresentation = error === undefined ? undefined : closureErrorPresentation(error);
+  const outcomeUnknown = hasUnknownStoreMutationOutcome(error);
 
   return (
     <Dialog
@@ -56,17 +59,33 @@ export function RequestStoreClosureDialog({
         Annuler
       </Button>
       <Button
-        disabled={isRequesting || normalizedReason.length === 0}
+        disabled={isRequesting || outcomeUnknown || normalizedReason.length === 0}
         onClick={() => onConfirm(normalizedReason)}
         type="button"
       >
-        {isRequesting ? "Demande en cours" : "Confirmer la demande de fermeture"}
+        {isRequesting
+          ? "Demande en cours"
+          : outcomeUnknown
+            ? "Résultat à vérifier"
+            : "Confirmer la demande de fermeture"}
       </Button>
     </Dialog>
   );
 }
 
 function closureErrorPresentation(error: unknown): UiError {
+  if (hasUnknownStoreMutationOutcome(error)) {
+    const mapped = errorMapper.map(
+      error instanceof ApiRequestError ? error.apiError : { kind: "response", status: 500 },
+    );
+    return {
+      ...(mapped.correlationId === undefined ? {} : { correlationId: mapped.correlationId }),
+      message:
+        "La demande a peut-être été enregistrée. Vérifiez l’état du magasin avant de recommencer.",
+      retryable: false,
+      title: "Résultat de demande à vérifier",
+    };
+  }
   if (error instanceof ApiRequestError) {
     return errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {

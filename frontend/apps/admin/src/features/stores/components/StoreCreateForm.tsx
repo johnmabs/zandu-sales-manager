@@ -6,6 +6,7 @@ import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
 import { Button, Input } from "@zandu/ui";
 import { useState } from "react";
 
+import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 import { createStoreSchema, toCreateStoreInput } from "../schemas/createStoreSchema";
 
 import type { CreateStoreFormValues } from "../schemas/createStoreSchema";
@@ -19,18 +20,24 @@ const errorMapper = new ErrorMapper();
 
 export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormProperties) {
   const [submissionError, setSubmissionError] = useState<UiError>();
+  const [outcomeUnknown, setOutcomeUnknown] = useState(false);
   const form = useZanduForm(createStoreSchema, {
     defaultValues: { address: "", code: "", name: "", ...defaults },
   });
   useUnsavedChangesWarning(form.formState.isDirty);
 
   const submit = form.handleSubmit(async (values) => {
+    if (outcomeUnknown) {
+      return;
+    }
     form.clearErrors("root");
     setSubmissionError(undefined);
+    setOutcomeUnknown(false);
     try {
       await onCreate(toCreateStoreInput(values));
     } catch (error: unknown) {
       setSubmissionError(applyCreateStoreErrors(form, error));
+      setOutcomeUnknown(hasUnknownStoreMutationOutcome(error));
     }
   });
 
@@ -78,8 +85,12 @@ export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormPropertie
           : { correlationId: submissionError.correlationId })}
         message={form.formState.errors.root?.message}
       />
-      <Button disabled={form.formState.isSubmitting} type="submit">
-        {form.formState.isSubmitting ? "Création en cours" : "Créer le magasin"}
+      <Button disabled={form.formState.isSubmitting || outcomeUnknown} type="submit">
+        {form.formState.isSubmitting
+          ? "Création en cours"
+          : outcomeUnknown
+            ? "Résultat à vérifier"
+            : "Créer le magasin"}
       </Button>
     </form>
   );
@@ -89,6 +100,20 @@ function applyCreateStoreErrors(
   form: ReturnType<typeof useZanduForm<CreateStoreFormValues>>,
   error: unknown,
 ): UiError {
+  if (hasUnknownStoreMutationOutcome(error)) {
+    const mapped = errorMapper.map(
+      error instanceof ApiRequestError ? error.apiError : { kind: "response", status: 500 },
+    );
+    const outcomeError: UiError = {
+      ...(mapped.correlationId === undefined ? {} : { correlationId: mapped.correlationId }),
+      message:
+        "La création a peut-être été enregistrée. Vérifiez la liste des magasins avant de recommencer.",
+      retryable: false,
+      title: "Résultat de création à vérifier",
+    };
+    form.setError("root", { message: outcomeError.message, type: "unknown-outcome" });
+    return outcomeError;
+  }
   if (error instanceof ApiRequestError) {
     const mapped = errorMapper.map(error.apiError, {
       CONFLICT: {

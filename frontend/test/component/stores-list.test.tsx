@@ -18,6 +18,10 @@ import {
 } from "../../apps/admin/src/features/stores/components/StoreList";
 import { StoreUpdateForm } from "../../apps/admin/src/features/stores/components/StoreUpdateForm";
 import { SuspendStoreDialog } from "../../apps/admin/src/features/stores/components/SuspendStoreDialog";
+import {
+  SingleFlight,
+  hasUnknownStoreMutationOutcome,
+} from "../../apps/admin/src/features/stores/mutationSafety";
 import { ApiRequestError } from "../../packages/api-client/src/index";
 
 const store = {
@@ -41,6 +45,32 @@ describe("Store context synchronization", () => {
     );
     expect(storeContextMessageForStatus("SELECTION_REQUIRED")).toContain("Sélectionnez");
     expect(storeContextMessageForStatus("ACTIVE")).toBeUndefined();
+  });
+});
+
+describe("Store mutation safety", () => {
+  it("allows only one command while the same user intention is pending", async () => {
+    const singleFlight = new SingleFlight();
+    let release: (() => void) | undefined;
+    const first = singleFlight.run(
+      () =>
+        new Promise<string>((resolve) => {
+          release = () => resolve("done");
+        }),
+    );
+    const second = await singleFlight.run(async () => "must-not-run");
+
+    expect(second).toBeUndefined();
+    release?.();
+    await expect(first).resolves.toBe("done");
+  });
+
+  it("keeps a timeout outcome ambiguous instead of treating it as a confirmed failure", () => {
+    expect(
+      hasUnknownStoreMutationOutcome(
+        new ApiRequestError({ kind: "network", message: "The request timed out." }, false),
+      ),
+    ).toBe(true);
   });
 });
 
@@ -339,6 +369,39 @@ describe("RequestStoreClosureDialog", () => {
     expect(dialog.getByLabelText("Motif de fermeture").hasAttribute("disabled")).toBe(true);
     expect(dialog.getByRole("button", { name: "Annuler" }).hasAttribute("disabled")).toBe(true);
   });
+
+  it("keeps the closure intention visible but blocks a blind retry after timeout", () => {
+    const view = render(
+      <RequestStoreClosureDialog
+        error={
+          new ApiRequestError(
+            {
+              correlationId: "0198c728-8f2d-7f43-92d8-3f0c75b80186",
+              kind: "network",
+              message: "The request timed out.",
+            },
+            false,
+          )
+        }
+        isRequesting={false}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Demander la fermeture du magasin" }),
+    );
+
+    expect(dialog.getByText(/a peut-être été enregistrée/)).toBeTruthy();
+    expect(dialog.getByText(/Référence de diagnostic/).textContent).toContain(
+      "0198c728-8f2d-7f43-92d8-3f0c75b80186",
+    );
+    expect(
+      dialog.getByRole("button", { name: "Résultat à vérifier" }).hasAttribute("disabled"),
+    ).toBe(true);
+  });
 });
 
 describe("StoreCreateForm", () => {
@@ -400,6 +463,28 @@ describe("StoreCreateForm", () => {
     ).toBeTruthy();
     expect(form.getByText(/Référence de diagnostic/).textContent).toContain(
       "0198c728-8f2d-7f43-92d8-3f0c75b80186",
+    );
+  });
+
+  it("preserves the creation intent and prevents a blind retry after timeout", async () => {
+    const user = userEvent.setup();
+    const view = render(
+      <StoreCreateForm
+        defaults={{ currency: "XAF", locale: "fr_CG", timeZone: "Africa/Brazzaville" }}
+        onCreate={async () => {
+          throw new ApiRequestError({ kind: "network", message: "The request timed out." }, false);
+        }}
+      />,
+    );
+    const form = within(view.container);
+    await user.type(form.getByLabelText("Code"), "CENTRE");
+    await user.type(form.getByLabelText("Nom"), "Centre-ville");
+    await user.click(form.getByRole("button", { name: "Créer le magasin" }));
+
+    expect(await form.findByText(/La création a peut-être été enregistrée/)).toBeTruthy();
+    expect(form.getByDisplayValue("CENTRE")).toBeTruthy();
+    expect(form.getByRole("button", { name: "Résultat à vérifier" }).hasAttribute("disabled")).toBe(
+      true,
     );
   });
 

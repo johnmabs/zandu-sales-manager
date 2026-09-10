@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useUpdateStore } from "../hooks/useUpdateStore";
+import { useSingleFlight } from "../mutationSafety";
 import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { storeDetailsErrorPresentation } from "./StoreDetails";
@@ -22,6 +23,7 @@ export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
   const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
+  const runSingleFlight = useSingleFlight();
   const editAccess = resolveStoreAccess(
     access,
     activeOrganizationId,
@@ -82,8 +84,14 @@ export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
   }
 
   const updateStore = async (input: StoreUpdateInput) => {
-    await update.mutateAsync(input);
-    await refreshStoreContext();
+    const result = await runSingleFlight(async () => {
+      await update.mutateAsync(input);
+      await refreshStoreContext();
+      return true;
+    });
+    if (result === undefined) {
+      return;
+    }
     notifications.notify({ message: "Magasin mis à jour.", tone: "success" });
     router.push(`/app/stores/${encodeURIComponent(storeId)}`);
   };

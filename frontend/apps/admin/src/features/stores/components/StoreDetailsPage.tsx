@@ -11,6 +11,7 @@ import { useCancelStoreClosure } from "../hooks/useCancelStoreClosure";
 import { useRequestStoreClosure } from "../hooks/useRequestStoreClosure";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useSuspendStore } from "../hooks/useSuspendStore";
+import { useSingleFlight } from "../mutationSafety";
 import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { CancelStoreClosureDialog } from "./CancelStoreClosureDialog";
@@ -25,6 +26,7 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   const { activeOrganizationId } = useOrganizationContext();
   const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
+  const runSingleFlight = useSingleFlight();
   const [isSuspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [isClosureDialogOpen, setClosureDialogOpen] = useState(false);
   const [isCancelClosureDialogOpen, setCancelClosureDialogOpen] = useState(false);
@@ -73,43 +75,49 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   });
 
   const confirmSuspension = async () => {
-    try {
-      await suspend.mutateAsync();
-      await refreshStoreContext();
-      notifications.notify({ message: "Magasin suspendu.", tone: "success" });
-      setSuspendDialogOpen(false);
-    } catch {
-      // The dialog renders the mutation error while preserving its confirmation context.
-    }
+    await runSingleFlight(async () => {
+      try {
+        await suspend.mutateAsync();
+        await refreshStoreContext();
+        notifications.notify({ message: "Magasin suspendu.", tone: "success" });
+        setSuspendDialogOpen(false);
+      } catch {
+        // The dialog renders the mutation error while preserving its confirmation context.
+      }
+    });
   };
 
   const confirmClosure = async (reason: string) => {
-    try {
-      const requestedClosure = await requestClosure.mutateAsync({ reason });
-      setClosure(requestedClosure);
+    await runSingleFlight(async () => {
       try {
-        await details.refetch();
+        const requestedClosure = await requestClosure.mutateAsync({ reason });
+        setClosure(requestedClosure);
+        try {
+          await details.refetch();
+        } catch {
+          // The workflow response remains authoritative if the refreshed Store projection is unavailable.
+        }
+        await refreshStoreContext();
+        notifications.notify({ message: "Demande de fermeture enregistrée.", tone: "success" });
+        setClosureDialogOpen(false);
       } catch {
-        // The workflow response remains authoritative if the refreshed Store projection is unavailable.
+        // The dialog renders the mutation error while preserving its confirmation context.
       }
-      await refreshStoreContext();
-      notifications.notify({ message: "Demande de fermeture enregistrée.", tone: "success" });
-      setClosureDialogOpen(false);
-    } catch {
-      // The dialog renders the mutation error while preserving its confirmation context.
-    }
+    });
   };
 
   const confirmClosureCancellation = async () => {
-    try {
-      await cancelClosure.mutateAsync();
-      await refreshStoreContext();
-      setClosure(undefined);
-      notifications.notify({ message: "Demande de fermeture annulée.", tone: "success" });
-      setCancelClosureDialogOpen(false);
-    } catch {
-      // The dialog renders the mutation error while preserving its confirmation context.
-    }
+    await runSingleFlight(async () => {
+      try {
+        await cancelClosure.mutateAsync();
+        await refreshStoreContext();
+        setClosure(undefined);
+        notifications.notify({ message: "Demande de fermeture annulée.", tone: "success" });
+        setCancelClosureDialogOpen(false);
+      } catch {
+        // The dialog renders the mutation error while preserving its confirmation context.
+      }
+    });
   };
 
   if (readAccess === "UNRESOLVED") {

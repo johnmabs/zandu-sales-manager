@@ -6,6 +6,7 @@ import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
 import { Button, Input } from "@zandu/ui";
 import { useState } from "react";
 
+import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 import { toUpdateStoreInput, updateStoreSchema } from "../schemas/updateStoreSchema";
 
 import type { UpdateStoreFormValues } from "../schemas/updateStoreSchema";
@@ -20,6 +21,7 @@ const errorMapper = new ErrorMapper();
 
 export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpdateFormProperties) {
   const [submissionError, setSubmissionError] = useState<UiError>();
+  const [outcomeUnknown, setOutcomeUnknown] = useState(false);
   const form = useZanduForm(updateStoreSchema, {
     defaultValues: {
       address: store.address ?? "",
@@ -31,12 +33,17 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
   useUnsavedChangesWarning(form.formState.isDirty);
 
   const submit = form.handleSubmit(async (values) => {
+    if (outcomeUnknown) {
+      return;
+    }
     form.clearErrors("root");
     setSubmissionError(undefined);
+    setOutcomeUnknown(false);
     try {
       await onUpdate(toUpdateStoreInput(values));
     } catch (error: unknown) {
       setSubmissionError(applyUpdateStoreErrors(form, error));
+      setOutcomeUnknown(hasUnknownStoreMutationOutcome(error));
     }
   });
   const isConcurrencyConflict = form.formState.errors.root?.type === "concurrency";
@@ -88,8 +95,12 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
           Recharger les données
         </Button>
       ) : null}
-      <Button disabled={form.formState.isSubmitting} type="submit">
-        {form.formState.isSubmitting ? "Enregistrement en cours" : "Enregistrer les modifications"}
+      <Button disabled={form.formState.isSubmitting || outcomeUnknown} type="submit">
+        {form.formState.isSubmitting
+          ? "Enregistrement en cours"
+          : outcomeUnknown
+            ? "Résultat à vérifier"
+            : "Enregistrer les modifications"}
       </Button>
     </form>
   );
@@ -99,6 +110,20 @@ function applyUpdateStoreErrors(
   form: ReturnType<typeof useZanduForm<UpdateStoreFormValues>>,
   error: unknown,
 ): UiError {
+  if (hasUnknownStoreMutationOutcome(error)) {
+    const mapped = errorMapper.map(
+      error instanceof ApiRequestError ? error.apiError : { kind: "response", status: 500 },
+    );
+    const outcomeError: UiError = {
+      ...(mapped.correlationId === undefined ? {} : { correlationId: mapped.correlationId }),
+      message:
+        "La modification a peut-être été enregistrée. Rechargez les données avant de recommencer.",
+      retryable: false,
+      title: "Résultat de modification à vérifier",
+    };
+    form.setError("root", { message: outcomeError.message, type: "unknown-outcome" });
+    return outcomeError;
+  }
   if (error instanceof ApiRequestError) {
     const mapped = errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useCreateStore } from "../hooks/useCreateStore";
+import { useSingleFlight } from "../mutationSafety";
 import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { StoreCreateForm } from "./StoreCreateForm";
@@ -20,6 +21,7 @@ export function CreateStorePage() {
   const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
+  const runSingleFlight = useSingleFlight();
   const createAccess = resolveStoreAccess(access, activeOrganization?.id, storePermissions.create);
   const create = useCreateStore({
     api,
@@ -42,8 +44,14 @@ export function CreateStorePage() {
   }
 
   const createStore = async (input: StoreCreateInput) => {
-    const store = await create.mutateAsync(input);
-    await refreshStoreContext();
+    const store = await runSingleFlight(async () => {
+      const createdStore = await create.mutateAsync(input);
+      await refreshStoreContext();
+      return createdStore;
+    });
+    if (store === undefined) {
+      return;
+    }
 
     notifications.notify({ message: "Magasin créé.", tone: "success" });
     router.push(`/app/stores/${encodeURIComponent(store.id)}`);

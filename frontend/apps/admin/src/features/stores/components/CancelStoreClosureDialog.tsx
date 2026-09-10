@@ -4,6 +4,8 @@ import { ApiRequestError } from "@zandu/api-client";
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog } from "@zandu/ui";
 
+import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
+
 type CancelStoreClosureDialogProperties = Readonly<{
   error?: unknown;
   isCancelling: boolean;
@@ -24,6 +26,7 @@ export function CancelStoreClosureDialog({
   storeName,
 }: CancelStoreClosureDialogProperties) {
   const errorPresentation = error === undefined ? undefined : cancellationErrorPresentation(error);
+  const outcomeUnknown = hasUnknownStoreMutationOutcome(error);
 
   return (
     <Dialog
@@ -43,14 +46,30 @@ export function CancelStoreClosureDialog({
       <Button disabled={isCancelling} onClick={onClose} type="button">
         Retour
       </Button>
-      <Button disabled={isCancelling} onClick={onConfirm} type="button">
-        {isCancelling ? "Annulation en cours" : "Confirmer l’annulation"}
+      <Button disabled={isCancelling || outcomeUnknown} onClick={onConfirm} type="button">
+        {isCancelling
+          ? "Annulation en cours"
+          : outcomeUnknown
+            ? "Résultat à vérifier"
+            : "Confirmer l’annulation"}
       </Button>
     </Dialog>
   );
 }
 
 function cancellationErrorPresentation(error: unknown): UiError {
+  if (hasUnknownStoreMutationOutcome(error)) {
+    const mapped = errorMapper.map(
+      error instanceof ApiRequestError ? error.apiError : { kind: "response", status: 500 },
+    );
+    return {
+      ...(mapped.correlationId === undefined ? {} : { correlationId: mapped.correlationId }),
+      message:
+        "L’annulation a peut-être été enregistrée. Vérifiez l’état du magasin avant de recommencer.",
+      retryable: false,
+      title: "Résultat d’annulation à vérifier",
+    };
+  }
   if (error instanceof ApiRequestError) {
     return errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {

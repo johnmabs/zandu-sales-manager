@@ -4,6 +4,8 @@ import { ApiRequestError } from "@zandu/api-client";
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog } from "@zandu/ui";
 
+import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
+
 type SuspendStoreDialogProperties = Readonly<{
   error?: unknown;
   isSuspending: boolean;
@@ -24,6 +26,7 @@ export function SuspendStoreDialog({
   storeName,
 }: SuspendStoreDialogProperties) {
   const errorPresentation = error === undefined ? undefined : suspendErrorPresentation(error);
+  const outcomeUnknown = hasUnknownStoreMutationOutcome(error);
 
   return (
     <Dialog
@@ -46,14 +49,30 @@ export function SuspendStoreDialog({
       <Button disabled={isSuspending} onClick={onClose} type="button">
         Annuler
       </Button>
-      <Button disabled={isSuspending} onClick={onConfirm} type="button">
-        {isSuspending ? "Suspension en cours" : "Confirmer la suspension"}
+      <Button disabled={isSuspending || outcomeUnknown} onClick={onConfirm} type="button">
+        {isSuspending
+          ? "Suspension en cours"
+          : outcomeUnknown
+            ? "Résultat à vérifier"
+            : "Confirmer la suspension"}
       </Button>
     </Dialog>
   );
 }
 
 function suspendErrorPresentation(error: unknown): UiError {
+  if (hasUnknownStoreMutationOutcome(error)) {
+    const mapped = errorMapper.map(
+      error instanceof ApiRequestError ? error.apiError : { kind: "response", status: 500 },
+    );
+    return {
+      ...(mapped.correlationId === undefined ? {} : { correlationId: mapped.correlationId }),
+      message:
+        "La suspension a peut-être été enregistrée. Vérifiez l’état du magasin avant de recommencer.",
+      retryable: false,
+      title: "Résultat de suspension à vérifier",
+    };
+  }
   if (error instanceof ApiRequestError) {
     return errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {

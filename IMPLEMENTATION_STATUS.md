@@ -10612,3 +10612,28 @@ foundation, 1 unitaire, 24 composants, 3 intégration) ; `pnpm lint` OK ;
 `pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add explicit loading and error states`.
+
+## Epic F1.14 — Mutation safety
+
+**Statut : TERMINÉ**
+
+- les pages de création, d’édition et de détail appliquent une garde
+  `SingleFlight` : une même intention ne peut déclencher qu’une commande à la
+  fois, y compris avant le prochain rendu React ;
+- les formulaires et dialogues conservent la saisie ou le motif, rendent le
+  pending explicite et bloquent leurs contrôles pendant la mutation ;
+- un timeout devient un état « résultat à vérifier », jamais un échec confirmé
+  : l’interface conserve le `correlationId`, explique que la commande a pu être
+  enregistrée et empêche un retry aveugle ;
+- le contrat OpenAPI courant ne déclare pas d’`Idempotency-Key` pour les
+  opérations Store. Aucun en-tête non contractuel n’est ajouté ; lorsque le
+  contrat le publiera, le mécanisme Foundation pourra conserver sa clé lors du
+  retry de la même intention ;
+- les tests couvrent la garde de concurrence, la détection de timeout et la
+  conservation de l’intention dans la création et la demande de fermeture.
+
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (20 tests
+foundation, 1 unitaire, 28 composants, 3 intégration) ; `pnpm lint` OK ;
+`pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): harden store mutation safety`.
