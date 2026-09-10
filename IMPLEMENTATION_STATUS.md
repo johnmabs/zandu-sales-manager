@@ -10507,17 +10507,20 @@ Commit recommandé : `feat(stores): present store closure blockers`.
 
 ## Epic F1.10 — Cancel Store Closure
 
-**Statut : DIFFÉRÉ — aucun endpoint HTTP d’annulation exposé par le contrat**
+**Statut : À FAIRE — endpoint backend disponible, intégration Admin restante**
 
-- l’OpenAPI courant expose uniquement `POST /api/stores/{id}/closure-request`
-  pour ce workflow ; aucun endpoint ou operationId d’annulation n’est généré ;
-- la ressource API Platform `StoreResource` ne déclare elle aussi qu’une
-  opération `store_closure_request` ;
-- conformément à la règle de décision F1.10, aucune URL, mutation ou PATCH
-  Store n’est inventé côté Admin. L’Epic reprendra lorsqu’un endpoint
-  d’annulation explicite sera publié dans le contrat.
+- le backend expose désormais explicitement
+  `POST /api/stores/{id}/closure-request/cancel`, sans payload, via l’opération
+  `store_closure_cancel` ;
+- l’opération réutilise `CancelStoreClosureHandler`, avec ses contrôles
+  d’autorisation, d’isolation tenant et de lifecycle, puis retourne la
+  projection Store redevenue `ACTIVE` ;
+- l’intégration dans l’Admin reste la prochaine unité F1.10 à réaliser ; aucune
+  mutation frontend n’est ajoutée par ce changement backend.
 
-Validation : inspection du contrat OpenAPI généré et des opérations API
-Platform Store, confirmant l’absence de l’opération requise.
+Validations backend : PHPUnit ciblé OK (28 tests, 235 assertions) ; PHPStan
+ciblé OK ; PHP-CS-Fixer ciblé OK ; Deptrac layers et modules 0 violation ;
+OpenAPI et workflow multi-store couvrent l’opération d’annulation explicite et
+son isolation cross-tenant.
 
-Commit recommandé : `docs(status): defer store closure cancellation pending API`.
+Commit recommandé : `feat(api): expose store closure cancellation endpoint`.

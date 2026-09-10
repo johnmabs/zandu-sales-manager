@@ -48,6 +48,7 @@ PATCH /stores/{id}
 POST /stores/{id}/suspend
 POST /stores/{id}/reactivate
 POST /stores/{id}/closure-request
+POST /stores/{id}/closure-request/cancel
 ```
 
 Toutes les collections sont tenant-scoped.

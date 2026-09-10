@@ -122,6 +122,9 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/stores/{id}/suspend')->getPost());
         self::assertNotNull($paths->getPath('/api/stores/{id}/reactivate')->getPost());
         self::assertNotNull($paths->getPath('/api/stores/{id}/closure-request')->getPost());
+        $cancelClosure = $paths->getPath('/api/stores/{id}/closure-request/cancel')->getPost();
+        self::assertNotNull($cancelClosure);
+        self::assertNull($cancelClosure->getRequestBody());
     }
 
     public function testStorePatchAcceptsJsonAndMergePatchJson(): void

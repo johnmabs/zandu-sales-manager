@@ -89,6 +89,17 @@ final class MultiStoreAdministrationWorkflowTest extends WebTestCase
         self::assertSame('READY', $closure['status']);
         self::assertSame([], $closure['blockers']);
 
+        $client->request('POST', sprintf('/api/stores/%s/closure-request/cancel', $storeA1['id']), server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $tenantB['token'],
+        ]);
+        $this->assertError($client, 404, 'NOT_FOUND');
+
+        $client->request('POST', sprintf('/api/stores/%s/closure-request/cancel', $storeA1['id']), server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $tenantA['token'],
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('ACTIVE', $this->payload($client)['status']);
+
         $client->request('GET', '/api/stores', server: [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $tenantA['token'],
             'HTTP_ACCEPT' => 'application/json',

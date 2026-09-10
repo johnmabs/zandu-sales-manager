@@ -18,6 +18,7 @@ use ApiPlatform\Metadata\Post;
     new Post(name: 'store_suspend', uriTemplate: '/stores/{id}/suspend', read: false, input: false, processor: StoreProcessor::class),
     new Post(name: 'store_reactivate', uriTemplate: '/stores/{id}/reactivate', read: false, input: false, processor: StoreProcessor::class),
     new Post(name: 'store_closure_request', uriTemplate: '/stores/{id}/closure-request', read: false, input: StoreClosureRequestInput::class, output: StoreClosureResource::class, processor: StoreProcessor::class),
+    new Post(name: 'store_closure_cancel', uriTemplate: '/stores/{id}/closure-request/cancel', read: false, input: false, processor: StoreProcessor::class),
 ])]
 final readonly class StoreResource
 {

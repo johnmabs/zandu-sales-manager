@@ -7,6 +7,8 @@ namespace Zandu\Modules\Organization\Presentation\Api;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use InvalidArgumentException;
+use Zandu\Modules\Organization\Application\CancelStoreClosure\CancelStoreClosure;
+use Zandu\Modules\Organization\Application\CancelStoreClosure\CancelStoreClosureHandler;
 use Zandu\Modules\Organization\Application\CreateStore\CreateStore;
 use Zandu\Modules\Organization\Application\CreateStore\CreateStoreHandler;
 use Zandu\Modules\Organization\Application\ReactivateStore\ReactivateStore;
@@ -37,6 +39,7 @@ final readonly class StoreProcessor implements ProcessorInterface
         private SuspendStoreHandler $suspend,
         private ReactivateStoreHandler $reactivate,
         private RequestStoreClosureHandler $requestClosure,
+        private CancelStoreClosureHandler $cancelClosure,
     ) {}
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): StoreResource|StoreClosureResource
@@ -67,6 +70,7 @@ final readonly class StoreProcessor implements ProcessorInterface
         $store = match ($name) {
             'store_suspend' => ($this->suspend)(new SuspendStore($id, $actor)),
             'store_reactivate' => ($this->reactivate)(new ReactivateStore($id, $actor)),
+            'store_closure_cancel' => ($this->cancelClosure)(new CancelStoreClosure($id, $actor)),
             default => throw new InvalidArgumentException('Unsupported store operation.'),
         };
 
