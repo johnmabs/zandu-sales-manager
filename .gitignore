@@ -9,3 +9,4 @@ frontend/**/.next/
 frontend/**/*.tsbuildinfo
 frontend/**/dist/
 frontend/**/src-tauri/target/
+frontend/**/.env.local
