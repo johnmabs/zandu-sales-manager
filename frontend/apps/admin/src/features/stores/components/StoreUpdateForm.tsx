@@ -4,7 +4,7 @@ import { ApiRequestError, type StoreResource, type StoreUpdateInput } from "@zan
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
 import { Button, Input } from "@zandu/ui";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 import { toUpdateStoreInput, updateStoreSchema } from "../schemas/updateStoreSchema";
@@ -20,6 +20,11 @@ type StoreUpdateFormProperties = Readonly<{
 const errorMapper = new ErrorMapper();
 
 export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpdateFormProperties) {
+  const nameErrorId = useId();
+  const addressErrorId = useId();
+  const timeZoneErrorId = useId();
+  const localeErrorId = useId();
+  const rootErrorId = useId();
   const [submissionError, setSubmissionError] = useState<UiError>();
   const [outcomeUnknown, setOutcomeUnknown] = useState(false);
   const form = useZanduForm(updateStoreSchema, {
@@ -49,45 +54,50 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
   const isConcurrencyConflict = form.formState.errors.root?.type === "concurrency";
 
   return (
-    <form noValidate onSubmit={submit}>
+    <form className="zandu-store-form" noValidate onSubmit={submit}>
       <p>Code : {store.code}</p>
       <p>Devise : {store.currency}</p>
       <label>
         Nom
         <Input
+          {...describedBy(form.formState.errors.name?.message, nameErrorId)}
           aria-invalid={form.formState.errors.name === undefined ? undefined : true}
           {...form.register("name")}
         />
       </label>
-      <FieldError message={form.formState.errors.name?.message} />
+      <FieldError id={nameErrorId} message={form.formState.errors.name?.message} />
       <label>
         Adresse
         <Input
+          {...describedBy(form.formState.errors.address?.message, addressErrorId)}
           aria-invalid={form.formState.errors.address === undefined ? undefined : true}
           {...form.register("address")}
         />
       </label>
-      <FieldError message={form.formState.errors.address?.message} />
+      <FieldError id={addressErrorId} message={form.formState.errors.address?.message} />
       <label>
         Fuseau horaire
         <Input
+          {...describedBy(form.formState.errors.timeZone?.message, timeZoneErrorId)}
           aria-invalid={form.formState.errors.timeZone === undefined ? undefined : true}
           {...form.register("timeZone")}
         />
       </label>
-      <FieldError message={form.formState.errors.timeZone?.message} />
+      <FieldError id={timeZoneErrorId} message={form.formState.errors.timeZone?.message} />
       <label>
         Langue
         <Input
+          {...describedBy(form.formState.errors.locale?.message, localeErrorId)}
           aria-invalid={form.formState.errors.locale === undefined ? undefined : true}
           {...form.register("locale")}
         />
       </label>
-      <FieldError message={form.formState.errors.locale?.message} />
+      <FieldError id={localeErrorId} message={form.formState.errors.locale?.message} />
       <FieldError
         {...(submissionError?.correlationId === undefined
           ? {}
           : { correlationId: submissionError.correlationId })}
+        id={rootErrorId}
         message={form.formState.errors.root?.message}
       />
       {isConcurrencyConflict ? (
@@ -169,12 +179,20 @@ function applyStoreUpdateFieldErrors(
 
 function FieldError({
   correlationId,
+  id,
   message,
-}: Readonly<{ correlationId?: string; message: string | undefined }>) {
+}: Readonly<{ correlationId?: string; id: string; message: string | undefined }>) {
   return message === undefined ? null : (
-    <div role="alert">
+    <div id={id} role="alert">
       <p>{message}</p>
       {correlationId === undefined ? null : <p>Référence de diagnostic : {correlationId}</p>}
     </div>
   );
+}
+
+function describedBy(
+  message: string | undefined,
+  errorId: string,
+): Readonly<{ "aria-describedby"?: string }> {
+  return message === undefined ? {} : { "aria-describedby": errorId };
 }

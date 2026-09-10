@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -370,6 +370,30 @@ describe("RequestStoreClosureDialog", () => {
     expect(dialog.getByRole("button", { name: "Annuler" }).hasAttribute("disabled")).toBe(true);
   });
 
+  it("announces the transition consequence and supports closing with the keyboard", () => {
+    const onClose = vi.fn();
+    const view = render(
+      <RequestStoreClosureDialog
+        isRequesting={false}
+        onClose={onClose}
+        onConfirm={vi.fn()}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialogElement = within(view.container).getByRole("dialog", {
+      name: "Demander la fermeture du magasin",
+    });
+    const dialog = within(dialogElement);
+    const descriptionId = dialogElement.getAttribute("aria-describedby");
+
+    expect(descriptionId).not.toBeNull();
+    expect(document.getElementById(descriptionId ?? "")?.textContent).toContain("Centre-ville");
+    expect(dialog.getByRole("button", { name: "Fermer le dialogue" })).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("keeps the closure intention visible but blocks a blind retry after timeout", () => {
     const view = render(
       <RequestStoreClosureDialog
@@ -458,6 +482,12 @@ describe("StoreCreateForm", () => {
     await user.click(form.getByRole("button", { name: "Créer le magasin" }));
 
     expect(await form.findByText("Le code doit être renseigné.")).toBeTruthy();
+    const code = form.getByLabelText("Code");
+    const codeErrorId = code.getAttribute("aria-describedby");
+    expect(codeErrorId).not.toBeNull();
+    expect(document.getElementById(codeErrorId ?? "")?.textContent).toContain(
+      "Le code doit être renseigné.",
+    );
     expect(
       form.getByText("Certaines informations sont invalides. Corrigez les champs indiqués."),
     ).toBeTruthy();

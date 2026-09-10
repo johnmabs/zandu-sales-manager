@@ -37,7 +37,7 @@ export function StoreListPage() {
   }
 
   return (
-    <section aria-labelledby="stores-page-title">
+    <section aria-labelledby="stores-page-title" className="zandu-store-list-page">
       <h1 id="stores-page-title">Magasins</h1>
       <StoreList
         canCreate={canCreate}

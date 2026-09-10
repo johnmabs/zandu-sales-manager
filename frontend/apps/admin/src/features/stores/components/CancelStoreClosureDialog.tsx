@@ -3,6 +3,7 @@
 import { ApiRequestError } from "@zandu/api-client";
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog } from "@zandu/ui";
+import { useId } from "react";
 
 import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 
@@ -25,16 +26,21 @@ export function CancelStoreClosureDialog({
   open,
   storeName,
 }: CancelStoreClosureDialogProperties) {
+  const descriptionId = useId();
   const errorPresentation = error === undefined ? undefined : cancellationErrorPresentation(error);
   const outcomeUnknown = hasUnknownStoreMutationOutcome(error);
 
   return (
     <Dialog
+      closeLabel="Fermer le dialogue"
+      descriptionId={descriptionId}
       onClose={isCancelling ? () => undefined : onClose}
       open={open}
       title="Annuler la fermeture du magasin"
     >
-      <p>La demande de fermeture de {storeName} sera annulée et le magasin redeviendra actif.</p>
+      <p id={descriptionId}>
+        La demande de fermeture de {storeName} sera annulée et le magasin redeviendra actif.
+      </p>
       {errorPresentation === undefined ? null : (
         <Alert tone="danger">
           <p>{errorPresentation.message}</p>

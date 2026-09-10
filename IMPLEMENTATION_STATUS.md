@@ -10637,3 +10637,49 @@ foundation, 1 unitaire, 28 composants, 3 intégration) ; `pnpm lint` OK ;
 `pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): harden store mutation safety`.
+
+## Epic F1.15 — Responsive Admin UX
+
+**Statut : TERMINÉ**
+
+- l’Admin conserve son cadre desktop-first tout en réduisant la sidebar et les
+  espacements au format laptop ;
+- à la tablette, la sidebar devient une navigation horizontale défilable, les
+  sélecteurs d’organisation et de magasin s’enroulent sans perdre leur largeur
+  utile, et le fil d’Ariane reste consultable horizontalement ;
+- la table Stores garde une largeur de colonnes lisible et un scroll horizontal
+  local, sans faire déborder la page ;
+- les pages de liste, détail et formulaires Stores utilisent des conteneurs
+  cohérents ; les profils et actions s’adaptent à une colonne, et les dialogues
+  deviennent des panneaux bas à hauteur bornée sur tablette ;
+- aucune interaction ou composant POS n’a été introduit. Un test Admin vérifie
+  les paliers laptop/tablette et les protections de débordement essentielles.
+
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (20 tests
+foundation, 1 unitaire, 28 composants, 3 intégration ; 8 tests Admin) ;
+`pnpm lint` OK ; `pnpm format:check` OK ; `pnpm build` OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(admin): improve responsive store workflows`.
+
+## Epic F1.16 — Accessibility
+
+**Statut : TERMINÉ**
+
+- les champs de création et d’édition restent associés à leurs labels
+  sémantiques et relient désormais explicitement chaque erreur publiée via
+  `aria-describedby` ; les erreurs gardent leur annonce `role="alert"` ;
+- les dialogues sensibles décrivent leur conséquence par `aria-describedby`,
+  disposent d’un contrôle de fermeture francisé et conservent les primitives
+  Foundation de focus, tabulation et Échap ;
+- les statuts Stores restent textuels dans les badges : la couleur complète
+  l’information, sans jamais être la seule représentation de l’état ;
+- les tests composants couvrent l’association champ-erreur, la description du
+  dialogue et sa fermeture au clavier.
+
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (20 tests
+foundation, 1 unitaire, 29 composants, 3 intégration ; 8 tests Admin) ;
+`pnpm lint` OK ; `pnpm format:check` OK ; `pnpm build` OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(stores): improve accessible store workflows`.

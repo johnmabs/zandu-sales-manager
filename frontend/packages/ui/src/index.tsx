@@ -83,6 +83,8 @@ export function Radio({ className, label, ...props }: ChoiceProps) {
 
 type OverlayProps = {
   children: ReactNode;
+  closeLabel?: string;
+  descriptionId?: string;
   onClose: () => void;
   open: boolean;
   title: string;
@@ -146,7 +148,14 @@ function useOverlayFocus(open: boolean, onClose: () => void) {
   return reference;
 }
 
-export function Dialog({ children, onClose, open, title }: OverlayProps) {
+export function Dialog({
+  children,
+  closeLabel = "Close dialog",
+  descriptionId,
+  onClose,
+  open,
+  title,
+}: OverlayProps) {
   const titleId = useId();
   const reference = useOverlayFocus(open, onClose);
 
@@ -157,6 +166,7 @@ export function Dialog({ children, onClose, open, title }: OverlayProps) {
   return (
     <div className="zandu-overlay" role="presentation">
       <section
+        {...(descriptionId === undefined ? {} : { "aria-describedby": descriptionId })}
         aria-labelledby={titleId}
         aria-modal="true"
         className="zandu-dialog"
@@ -166,7 +176,7 @@ export function Dialog({ children, onClose, open, title }: OverlayProps) {
       >
         <header className="zandu-overlay__header">
           <h2 id={titleId}>{title}</h2>
-          <IconButton aria-label="Close dialog" onClick={onClose} type="button">
+          <IconButton aria-label={closeLabel} onClick={onClose} type="button">
             ×
           </IconButton>
         </header>
@@ -176,7 +186,14 @@ export function Dialog({ children, onClose, open, title }: OverlayProps) {
   );
 }
 
-export function Drawer({ children, onClose, open, title }: OverlayProps) {
+export function Drawer({
+  children,
+  closeLabel = "Close drawer",
+  descriptionId,
+  onClose,
+  open,
+  title,
+}: OverlayProps) {
   const titleId = useId();
   const reference = useOverlayFocus(open, onClose);
 
@@ -187,6 +204,7 @@ export function Drawer({ children, onClose, open, title }: OverlayProps) {
   return (
     <div className="zandu-overlay" role="presentation">
       <section
+        {...(descriptionId === undefined ? {} : { "aria-describedby": descriptionId })}
         aria-labelledby={titleId}
         aria-modal="true"
         className="zandu-drawer"
@@ -196,7 +214,7 @@ export function Drawer({ children, onClose, open, title }: OverlayProps) {
       >
         <header className="zandu-overlay__header">
           <h2 id={titleId}>{title}</h2>
-          <IconButton aria-label="Close drawer" onClick={onClose} type="button">
+          <IconButton aria-label={closeLabel} onClick={onClose} type="button">
             ×
           </IconButton>
         </header>

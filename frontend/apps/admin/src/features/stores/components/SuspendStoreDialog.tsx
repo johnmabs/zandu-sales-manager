@@ -3,6 +3,7 @@
 import { ApiRequestError } from "@zandu/api-client";
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog } from "@zandu/ui";
+import { useId } from "react";
 
 import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 
@@ -25,16 +26,19 @@ export function SuspendStoreDialog({
   open,
   storeName,
 }: SuspendStoreDialogProperties) {
+  const descriptionId = useId();
   const errorPresentation = error === undefined ? undefined : suspendErrorPresentation(error);
   const outcomeUnknown = hasUnknownStoreMutationOutcome(error);
 
   return (
     <Dialog
+      closeLabel="Fermer le dialogue"
+      descriptionId={descriptionId}
       onClose={isSuspending ? () => undefined : onClose}
       open={open}
       title="Suspendre le magasin"
     >
-      <p>
+      <p id={descriptionId}>
         Suspendre {storeName} bloquera les nouvelles opérations de ce magasin jusqu’à sa
         réactivation.
       </p>

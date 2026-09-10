@@ -4,7 +4,7 @@ import { ApiRequestError, type StoreCreateInput } from "@zandu/api-client";
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
 import { Button, Input } from "@zandu/ui";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 import { createStoreSchema, toCreateStoreInput } from "../schemas/createStoreSchema";
@@ -19,6 +19,13 @@ type StoreCreateFormProperties = Readonly<{
 const errorMapper = new ErrorMapper();
 
 export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormProperties) {
+  const codeErrorId = useId();
+  const nameErrorId = useId();
+  const addressErrorId = useId();
+  const timeZoneErrorId = useId();
+  const currencyErrorId = useId();
+  const localeErrorId = useId();
+  const rootErrorId = useId();
   const [submissionError, setSubmissionError] = useState<UiError>();
   const [outcomeUnknown, setOutcomeUnknown] = useState(false);
   const form = useZanduForm(createStoreSchema, {
@@ -42,47 +49,62 @@ export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormPropertie
   });
 
   return (
-    <form noValidate onSubmit={submit}>
+    <form className="zandu-store-form" noValidate onSubmit={submit}>
       <label>
         Code
         <Input
+          {...describedBy(form.formState.errors.code?.message, codeErrorId)}
           aria-invalid={form.formState.errors.code === undefined ? undefined : true}
           {...form.register("code")}
         />
       </label>
-      <FieldError message={form.formState.errors.code?.message} />
+      <FieldError id={codeErrorId} message={form.formState.errors.code?.message} />
       <label>
         Nom
         <Input
+          {...describedBy(form.formState.errors.name?.message, nameErrorId)}
           aria-invalid={form.formState.errors.name === undefined ? undefined : true}
           {...form.register("name")}
         />
       </label>
-      <FieldError message={form.formState.errors.name?.message} />
+      <FieldError id={nameErrorId} message={form.formState.errors.name?.message} />
       <label>
         Adresse
-        <Input {...form.register("address")} />
+        <Input
+          {...describedBy(form.formState.errors.address?.message, addressErrorId)}
+          {...form.register("address")}
+        />
       </label>
-      <FieldError message={form.formState.errors.address?.message} />
+      <FieldError id={addressErrorId} message={form.formState.errors.address?.message} />
       <label>
         Fuseau horaire
-        <Input {...form.register("timeZone")} />
+        <Input
+          {...describedBy(form.formState.errors.timeZone?.message, timeZoneErrorId)}
+          {...form.register("timeZone")}
+        />
       </label>
-      <FieldError message={form.formState.errors.timeZone?.message} />
+      <FieldError id={timeZoneErrorId} message={form.formState.errors.timeZone?.message} />
       <label>
         Devise
-        <Input {...form.register("currency")} />
+        <Input
+          {...describedBy(form.formState.errors.currency?.message, currencyErrorId)}
+          {...form.register("currency")}
+        />
       </label>
-      <FieldError message={form.formState.errors.currency?.message} />
+      <FieldError id={currencyErrorId} message={form.formState.errors.currency?.message} />
       <label>
         Langue
-        <Input {...form.register("locale")} />
+        <Input
+          {...describedBy(form.formState.errors.locale?.message, localeErrorId)}
+          {...form.register("locale")}
+        />
       </label>
-      <FieldError message={form.formState.errors.locale?.message} />
+      <FieldError id={localeErrorId} message={form.formState.errors.locale?.message} />
       <FieldError
         {...(submissionError?.correlationId === undefined
           ? {}
           : { correlationId: submissionError.correlationId })}
+        id={rootErrorId}
         message={form.formState.errors.root?.message}
       />
       <Button disabled={form.formState.isSubmitting || outcomeUnknown} type="submit">
@@ -157,12 +179,20 @@ function applyStoreCreateFieldErrors(
 
 function FieldError({
   correlationId,
+  id,
   message,
-}: Readonly<{ correlationId?: string; message: string | undefined }>) {
+}: Readonly<{ correlationId?: string; id: string; message: string | undefined }>) {
   return message === undefined ? null : (
-    <div role="alert">
+    <div id={id} role="alert">
       <p>{message}</p>
       {correlationId === undefined ? null : <p>Référence de diagnostic : {correlationId}</p>}
     </div>
   );
+}
+
+function describedBy(
+  message: string | undefined,
+  errorId: string,
+): Readonly<{ "aria-describedby"?: string }> {
+  return message === undefined ? {} : { "aria-describedby": errorId };
 }

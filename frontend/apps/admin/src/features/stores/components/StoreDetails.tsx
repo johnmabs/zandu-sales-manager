@@ -63,13 +63,13 @@ export function StoreDetails({
   }
 
   return (
-    <>
-      <header>
+    <div className="zandu-store-details">
+      <header className="zandu-store-details__header">
         <h1>{store.name}</h1>
         <p>Code : {store.code}</p>
         <StoreStatus status={store.status} />
       </header>
-      <section aria-labelledby="store-profile-title">
+      <section aria-labelledby="store-profile-title" className="zandu-store-details__section">
         <h2 id="store-profile-title">Profil</h2>
         <dl>
           <dt>Adresse</dt>
@@ -82,7 +82,7 @@ export function StoreDetails({
           <dd>{store.timeZone}</dd>
         </dl>
       </section>
-      <section aria-labelledby="store-closure-title">
+      <section aria-labelledby="store-closure-title" className="zandu-store-details__section">
         <h2 id="store-closure-title">Fermeture</h2>
         <p>
           {closure === undefined
@@ -100,7 +100,7 @@ export function StoreDetails({
         {...(onRequestClosure === undefined ? {} : { onRequestClosure })}
         storeId={store.id}
       />
-    </>
+    </div>
   );
 }
 
@@ -148,9 +148,9 @@ function AvailableActions({
   }
 
   return (
-    <section aria-labelledby="store-actions-title">
+    <section aria-labelledby="store-actions-title" className="zandu-store-details__section">
       <h2 id="store-actions-title">Actions disponibles</h2>
-      <ul>
+      <ul className="zandu-store-details__actions">
         {labels.map((label) => (
           <li key={label}>
             {label === "Modifier" ? (

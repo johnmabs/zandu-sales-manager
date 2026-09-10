@@ -3,7 +3,7 @@
 import { ApiRequestError } from "@zandu/api-client";
 import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog, Textarea } from "@zandu/ui";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { hasUnknownStoreMutationOutcome } from "../mutationSafety";
 
@@ -26,6 +26,7 @@ export function RequestStoreClosureDialog({
   open,
   storeName,
 }: RequestStoreClosureDialogProperties) {
+  const descriptionId = useId();
   const [reason, setReason] = useState("");
   const normalizedReason = reason.trim();
   const errorPresentation = error === undefined ? undefined : closureErrorPresentation(error);
@@ -33,11 +34,15 @@ export function RequestStoreClosureDialog({
 
   return (
     <Dialog
+      closeLabel="Fermer le dialogue"
+      descriptionId={descriptionId}
       onClose={isRequesting ? () => undefined : onClose}
       open={open}
       title="Demander la fermeture du magasin"
     >
-      <p>La fermeture de {storeName} sera traitée comme un workflow distinct et contrôlé.</p>
+      <p id={descriptionId}>
+        La fermeture de {storeName} sera traitée comme un workflow distinct et contrôlé.
+      </p>
       <label>
         Motif de fermeture
         <Textarea
