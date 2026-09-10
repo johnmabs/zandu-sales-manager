@@ -10702,3 +10702,23 @@ OK (33 tests) ; `pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ;
 `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `test(stores): add unit and component coverage`.
+
+## Epic F1.18 — Integration tests
+
+**Statut : TERMINÉ — contrats Stores vérifiés à la frontière HTTP**
+
+- les scénarios MSW existants de liste, détail, création (succès et validation),
+  modification et suspension sont consolidés avec la réactivation explicite ;
+- `FoundationApi` expose désormais la transition contractuelle
+  `POST /stores/{id}/reactivate`, telle que publiée dans l’OpenAPI ;
+- la demande de fermeture vérifie le payload, le statut workflow et les blockers
+  transmis par l’API, y compris un code encore inconnu du frontend ;
+- un scénario distingue le refus `403` d’une erreur réseau à la frontière du
+  client, sans réimplémenter les invariants métier Symfony.
+
+Validations frontend : `pnpm test:integration` OK (4 tests) ; `pnpm test:unit`
+OK (6 tests) ; `pnpm test:component` OK (33 tests) ;
+`pnpm --filter @zandu/api-client typecheck` OK ; `pnpm lint` OK ;
+`pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `test(stores): add integration coverage`.

@@ -393,6 +393,15 @@ export class FoundationApi {
     return decodeStore(response.data);
   }
 
+  async reactivateStore(storeId: string): Promise<StoreResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `stores/${encodeURIComponent(storeId)}/reactivate`,
+    });
+
+    return decodeStore(response.data);
+  }
+
   async requestStoreClosure(
     storeId: string,
     input: StoreClosureRequestInput,

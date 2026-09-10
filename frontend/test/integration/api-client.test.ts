@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   ApiClient,
+  ApiRequestError,
   FoundationApi,
   createAuthenticationTransport,
 } from "../../packages/api-client/src/index";
@@ -220,6 +221,43 @@ describe("ApiClient at the mocked API boundary", () => {
           { status: 201 },
         );
       }),
+      http.post("https://api.zandu.test/api/stores/store-1/reactivate", async ({ request }) => {
+        expect(await request.text()).toBe("");
+        return HttpResponse.json(
+          {
+            address: "12 avenue du Port",
+            code: "CENTRE",
+            currency: "XAF",
+            id: "store-1",
+            locale: "fr_CG",
+            name: "Centre-ville",
+            organizationId,
+            status: "ACTIVE",
+            timeZone: "Africa/Brazzaville",
+            updatedAt: "2026-09-10T10:30:00+00:00",
+            version: 3,
+          },
+          { status: 201 },
+        );
+      }),
+      http.post(
+        "https://api.zandu.test/api/stores/store-1/closure-request",
+        async ({ request }) => {
+          expect(await request.json()).toEqual({ reason: "Fin d’activité" });
+          return HttpResponse.json(
+            {
+              blockers: ["OPEN_CASH_SESSION", "FUTURE_BLOCKER"],
+              id: "closure-1",
+              reason: "Fin d’activité",
+              requestedAt: "2026-09-10T11:00:00+00:00",
+              status: "IN_PROGRESS",
+              storeId: "store-1",
+              version: 1,
+            },
+            { status: 201 },
+          );
+        },
+      ),
     );
     const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
     const auth = new AuthenticationManager(
@@ -275,6 +313,46 @@ describe("ApiClient at the mocked API boundary", () => {
       id: "store-1",
       status: "SUSPENDED",
     });
+    await expect(api.reactivateStore("store-1")).resolves.toMatchObject({
+      id: "store-1",
+      status: "ACTIVE",
+    });
+    await expect(
+      api.requestStoreClosure("store-1", { reason: "Fin d’activité" }),
+    ).resolves.toMatchObject({
+      blockers: ["OPEN_CASH_SESSION", "FUTURE_BLOCKER"],
+      id: "closure-1",
+      status: "IN_PROGRESS",
+    });
+  });
+
+  it("keeps server denial and network failure distinct at the Stores boundary", async () => {
+    const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
+    const access = {
+      accessibleStoreIds: ["store-1"],
+      authorizationVersion: 4,
+      organizationId: "organization-1",
+      permissions: ["STORE_READ"],
+      scope: { type: "ORGANIZATION" as const },
+    };
+    const api = new FoundationApi(new ApiClient({ config }));
+
+    server.use(
+      http.get("https://api.zandu.test/api/stores", () =>
+        HttpResponse.json({ code: "FORBIDDEN" }, { status: 403 }),
+      ),
+    );
+    await expect(api.listAccessibleStores(access)).rejects.toSatisfy(
+      (error: unknown) =>
+        error instanceof ApiRequestError &&
+        error.apiError.kind === "response" &&
+        error.apiError.status === 403,
+    );
+
+    server.use(http.get("https://api.zandu.test/api/stores", () => HttpResponse.error()));
+    await expect(api.listAccessibleStores(access)).rejects.toSatisfy(
+      (error: unknown) => error instanceof ApiRequestError && error.apiError.kind === "network",
+    );
   });
 });
 
