@@ -76,6 +76,7 @@ export function AdminApplicationShell({ children }: Readonly<{ children: ReactNo
             onStoreChange={runtime.selectStore}
             organizations={runtime.organizationState.organizations}
             pathname={pathname}
+            storeContextStatus={runtime.storeState.status}
             stores={runtime.storeState.stores.filter((store) => store.status === "ACTIVE")}
           >
             {children}

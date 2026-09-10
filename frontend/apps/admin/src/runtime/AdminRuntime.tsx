@@ -15,7 +15,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { resolveAdminApiBaseUrl } from "./adminApiBaseUrl";
 
 import type { QueryClient } from "@tanstack/react-query";
-import type { StoreResource } from "@zandu/api-client";
 import type { AuthCredentials, AuthState } from "@zandu/auth";
 import type { OrganizationContextState } from "@zandu/organization-context";
 import type { StoreContextState } from "@zandu/store-context";
@@ -33,10 +32,10 @@ type AdminRuntime = Readonly<{
   logout: () => Promise<void>;
   organizationState: OrganizationContextState;
   queryClient: QueryClient;
+  refreshStoreContext: () => Promise<void>;
   selectOrganization: (organizationId: string) => Promise<void>;
   selectStore: (storeId: string) => void;
   storeState?: StoreContextState;
-  synchronizeStore: (store: StoreResource) => void;
 }>;
 
 type RuntimeServices = Readonly<{
@@ -153,6 +152,35 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
     },
     organizationState,
     queryClient: services?.queryClient ?? fallbackQueryClient,
+    async refreshStoreContext() {
+      const actor = authState.actor;
+      if (
+        services === undefined ||
+        actor === undefined ||
+        storeManager === undefined ||
+        storeManager.getState().organizationId !== actor.organizationId
+      ) {
+        return;
+      }
+
+      try {
+        const stores = actor.effectiveAccess.permissions.includes("STORE_READ")
+          ? await services.api.listAccessibleStores(actor.effectiveAccess)
+          : [];
+        services.queryClient.setQueryData(
+          queryKeys.stores.list(actor.organizationId, {
+            authorizationVersion: actor.effectiveAccess.authorizationVersion,
+          }),
+          stores,
+        );
+        setStoreState(storeManager.setAccessibleStores(stores));
+        setContextError(undefined);
+        setContextStatus("READY");
+      } catch {
+        setContextError("Le contexte magasin n’a pas pu être resynchronisé.");
+        setContextStatus("ERROR");
+      }
+    },
     async selectOrganization(organizationId) {
       if (services === undefined) {
         return;
@@ -166,29 +194,6 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
       if (storeManager !== undefined) {
         setStoreState(storeManager.selectStore(storeId));
       }
-    },
-    synchronizeStore(store) {
-      if (
-        storeManager === undefined ||
-        store.organizationId !== storeManager.getState().organizationId
-      ) {
-        return;
-      }
-
-      const stores = storeManager.getState().stores.map((currentStore) =>
-        currentStore.id === store.id
-          ? {
-              currency: store.currency,
-              id: store.id,
-              locale: store.locale,
-              name: store.name,
-              organizationId: store.organizationId,
-              status: store.status,
-              timeZone: store.timeZone,
-            }
-          : currentStore,
-      );
-      setStoreState(storeManager.setAccessibleStores(stores));
     },
     ...(storeState === undefined ? {} : { storeState }),
   };

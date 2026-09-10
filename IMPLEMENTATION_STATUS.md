@@ -10561,3 +10561,29 @@ foundation, 1 unitaire, 22 composants, 3 intégration) ; `pnpm lint` OK ;
 `pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): enforce permission-aware store actions`.
+
+## Epic F1.12 — Store context synchronization
+
+**Statut : TERMINÉ**
+
+- après chaque mutation Store déjà exposée (création, modification, suspension,
+  demande de fermeture et annulation), le runtime recharge la collection
+  accessible depuis Symfony et reconstruit le `StoreContext` à partir de ce
+  scope serveur complet ;
+- la projection et la query liste partagent ainsi le même état tenant/version
+  d’autorisation, y compris lorsqu’un Store disparaît du scope ou devient non
+  opérationnel ;
+- le `StoreContextManager` conserve une sélection encore valide, sélectionne
+  l’unique Store opérationnel disponible ou retire explicitement une sélection
+  devenue suspendue, en fermeture ou inaccessible ;
+- le shell Admin affiche désormais un état explicite lorsqu’aucun Store n’est
+  accessible/opérationnel ou lorsqu’une nouvelle sélection est requise ; il ne
+  présente plus un Store obsolète comme actif ;
+- un échec de resynchronisation bascule le contexte de travail vers son état
+  d’erreur sûr au lieu de poursuivre avec une projection périmée.
+
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (20 tests
+foundation, 1 unitaire, 23 composants, 3 intégration) ; `pnpm lint` OK ;
+`pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): synchronize active store context`.

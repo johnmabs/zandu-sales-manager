@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
 import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
@@ -31,6 +32,16 @@ const store = {
   updatedAt: "2026-09-10T08:00:00+00:00",
   version: 1,
 };
+
+describe("Store context synchronization", () => {
+  it("makes an unavailable active Store explicit after reconciliation", () => {
+    expect(storeContextMessageForStatus("NO_SELECTABLE_STORES")).toContain(
+      "Aucun magasin opérationnel",
+    );
+    expect(storeContextMessageForStatus("SELECTION_REQUIRED")).toContain("Sélectionnez");
+    expect(storeContextMessageForStatus("ACTIVE")).toBeUndefined();
+  });
+});
 
 describe("StoreList", () => {
   it("renders loading and the Store contract fields", () => {

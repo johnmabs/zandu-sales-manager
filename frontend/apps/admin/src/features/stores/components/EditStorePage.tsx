@@ -19,7 +19,7 @@ import type { StoreUpdateInput } from "@zandu/api-client";
 export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
-  const { api, queryClient } = useAdminRuntime();
+  const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
   const editAccess = resolveStoreAccess(
@@ -83,6 +83,7 @@ export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
 
   const updateStore = async (input: StoreUpdateInput) => {
     await update.mutateAsync(input);
+    await refreshStoreContext();
     notifications.notify({ message: "Magasin mis à jour.", tone: "success" });
     router.push(`/app/stores/${encodeURIComponent(storeId)}`);
   };

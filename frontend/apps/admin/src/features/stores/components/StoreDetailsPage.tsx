@@ -23,7 +23,7 @@ import type { StoreClosureResource } from "@zandu/api-client";
 export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
-  const { api, queryClient, synchronizeStore } = useAdminRuntime();
+  const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
   const [isSuspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [isClosureDialogOpen, setClosureDialogOpen] = useState(false);
@@ -74,8 +74,8 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
 
   const confirmSuspension = async () => {
     try {
-      const store = await suspend.mutateAsync();
-      synchronizeStore(store);
+      await suspend.mutateAsync();
+      await refreshStoreContext();
       notifications.notify({ message: "Magasin suspendu.", tone: "success" });
       setSuspendDialogOpen(false);
     } catch {
@@ -88,13 +88,11 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
       const requestedClosure = await requestClosure.mutateAsync({ reason });
       setClosure(requestedClosure);
       try {
-        const refreshed = await details.refetch();
-        if (refreshed.data !== undefined) {
-          synchronizeStore(refreshed.data);
-        }
+        await details.refetch();
       } catch {
         // The workflow response remains authoritative if the refreshed Store projection is unavailable.
       }
+      await refreshStoreContext();
       notifications.notify({ message: "Demande de fermeture enregistrée.", tone: "success" });
       setClosureDialogOpen(false);
     } catch {
@@ -104,8 +102,8 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
 
   const confirmClosureCancellation = async () => {
     try {
-      const store = await cancelClosure.mutateAsync();
-      synchronizeStore(store);
+      await cancelClosure.mutateAsync();
+      await refreshStoreContext();
       setClosure(undefined);
       notifications.notify({ message: "Demande de fermeture annulée.", tone: "success" });
       setCancelClosureDialogOpen(false);

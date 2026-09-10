@@ -17,7 +17,7 @@ import type { StoreCreateInput } from "@zandu/api-client";
 export function CreateStorePage() {
   const access = useEffectiveAccess();
   const { activeOrganization } = useOrganizationContext();
-  const { api, queryClient } = useAdminRuntime();
+  const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
   const createAccess = resolveStoreAccess(access, activeOrganization?.id, storePermissions.create);
@@ -43,6 +43,7 @@ export function CreateStorePage() {
 
   const createStore = async (input: StoreCreateInput) => {
     const store = await create.mutateAsync(input);
+    await refreshStoreContext();
 
     notifications.notify({ message: "Magasin créé.", tone: "success" });
     router.push(`/app/stores/${encodeURIComponent(store.id)}`);

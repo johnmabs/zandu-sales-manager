@@ -8,7 +8,7 @@ import { breadcrumbsForPath } from "./breadcrumbs";
 import { visibleAdminNavigation } from "./navigation";
 
 import type { EffectiveAccess } from "@zandu/authorization";
-import type { AccessibleStore } from "@zandu/store-context";
+import type { AccessibleStore, StoreContextStatus } from "@zandu/store-context";
 import type { ReactNode } from "react";
 
 export type OrganizationOption = Readonly<{
@@ -27,6 +27,7 @@ export type AdminShellProps = Readonly<{
   onStoreChange: (storeId: string) => void;
   organizations: readonly OrganizationOption[];
   pathname: string;
+  storeContextStatus: StoreContextStatus;
   stores: readonly AccessibleStore[];
 }>;
 
@@ -45,10 +46,12 @@ export function AdminShell({
   onStoreChange,
   organizations,
   pathname,
+  storeContextStatus,
   stores,
 }: AdminShellProps) {
   const navigation = visibleAdminNavigation(access);
   const breadcrumbs = breadcrumbsForPath(pathname, navigation);
+  const storeContextMessage = storeContextMessageForStatus(storeContextStatus);
 
   return (
     <div className="zandu-admin-shell">
@@ -128,9 +131,29 @@ export function AdminShell({
         </nav>
         <NotificationViewport />
         <main className="zandu-admin-shell__content" id="admin-content">
+          {storeContextMessage === undefined ? null : (
+            <p className="zandu-admin-shell__context-notice" role="status">
+              {storeContextMessage}
+            </p>
+          )}
           {children}
         </main>
       </div>
     </div>
   );
+}
+
+export function storeContextMessageForStatus(status: StoreContextStatus): string | undefined {
+  switch (status) {
+    case "NO_ACCESSIBLE_STORES":
+      return "Aucun magasin n’est accessible dans cette organisation.";
+    case "NO_SELECTABLE_STORES":
+      return "Aucun magasin opérationnel n’est disponible. Réactivez un magasin pour reprendre les opérations.";
+    case "SELECTION_REQUIRED":
+      return "Sélectionnez un magasin opérationnel pour continuer.";
+    case "UNKNOWN":
+      return "Le contexte magasin n’est pas encore disponible.";
+    case "ACTIVE":
+      return undefined;
+  }
 }
