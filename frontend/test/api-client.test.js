@@ -13,6 +13,27 @@ const config = publicRuntimeConfig({
   APP_ENV: "test",
 });
 
+test("default fetch preserves the browser global receiver", async (t) => {
+  t.mock.method(globalThis, "fetch", function (url, init) {
+    if (this !== globalThis) {
+      throw new TypeError("Illegal invocation");
+    }
+    assert.equal(url, "https://api.zandu.test/auth/login");
+    assert.equal(init.method, "POST");
+    return Promise.resolve(new Response(JSON.stringify({ ok: true })));
+  });
+  const client = new ApiClient({ config, generateCorrelationId: () => "correlation" });
+
+  const response = await client.request({
+    body: { email: "owner@example.com", password: "password" },
+    method: "POST",
+    path: "auth/login",
+    requiresAuthentication: false,
+  });
+
+  assert.deepEqual(response.data, { ok: true });
+});
+
 test("API client centralizes public configuration and critical request headers", async () => {
   let request;
   const client = new ApiClient({

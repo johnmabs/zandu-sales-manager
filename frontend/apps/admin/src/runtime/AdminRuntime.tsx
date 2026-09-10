@@ -8,6 +8,8 @@ import { createServerStateClient, transitionOrganizationCache } from "@zandu/ser
 import { StoreContextManager } from "@zandu/store-context";
 import { createContext, useContext, useEffect, useState } from "react";
 
+import { resolveAdminApiBaseUrl } from "./adminApiBaseUrl";
+
 import type { QueryClient } from "@tanstack/react-query";
 import type { AuthCredentials, AuthState } from "@zandu/auth";
 import type { OrganizationContextState } from "@zandu/organization-context";
@@ -166,7 +168,10 @@ export function useAdminRuntime(): AdminRuntime {
 }
 
 function createRuntimeServices(): Readonly<{ error?: string; services?: RuntimeServices }> {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const apiBaseUrl = resolveAdminApiBaseUrl(
+    process.env.NEXT_PUBLIC_API_BASE_URL,
+    typeof window === "undefined" ? "http://localhost:3000" : window.location.origin,
+  );
   const appEnvironment = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.NODE_ENV;
   try {
     const config = publicRuntimeConfig({ API_BASE_URL: apiBaseUrl, APP_ENV: appEnvironment });
@@ -194,6 +199,9 @@ function createRuntimeServices(): Readonly<{ error?: string; services?: RuntimeS
       },
     };
   } catch {
-    return { error: "NEXT_PUBLIC_API_BASE_URL doit contenir l’URL absolue de l’API Symfony." };
+    return {
+      error:
+        "NEXT_PUBLIC_API_BASE_URL doit contenir une URL absolue ou un chemin same-origin commençant par /.",
+    };
   }
 }

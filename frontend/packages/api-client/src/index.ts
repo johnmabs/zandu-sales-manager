@@ -84,7 +84,7 @@ export class ApiClient {
   constructor({
     config,
     defaultTimeoutMs = 15_000,
-    fetchImplementation = fetch,
+    fetchImplementation = (url, init) => globalThis.fetch(url, init),
     generateCorrelationId = generateRequestCorrelationId,
     observability,
     session,
