@@ -109,6 +109,8 @@ describe("ApiClient at the mocked API boundary", () => {
             organizationId,
             status: "ACTIVE",
             timeZone: "Africa/Brazzaville",
+            updatedAt: "2026-09-10T08:00:00+00:00",
+            version: 1,
           },
           {
             address: null,
@@ -120,6 +122,8 @@ describe("ApiClient at the mocked API boundary", () => {
             organizationId,
             status: "ACTIVE",
             timeZone: "Africa/Brazzaville",
+            updatedAt: "2026-09-10T08:00:00+00:00",
+            version: 1,
           },
           {
             address: null,
@@ -131,6 +135,8 @@ describe("ApiClient at the mocked API boundary", () => {
             organizationId: "organization-2",
             status: "ACTIVE",
             timeZone: "Africa/Brazzaville",
+            updatedAt: "2026-09-10T08:00:00+00:00",
+            version: 1,
           },
         ]),
       ),
@@ -145,6 +151,8 @@ describe("ApiClient at the mocked API boundary", () => {
           organizationId: params.storeId === "store-1" ? organizationId : "organization-2",
           status: "ACTIVE",
           timeZone: "Africa/Brazzaville",
+          updatedAt: "2026-09-10T08:00:00+00:00",
+          version: 1,
         }),
       ),
       http.post("https://api.zandu.test/api/stores", async ({ request }) => {
@@ -167,9 +175,32 @@ describe("ApiClient at the mocked API boundary", () => {
             organizationId,
             status: "ACTIVE",
             timeZone: "Africa/Brazzaville",
+            updatedAt: "2026-09-10T08:00:00+00:00",
+            version: 1,
           },
           { status: 201 },
         );
+      }),
+      http.patch("https://api.zandu.test/api/stores/store-1", async ({ request }) => {
+        expect(await request.json()).toEqual({
+          address: "15 avenue du Port",
+          locale: "fr_CG",
+          name: "Centre rénové",
+          timeZone: "Africa/Brazzaville",
+        });
+        return HttpResponse.json({
+          address: "15 avenue du Port",
+          code: "CENTRE",
+          currency: "XAF",
+          id: "store-1",
+          locale: "fr_CG",
+          name: "Centre rénové",
+          organizationId,
+          status: "ACTIVE",
+          timeZone: "Africa/Brazzaville",
+          updatedAt: "2026-09-10T09:00:00+00:00",
+          version: 2,
+        });
       }),
     );
     const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
@@ -214,6 +245,14 @@ describe("ApiClient at the mocked API boundary", () => {
         timeZone: "Africa/Brazzaville",
       }),
     ).resolves.toMatchObject({ id: "store-new" });
+    await expect(
+      api.updateStore("store-1", {
+        address: "15 avenue du Port",
+        locale: "fr_CG",
+        name: "Centre rénové",
+        timeZone: "Africa/Brazzaville",
+      }),
+    ).resolves.toMatchObject({ id: "store-1", version: 2 });
   });
 });
 

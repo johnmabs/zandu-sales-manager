@@ -295,12 +295,21 @@ export type StoreResource = Readonly<{
   organizationId: string;
   status: "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED";
   timeZone: string;
+  updatedAt: string;
+  version: number;
 }>;
 
 export type StoreCreateInput = Readonly<{
   address: string | null;
   code: string;
   currency: string;
+  locale: string;
+  name: string;
+  timeZone: string;
+}>;
+
+export type StoreUpdateInput = Readonly<{
+  address: string | null;
   locale: string;
   name: string;
   timeZone: string;
@@ -350,6 +359,16 @@ export class FoundationApi {
 
   async createStore(input: StoreCreateInput): Promise<StoreResource> {
     const response = await this.client.request({ body: input, method: "POST", path: "stores" });
+
+    return decodeStore(response.data);
+  }
+
+  async updateStore(storeId: string, input: StoreUpdateInput): Promise<StoreResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `stores/${encodeURIComponent(storeId)}`,
+    });
 
     return decodeStore(response.data);
   }
@@ -480,6 +499,8 @@ function decodeStore(value: unknown): StoreResource {
     organizationId: requiredString(value, "organizationId", "A store response is invalid."),
     status: value.status,
     timeZone: requiredString(value, "timeZone", "A store response is invalid."),
+    updatedAt: requiredString(value, "updatedAt", "A store response is invalid."),
+    version: requiredNumber(value, "version", "A store response is invalid."),
   };
 }
 
@@ -497,6 +518,14 @@ function isStringArray(value: unknown): value is readonly string[] {
 function requiredString(value: Record<string, unknown>, property: string, message: string): string {
   const propertyValue = value[property];
   if (typeof propertyValue !== "string") {
+    throw new ApiContractError(message);
+  }
+  return propertyValue;
+}
+
+function requiredNumber(value: Record<string, unknown>, property: string, message: string): number {
+  const propertyValue = value[property];
+  if (typeof propertyValue !== "number") {
     throw new ApiContractError(message);
   }
   return propertyValue;

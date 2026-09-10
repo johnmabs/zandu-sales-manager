@@ -2,6 +2,7 @@
 
 import { ApiRequestError } from "@zandu/api-client";
 import { Badge, ErrorState, Spinner } from "@zandu/ui";
+import Link from "next/link";
 
 import type { StoreResource } from "@zandu/api-client";
 
@@ -65,7 +66,7 @@ export function StoreDetails({ actions, error, isLoading, store }: StoreDetailsP
             : "Aucune demande de fermeture en cours."}
         </p>
       </section>
-      <AvailableActions actions={actions} />
+      <AvailableActions actions={actions} storeId={store.id} />
     </>
   );
 }
@@ -96,7 +97,10 @@ export function storeDetailsErrorPresentation(error: unknown): Readonly<{
   };
 }
 
-function AvailableActions({ actions }: Readonly<{ actions: StoreActionAvailability }>) {
+function AvailableActions({
+  actions,
+  storeId,
+}: Readonly<{ actions: StoreActionAvailability; storeId: string }>) {
   const labels = [
     ...(actions.edit ? ["Modifier"] : []),
     ...(actions.suspend ? ["Suspendre"] : []),
@@ -113,7 +117,13 @@ function AvailableActions({ actions }: Readonly<{ actions: StoreActionAvailabili
       <h2 id="store-actions-title">Actions disponibles</h2>
       <ul>
         {labels.map((label) => (
-          <li key={label}>{label}</li>
+          <li key={label}>
+            {label === "Modifier" ? (
+              <Link href={`/app/stores/${encodeURIComponent(storeId)}/edit`}>{label}</Link>
+            ) : (
+              label
+            )}
+          </li>
         ))}
       </ul>
     </section>

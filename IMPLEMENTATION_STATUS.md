@@ -10400,3 +10400,31 @@ Validations : `pnpm test:component -- stores-list.test.tsx` OK (10 tests) ;
 `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add store creation workflow`.
+
+## Epic F1.5 — Update Store
+
+**Statut : TERMINÉ — édition Store contractuelle et résolution explicite des conflits**
+
+- la route `/app/stores/{storeId}/edit` charge la projection serveur tenant- et
+  scope-aware puis initialise le formulaire avec ses valeurs publiées ; le lien
+  Modifier depuis le détail y mène uniquement lorsque `STORE_UPDATE` est
+  accordée ;
+- `PATCH /api/stores/{id}` ne transmet que `name`, `address`, `timeZone` et
+  `locale`. Le code immuable et la devise non éditable sont affichés sans être
+  des champs du payload ; une adresse vide reste normalisée à `null` ;
+- la version et la date de mise à jour exposées par le contrat sont décodées.
+  Comme l’endpoint ne publie pas de version conditionnelle, tout `409 CONFLICT`
+  garde la saisie intacte, interdit une réécriture silencieuse et propose un
+  rechargement explicite de la projection serveur ;
+- après succès, les caches détail et collection de l’organisation/version
+  d’autorisation active sont invalidés et rechargés, une notification est
+  affichée puis la navigation retourne au détail.
+
+Validations : `pnpm --filter @zandu/admin typecheck` OK ;
+`pnpm --filter @zandu/api-client typecheck` OK ;
+`pnpm test:component -- stores-list.test.tsx` OK (12 tests) ;
+`pnpm test:integration -- api-client.test.ts` OK (3 tests) ; `pnpm test` OK ;
+`pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(stores): add store update workflow`.

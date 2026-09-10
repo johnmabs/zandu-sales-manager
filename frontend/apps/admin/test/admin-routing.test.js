@@ -8,6 +8,7 @@ const routes = [
   "/app/organization",
   "/app/stores",
   "/app/stores/[storeId]",
+  "/app/stores/[storeId]/edit",
   "/app/stores/new",
   "/app/members",
   "/app/catalog",

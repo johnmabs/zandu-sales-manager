@@ -12,6 +12,7 @@ import {
   StoreList,
   storeListErrorPresentation,
 } from "../../apps/admin/src/features/stores/components/StoreList";
+import { StoreUpdateForm } from "../../apps/admin/src/features/stores/components/StoreUpdateForm";
 import { ApiRequestError } from "../../packages/api-client/src/index";
 
 const store = {
@@ -24,6 +25,8 @@ const store = {
   organizationId: "organization-1",
   status: "ACTIVE" as const,
   timeZone: "Africa/Brazzaville",
+  updatedAt: "2026-09-10T08:00:00+00:00",
+  version: 1,
 };
 
 describe("StoreList", () => {
@@ -77,7 +80,9 @@ describe("StoreDetails", () => {
     expect(screen.getByRole("heading", { name: "Centre-ville" })).toBeTruthy();
     expect(screen.getByText("12 avenue du Port")).toBeTruthy();
     expect(screen.getByText("Aucune demande de fermeture en cours.")).toBeTruthy();
-    expect(screen.getByText("Modifier")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Modifier" }).getAttribute("href")).toBe(
+      "/app/stores/store-1/edit",
+    );
     expect(screen.getByText("Suspendre")).toBeTruthy();
     expect(screen.getByText("Demander la fermeture")).toBeTruthy();
     expect(screen.queryByText("Réactiver")).toBeNull();
@@ -172,5 +177,64 @@ describe("StoreCreateForm", () => {
     expect(
       await form.findByText("Ce code de magasin est déjà utilisé dans l’organisation."),
     ).toBeTruthy();
+  });
+});
+
+describe("StoreUpdateForm", () => {
+  it("initializes from the server projection and submits only editable fields", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn().mockResolvedValue(undefined);
+    const view = render(
+      <StoreUpdateForm
+        onConflictReload={vi.fn()}
+        onUpdate={onUpdate}
+        store={{ ...store, address: null }}
+      />,
+    );
+    const form = within(view.container);
+
+    expect(form.getByText("Code : CENTRE")).toBeTruthy();
+    expect(form.getByText("Devise : XAF")).toBeTruthy();
+    expect(form.queryByLabelText("Code")).toBeNull();
+    await user.clear(form.getByLabelText("Nom"));
+    await user.type(form.getByLabelText("Nom"), "Centre rénové");
+    await user.type(form.getByLabelText("Adresse"), "15 avenue du Port");
+    await user.click(form.getByRole("button", { name: "Enregistrer les modifications" }));
+
+    await waitFor(() =>
+      expect(onUpdate).toHaveBeenCalledWith({
+        address: "15 avenue du Port",
+        locale: "fr_CG",
+        name: "Centre rénové",
+        timeZone: "Africa/Brazzaville",
+      }),
+    );
+  });
+
+  it("does not silently overwrite a concurrent server update", async () => {
+    const user = userEvent.setup();
+    const onConflictReload = vi.fn();
+    const view = render(
+      <StoreUpdateForm
+        onConflictReload={onConflictReload}
+        onUpdate={async () => {
+          throw new ApiRequestError({ code: "CONFLICT", kind: "response", status: 409 }, false);
+        }}
+        store={store}
+      />,
+    );
+    const form = within(view.container);
+
+    await user.clear(form.getByLabelText("Nom"));
+    await user.type(form.getByLabelText("Nom"), "Centre rénové");
+    await user.click(form.getByRole("button", { name: "Enregistrer les modifications" }));
+
+    expect(
+      await form.findByText(
+        "Ce magasin a été modifié entre-temps. Rechargez les données avant de réessayer.",
+      ),
+    ).toBeTruthy();
+    await user.click(form.getByRole("button", { name: "Recharger les données" }));
+    expect(onConflictReload).toHaveBeenCalledOnce();
   });
 });

@@ -5,7 +5,7 @@ import { queryKeys } from "@zandu/server-state";
 
 import { getStore } from "../api/getStore";
 
-import type { FoundationApi } from "@zandu/api-client";
+import type { FoundationApi, StoreResource } from "@zandu/api-client";
 
 type StoreAccess = Parameters<FoundationApi["getAccessibleStore"]>[1];
 
@@ -20,7 +20,7 @@ export function useStoreDetails({ access, api, organizationId, storeId }: UseSto
   const resolvedOrganizationId = organizationId ?? "unresolved-organization";
   const authorizationVersion = access?.authorizationVersion ?? 0;
 
-  return useQuery({
+  return useQuery<StoreResource | undefined>({
     enabled: api !== undefined && access !== undefined && organizationId !== undefined,
     queryFn: async () => {
       if (api === undefined || access === undefined) {
