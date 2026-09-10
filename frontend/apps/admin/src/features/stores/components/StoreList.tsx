@@ -44,7 +44,7 @@ export function StoreList({
     return <StoreListSkeleton />;
   }
 
-  if (error !== undefined) {
+  if (error != null) {
     return (
       <StoreErrorState error={error} {...(onRetry === undefined ? {} : { onRetry })} scope="list" />
     );

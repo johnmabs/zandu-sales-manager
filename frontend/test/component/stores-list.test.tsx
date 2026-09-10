@@ -87,9 +87,12 @@ describe("StoreList", () => {
   });
 
   it("only proposes creation in the empty state when the client permission is known", () => {
-    const { rerender } = render(<StoreList canCreate={false} isLoading={false} stores={[]} />);
+    const { rerender } = render(
+      <StoreList canCreate={false} error={null} isLoading={false} stores={[]} />,
+    );
 
     expect(screen.queryByRole("link", { name: "Créer un magasin" })).toBeNull();
+    expect(screen.queryByText("Erreur du service")).toBeNull();
 
     rerender(<StoreList canCreate isLoading={false} stores={[]} />);
     expect(screen.getByRole("link", { name: "Créer un magasin" }).getAttribute("href")).toBe(
@@ -146,6 +149,7 @@ describe("StoreDetails", () => {
           requestClosure: true,
           suspend: true,
         }}
+        error={null}
         isLoading={false}
         store={{ ...store, address: "12 avenue du Port" }}
       />,
@@ -154,6 +158,7 @@ describe("StoreDetails", () => {
     expect(screen.getByRole("heading", { name: "Centre-ville" })).toBeTruthy();
     expect(screen.getByText("12 avenue du Port")).toBeTruthy();
     expect(screen.getByText("Aucune demande de fermeture en cours.")).toBeTruthy();
+    expect(screen.queryByText("Erreur du service")).toBeNull();
     expect(screen.getByRole("link", { name: "Modifier" }).getAttribute("href")).toBe(
       "/app/stores/store-1/edit",
     );

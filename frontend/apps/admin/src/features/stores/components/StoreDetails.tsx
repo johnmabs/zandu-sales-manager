@@ -43,7 +43,7 @@ export function StoreDetails({
     return <StoreDetailsSkeleton />;
   }
 
-  if (error !== undefined) {
+  if (error != null) {
     return (
       <StoreErrorState
         error={error}
