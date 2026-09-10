@@ -7,6 +7,7 @@ const routes = [
   "/app",
   "/app/organization",
   "/app/stores",
+  "/app/stores/[storeId]",
   "/app/members",
   "/app/catalog",
   "/app/pricing",

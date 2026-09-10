@@ -3,12 +3,17 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 
 import {
+  StoreDetails,
+  storeDetailsErrorPresentation,
+} from "../../apps/admin/src/features/stores/components/StoreDetails";
+import {
   StoreList,
   storeListErrorPresentation,
 } from "../../apps/admin/src/features/stores/components/StoreList";
 import { ApiRequestError } from "../../packages/api-client/src/index";
 
 const store = {
+  address: null,
   code: "CENTRE",
   currency: "XAF",
   id: "store-1",
@@ -54,5 +59,36 @@ describe("StoreList", () => {
       storeListErrorPresentation(new ApiRequestError({ kind: "response", status: 422 }, false))
         .title,
     ).toBe("Impossible de charger les magasins");
+  });
+});
+
+describe("StoreDetails", () => {
+  it("renders the published profile, closure state, and status-permitted actions", () => {
+    render(
+      <StoreDetails
+        actions={{ edit: true, reactivate: false, requestClosure: true, suspend: true }}
+        isLoading={false}
+        store={{ ...store, address: "12 avenue du Port" }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Centre-ville" })).toBeTruthy();
+    expect(screen.getByText("12 avenue du Port")).toBeTruthy();
+    expect(screen.getByText("Aucune demande de fermeture en cours.")).toBeTruthy();
+    expect(screen.getByText("Modifier")).toBeTruthy();
+    expect(screen.getByText("Suspendre")).toBeTruthy();
+    expect(screen.getByText("Demander la fermeture")).toBeTruthy();
+    expect(screen.queryByText("Réactiver")).toBeNull();
+  });
+
+  it("masks stale and cross-tenant resources as not found while keeping a 403 distinct", () => {
+    expect(
+      storeDetailsErrorPresentation(new ApiRequestError({ kind: "response", status: 404 }, false))
+        .title,
+    ).toBe("Magasin introuvable");
+    expect(
+      storeDetailsErrorPresentation(new ApiRequestError({ kind: "response", status: 403 }, false))
+        .title,
+    ).toBe("Accès refusé");
   });
 });

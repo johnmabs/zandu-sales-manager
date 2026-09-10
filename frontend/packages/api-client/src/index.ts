@@ -286,6 +286,7 @@ export type OrganizationResource = Readonly<{
 }>;
 
 export type StoreResource = Readonly<{
+  address: string | null;
   code: string;
   currency: string;
   id: string;
@@ -320,6 +321,22 @@ export class FoundationApi {
     return stores.filter(
       (store) => store.organizationId === access.organizationId && accessible.has(store.id),
     );
+  }
+
+  async getAccessibleStore(
+    storeId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StoreResource | undefined> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `stores/${encodeURIComponent(storeId)}`,
+    });
+    const store = decodeStore(response.data);
+
+    return store.organizationId === access.organizationId &&
+      access.accessibleStoreIds.includes(store.id)
+      ? store
+      : undefined;
   }
 }
 
@@ -427,24 +444,28 @@ function decodeStores(value: unknown): readonly StoreResource[] {
   if (items === undefined) {
     throw new ApiContractError("The store collection response is invalid.");
   }
-  return items.map((item) => {
-    if (!isRecord(item)) {
-      throw new ApiContractError("A store response is invalid.");
-    }
-    if (!isOperationalStatus(item.status)) {
-      throw new ApiContractError("A store response is invalid.");
-    }
-    return {
-      code: requiredString(item, "code", "A store response is invalid."),
-      currency: requiredString(item, "currency", "A store response is invalid."),
-      id: requiredString(item, "id", "A store response is invalid."),
-      locale: requiredString(item, "locale", "A store response is invalid."),
-      name: requiredString(item, "name", "A store response is invalid."),
-      organizationId: requiredString(item, "organizationId", "A store response is invalid."),
-      status: item.status,
-      timeZone: requiredString(item, "timeZone", "A store response is invalid."),
-    };
-  });
+  return items.map(decodeStore);
+}
+
+function decodeStore(value: unknown): StoreResource {
+  if (!isRecord(value) || !isOperationalStatus(value.status)) {
+    throw new ApiContractError("A store response is invalid.");
+  }
+  if (value.address !== null && typeof value.address !== "string") {
+    throw new ApiContractError("A store response is invalid.");
+  }
+
+  return {
+    address: value.address,
+    code: requiredString(value, "code", "A store response is invalid."),
+    currency: requiredString(value, "currency", "A store response is invalid."),
+    id: requiredString(value, "id", "A store response is invalid."),
+    locale: requiredString(value, "locale", "A store response is invalid."),
+    name: requiredString(value, "name", "A store response is invalid."),
+    organizationId: requiredString(value, "organizationId", "A store response is invalid."),
+    status: value.status,
+    timeZone: requiredString(value, "timeZone", "A store response is invalid."),
+  };
 }
 
 export class ApiContractError extends Error {

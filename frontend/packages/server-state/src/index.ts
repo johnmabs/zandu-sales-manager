@@ -65,8 +65,10 @@ export const queryKeys = {
         : (["stock", organizationId, storeId, filters] as const),
   },
   stores: {
-    detail: (organizationId: string, storeId: string) =>
-      ["stores", organizationId, storeId] as const,
+    detail: (organizationId: string, storeId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["stores", organizationId, storeId] as const)
+        : (["stores", organizationId, storeId, filters] as const),
     list: (organizationId: string, filters?: QueryParameters) =>
       filters === undefined
         ? (["stores", organizationId] as const)

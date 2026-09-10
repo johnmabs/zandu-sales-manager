@@ -100,6 +100,7 @@ describe("ApiClient at the mocked API boundary", () => {
       http.get("https://api.zandu.test/api/stores", () =>
         HttpResponse.json([
           {
+            address: null,
             code: "CENTRE",
             currency: "XAF",
             id: "store-1",
@@ -110,6 +111,7 @@ describe("ApiClient at the mocked API boundary", () => {
             timeZone: "Africa/Brazzaville",
           },
           {
+            address: null,
             code: "HORS-SCOPE",
             currency: "XAF",
             id: "store-out-of-scope",
@@ -120,6 +122,7 @@ describe("ApiClient at the mocked API boundary", () => {
             timeZone: "Africa/Brazzaville",
           },
           {
+            address: null,
             code: "AUTRE-TENANT",
             currency: "XAF",
             id: "store-other-organization",
@@ -130,6 +133,19 @@ describe("ApiClient at the mocked API boundary", () => {
             timeZone: "Africa/Brazzaville",
           },
         ]),
+      ),
+      http.get("https://api.zandu.test/api/stores/:storeId", ({ params }) =>
+        HttpResponse.json({
+          address: "12 avenue du Port",
+          code: params.storeId === "store-1" ? "CENTRE" : "AUTRE-TENANT",
+          currency: "XAF",
+          id: params.storeId,
+          locale: "fr_CG",
+          name: "Centre-ville",
+          organizationId: params.storeId === "store-1" ? organizationId : "organization-2",
+          status: "ACTIVE",
+          timeZone: "Africa/Brazzaville",
+        }),
       ),
     );
     const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
@@ -155,6 +171,15 @@ describe("ApiClient at the mocked API boundary", () => {
     );
     const stores = await api.listAccessibleStores(authState.actor.effectiveAccess);
     expect(stores.map((store) => store.id)).toEqual(["store-1"]);
+    await expect(
+      api.getAccessibleStore("store-1", authState.actor.effectiveAccess),
+    ).resolves.toMatchObject({
+      address: "12 avenue du Port",
+      id: "store-1",
+    });
+    await expect(
+      api.getAccessibleStore("store-other-organization", authState.actor.effectiveAccess),
+    ).resolves.toBeUndefined();
   });
 });
 
