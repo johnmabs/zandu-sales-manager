@@ -1,13 +1,14 @@
 "use client";
 
-import { useCan, useEffectiveAccess } from "@zandu/authorization";
+import { useEffectiveAccess } from "@zandu/authorization";
 import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
-import { ErrorState } from "@zandu/ui";
+import { ErrorState, Spinner } from "@zandu/ui";
 import { useRouter } from "next/navigation";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useCreateStore } from "../hooks/useCreateStore";
+import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { StoreCreateForm } from "./StoreCreateForm";
 
@@ -15,11 +16,11 @@ import type { StoreCreateInput } from "@zandu/api-client";
 
 export function CreateStorePage() {
   const access = useEffectiveAccess();
-  const canCreate = useCan("STORE_CREATE");
   const { activeOrganization } = useOrganizationContext();
   const { api, queryClient } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
+  const createAccess = resolveStoreAccess(access, activeOrganization?.id, storePermissions.create);
   const create = useCreateStore({
     api,
     authorizationVersion: access?.authorizationVersion ?? 0,
@@ -27,7 +28,11 @@ export function CreateStorePage() {
     queryClient,
   });
 
-  if (!canCreate || activeOrganization === undefined) {
+  if (createAccess === "UNRESOLVED") {
+    return <Spinner label="Chargement des autorisations" />;
+  }
+
+  if (createAccess !== "ALLOWED" || activeOrganization === undefined) {
     return (
       <ErrorState
         description="Votre accès ne permet pas de créer un magasin dans l’organisation active."

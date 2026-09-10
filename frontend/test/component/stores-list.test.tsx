@@ -239,6 +239,27 @@ describe("CancelStoreClosureDialog", () => {
       dialog.getByRole("button", { name: "Annulation en cours" }).hasAttribute("disabled"),
     ).toBe(true);
   });
+
+  it("keeps the action context coherent when the backend denies a visible action", () => {
+    const view = render(
+      <CancelStoreClosureDialog
+        error={new ApiRequestError({ kind: "response", status: 403 }, false)}
+        isCancelling={false}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Annuler la fermeture du magasin" }),
+    );
+
+    expect(dialog.getByText("Vous n’êtes pas autorisé à effectuer cette action.")).toBeTruthy();
+    expect(
+      dialog.getByRole("button", { name: "Confirmer l’annulation" }).hasAttribute("disabled"),
+    ).toBe(false);
+  });
 });
 
 describe("RequestStoreClosureDialog", () => {

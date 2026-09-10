@@ -10537,3 +10537,27 @@ foundation, 1 unitaire, 21 composants, 3 intégration) ; `pnpm lint` OK ;
 `pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add store closure cancellation workflow`.
+
+## Epic F1.11 — Permission-aware actions
+
+**Statut : TERMINÉ**
+
+- les codes `STORE_READ`, `STORE_CREATE`, `STORE_UPDATE`, `STORE_SUSPEND` et
+  `STORE_CLOSE` sont centralisés dans le catalogue partagé de la feature ;
+- l’accès aux listes, détails, création et édition est résolu à partir de la
+  projection effective du Foundation et de l’organisation active ;
+- un contexte d’autorisation non chargé reste en attente, une permission
+  absente est refusée localement et un Store hors scope est masqué comme
+  introuvable ;
+- les queries liste et détail restent désactivées tant que l’accès local n’est
+  pas accordé, afin qu’une route directe ne charge aucune donnée interdite ;
+- les actions du détail combinent permission, organisation active, scope Store
+  et état publié, sans remplacer l’autorisation serveur ;
+- un `403` retourné malgré une action visible conserve le dialogue ouvert,
+  réactive ses contrôles et présente le refus via l’ErrorMapper Foundation.
+
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (20 tests
+foundation, 1 unitaire, 22 composants, 3 intégration) ; `pnpm lint` OK ;
+`pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): enforce permission-aware store actions`.

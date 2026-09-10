@@ -1,8 +1,9 @@
 "use client";
 
-import { useCan, useEffectiveAccess } from "@zandu/authorization";
+import { useEffectiveAccess } from "@zandu/authorization";
 import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
+import { ErrorState, Spinner } from "@zandu/ui";
 import { useState } from "react";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
@@ -10,6 +11,7 @@ import { useCancelStoreClosure } from "../hooks/useCancelStoreClosure";
 import { useRequestStoreClosure } from "../hooks/useRequestStoreClosure";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useSuspendStore } from "../hooks/useSuspendStore";
+import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { CancelStoreClosureDialog } from "./CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "./RequestStoreClosureDialog";
@@ -27,10 +29,26 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   const [isClosureDialogOpen, setClosureDialogOpen] = useState(false);
   const [isCancelClosureDialogOpen, setCancelClosureDialogOpen] = useState(false);
   const [closure, setClosure] = useState<StoreClosureResource>();
-  const details = useStoreDetails({ access, api, organizationId: activeOrganizationId, storeId });
-  const canEdit = useCan("STORE_UPDATE", { storeId });
-  const canSuspend = useCan("STORE_SUSPEND", { storeId });
-  const canClose = useCan("STORE_CLOSE", { storeId });
+  const readAccess = resolveStoreAccess(
+    access,
+    activeOrganizationId,
+    storePermissions.read,
+    storeId,
+  );
+  const details = useStoreDetails({
+    access: readAccess === "ALLOWED" ? access : undefined,
+    api,
+    organizationId: activeOrganizationId,
+    storeId,
+  });
+  const canEdit =
+    resolveStoreAccess(access, activeOrganizationId, storePermissions.update, storeId) ===
+    "ALLOWED";
+  const canSuspend =
+    resolveStoreAccess(access, activeOrganizationId, storePermissions.suspend, storeId) ===
+    "ALLOWED";
+  const canClose =
+    resolveStoreAccess(access, activeOrganizationId, storePermissions.close, storeId) === "ALLOWED";
   const status = details.data?.status;
   const suspend = useSuspendStore({
     api,
@@ -95,6 +113,28 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
       // The dialog renders the mutation error while preserving its confirmation context.
     }
   };
+
+  if (readAccess === "UNRESOLVED") {
+    return <Spinner label="Chargement des autorisations" />;
+  }
+
+  if (readAccess === "OUT_OF_SCOPE") {
+    return (
+      <ErrorState
+        description="Ce magasin est introuvable ou n’est pas accessible dans l’organisation active."
+        title="Magasin introuvable"
+      />
+    );
+  }
+
+  if (readAccess === "DENIED") {
+    return (
+      <ErrorState
+        description="Votre accès ne permet pas de consulter ce magasin."
+        title="Accès refusé"
+      />
+    );
+  }
 
   return (
     <>

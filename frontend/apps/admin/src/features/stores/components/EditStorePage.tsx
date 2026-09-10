@@ -1,6 +1,6 @@
 "use client";
 
-import { useCan, useEffectiveAccess } from "@zandu/authorization";
+import { useEffectiveAccess } from "@zandu/authorization";
 import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
 import { ErrorState, Spinner } from "@zandu/ui";
@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useUpdateStore } from "../hooks/useUpdateStore";
+import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { storeDetailsErrorPresentation } from "./StoreDetails";
 import { StoreUpdateForm } from "./StoreUpdateForm";
@@ -17,12 +18,22 @@ import type { StoreUpdateInput } from "@zandu/api-client";
 
 export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
   const access = useEffectiveAccess();
-  const canEdit = useCan("STORE_UPDATE", { storeId });
   const { activeOrganizationId } = useOrganizationContext();
   const { api, queryClient } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
-  const details = useStoreDetails({ access, api, organizationId: activeOrganizationId, storeId });
+  const editAccess = resolveStoreAccess(
+    access,
+    activeOrganizationId,
+    storePermissions.update,
+    storeId,
+  );
+  const details = useStoreDetails({
+    access: editAccess === "ALLOWED" ? access : undefined,
+    api,
+    organizationId: activeOrganizationId,
+    storeId,
+  });
   const update = useUpdateStore({
     api,
     authorizationVersion: access?.authorizationVersion ?? 0,
@@ -31,7 +42,20 @@ export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
     storeId,
   });
 
-  if (!canEdit || activeOrganizationId === undefined) {
+  if (editAccess === "UNRESOLVED") {
+    return <Spinner label="Chargement des autorisations" />;
+  }
+
+  if (editAccess === "OUT_OF_SCOPE") {
+    return (
+      <ErrorState
+        description="Ce magasin est introuvable ou n’est pas accessible dans l’organisation active."
+        title="Magasin introuvable"
+      />
+    );
+  }
+
+  if (editAccess === "DENIED" || activeOrganizationId === undefined) {
     return (
       <ErrorState
         description="Votre accès ne permet pas de modifier ce magasin dans l’organisation active."
