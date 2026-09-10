@@ -1,9 +1,10 @@
 "use client";
 
 import { ApiRequestError, type StoreCreateInput } from "@zandu/api-client";
-import { ErrorMapper } from "@zandu/error-contract";
+import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
 import { Button, Input } from "@zandu/ui";
+import { useState } from "react";
 
 import { createStoreSchema, toCreateStoreInput } from "../schemas/createStoreSchema";
 
@@ -17,6 +18,7 @@ type StoreCreateFormProperties = Readonly<{
 const errorMapper = new ErrorMapper();
 
 export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormProperties) {
+  const [submissionError, setSubmissionError] = useState<UiError>();
   const form = useZanduForm(createStoreSchema, {
     defaultValues: { address: "", code: "", name: "", ...defaults },
   });
@@ -24,10 +26,11 @@ export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormPropertie
 
   const submit = form.handleSubmit(async (values) => {
     form.clearErrors("root");
+    setSubmissionError(undefined);
     try {
       await onCreate(toCreateStoreInput(values));
     } catch (error: unknown) {
-      applyCreateStoreErrors(form, error);
+      setSubmissionError(applyCreateStoreErrors(form, error));
     }
   });
 
@@ -69,7 +72,12 @@ export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormPropertie
         <Input {...form.register("locale")} />
       </label>
       <FieldError message={form.formState.errors.locale?.message} />
-      <FieldError message={form.formState.errors.root?.message} />
+      <FieldError
+        {...(submissionError?.correlationId === undefined
+          ? {}
+          : { correlationId: submissionError.correlationId })}
+        message={form.formState.errors.root?.message}
+      />
       <Button disabled={form.formState.isSubmitting} type="submit">
         {form.formState.isSubmitting ? "Création en cours" : "Créer le magasin"}
       </Button>
@@ -80,7 +88,7 @@ export function StoreCreateForm({ defaults, onCreate }: StoreCreateFormPropertie
 function applyCreateStoreErrors(
   form: ReturnType<typeof useZanduForm<CreateStoreFormValues>>,
   error: unknown,
-): void {
+): UiError {
   if (error instanceof ApiRequestError) {
     const mapped = errorMapper.map(error.apiError, {
       CONFLICT: {
@@ -99,13 +107,15 @@ function applyCreateStoreErrors(
     }
     form.setError("root", { message: mapped.message, type: "server" });
 
-    return;
+    return mapped;
   }
 
+  const mapped = errorMapper.map({ kind: "response", status: 500 });
   form.setError("root", {
-    message: "Une erreur inattendue est survenue. Réessayez ultérieurement.",
+    message: mapped.message,
     type: "server",
   });
+  return mapped;
 }
 
 function applyStoreCreateFieldErrors(
@@ -120,6 +130,14 @@ function applyStoreCreateFieldErrors(
   }
 }
 
-function FieldError({ message }: Readonly<{ message: string | undefined }>) {
-  return message === undefined ? null : <p role="alert">{message}</p>;
+function FieldError({
+  correlationId,
+  message,
+}: Readonly<{ correlationId?: string; message: string | undefined }>) {
+  return message === undefined ? null : (
+    <div role="alert">
+      <p>{message}</p>
+      {correlationId === undefined ? null : <p>Référence de diagnostic : {correlationId}</p>}
+    </div>
+  );
 }

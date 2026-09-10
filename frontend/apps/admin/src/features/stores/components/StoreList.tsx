@@ -1,10 +1,11 @@
 "use client";
 
-import { ApiRequestError } from "@zandu/api-client";
-import { Badge, EmptyState, ErrorState, Spinner } from "@zandu/ui";
+import { Badge, EmptyState, Skeleton } from "@zandu/ui";
 import Link from "next/link";
 
 import { AdminTable } from "../../../components/tables/AdminTable";
+
+import { StoreErrorState, storeErrorPresentation } from "./StoreErrorState";
 
 import type { AdminTableColumn } from "../../../components/tables/AdminTable";
 import type { StoreResource } from "@zandu/api-client";
@@ -32,15 +33,21 @@ const columns: readonly AdminTableColumn<StoreResource>[] = [
 
 const tableQuery = { filters: {}, page: 1 } as const;
 
-export function StoreList({ canCreate, error, isLoading, stores }: StoreListProperties) {
+export function StoreList({
+  canCreate,
+  error,
+  isLoading,
+  onRetry,
+  stores,
+}: StoreListProperties & Readonly<{ onRetry?: () => void }>) {
   if (isLoading) {
-    return <Spinner label="Chargement des magasins" />;
+    return <StoreListSkeleton />;
   }
 
   if (error !== undefined) {
-    const presentation = storeListErrorPresentation(error);
-
-    return <ErrorState {...presentation} />;
+    return (
+      <StoreErrorState error={error} {...(onRetry === undefined ? {} : { onRetry })} scope="list" />
+    );
   }
 
   if (stores === undefined || stores.length === 0) {
@@ -70,30 +77,21 @@ export function StoreList({ canCreate, error, isLoading, stores }: StoreListProp
   );
 }
 
+export function StoreListSkeleton() {
+  return (
+    <div aria-label="Chargement des magasins" aria-busy="true" role="status">
+      <Skeleton className="zandu-skeleton--title" />
+      <Skeleton className="zandu-skeleton--table" />
+    </div>
+  );
+}
+
 export function storeListErrorPresentation(error: unknown): Readonly<{
   description: string;
   title: string;
 }> {
-  if (error instanceof ApiRequestError) {
-    if (error.apiError.kind === "response" && error.apiError.status === 403) {
-      return {
-        description: "Votre accès ne permet pas de consulter les magasins de cette organisation.",
-        title: "Accès refusé",
-      };
-    }
-
-    if (error.apiError.kind === "network") {
-      return {
-        description: "Vérifiez votre connexion puis réessayez.",
-        title: "Connexion indisponible",
-      };
-    }
-  }
-
-  return {
-    description: "Le serveur n’a pas pu fournir la liste des magasins. Réessayez ultérieurement.",
-    title: "Impossible de charger les magasins",
-  };
+  const presentation = storeErrorPresentation(error, "list");
+  return { description: presentation.description, title: presentation.title };
 }
 
 function StoreStatus({ status }: Pick<StoreResource, "status">) {

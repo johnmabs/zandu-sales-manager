@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiRequestError } from "@zandu/api-client";
-import { ErrorMapper } from "@zandu/error-contract";
+import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog } from "@zandu/ui";
 
 type CancelStoreClosureDialogProperties = Readonly<{
@@ -23,6 +23,8 @@ export function CancelStoreClosureDialog({
   open,
   storeName,
 }: CancelStoreClosureDialogProperties) {
+  const errorPresentation = error === undefined ? undefined : cancellationErrorPresentation(error);
+
   return (
     <Dialog
       onClose={isCancelling ? () => undefined : onClose}
@@ -30,7 +32,14 @@ export function CancelStoreClosureDialog({
       title="Annuler la fermeture du magasin"
     >
       <p>La demande de fermeture de {storeName} sera annulée et le magasin redeviendra actif.</p>
-      {error === undefined ? null : <Alert tone="danger">{cancellationErrorMessage(error)}</Alert>}
+      {errorPresentation === undefined ? null : (
+        <Alert tone="danger">
+          <p>{errorPresentation.message}</p>
+          {errorPresentation.correlationId === undefined ? null : (
+            <p>Référence de diagnostic : {errorPresentation.correlationId}</p>
+          )}
+        </Alert>
+      )}
       <Button disabled={isCancelling} onClick={onClose} type="button">
         Retour
       </Button>
@@ -41,7 +50,7 @@ export function CancelStoreClosureDialog({
   );
 }
 
-function cancellationErrorMessage(error: unknown): string {
+function cancellationErrorPresentation(error: unknown): UiError {
   if (error instanceof ApiRequestError) {
     return errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {
@@ -49,8 +58,8 @@ function cancellationErrorMessage(error: unknown): string {
         retryable: false,
         title: "Annulation impossible",
       },
-    }).message;
+    });
   }
 
-  return "Une erreur inattendue est survenue. Réessayez ultérieurement.";
+  return errorMapper.map({ kind: "response", status: 500 });
 }

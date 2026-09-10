@@ -1,10 +1,10 @@
 "use client";
 
-import { ApiRequestError } from "@zandu/api-client";
-import { Badge, Button, ErrorState, Spinner } from "@zandu/ui";
+import { Badge, Button, ErrorState, Skeleton } from "@zandu/ui";
 import Link from "next/link";
 
 import { StoreClosureBlockers } from "./StoreClosureBlockers";
+import { StoreErrorState, storeErrorPresentation } from "./StoreErrorState";
 
 import type { StoreClosureResource, StoreResource } from "@zandu/api-client";
 
@@ -24,6 +24,7 @@ type StoreDetailsProperties = Readonly<{
   onCancelClosure?: () => void;
   onSuspend?: () => void;
   onRequestClosure?: () => void;
+  onRetry?: () => void;
   store?: StoreResource | undefined;
 }>;
 
@@ -35,14 +36,21 @@ export function StoreDetails({
   onCancelClosure,
   onSuspend,
   onRequestClosure,
+  onRetry,
   store,
 }: StoreDetailsProperties) {
   if (isLoading) {
-    return <Spinner label="Chargement du magasin" />;
+    return <StoreDetailsSkeleton />;
   }
 
   if (error !== undefined) {
-    return <ErrorState {...storeDetailsErrorPresentation(error)} />;
+    return (
+      <StoreErrorState
+        error={error}
+        {...(onRetry === undefined ? {} : { onRetry })}
+        scope="details"
+      />
+    );
   }
 
   if (store === undefined) {
@@ -96,30 +104,22 @@ export function StoreDetails({
   );
 }
 
+export function StoreDetailsSkeleton() {
+  return (
+    <div aria-label="Chargement du magasin" aria-busy="true" role="status">
+      <Skeleton className="zandu-skeleton--title" />
+      <Skeleton className="zandu-skeleton--text" />
+      <Skeleton className="zandu-skeleton--section" />
+    </div>
+  );
+}
+
 export function storeDetailsErrorPresentation(error: unknown): Readonly<{
   description: string;
   title: string;
 }> {
-  if (error instanceof ApiRequestError) {
-    if (error.apiError.kind === "response" && error.apiError.status === 404) {
-      return {
-        description:
-          "Ce magasin est introuvable ou n’est pas accessible dans l’organisation active.",
-        title: "Magasin introuvable",
-      };
-    }
-    if (error.apiError.kind === "response" && error.apiError.status === 403) {
-      return {
-        description: "Votre accès ne permet pas de consulter ce magasin.",
-        title: "Accès refusé",
-      };
-    }
-  }
-
-  return {
-    description: "Le serveur n’a pas pu fournir ce magasin. Réessayez ultérieurement.",
-    title: "Impossible de charger le magasin",
-  };
+  const presentation = storeErrorPresentation(error, "details");
+  return { description: presentation.description, title: presentation.title };
 }
 
 function AvailableActions({

@@ -11,6 +11,7 @@ import {
   StoreDetails,
   storeDetailsErrorPresentation,
 } from "../../apps/admin/src/features/stores/components/StoreDetails";
+import { StoreErrorState } from "../../apps/admin/src/features/stores/components/StoreErrorState";
 import {
   StoreList,
   storeListErrorPresentation,
@@ -77,7 +78,30 @@ describe("StoreList", () => {
     expect(
       storeListErrorPresentation(new ApiRequestError({ kind: "response", status: 422 }, false))
         .title,
-    ).toBe("Impossible de charger les magasins");
+    ).toBe("Action impossible");
+  });
+
+  it("keeps a safe diagnostic reference and a retry action for retryable failures", () => {
+    const onRetry = vi.fn();
+    render(
+      <StoreErrorState
+        error={
+          new ApiRequestError(
+            { correlationId: "0198c728-8f2d-7f43-92d8-3f0c75b80186", kind: "network" },
+            false,
+          )
+        }
+        onRetry={onRetry}
+        scope="list"
+      />,
+    );
+
+    expect(screen.getByRole("alert").textContent).toContain("Connexion indisponible");
+    expect(screen.getByText(/Référence de diagnostic/).textContent).toContain(
+      "0198c728-8f2d-7f43-92d8-3f0c75b80186",
+    );
+    screen.getByRole("button", { name: "Réessayer" }).click();
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 });
 
@@ -354,6 +378,7 @@ describe("StoreCreateForm", () => {
           throw new ApiRequestError(
             {
               code: "VALIDATION_ERROR",
+              correlationId: "0198c728-8f2d-7f43-92d8-3f0c75b80186",
               fieldErrors: { code: ["Le code doit être renseigné."] },
               kind: "response",
               status: 400,
@@ -373,6 +398,9 @@ describe("StoreCreateForm", () => {
     expect(
       form.getByText("Certaines informations sont invalides. Corrigez les champs indiqués."),
     ).toBeTruthy();
+    expect(form.getByText(/Référence de diagnostic/).textContent).toContain(
+      "0198c728-8f2d-7f43-92d8-3f0c75b80186",
+    );
   });
 
   it("maps a duplicate code conflict to the creation-specific message", async () => {

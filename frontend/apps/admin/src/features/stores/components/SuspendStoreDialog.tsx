@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiRequestError } from "@zandu/api-client";
-import { ErrorMapper } from "@zandu/error-contract";
+import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog } from "@zandu/ui";
 
 type SuspendStoreDialogProperties = Readonly<{
@@ -23,6 +23,8 @@ export function SuspendStoreDialog({
   open,
   storeName,
 }: SuspendStoreDialogProperties) {
+  const errorPresentation = error === undefined ? undefined : suspendErrorPresentation(error);
+
   return (
     <Dialog
       onClose={isSuspending ? () => undefined : onClose}
@@ -33,7 +35,14 @@ export function SuspendStoreDialog({
         Suspendre {storeName} bloquera les nouvelles opérations de ce magasin jusqu’à sa
         réactivation.
       </p>
-      {error === undefined ? null : <Alert tone="danger">{suspendErrorMessage(error)}</Alert>}
+      {errorPresentation === undefined ? null : (
+        <Alert tone="danger">
+          <p>{errorPresentation.message}</p>
+          {errorPresentation.correlationId === undefined ? null : (
+            <p>Référence de diagnostic : {errorPresentation.correlationId}</p>
+          )}
+        </Alert>
+      )}
       <Button disabled={isSuspending} onClick={onClose} type="button">
         Annuler
       </Button>
@@ -44,7 +53,7 @@ export function SuspendStoreDialog({
   );
 }
 
-function suspendErrorMessage(error: unknown): string {
+function suspendErrorPresentation(error: unknown): UiError {
   if (error instanceof ApiRequestError) {
     return errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {
@@ -52,8 +61,8 @@ function suspendErrorMessage(error: unknown): string {
         retryable: false,
         title: "Suspension impossible",
       },
-    }).message;
+    });
   }
 
-  return "Une erreur inattendue est survenue. Réessayez ultérieurement.";
+  return errorMapper.map({ kind: "response", status: 500 });
 }

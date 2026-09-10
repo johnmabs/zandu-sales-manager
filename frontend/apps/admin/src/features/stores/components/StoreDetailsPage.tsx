@@ -149,6 +149,7 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
         isLoading={details.isLoading}
         onCancelClosure={() => setCancelClosureDialogOpen(true)}
         onRequestClosure={() => setClosureDialogOpen(true)}
+        onRetry={() => void details.refetch()}
         onSuspend={() => setSuspendDialogOpen(true)}
         store={details.data}
       />

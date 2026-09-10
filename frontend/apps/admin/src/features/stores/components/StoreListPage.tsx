@@ -43,6 +43,7 @@ export function StoreListPage() {
         canCreate={canCreate}
         error={stores.error}
         isLoading={stores.isLoading}
+        onRetry={() => void stores.refetch()}
         stores={stores.data}
       />
     </section>

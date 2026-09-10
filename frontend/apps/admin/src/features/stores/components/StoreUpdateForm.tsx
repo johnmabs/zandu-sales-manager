@@ -1,9 +1,10 @@
 "use client";
 
 import { ApiRequestError, type StoreResource, type StoreUpdateInput } from "@zandu/api-client";
-import { ErrorMapper } from "@zandu/error-contract";
+import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
 import { Button, Input } from "@zandu/ui";
+import { useState } from "react";
 
 import { toUpdateStoreInput, updateStoreSchema } from "../schemas/updateStoreSchema";
 
@@ -18,6 +19,7 @@ type StoreUpdateFormProperties = Readonly<{
 const errorMapper = new ErrorMapper();
 
 export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpdateFormProperties) {
+  const [submissionError, setSubmissionError] = useState<UiError>();
   const form = useZanduForm(updateStoreSchema, {
     defaultValues: {
       address: store.address ?? "",
@@ -30,10 +32,11 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
 
   const submit = form.handleSubmit(async (values) => {
     form.clearErrors("root");
+    setSubmissionError(undefined);
     try {
       await onUpdate(toUpdateStoreInput(values));
     } catch (error: unknown) {
-      applyUpdateStoreErrors(form, error);
+      setSubmissionError(applyUpdateStoreErrors(form, error));
     }
   });
   const isConcurrencyConflict = form.formState.errors.root?.type === "concurrency";
@@ -74,7 +77,12 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
         />
       </label>
       <FieldError message={form.formState.errors.locale?.message} />
-      <FieldError message={form.formState.errors.root?.message} />
+      <FieldError
+        {...(submissionError?.correlationId === undefined
+          ? {}
+          : { correlationId: submissionError.correlationId })}
+        message={form.formState.errors.root?.message}
+      />
       {isConcurrencyConflict ? (
         <Button onClick={onConflictReload} type="button">
           Recharger les données
@@ -90,16 +98,8 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
 function applyUpdateStoreErrors(
   form: ReturnType<typeof useZanduForm<UpdateStoreFormValues>>,
   error: unknown,
-): void {
+): UiError {
   if (error instanceof ApiRequestError) {
-    if (error.apiError.kind === "response" && error.apiError.status === 409) {
-      form.setError("root", {
-        message: "Ce magasin a été modifié entre-temps. Rechargez les données avant de réessayer.",
-        type: "concurrency",
-      });
-      return;
-    }
-
     const mapped = errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {
         message: "La modification est indisponible dans l’état actuel du magasin.",
@@ -107,17 +107,27 @@ function applyUpdateStoreErrors(
         title: "Modification impossible",
       },
     });
+    if (error.apiError.kind === "response" && error.apiError.status === 409) {
+      form.setError("root", {
+        message: "Ce magasin a été modifié entre-temps. Rechargez les données avant de réessayer.",
+        type: "concurrency",
+      });
+      return mapped;
+    }
+
     if (mapped.fieldErrors !== undefined) {
       applyStoreUpdateFieldErrors(form, mapped.fieldErrors);
     }
     form.setError("root", { message: mapped.message, type: "server" });
-    return;
+    return mapped;
   }
 
+  const mapped = errorMapper.map({ kind: "response", status: 500 });
   form.setError("root", {
-    message: "Une erreur inattendue est survenue. Réessayez ultérieurement.",
+    message: mapped.message,
     type: "server",
   });
+  return mapped;
 }
 
 function applyStoreUpdateFieldErrors(
@@ -132,6 +142,14 @@ function applyStoreUpdateFieldErrors(
   }
 }
 
-function FieldError({ message }: Readonly<{ message: string | undefined }>) {
-  return message === undefined ? null : <p role="alert">{message}</p>;
+function FieldError({
+  correlationId,
+  message,
+}: Readonly<{ correlationId?: string; message: string | undefined }>) {
+  return message === undefined ? null : (
+    <div role="alert">
+      <p>{message}</p>
+      {correlationId === undefined ? null : <p>Référence de diagnostic : {correlationId}</p>}
+    </div>
+  );
 }

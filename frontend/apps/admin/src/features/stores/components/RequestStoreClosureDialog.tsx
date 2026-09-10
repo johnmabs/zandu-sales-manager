@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiRequestError } from "@zandu/api-client";
-import { ErrorMapper } from "@zandu/error-contract";
+import { ErrorMapper, type UiError } from "@zandu/error-contract";
 import { Alert, Button, Dialog, Textarea } from "@zandu/ui";
 import { useState } from "react";
 
@@ -26,6 +26,7 @@ export function RequestStoreClosureDialog({
 }: RequestStoreClosureDialogProperties) {
   const [reason, setReason] = useState("");
   const normalizedReason = reason.trim();
+  const errorPresentation = error === undefined ? undefined : closureErrorPresentation(error);
 
   return (
     <Dialog
@@ -43,7 +44,14 @@ export function RequestStoreClosureDialog({
           value={reason}
         />
       </label>
-      {error === undefined ? null : <Alert tone="danger">{closureErrorMessage(error)}</Alert>}
+      {errorPresentation === undefined ? null : (
+        <Alert tone="danger">
+          <p>{errorPresentation.message}</p>
+          {errorPresentation.correlationId === undefined ? null : (
+            <p>Référence de diagnostic : {errorPresentation.correlationId}</p>
+          )}
+        </Alert>
+      )}
       <Button disabled={isRequesting} onClick={onClose} type="button">
         Annuler
       </Button>
@@ -58,7 +66,7 @@ export function RequestStoreClosureDialog({
   );
 }
 
-function closureErrorMessage(error: unknown): string {
+function closureErrorPresentation(error: unknown): UiError {
   if (error instanceof ApiRequestError) {
     return errorMapper.map(error.apiError, {
       DOMAIN_RULE_VIOLATION: {
@@ -66,8 +74,8 @@ function closureErrorMessage(error: unknown): string {
         retryable: false,
         title: "Demande impossible",
       },
-    }).message;
+    });
   }
 
-  return "Une erreur inattendue est survenue. Réessayez ultérieurement.";
+  return errorMapper.map({ kind: "response", status: 500 });
 }

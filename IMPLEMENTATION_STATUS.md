@@ -10587,3 +10587,28 @@ foundation, 1 unitaire, 23 composants, 3 intégration) ; `pnpm lint` OK ;
 `pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): synchronize active store context`.
+
+## Epic F1.13 — Loading, empty and error states
+
+**Statut : TERMINÉ**
+
+- les listes et détails Stores remplacent les spinners de données par des
+  skeletons de table/page annoncés pendant le chargement ; aucune vue de
+  lecture ne reste blanche ;
+- l’état vide de la liste explique toujours le rôle des magasins et propose la
+  création seulement lorsqu’elle est effectivement autorisée ;
+- les erreurs de lecture passent par `ErrorMapper` : permission, ressource
+  absente, conflit métier, réseau et erreur inattendue reçoivent une
+  présentation sûre et cohérente ; les erreurs rejouables proposent un
+  réessai ;
+- les erreurs de formulaires et de dialogues conservent les mappings métier et
+  affichent, lorsque fourni par l’API, le `correlationId` comme référence de
+  diagnostic sans exposer d’information sensible ;
+- les actions en mutation restent explicitement pending et désactivées selon
+  les composants de formulaire et de dialogue déjà établis.
+
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (20 tests
+foundation, 1 unitaire, 24 composants, 3 intégration) ; `pnpm lint` OK ;
+`pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): add explicit loading and error states`.
