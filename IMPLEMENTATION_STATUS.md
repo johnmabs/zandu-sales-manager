@@ -10307,3 +10307,23 @@ localement, mais Next.js ne termine pas sa génération statique dans cet
 environnement ; les builds Admin et POS restent donc deux étapes CI distinctes.
 
 Commit recommandé : `ci(frontend): add full validation pipeline`.
+
+## Epic F1.1 — Stores feature foundation
+
+**Statut : TERMINÉ — frontière Admin Stores prête à accueillir les slices métier**
+
+- la page Next.js `/app/stores` reste une adaptation mince et délègue à la
+  composition de route détenue par `features/stores/routes` ;
+- la feature rassemble son composant temporaire, ses routes et ses points
+  d’extension versionnés pour les adaptateurs API, hooks et schémas ; aucun
+  contrat ou invariant du backend Store n’est anticipé avant les Epics qui en
+  ont besoin ;
+- les tests protègent l’existence de la frontière et la délégation de route,
+  tandis que les règles ESLint du workspace continuent d’interdire aux packages
+  partagés de dépendre d’une application ou de cette feature.
+
+Validations : `pnpm --filter @zandu/admin test` OK (7 tests) ;
+`pnpm test:foundation` OK (19 tests) ; `pnpm --filter @zandu/admin typecheck`
+OK ; `pnpm lint` OK ; `pnpm format:check` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): establish admin feature boundary`.
