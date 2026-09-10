@@ -13,7 +13,6 @@ export type AuthCredentials = Readonly<{
 export type AuthTokens = Readonly<{
   accessToken: string;
   refreshExpiresAt?: string;
-  refreshToken: string;
 }>;
 
 export type AuthAccessScope =
@@ -62,13 +61,13 @@ export type AuthState = Readonly<{
 
 /**
  * The transport owns HTTP and platform-specific credential exchange. The
- * manager deliberately offers no browser storage adapter: access and refresh
- * tokens are retained in memory only.
+ * The access token is retained in memory only. The transport owns the
+ * HttpOnly refresh cookie, which is deliberately inaccessible to JavaScript.
  */
 export interface AuthTransport {
   login(credentials: AuthCredentials): Promise<AuthTokens>;
-  logout(refreshToken: string): Promise<void>;
-  refresh(refreshToken: string): Promise<AuthTokens>;
+  logout(): Promise<void>;
+  refresh(): Promise<AuthTokens>;
   resolveActor(accessToken: string): Promise<AuthActor>;
 }
 
@@ -93,7 +92,6 @@ export class AuthenticationManager {
   private readonly listeners = new Set<AuthStateListener>();
   private refreshInFlight: Promise<AuthState> | undefined;
   private refreshExpiresAt: string | undefined;
-  private refreshToken: string | undefined;
   private readonly transport: AuthTransport;
 
   constructor(transport: AuthTransport) {
@@ -128,17 +126,16 @@ export class AuthenticationManager {
   }
 
   /**
-   * Resolves only a session already supplied by a trusted runtime integration.
-   * It never reads localStorage, sessionStorage or another persistent store.
+   * Restores a browser session by rotating the server-managed HttpOnly cookie
+   * when no access token is currently held in memory.
    */
   async bootstrap(tokens?: AuthTokens): Promise<AuthState> {
     if (tokens !== undefined) {
       this.remember(tokens);
     }
 
-    if (this.accessToken === undefined || this.refreshToken === undefined) {
-      this.clearSession();
-      return this.currentState;
+    if (this.accessToken === undefined) {
+      return this.refresh();
     }
 
     if (isExpired(readJwtMetadata(this.accessToken).expiresAt)) {
@@ -158,14 +155,8 @@ export class AuthenticationManager {
       return this.refreshInFlight;
     }
 
-    const refreshToken = this.refreshToken;
-    if (refreshToken === undefined) {
-      this.clearSession();
-      return this.currentState;
-    }
-
     this.setState({ status: "REFRESHING" });
-    this.refreshInFlight = this.rotate(refreshToken);
+    this.refreshInFlight = this.rotate();
 
     try {
       return await this.refreshInFlight;
@@ -186,20 +177,16 @@ export class AuthenticationManager {
   }
 
   async logout(): Promise<void> {
-    const refreshToken = this.refreshToken;
-
     try {
-      if (refreshToken !== undefined) {
-        await this.transport.logout(refreshToken);
-      }
+      await this.transport.logout();
     } finally {
       this.clearSession();
     }
   }
 
-  private async rotate(refreshToken: string): Promise<AuthState> {
+  private async rotate(): Promise<AuthState> {
     try {
-      return await this.establish(await this.transport.refresh(refreshToken));
+      return await this.establish(await this.transport.refresh());
     } catch (error: unknown) {
       this.clearSession();
       throw error;
@@ -247,13 +234,11 @@ export class AuthenticationManager {
   private remember(tokens: AuthTokens): void {
     this.accessToken = tokens.accessToken;
     this.refreshExpiresAt = tokens.refreshExpiresAt;
-    this.refreshToken = tokens.refreshToken;
   }
 
   private clearSession(): void {
     this.accessToken = undefined;
     this.refreshExpiresAt = undefined;
-    this.refreshToken = undefined;
     this.setState({ status: "UNAUTHENTICATED" });
   }
 

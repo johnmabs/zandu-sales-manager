@@ -57,6 +57,9 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($logout);
         self::assertArrayHasKey('token', $login->getResponses()['200']->getContent()['application/json']->getSchema()['properties']);
         self::assertArrayHasKey('token', $refresh->getResponses()['200']->getContent()['application/json']->getSchema()['properties']);
+        self::assertArrayNotHasKey('refreshToken', $login->getResponses()['200']->getContent()['application/json']->getSchema()['properties']);
+        self::assertNull($refresh->getRequestBody());
+        self::assertNull($logout->getRequestBody());
         self::assertArrayHasKey('204', $logout->getResponses());
         self::assertNull($logout->getResponses()['204']->getContent());
     }

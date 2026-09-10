@@ -66,7 +66,6 @@ describe("ApiClient at the mocked API boundary", () => {
       http.post("https://api.zandu.test/api/auth/login", () =>
         HttpResponse.json({
           refreshExpiresAt: "2026-12-01T00:00:00+00:00",
-          refreshToken: "refresh-token",
           token: accessToken,
         }),
       ),

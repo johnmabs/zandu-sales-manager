@@ -11,8 +11,9 @@ expired session
 invalidated authorizationVersion
 ```
 
-La stratégie exacte de stockage des tokens doit respecter l’ADR sécurité existant.
-
-Ne pas inventer un stockage permanent de credentials côté client.
+Le refresh token est transporté par un cookie `HttpOnly`, `Secure`,
+`SameSite=Strict` géré par Symfony. Il n’est jamais exposé au JavaScript.
+L'access token reste uniquement en mémoire et le bootstrap restaure la session
+en appelant l'endpoint de refresh.
 
 ---

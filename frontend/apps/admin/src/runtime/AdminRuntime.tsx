@@ -15,10 +15,10 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { resolveAdminApiBaseUrl } from "./adminApiBaseUrl";
 
 import type { QueryClient } from "@tanstack/react-query";
+import type { StoreResource } from "@zandu/api-client";
 import type { AuthCredentials, AuthState } from "@zandu/auth";
 import type { OrganizationContextState } from "@zandu/organization-context";
 import type { StoreContextState } from "@zandu/store-context";
-import type { StoreResource } from "@zandu/api-client";
 import type { ReactNode } from "react";
 
 type ContextStatus = "IDLE" | "LOADING" | "READY" | "ERROR";

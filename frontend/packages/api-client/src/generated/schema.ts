@@ -3330,7 +3330,6 @@ export interface operations {
         content: {
           "application/json": {
             token: string;
-            refreshToken: string;
             /** Format: date-time */
             refreshExpiresAt: string;
           };
@@ -3352,14 +3351,7 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    /** @description Current refresh token. */
-    requestBody: {
-      content: {
-        "application/json": {
-          refreshToken: string;
-        };
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description Refresh session revoked. */
       204: {
@@ -3377,14 +3369,7 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    /** @description Current refresh token. */
-    requestBody: {
-      content: {
-        "application/json": {
-          refreshToken: string;
-        };
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description Rotated authentication tokens. */
       200: {
@@ -3394,7 +3379,6 @@ export interface operations {
         content: {
           "application/json": {
             token: string;
-            refreshToken: string;
             /** Format: date-time */
             refreshExpiresAt: string;
           };

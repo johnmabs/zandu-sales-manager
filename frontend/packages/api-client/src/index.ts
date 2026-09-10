@@ -16,8 +16,6 @@ export type SymfonyLoginRequest =
   GeneratedOperations["auth_login"]["requestBody"]["content"]["application/json"];
 export type SymfonyAuthenticationResponse =
   GeneratedOperations["auth_login"]["responses"][200]["content"]["application/json"];
-export type SymfonyRefreshRequest =
-  GeneratedOperations["auth_refresh"]["requestBody"]["content"]["application/json"];
 export type SymfonyCurrentSessionResponse =
   GeneratedComponents["schemas"]["CurrentSessionResource"];
 
@@ -230,13 +228,12 @@ export type CurrentSession = Readonly<{
 export type AuthenticationTokens = Readonly<{
   accessToken: string;
   refreshExpiresAt?: string;
-  refreshToken: string;
 }>;
 
 export type AuthenticationTransport = Readonly<{
   login: (credentials: Readonly<SymfonyLoginRequest>) => Promise<AuthenticationTokens>;
-  logout: (refreshToken: string) => Promise<void>;
-  refresh: (refreshToken: string) => Promise<AuthenticationTokens>;
+  logout: () => Promise<void>;
+  refresh: () => Promise<AuthenticationTokens>;
   resolveActor: (accessToken: string) => Promise<CurrentSession>;
 }>;
 
@@ -252,17 +249,15 @@ export function createAuthenticationTransport(client: ApiClient): Authentication
       });
       return decodeAuthenticationTokens(response.data);
     },
-    async logout(refreshToken) {
+    async logout() {
       await client.request({
-        body: { refreshToken },
         method: "POST",
         path: "auth/logout",
         requiresAuthentication: false,
       });
     },
-    async refresh(refreshToken) {
+    async refresh() {
       const response = await client.request({
-        body: { refreshToken },
         method: "POST",
         path: "auth/refresh",
         requiresAuthentication: false,
@@ -386,8 +381,7 @@ export class FoundationApi {
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
   if (
     !isRecord(value) ||
-    typeof value.token !== "string" ||
-    typeof value.refreshToken !== "string"
+    typeof value.token !== "string"
   ) {
     throw new ApiContractError("The authentication response is invalid.");
   }
@@ -397,7 +391,6 @@ function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
   return {
     accessToken: value.token,
     ...(value.refreshExpiresAt === undefined ? {} : { refreshExpiresAt: value.refreshExpiresAt }),
-    refreshToken: value.refreshToken,
   };
 }
 

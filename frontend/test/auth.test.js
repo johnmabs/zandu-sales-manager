@@ -3,7 +3,6 @@ import test from "node:test";
 
 import {
   AuthenticationManager,
-  AuthenticationRequiredError,
   AuthorizationVersionInvalidatedError,
 } from "../packages/auth/src/index.ts";
 
@@ -47,7 +46,6 @@ function tokens(overrides = {}) {
   return {
     accessToken: token(),
     refreshExpiresAt: "2026-12-01T00:00:00.000Z",
-    refreshToken: "opaque-refresh-token",
     ...overrides,
   };
 }
@@ -56,7 +54,7 @@ function transport(overrides = {}) {
   return {
     login: async () => tokens(),
     logout: async () => undefined,
-    refresh: async () => tokens({ refreshToken: "rotated-refresh-token" }),
+    refresh: async () => tokens(),
     resolveActor: async () => actor,
     ...overrides,
   };
@@ -88,13 +86,30 @@ test("bootstrap stays unresolved until it has built the actor context", async ()
   assert.equal((await bootstrapping).status, "AUTHENTICATED");
 });
 
+test("bootstrap restores a session from the transport-managed refresh cookie", async () => {
+  let refreshCalls = 0;
+  const auth = new AuthenticationManager(
+    transport({
+      refresh: async () => {
+        refreshCalls += 1;
+        return tokens();
+      },
+    }),
+  );
+
+  const state = await auth.bootstrap();
+
+  assert.equal(refreshCalls, 1);
+  assert.equal(state.status, "AUTHENTICATED");
+});
+
 test("bootstrap refreshes an expired access token before authenticating", async () => {
   let refreshCalls = 0;
   const auth = new AuthenticationManager(
     transport({
       refresh: async () => {
         refreshCalls += 1;
-        return tokens({ accessToken: token(), refreshToken: "rotated-refresh-token" });
+        return tokens({ accessToken: token() });
       },
     }),
   );
@@ -127,7 +142,7 @@ test("concurrent expired requests share one refresh and retry with its access to
     auth.refreshAndRetry(async (accessToken) => accessToken),
     auth.refreshAndRetry(async (accessToken) => accessToken),
   ];
-  completeRefresh(tokens({ accessToken: token(), refreshToken: "rotated-refresh-token" }));
+  completeRefresh(tokens({ accessToken: token() }));
 
   const [first, second] = await Promise.all(retries);
   assert.equal(refreshCalls, 1);
@@ -144,10 +159,7 @@ test("a failed refresh clears credentials and requires a new login", async () =>
   await assert.rejects(auth.refresh(), /refresh rejected/);
   assert.equal(auth.getState().status, "UNAUTHENTICATED");
   assert.equal(auth.getAccessToken(), undefined);
-  await assert.rejects(
-    auth.refreshAndRetry(async () => "never"),
-    AuthenticationRequiredError,
-  );
+  await assert.rejects(auth.refreshAndRetry(async () => "never"), /refresh rejected/);
 });
 
 test("an invalidated authorization version clears the stale session", async () => {
@@ -163,15 +175,15 @@ test("an invalidated authorization version clears the stale session", async () =
   assert.equal(auth.getAccessToken(), undefined);
 });
 
-test("logout revokes the current refresh token before clearing the session", async () => {
-  const revoked = [];
+test("logout revokes the transport-managed refresh cookie before clearing the session", async () => {
+  let logoutCalls = 0;
   const auth = new AuthenticationManager(
-    transport({ logout: async (refreshToken) => revoked.push(refreshToken) }),
+    transport({ logout: async () => void (logoutCalls += 1) }),
   );
   await auth.login({ email: "owner@zandu.test", password: "password" });
 
   await auth.logout();
 
-  assert.deepEqual(revoked, ["opaque-refresh-token"]);
+  assert.equal(logoutCalls, 1);
   assert.equal(auth.getState().status, "UNAUTHENTICATED");
 });

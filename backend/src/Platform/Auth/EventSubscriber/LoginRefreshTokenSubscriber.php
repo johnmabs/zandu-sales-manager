@@ -7,6 +7,7 @@ namespace Zandu\Platform\Auth\EventSubscriber;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Zandu\Platform\Auth\Http\RefreshTokenCookie;
 use Zandu\Platform\Auth\Refresh\RefreshSessionManager;
 use Zandu\Platform\Auth\Security\AuthenticatedUser;
 use Zandu\SharedKernel\Identity\OrganizationId;
@@ -16,6 +17,7 @@ final readonly class LoginRefreshTokenSubscriber
 {
     public function __construct(
         private RefreshSessionManager $refreshSessions,
+        private RefreshTokenCookie $refreshTokenCookie,
         private UuidFactory $uuidFactory,
     ) {}
 
@@ -32,8 +34,11 @@ final readonly class LoginRefreshTokenSubscriber
             $user->authorizationVersion(),
         );
 
+        $event->getResponse()->headers->setCookie($this->refreshTokenCookie->create(
+            $refreshToken->token(),
+            $refreshToken->expiresAt(),
+        ));
         $event->setData($event->getData() + [
-            'refreshToken' => $refreshToken->token(),
             'refreshExpiresAt' => $refreshToken->expiresAt()->format(DATE_ATOM),
         ]);
     }

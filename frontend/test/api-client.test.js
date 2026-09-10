@@ -107,7 +107,6 @@ test("Symfony auth transport maps token to accessToken and accepts a 204 logout"
       return new Response(
         JSON.stringify({
           refreshExpiresAt: "2026-12-01T00:00:00+00:00",
-          refreshToken: "refresh-token",
           token: "symfony-jwt",
         }),
         { status: 200 },
@@ -120,15 +119,18 @@ test("Symfony auth transport maps token to accessToken and accepts a 204 logout"
   assert.deepEqual(await auth.login({ email: "owner@example.com", password: "password" }), {
     accessToken: "symfony-jwt",
     refreshExpiresAt: "2026-12-01T00:00:00+00:00",
-    refreshToken: "refresh-token",
   });
-  assert.deepEqual(await auth.refresh("refresh-token"), {
+  assert.deepEqual(await auth.refresh(), {
     accessToken: "symfony-jwt",
     refreshExpiresAt: "2026-12-01T00:00:00+00:00",
-    refreshToken: "refresh-token",
   });
-  await assert.doesNotReject(auth.logout("refresh-token"));
+  await assert.doesNotReject(auth.logout());
   assert.equal(requests.length, 3);
+  assert.deepEqual(requests.map(({ body }) => body), [
+    JSON.stringify({ email: "owner@example.com", password: "password" }),
+    undefined,
+    undefined,
+  ]);
 });
 
 test("idempotent command timeout reports an unknown outcome and preserves server error context", async () => {

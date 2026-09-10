@@ -52,17 +52,11 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
                 'password' => ['type' => 'string', 'format' => 'password'],
             ],
         ];
-        $refreshRequest = [
-            'type' => 'object',
-            'required' => ['refreshToken'],
-            'properties' => ['refreshToken' => ['type' => 'string']],
-        ];
         $tokens = [
             'type' => 'object',
-            'required' => ['token', 'refreshToken', 'refreshExpiresAt'],
+            'required' => ['token', 'refreshExpiresAt'],
             'properties' => [
                 'token' => ['type' => 'string'],
-                'refreshToken' => ['type' => 'string'],
                 'refreshExpiresAt' => ['type' => 'string', 'format' => 'date-time'],
             ],
         ];
@@ -86,7 +80,6 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
                 '401' => new Response('Invalid refresh token.'),
             ],
             summary: 'Rotates a refresh token.',
-            requestBody: new RequestBody('Current refresh token.', $this->jsonContent($refreshRequest), true),
             security: [],
         )));
         $openApi->getPaths()->addPath('/api/auth/logout', new PathItem(post: new Operation(
@@ -94,7 +87,6 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
             tags: ['Authentication'],
             responses: ['204' => new Response('Refresh session revoked.')],
             summary: 'Revokes a refresh session.',
-            requestBody: new RequestBody('Current refresh token.', $this->jsonContent($refreshRequest), true),
             security: [],
         )));
     }

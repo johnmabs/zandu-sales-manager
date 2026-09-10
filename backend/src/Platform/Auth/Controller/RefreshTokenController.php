@@ -12,6 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Zandu\Platform\Api\Exception\ApplicationErrorException;
+use Zandu\Platform\Auth\Http\RefreshTokenCookie;
 use Zandu\Platform\Auth\Refresh\InvalidRefreshToken;
 use Zandu\Platform\Auth\Refresh\RefreshSessionManager;
 use Zandu\Platform\Auth\Security\AuthenticatedUser;
@@ -26,6 +27,7 @@ final readonly class RefreshTokenController
         private RefreshSessionManager $refreshSessions,
         private JWTTokenManagerInterface $jwtTokens,
         private UserProviderInterface $userProvider,
+        private RefreshTokenCookie $refreshTokenCookie,
     ) {}
 
     #[Route('/api/auth/refresh', name: 'api_auth_refresh', methods: ['POST'])]
@@ -46,13 +48,18 @@ final readonly class RefreshTokenController
             throw $this->invalidRefreshToken();
         }
 
-        return new JsonResponse([
+        $response = new JsonResponse([
             'token' => $this->jwtTokens->createFromPayload($user, [
                 'sessionId' => $rotated->sessionId()->toString(),
             ]),
-            'refreshToken' => $rotated->token(),
             'refreshExpiresAt' => $rotated->expiresAt()->format(DATE_ATOM),
         ]);
+        $response->headers->setCookie($this->refreshTokenCookie->create(
+            $rotated->token(),
+            $rotated->expiresAt(),
+        ));
+
+        return $response;
     }
 
     #[Route('/api/auth/logout', name: 'api_auth_logout', methods: ['POST'])]
@@ -64,13 +71,15 @@ final readonly class RefreshTokenController
             throw $this->invalidRefreshToken();
         }
 
-        return new Response(status: Response::HTTP_NO_CONTENT);
+        $response = new Response(status: Response::HTTP_NO_CONTENT);
+        $response->headers->setCookie($this->refreshTokenCookie->clear());
+
+        return $response;
     }
 
     private function tokenFromRequest(Request $request): string
     {
-        $payload = json_decode($request->getContent(), true);
-        $token = is_array($payload) ? ($payload['refreshToken'] ?? null) : null;
+        $token = $request->cookies->get(RefreshTokenCookie::NAME);
 
         if (!is_string($token) || '' === $token) {
             throw $this->invalidRefreshToken();

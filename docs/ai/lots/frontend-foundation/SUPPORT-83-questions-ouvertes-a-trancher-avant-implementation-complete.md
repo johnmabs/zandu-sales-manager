@@ -51,11 +51,10 @@ standardize
 
 ---
 
-## OUVERT — Token storage details
+## DÉCIDÉ — Token storage details
 
-Doivent être alignés avec l’ADR JWT/security réel.
-
-Le document Foundation ne modifie pas cette décision silencieusement.
+Le refresh token utilise un cookie `HttpOnly`, `Secure`, `SameSite=Strict`
+same-origin. L'access token reste uniquement en mémoire. Voir ADR-0006.
 
 ---
 
