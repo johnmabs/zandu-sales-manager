@@ -173,6 +173,40 @@ test("FoundationApi sends a closure request to the dedicated workflow endpoint",
   });
 });
 
+test("FoundationApi cancels a closure through the published endpoint without a payload", async () => {
+  let request;
+  const client = new ApiClient({
+    config,
+    fetchImplementation: async (url, init) => {
+      request = { init, url };
+      return new Response(
+        JSON.stringify({
+          address: null,
+          code: "CENTRE",
+          currency: "XAF",
+          id: "store-1",
+          locale: "fr_CG",
+          name: "Centre-ville",
+          organizationId: "organization-1",
+          status: "ACTIVE",
+          timeZone: "Africa/Brazzaville",
+          updatedAt: "2026-09-10T08:00:00+00:00",
+          version: 3,
+        }),
+        { status: 201 },
+      );
+    },
+    generateCorrelationId: () => "correlation",
+  });
+
+  const store = await new FoundationApi(client).cancelStoreClosure("store-1");
+
+  assert.equal(request.url, "https://api.zandu.test/stores/store-1/closure-request/cancel");
+  assert.equal(request.init.method, "POST");
+  assert.equal(request.init.body, undefined);
+  assert.equal(store.status, "ACTIVE");
+});
+
 test("idempotent command timeout reports an unknown outcome and preserves server error context", async () => {
   const timeoutClient = new ApiClient({
     config,

@@ -405,6 +405,15 @@ export class FoundationApi {
 
     return decodeStoreClosure(response.data);
   }
+
+  async cancelStoreClosure(storeId: string): Promise<StoreResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `stores/${encodeURIComponent(storeId)}/closure-request/cancel`,
+    });
+
+    return decodeStore(response.data);
+  }
 }
 
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {

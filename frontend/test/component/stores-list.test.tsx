@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
 import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
 import {
@@ -73,7 +74,13 @@ describe("StoreDetails", () => {
   it("renders the published profile, closure state, and status-permitted actions", () => {
     render(
       <StoreDetails
-        actions={{ edit: true, reactivate: false, requestClosure: true, suspend: true }}
+        actions={{
+          cancelClosure: false,
+          edit: true,
+          reactivate: false,
+          requestClosure: true,
+          suspend: true,
+        }}
         isLoading={false}
         store={{ ...store, address: "12 avenue du Port" }}
       />,
@@ -104,7 +111,13 @@ describe("StoreDetails", () => {
   it("presents the closure workflow response without treating it as a Store status patch", () => {
     render(
       <StoreDetails
-        actions={{ edit: false, reactivate: false, requestClosure: false, suspend: false }}
+        actions={{
+          cancelClosure: true,
+          edit: false,
+          reactivate: false,
+          requestClosure: false,
+          suspend: false,
+        }}
         closure={{
           blockers: ["OPEN_CASH_SESSION"],
           id: "closure-1",
@@ -115,18 +128,26 @@ describe("StoreDetails", () => {
           version: 1,
         }}
         isLoading={false}
+        onCancelClosure={vi.fn()}
         store={{ ...store, status: "CLOSURE_PENDING" }}
       />,
     );
 
     expect(screen.getByText("Statut de la demande : IN_PROGRESS.")).toBeTruthy();
     expect(screen.getByText("Une session de caisse est encore ouverte.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Annuler la fermeture" })).toBeTruthy();
   });
 
   it("maps known closure blockers and keeps unknown codes safely diagnosable", () => {
     render(
       <StoreDetails
-        actions={{ edit: false, reactivate: false, requestClosure: false, suspend: false }}
+        actions={{
+          cancelClosure: false,
+          edit: false,
+          reactivate: false,
+          requestClosure: false,
+          suspend: false,
+        }}
         closure={{
           blockers: ["OPEN_STOCK_COUNT", "FUTURE_BLOCKER"],
           id: "closure-1",
@@ -152,7 +173,13 @@ describe("StoreDetails", () => {
   it("explains when the closure response contains no blocker", () => {
     render(
       <StoreDetails
-        actions={{ edit: false, reactivate: false, requestClosure: false, suspend: false }}
+        actions={{
+          cancelClosure: false,
+          edit: false,
+          reactivate: false,
+          requestClosure: false,
+          suspend: false,
+        }}
         closure={{
           blockers: [],
           id: "closure-1",
@@ -168,6 +195,49 @@ describe("StoreDetails", () => {
     );
 
     expect(screen.getByText("Aucun blocker n’a été signalé.")).toBeTruthy();
+  });
+});
+
+describe("CancelStoreClosureDialog", () => {
+  it("requires explicit confirmation and explains the resulting Store state", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    const view = render(
+      <CancelStoreClosureDialog
+        isCancelling={false}
+        onClose={vi.fn()}
+        onConfirm={onConfirm}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Annuler la fermeture du magasin" }),
+    );
+
+    expect(dialog.getByText(/le magasin redeviendra actif/)).toBeTruthy();
+    await user.click(dialog.getByRole("button", { name: "Confirmer l’annulation" }));
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
+
+  it("locks cancellation controls while the mutation is pending", () => {
+    const view = render(
+      <CancelStoreClosureDialog
+        isCancelling
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Annuler la fermeture du magasin" }),
+    );
+
+    expect(dialog.getByRole("button", { name: "Retour" }).hasAttribute("disabled")).toBe(true);
+    expect(
+      dialog.getByRole("button", { name: "Annulation en cours" }).hasAttribute("disabled"),
+    ).toBe(true);
   });
 });
 

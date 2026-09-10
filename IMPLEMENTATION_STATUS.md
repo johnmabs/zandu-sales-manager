@@ -10507,7 +10507,7 @@ Commit recommandé : `feat(stores): present store closure blockers`.
 
 ## Epic F1.10 — Cancel Store Closure
 
-**Statut : À FAIRE — endpoint backend disponible, intégration Admin restante**
+**Statut : TERMINÉ**
 
 - le backend expose désormais explicitement
   `POST /api/stores/{id}/closure-request/cancel`, sans payload, via l’opération
@@ -10515,12 +10515,25 @@ Commit recommandé : `feat(stores): present store closure blockers`.
 - l’opération réutilise `CancelStoreClosureHandler`, avec ses contrôles
   d’autorisation, d’isolation tenant et de lifecycle, puis retourne la
   projection Store redevenue `ACTIVE` ;
-- l’intégration dans l’Admin reste la prochaine unité F1.10 à réaliser ; aucune
-  mutation frontend n’est ajoutée par ce changement backend.
+- le client API Admin consomme uniquement cet endpoint explicite, sans payload,
+  et décode la projection Store retournée ;
+- le détail propose « Annuler la fermeture » uniquement pour un Store
+  `CLOSURE_PENDING` lorsque la permission `STORE_CLOSE` est accordée ;
+- une confirmation dédiée explique le retour à l’état actif, verrouille ses
+  contrôles pendant la requête et conserve le contexte en cas d’erreur ;
+- après succès, la projection Store retournée synchronise le StoreContext, la
+  demande locale est retirée, les caches détail/liste sont invalidés et
+  rafraîchis, puis une notification confirme l’annulation ;
+- les tests couvrent le contrat HTTP exact, le décodage de la réponse, la
+  visibilité de l’action et le comportement de la confirmation.
 
-Validations backend : PHPUnit ciblé OK (28 tests, 235 assertions) ; PHPStan
-ciblé OK ; PHP-CS-Fixer ciblé OK ; Deptrac layers et modules 0 violation ;
-OpenAPI et workflow multi-store couvrent l’opération d’annulation explicite et
-son isolation cross-tenant.
+Validations backend conservées : PHPUnit ciblé OK (28 tests, 235 assertions) ;
+PHPStan ciblé OK ; PHP-CS-Fixer ciblé OK ; Deptrac layers et modules 0
+violation ; OpenAPI et workflow multi-store couvrent l’opération d’annulation
+explicite et son isolation cross-tenant.
 
-Commit recommandé : `feat(api): expose store closure cancellation endpoint`.
+Validations frontend : `pnpm typecheck` OK ; `pnpm test` OK (19 tests
+foundation, 1 unitaire, 21 composants, 3 intégration) ; `pnpm lint` OK ;
+`pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): add store closure cancellation workflow`.

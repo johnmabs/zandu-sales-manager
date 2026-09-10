@@ -9,6 +9,7 @@ import { StoreClosureBlockers } from "./StoreClosureBlockers";
 import type { StoreClosureResource, StoreResource } from "@zandu/api-client";
 
 export type StoreActionAvailability = Readonly<{
+  cancelClosure: boolean;
   edit: boolean;
   reactivate: boolean;
   requestClosure: boolean;
@@ -20,6 +21,7 @@ type StoreDetailsProperties = Readonly<{
   closure?: StoreClosureResource;
   error?: unknown | undefined;
   isLoading: boolean;
+  onCancelClosure?: () => void;
   onSuspend?: () => void;
   onRequestClosure?: () => void;
   store?: StoreResource | undefined;
@@ -30,6 +32,7 @@ export function StoreDetails({
   closure,
   error,
   isLoading,
+  onCancelClosure,
   onSuspend,
   onRequestClosure,
   store,
@@ -84,6 +87,7 @@ export function StoreDetails({
       </section>
       <AvailableActions
         actions={actions}
+        {...(onCancelClosure === undefined ? {} : { onCancelClosure })}
         {...(onSuspend === undefined ? {} : { onSuspend })}
         {...(onRequestClosure === undefined ? {} : { onRequestClosure })}
         storeId={store.id}
@@ -120,16 +124,19 @@ export function storeDetailsErrorPresentation(error: unknown): Readonly<{
 
 function AvailableActions({
   actions,
+  onCancelClosure,
   onSuspend,
   onRequestClosure,
   storeId,
 }: Readonly<{
   actions: StoreActionAvailability;
+  onCancelClosure?: () => void;
   onRequestClosure?: () => void;
   onSuspend?: () => void;
   storeId: string;
 }>) {
   const labels = [
+    ...(actions.cancelClosure ? ["Annuler la fermeture"] : []),
     ...(actions.edit ? ["Modifier"] : []),
     ...(actions.suspend ? ["Suspendre"] : []),
     ...(actions.reactivate ? ["Réactiver"] : []),
@@ -154,6 +161,10 @@ function AvailableActions({
               </Button>
             ) : label === "Demander la fermeture" && onRequestClosure !== undefined ? (
               <Button onClick={onRequestClosure} type="button">
+                {label}
+              </Button>
+            ) : label === "Annuler la fermeture" && onCancelClosure !== undefined ? (
+              <Button onClick={onCancelClosure} type="button">
                 {label}
               </Button>
             ) : (
