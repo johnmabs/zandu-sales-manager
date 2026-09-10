@@ -159,7 +159,10 @@ test("a failed refresh clears credentials and requires a new login", async () =>
   await assert.rejects(auth.refresh(), /refresh rejected/);
   assert.equal(auth.getState().status, "UNAUTHENTICATED");
   assert.equal(auth.getAccessToken(), undefined);
-  await assert.rejects(auth.refreshAndRetry(async () => "never"), /refresh rejected/);
+  await assert.rejects(
+    auth.refreshAndRetry(async () => "never"),
+    /refresh rejected/,
+  );
 });
 
 test("an invalidated authorization version clears the stale session", async () => {
