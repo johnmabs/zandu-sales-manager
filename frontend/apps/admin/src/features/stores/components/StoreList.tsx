@@ -1,11 +1,12 @@
 "use client";
 
-import { Badge, EmptyState, Skeleton } from "@zandu/ui";
+import { EmptyState, Skeleton } from "@zandu/ui";
 import Link from "next/link";
 
 import { AdminTable } from "../../../components/tables/AdminTable";
 
 import { StoreErrorState, storeErrorPresentation } from "./StoreErrorState";
+import { StoreStatusBadge } from "./StoreStatusBadge";
 
 import type { AdminTableColumn } from "../../../components/tables/AdminTable";
 import type { StoreResource } from "@zandu/api-client";
@@ -25,7 +26,7 @@ const columns: readonly AdminTableColumn<StoreResource>[] = [
   },
   { cell: (store) => store.code, header: "Code", id: "code" },
   {
-    cell: (store) => <StoreStatus status={store.status} />,
+    cell: (store) => <StoreStatusBadge status={store.status} />,
     header: "Statut",
     id: "status",
   },
@@ -92,15 +93,4 @@ export function storeListErrorPresentation(error: unknown): Readonly<{
 }> {
   const presentation = storeErrorPresentation(error, "list");
   return { description: presentation.description, title: presentation.title };
-}
-
-function StoreStatus({ status }: Pick<StoreResource, "status">) {
-  const tone =
-    status === "ACTIVE"
-      ? "success"
-      : status === "SUSPENDED" || status === "CLOSURE_PENDING"
-        ? "warning"
-        : "neutral";
-
-  return <Badge tone={tone}>{status}</Badge>;
 }

@@ -10683,3 +10683,22 @@ foundation, 1 unitaire, 29 composants, 3 intégration ; 8 tests Admin) ;
 `git diff --check` OK.
 
 Commit recommandé : `feat(stores): improve accessible store workflows`.
+
+## Epic F1.17 — Unit and component tests
+
+**Statut : TERMINÉ — couverture ciblée des composants et mappings Stores**
+
+- `StoreStatusBadge` est désormais un composant partagé par la liste et le
+  détail ; ses tons couvrent les quatre statuts publiés par le contrat ;
+- les tests unitaires vérifient les payloads Create/Update contractuels, sans
+  dupliquer les règles métier serveur, ainsi que le mapping des blockers connus
+  et inconnus et les présentations d’erreur `403`/`404` ;
+- les tests composants existants couvrent le rendu conditionné des actions et
+  permissions, la validation et les erreurs API des formulaires, tandis que la
+  suite dédiée couvre le badge de statut.
+
+Validations frontend : `pnpm test:unit` OK (6 tests) ; `pnpm test:component`
+OK (33 tests) ; `pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ;
+`pnpm build` OK ; `git diff --check` OK.
+
+Commit recommandé : `test(stores): add unit and component coverage`.

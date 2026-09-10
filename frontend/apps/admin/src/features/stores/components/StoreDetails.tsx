@@ -1,10 +1,11 @@
 "use client";
 
-import { Badge, Button, ErrorState, Skeleton } from "@zandu/ui";
+import { Button, ErrorState, Skeleton } from "@zandu/ui";
 import Link from "next/link";
 
 import { StoreClosureBlockers } from "./StoreClosureBlockers";
 import { StoreErrorState, storeErrorPresentation } from "./StoreErrorState";
+import { StoreStatusBadge } from "./StoreStatusBadge";
 
 import type { StoreClosureResource, StoreResource } from "@zandu/api-client";
 
@@ -67,7 +68,7 @@ export function StoreDetails({
       <header className="zandu-store-details__header">
         <h1>{store.name}</h1>
         <p>Code : {store.code}</p>
-        <StoreStatus status={store.status} />
+        <StoreStatusBadge status={store.status} />
       </header>
       <section aria-labelledby="store-profile-title" className="zandu-store-details__section">
         <h2 id="store-profile-title">Profil</h2>
@@ -175,15 +176,4 @@ function AvailableActions({
       </ul>
     </section>
   );
-}
-
-function StoreStatus({ status }: Pick<StoreResource, "status">) {
-  const tone =
-    status === "ACTIVE"
-      ? "success"
-      : status === "SUSPENDED" || status === "CLOSURE_PENDING"
-        ? "warning"
-        : "neutral";
-
-  return <Badge tone={tone}>{status}</Badge>;
 }
