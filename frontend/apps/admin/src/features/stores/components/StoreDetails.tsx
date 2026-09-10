@@ -4,6 +4,8 @@ import { ApiRequestError } from "@zandu/api-client";
 import { Badge, Button, ErrorState, Spinner } from "@zandu/ui";
 import Link from "next/link";
 
+import { StoreClosureBlockers } from "./StoreClosureBlockers";
+
 import type { StoreClosureResource, StoreResource } from "@zandu/api-client";
 
 export type StoreActionAvailability = Readonly<{
@@ -78,13 +80,7 @@ export function StoreDetails({
               : "Aucune demande de fermeture en cours."
             : `Statut de la demande : ${closure.status}.`}
         </p>
-        {closure === undefined ? null : (
-          <p>
-            {closure.blockers.length === 0
-              ? "Aucun blocker n’a été signalé."
-              : `${closure.blockers.length} blocker(s) ont été signalés.`}
-          </p>
-        )}
+        {closure === undefined ? null : <StoreClosureBlockers blockers={closure.blockers} />}
       </section>
       <AvailableActions
         actions={actions}

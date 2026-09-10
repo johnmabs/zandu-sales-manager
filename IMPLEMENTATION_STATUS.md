@@ -10477,8 +10477,30 @@ Commit recommandé : `feat(stores): add store suspension workflow`.
 Validations : `pnpm --filter @zandu/api-client typecheck` OK ;
 `pnpm --filter @zandu/admin typecheck` OK ; `pnpm test:foundation` OK (19 tests) ;
 `pnpm test:component -- stores-list.test.tsx` OK (17 tests) ; `pnpm lint` OK ;
-Prettier ciblé F1.8 OK ; `pnpm --filter @zandu/admin build` OK ;
-`git diff --check` OK. Le contrôle Prettier global reste en échec sur
-`test/auth.test.js`, écart préexistant hors de cette tranche.
+`pnpm format:check` OK ; `pnpm --filter @zandu/admin build` OK ;
+`git diff --check` OK.
 
 Commit recommandé : `feat(stores): add store closure request workflow`.
+
+## Epic F1.9 — Store Closure blockers
+
+**Statut : TERMINÉ — blockers StoreClosure présentés depuis le contrat API**
+
+- les codes effectivement fournis par Symfony sont traduits en textes utiles :
+  `OPEN_STOCK_COUNT`, `OPEN_CASH_SESSION`, `OPEN_PURCHASE_ORDER`,
+  `DRAFT_GOODS_RECEIPT`, `OPEN_PURCHASE_RETURN` et
+  `OPEN_GOODS_RECEIPT_CORRECTION` ;
+- aucun blocker n’est recalculé côté frontend et aucun écran Inventory, Cash ou
+  Purchasing n’est ajouté ;
+- un code inconnu reçoit un message sûr contenant son code diagnostic, ce qui
+  maintient l’interface fonctionnelle et permet l’investigation sans inventer
+  de règle métier ;
+- le détail distingue explicitement l’absence de blocker de la liste des
+  éléments à résoudre.
+
+Validations : `pnpm --filter @zandu/admin typecheck` OK ;
+`pnpm test:component -- stores-list.test.tsx` OK (19 tests) ; `pnpm lint` OK ;
+`pnpm test:foundation` OK (19 tests) ; `pnpm format:check` OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(stores): present store closure blockers`.

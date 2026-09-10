@@ -120,7 +120,54 @@ describe("StoreDetails", () => {
     );
 
     expect(screen.getByText("Statut de la demande : IN_PROGRESS.")).toBeTruthy();
-    expect(screen.getByText("1 blocker(s) ont été signalés.")).toBeTruthy();
+    expect(screen.getByText("Une session de caisse est encore ouverte.")).toBeTruthy();
+  });
+
+  it("maps known closure blockers and keeps unknown codes safely diagnosable", () => {
+    render(
+      <StoreDetails
+        actions={{ edit: false, reactivate: false, requestClosure: false, suspend: false }}
+        closure={{
+          blockers: ["OPEN_STOCK_COUNT", "FUTURE_BLOCKER"],
+          id: "closure-1",
+          reason: "Fin d’activité",
+          requestedAt: "2026-09-10T08:00:00+00:00",
+          status: "IN_PROGRESS",
+          storeId: "store-1",
+          version: 1,
+        }}
+        isLoading={false}
+        store={{ ...store, status: "CLOSURE_PENDING" }}
+      />,
+    );
+
+    expect(screen.getByText("Un inventaire est encore ouvert.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Un élément opérationnel doit être résolu avant la fermeture (code diagnostic : FUTURE_BLOCKER).",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("explains when the closure response contains no blocker", () => {
+    render(
+      <StoreDetails
+        actions={{ edit: false, reactivate: false, requestClosure: false, suspend: false }}
+        closure={{
+          blockers: [],
+          id: "closure-1",
+          reason: "Fin d’activité",
+          requestedAt: "2026-09-10T08:00:00+00:00",
+          status: "READY",
+          storeId: "store-1",
+          version: 1,
+        }}
+        isLoading={false}
+        store={{ ...store, status: "CLOSURE_PENDING" }}
+      />,
+    );
+
+    expect(screen.getByText("Aucun blocker n’a été signalé.")).toBeTruthy();
   });
 });
 
