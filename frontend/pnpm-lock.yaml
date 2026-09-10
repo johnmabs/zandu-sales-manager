@@ -74,6 +74,12 @@ importers:
       '@zandu/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@zandu/error-contract':
+        specifier: workspace:*
+        version: link:../../packages/error-contract
+      '@zandu/forms':
+        specifier: workspace:*
+        version: link:../../packages/forms
       '@zandu/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications

@@ -297,6 +297,15 @@ export type StoreResource = Readonly<{
   timeZone: string;
 }>;
 
+export type StoreCreateInput = Readonly<{
+  address: string | null;
+  code: string;
+  currency: string;
+  locale: string;
+  name: string;
+  timeZone: string;
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -337,6 +346,12 @@ export class FoundationApi {
       access.accessibleStoreIds.includes(store.id)
       ? store
       : undefined;
+  }
+
+  async createStore(input: StoreCreateInput): Promise<StoreResource> {
+    const response = await this.client.request({ body: input, method: "POST", path: "stores" });
+
+    return decodeStore(response.data);
   }
 }
 

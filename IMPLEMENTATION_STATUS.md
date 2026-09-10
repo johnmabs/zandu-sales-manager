@@ -10375,3 +10375,28 @@ détail hors tenant masqué inclus) ; `pnpm test` OK ; typechecks Admin,
 `pnpm format:check` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add tenant-scoped store details`.
+
+## Epic F1.4 — Create Store
+
+**Statut : TERMINÉ — création Store tenant-scoped avec retour cohérent vers la collection**
+
+- la route `/app/stores/new` expose le formulaire de création uniquement aux
+  utilisateurs ayant `STORE_CREATE` dans l’organisation active ; ses valeurs
+  initiales reprennent la devise, la langue et le fuseau horaire publiés par
+  cette organisation ;
+- le client appelle `POST /api/stores` avec les seuls champs du contrat, en
+  normalisant une adresse vide à `null`. Aucun `Idempotency-Key` n’est envoyé :
+  l’opération OpenAPI ne déclare pas cet en-tête ;
+- les erreurs de validation par champ sont conservées sur le formulaire ; le
+  conflit de code, la restriction opérationnelle, les refus et les erreurs
+  réseau passent par le contrat d’erreurs avec des messages adaptés ;
+- après succès, la collection Stores de l’organisation et de la version
+  d’autorisation courantes est invalidée puis rechargée, une notification est
+  affichée et la navigation mène au détail du nouveau magasin.
+
+Validations : `pnpm test:component -- stores-list.test.tsx` OK (10 tests) ;
+`pnpm test:integration -- api-client.test.ts` OK (3 tests) ; `pnpm test` OK ;
+`pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(stores): add store creation workflow`.

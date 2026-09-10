@@ -147,6 +147,30 @@ describe("ApiClient at the mocked API boundary", () => {
           timeZone: "Africa/Brazzaville",
         }),
       ),
+      http.post("https://api.zandu.test/api/stores", async ({ request }) => {
+        expect(await request.json()).toEqual({
+          address: null,
+          code: "NOUVEAU",
+          currency: "XAF",
+          locale: "fr_CG",
+          name: "Nouveau magasin",
+          timeZone: "Africa/Brazzaville",
+        });
+        return HttpResponse.json(
+          {
+            address: null,
+            code: "NOUVEAU",
+            currency: "XAF",
+            id: "store-new",
+            locale: "fr_CG",
+            name: "Nouveau magasin",
+            organizationId,
+            status: "ACTIVE",
+            timeZone: "Africa/Brazzaville",
+          },
+          { status: 201 },
+        );
+      }),
     );
     const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
     const auth = new AuthenticationManager(
@@ -180,6 +204,16 @@ describe("ApiClient at the mocked API boundary", () => {
     await expect(
       api.getAccessibleStore("store-other-organization", authState.actor.effectiveAccess),
     ).resolves.toBeUndefined();
+    await expect(
+      api.createStore({
+        address: null,
+        code: "NOUVEAU",
+        currency: "XAF",
+        locale: "fr_CG",
+        name: "Nouveau magasin",
+        timeZone: "Africa/Brazzaville",
+      }),
+    ).resolves.toMatchObject({ id: "store-new" });
   });
 });
 

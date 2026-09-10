@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
 import {
   StoreDetails,
   storeDetailsErrorPresentation,
@@ -90,5 +92,85 @@ describe("StoreDetails", () => {
       storeDetailsErrorPresentation(new ApiRequestError({ kind: "response", status: 403 }, false))
         .title,
     ).toBe("Accès refusé");
+  });
+});
+
+describe("StoreCreateForm", () => {
+  it("submits only the published creation payload and normalizes an empty address to null", async () => {
+    const user = userEvent.setup();
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    const view = render(
+      <StoreCreateForm
+        defaults={{ currency: "XAF", locale: "fr_CG", timeZone: "Africa/Brazzaville" }}
+        onCreate={onCreate}
+      />,
+    );
+
+    const form = within(view.container);
+    await user.type(form.getByLabelText("Code"), "CENTRE");
+    await user.type(form.getByLabelText("Nom"), "Centre-ville");
+    await user.click(form.getByRole("button", { name: "Créer le magasin" }));
+
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith({
+        address: null,
+        code: "CENTRE",
+        currency: "XAF",
+        locale: "fr_CG",
+        name: "Centre-ville",
+        timeZone: "Africa/Brazzaville",
+      }),
+    );
+  });
+
+  it("preserves server validation errors on their corresponding fields", async () => {
+    const user = userEvent.setup();
+    const view = render(
+      <StoreCreateForm
+        defaults={{ currency: "XAF", locale: "fr_CG", timeZone: "Africa/Brazzaville" }}
+        onCreate={async () => {
+          throw new ApiRequestError(
+            {
+              code: "VALIDATION_ERROR",
+              fieldErrors: { code: ["Le code doit être renseigné."] },
+              kind: "response",
+              status: 400,
+            },
+            false,
+          );
+        }}
+      />,
+    );
+
+    const form = within(view.container);
+    await user.type(form.getByLabelText("Code"), "CENTRE");
+    await user.type(form.getByLabelText("Nom"), "Centre-ville");
+    await user.click(form.getByRole("button", { name: "Créer le magasin" }));
+
+    expect(await form.findByText("Le code doit être renseigné.")).toBeTruthy();
+    expect(
+      form.getByText("Certaines informations sont invalides. Corrigez les champs indiqués."),
+    ).toBeTruthy();
+  });
+
+  it("maps a duplicate code conflict to the creation-specific message", async () => {
+    const user = userEvent.setup();
+    const view = render(
+      <StoreCreateForm
+        defaults={{ currency: "XAF", locale: "fr_CG", timeZone: "Africa/Brazzaville" }}
+        onCreate={async () => {
+          throw new ApiRequestError({ code: "CONFLICT", kind: "response", status: 409 }, false);
+        }}
+      />,
+    );
+    const form = within(view.container);
+
+    await user.type(form.getByLabelText("Code"), "CENTRE");
+    await user.type(form.getByLabelText("Nom"), "Centre-ville");
+    await user.click(form.getByRole("button", { name: "Créer le magasin" }));
+
+    expect(
+      await form.findByText("Ce code de magasin est déjà utilisé dans l’organisation."),
+    ).toBeTruthy();
   });
 });

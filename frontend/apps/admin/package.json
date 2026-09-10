@@ -17,6 +17,8 @@
     "@zandu/authorization": "workspace:*",
     "@zandu/config": "workspace:*",
     "@zandu/design-tokens": "workspace:*",
+    "@zandu/error-contract": "workspace:*",
+    "@zandu/forms": "workspace:*",
     "@zandu/notifications": "workspace:*",
     "@zandu/organization-context": "workspace:*",
     "@zandu/server-state": "workspace:*",
