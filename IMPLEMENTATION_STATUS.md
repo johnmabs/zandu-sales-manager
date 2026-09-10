@@ -10504,3 +10504,20 @@ Validations : `pnpm --filter @zandu/admin typecheck` OK ;
 `git diff --check` OK.
 
 Commit recommandé : `feat(stores): present store closure blockers`.
+
+## Epic F1.10 — Cancel Store Closure
+
+**Statut : DIFFÉRÉ — aucun endpoint HTTP d’annulation exposé par le contrat**
+
+- l’OpenAPI courant expose uniquement `POST /api/stores/{id}/closure-request`
+  pour ce workflow ; aucun endpoint ou operationId d’annulation n’est généré ;
+- la ressource API Platform `StoreResource` ne déclare elle aussi qu’une
+  opération `store_closure_request` ;
+- conformément à la règle de décision F1.10, aucune URL, mutation ou PATCH
+  Store n’est inventé côté Admin. L’Epic reprendra lorsqu’un endpoint
+  d’annulation explicite sera publié dans le contrat.
+
+Validation : inspection du contrat OpenAPI généré et des opérations API
+Platform Store, confirmant l’absence de l’opération requise.
+
+Commit recommandé : `docs(status): defer store closure cancellation pending API`.
