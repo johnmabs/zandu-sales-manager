@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   ApiClient,
   ApiRequestError,
+  FoundationApi,
   createAuthenticationTransport,
 } from "../packages/api-client/src/index.ts";
 import { publicRuntimeConfig } from "../packages/config/src/index.ts";
@@ -126,11 +127,50 @@ test("Symfony auth transport maps token to accessToken and accepts a 204 logout"
   });
   await assert.doesNotReject(auth.logout());
   assert.equal(requests.length, 3);
-  assert.deepEqual(requests.map(({ body }) => body), [
-    JSON.stringify({ email: "owner@example.com", password: "password" }),
-    undefined,
-    undefined,
-  ]);
+  assert.deepEqual(
+    requests.map(({ body }) => body),
+    [JSON.stringify({ email: "owner@example.com", password: "password" }), undefined, undefined],
+  );
+});
+
+test("FoundationApi sends a closure request to the dedicated workflow endpoint", async () => {
+  let request;
+  const client = new ApiClient({
+    config,
+    fetchImplementation: async (url, init) => {
+      request = { init, url };
+      return new Response(
+        JSON.stringify({
+          blockers: ["OPEN_CASH_SESSION"],
+          id: "closure-1",
+          reason: "Fin d’activité",
+          requestedAt: "2026-09-10T08:00:00+00:00",
+          status: "IN_PROGRESS",
+          storeId: "store-1",
+          version: 1,
+        }),
+        { status: 201 },
+      );
+    },
+    generateCorrelationId: () => "correlation",
+  });
+
+  const closure = await new FoundationApi(client).requestStoreClosure("store-1", {
+    reason: "Fin d’activité",
+  });
+
+  assert.equal(request.url, "https://api.zandu.test/stores/store-1/closure-request");
+  assert.equal(request.init.method, "POST");
+  assert.equal(request.init.body, JSON.stringify({ reason: "Fin d’activité" }));
+  assert.deepEqual(closure, {
+    blockers: ["OPEN_CASH_SESSION"],
+    id: "closure-1",
+    reason: "Fin d’activité",
+    requestedAt: "2026-09-10T08:00:00+00:00",
+    status: "IN_PROGRESS",
+    storeId: "store-1",
+    version: 1,
+  });
 });
 
 test("idempotent command timeout reports an unknown outcome and preserves server error context", async () => {

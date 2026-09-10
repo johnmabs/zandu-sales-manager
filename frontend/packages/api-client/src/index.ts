@@ -310,6 +310,22 @@ export type StoreUpdateInput = Readonly<{
   timeZone: string;
 }>;
 
+export type StoreClosureRequestInput = Readonly<{
+  reason: string;
+}>;
+
+export type StoreClosureStatus = "REQUESTED" | "IN_PROGRESS" | "READY" | "COMPLETED" | "CANCELLED";
+
+export type StoreClosureResource = Readonly<{
+  blockers: readonly string[];
+  id: string;
+  reason: string;
+  requestedAt: string;
+  status: StoreClosureStatus;
+  storeId: string;
+  version: number;
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -376,13 +392,23 @@ export class FoundationApi {
 
     return decodeStore(response.data);
   }
+
+  async requestStoreClosure(
+    storeId: string,
+    input: StoreClosureRequestInput,
+  ): Promise<StoreClosureResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `stores/${encodeURIComponent(storeId)}/closure-request`,
+    });
+
+    return decodeStoreClosure(response.data);
+  }
 }
 
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
-  if (
-    !isRecord(value) ||
-    typeof value.token !== "string"
-  ) {
+  if (!isRecord(value) || typeof value.token !== "string") {
     throw new ApiContractError("The authentication response is invalid.");
   }
   if (value.refreshExpiresAt !== undefined && typeof value.refreshExpiresAt !== "string") {
@@ -506,6 +532,22 @@ function decodeStore(value: unknown): StoreResource {
   };
 }
 
+function decodeStoreClosure(value: unknown): StoreClosureResource {
+  if (!isRecord(value) || !isStoreClosureStatus(value.status) || !isStringArray(value.blockers)) {
+    throw new ApiContractError("A store closure response is invalid.");
+  }
+
+  return {
+    blockers: value.blockers,
+    id: requiredString(value, "id", "A store closure response is invalid."),
+    reason: requiredString(value, "reason", "A store closure response is invalid."),
+    requestedAt: requiredString(value, "requestedAt", "A store closure response is invalid."),
+    status: value.status,
+    storeId: requiredString(value, "storeId", "A store closure response is invalid."),
+    version: requiredNumber(value, "version", "A store closure response is invalid."),
+  };
+}
+
 export class ApiContractError extends Error {
   constructor(message: string) {
     super(message);
@@ -538,6 +580,16 @@ function isOperationalStatus(
 ): value is "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED" {
   return (
     value === "ACTIVE" || value === "SUSPENDED" || value === "CLOSURE_PENDING" || value === "CLOSED"
+  );
+}
+
+function isStoreClosureStatus(value: unknown): value is StoreClosureStatus {
+  return (
+    value === "REQUESTED" ||
+    value === "IN_PROGRESS" ||
+    value === "READY" ||
+    value === "COMPLETED" ||
+    value === "CANCELLED"
   );
 }
 

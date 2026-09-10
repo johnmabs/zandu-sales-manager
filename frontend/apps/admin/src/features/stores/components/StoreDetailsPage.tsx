@@ -6,11 +6,15 @@ import { useOrganizationContext } from "@zandu/organization-context";
 import { useState } from "react";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
+import { useRequestStoreClosure } from "../hooks/useRequestStoreClosure";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useSuspendStore } from "../hooks/useSuspendStore";
 
+import { RequestStoreClosureDialog } from "./RequestStoreClosureDialog";
 import { StoreDetails } from "./StoreDetails";
 import { SuspendStoreDialog } from "./SuspendStoreDialog";
+
+import type { StoreClosureResource } from "@zandu/api-client";
 
 export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   const access = useEffectiveAccess();
@@ -18,12 +22,21 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   const { api, queryClient, synchronizeStore } = useAdminRuntime();
   const notifications = useNotifications();
   const [isSuspendDialogOpen, setSuspendDialogOpen] = useState(false);
+  const [isClosureDialogOpen, setClosureDialogOpen] = useState(false);
+  const [closure, setClosure] = useState<StoreClosureResource>();
   const details = useStoreDetails({ access, api, organizationId: activeOrganizationId, storeId });
   const canEdit = useCan("STORE_UPDATE", { storeId });
   const canSuspend = useCan("STORE_SUSPEND", { storeId });
   const canClose = useCan("STORE_CLOSE", { storeId });
   const status = details.data?.status;
   const suspend = useSuspendStore({
+    api,
+    authorizationVersion: access?.authorizationVersion ?? 0,
+    organizationId: activeOrganizationId ?? "unresolved-organization",
+    queryClient,
+    storeId,
+  });
+  const requestClosure = useRequestStoreClosure({
     api,
     authorizationVersion: access?.authorizationVersion ?? 0,
     organizationId: activeOrganizationId ?? "unresolved-organization",
@@ -42,6 +55,25 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
     }
   };
 
+  const confirmClosure = async (reason: string) => {
+    try {
+      const requestedClosure = await requestClosure.mutateAsync({ reason });
+      setClosure(requestedClosure);
+      try {
+        const refreshed = await details.refetch();
+        if (refreshed.data !== undefined) {
+          synchronizeStore(refreshed.data);
+        }
+      } catch {
+        // The workflow response remains authoritative if the refreshed Store projection is unavailable.
+      }
+      notifications.notify({ message: "Demande de fermeture enregistrée.", tone: "success" });
+      setClosureDialogOpen(false);
+    } catch {
+      // The dialog renders the mutation error while preserving its confirmation context.
+    }
+  };
+
   return (
     <>
       <StoreDetails
@@ -51,8 +83,10 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
           requestClosure: (status === "ACTIVE" || status === "SUSPENDED") && canClose,
           suspend: status === "ACTIVE" && canSuspend,
         }}
+        {...(closure === undefined ? {} : { closure })}
         error={details.error}
         isLoading={details.isLoading}
+        onRequestClosure={() => setClosureDialogOpen(true)}
         onSuspend={() => setSuspendDialogOpen(true)}
         store={details.data}
       />
@@ -62,6 +96,14 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
         onClose={() => setSuspendDialogOpen(false)}
         onConfirm={() => void confirmSuspension()}
         open={isSuspendDialogOpen}
+        storeName={details.data?.name ?? "ce magasin"}
+      />
+      <RequestStoreClosureDialog
+        error={requestClosure.error ?? undefined}
+        isRequesting={requestClosure.isPending}
+        onClose={() => setClosureDialogOpen(false)}
+        onConfirm={(reason) => void confirmClosure(reason)}
+        open={isClosureDialogOpen}
         storeName={details.data?.name ?? "ce magasin"}
       />
     </>

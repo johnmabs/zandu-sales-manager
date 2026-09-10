@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
+import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
 import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
 import {
   StoreDetails,
@@ -98,6 +99,72 @@ describe("StoreDetails", () => {
       storeDetailsErrorPresentation(new ApiRequestError({ kind: "response", status: 403 }, false))
         .title,
     ).toBe("Accès refusé");
+  });
+
+  it("presents the closure workflow response without treating it as a Store status patch", () => {
+    render(
+      <StoreDetails
+        actions={{ edit: false, reactivate: false, requestClosure: false, suspend: false }}
+        closure={{
+          blockers: ["OPEN_CASH_SESSION"],
+          id: "closure-1",
+          reason: "Fin d’activité",
+          requestedAt: "2026-09-10T08:00:00+00:00",
+          status: "IN_PROGRESS",
+          storeId: "store-1",
+          version: 1,
+        }}
+        isLoading={false}
+        store={{ ...store, status: "CLOSURE_PENDING" }}
+      />,
+    );
+
+    expect(screen.getByText("Statut de la demande : IN_PROGRESS.")).toBeTruthy();
+    expect(screen.getByText("1 blocker(s) ont été signalés.")).toBeTruthy();
+  });
+});
+
+describe("RequestStoreClosureDialog", () => {
+  it("requires a reason and sends the trimmed reason after confirmation", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    const view = render(
+      <RequestStoreClosureDialog
+        isRequesting={false}
+        onClose={vi.fn()}
+        onConfirm={onConfirm}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Demander la fermeture du magasin" }),
+    );
+
+    const confirm = dialog.getByRole("button", { name: "Confirmer la demande de fermeture" });
+    expect(confirm.hasAttribute("disabled")).toBe(true);
+    await user.type(dialog.getByLabelText("Motif de fermeture"), "  Fin d’activité  ");
+    await user.click(confirm);
+
+    expect(onConfirm).toHaveBeenCalledWith("Fin d’activité");
+  });
+
+  it("disables closure controls while the request is pending", () => {
+    const view = render(
+      <RequestStoreClosureDialog
+        isRequesting
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Demander la fermeture du magasin" }),
+    );
+
+    expect(dialog.getByLabelText("Motif de fermeture").hasAttribute("disabled")).toBe(true);
+    expect(dialog.getByRole("button", { name: "Annuler" }).hasAttribute("disabled")).toBe(true);
   });
 });
 

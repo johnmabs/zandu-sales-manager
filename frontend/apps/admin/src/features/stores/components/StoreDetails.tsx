@@ -4,7 +4,7 @@ import { ApiRequestError } from "@zandu/api-client";
 import { Badge, Button, ErrorState, Spinner } from "@zandu/ui";
 import Link from "next/link";
 
-import type { StoreResource } from "@zandu/api-client";
+import type { StoreClosureResource, StoreResource } from "@zandu/api-client";
 
 export type StoreActionAvailability = Readonly<{
   edit: boolean;
@@ -15,17 +15,21 @@ export type StoreActionAvailability = Readonly<{
 
 type StoreDetailsProperties = Readonly<{
   actions: StoreActionAvailability;
+  closure?: StoreClosureResource;
   error?: unknown | undefined;
   isLoading: boolean;
   onSuspend?: () => void;
+  onRequestClosure?: () => void;
   store?: StoreResource | undefined;
 }>;
 
 export function StoreDetails({
   actions,
+  closure,
   error,
   isLoading,
   onSuspend,
+  onRequestClosure,
   store,
 }: StoreDetailsProperties) {
   if (isLoading) {
@@ -68,14 +72,24 @@ export function StoreDetails({
       <section aria-labelledby="store-closure-title">
         <h2 id="store-closure-title">Fermeture</h2>
         <p>
-          {store.status === "CLOSURE_PENDING"
-            ? "Une demande de fermeture est en cours."
-            : "Aucune demande de fermeture en cours."}
+          {closure === undefined
+            ? store.status === "CLOSURE_PENDING"
+              ? "Une demande de fermeture est en cours."
+              : "Aucune demande de fermeture en cours."
+            : `Statut de la demande : ${closure.status}.`}
         </p>
+        {closure === undefined ? null : (
+          <p>
+            {closure.blockers.length === 0
+              ? "Aucun blocker n’a été signalé."
+              : `${closure.blockers.length} blocker(s) ont été signalés.`}
+          </p>
+        )}
       </section>
       <AvailableActions
         actions={actions}
         {...(onSuspend === undefined ? {} : { onSuspend })}
+        {...(onRequestClosure === undefined ? {} : { onRequestClosure })}
         storeId={store.id}
       />
     </>
@@ -111,8 +125,14 @@ export function storeDetailsErrorPresentation(error: unknown): Readonly<{
 function AvailableActions({
   actions,
   onSuspend,
+  onRequestClosure,
   storeId,
-}: Readonly<{ actions: StoreActionAvailability; onSuspend?: () => void; storeId: string }>) {
+}: Readonly<{
+  actions: StoreActionAvailability;
+  onRequestClosure?: () => void;
+  onSuspend?: () => void;
+  storeId: string;
+}>) {
   const labels = [
     ...(actions.edit ? ["Modifier"] : []),
     ...(actions.suspend ? ["Suspendre"] : []),
@@ -134,6 +154,10 @@ function AvailableActions({
               <Link href={`/app/stores/${encodeURIComponent(storeId)}/edit`}>{label}</Link>
             ) : label === "Suspendre" && onSuspend !== undefined ? (
               <Button onClick={onSuspend} type="button">
+                {label}
+              </Button>
+            ) : label === "Demander la fermeture" && onRequestClosure !== undefined ? (
+              <Button onClick={onRequestClosure} type="button">
                 {label}
               </Button>
             ) : (

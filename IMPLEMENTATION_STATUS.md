@@ -10456,3 +10456,29 @@ Validations : `pnpm --filter @zandu/admin typecheck` OK ;
 `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add store suspension workflow`.
+
+## Epic F1.8 — Request Store Closure
+
+**Statut : TERMINÉ — demande de fermeture via le workflow StoreClosure dédié**
+
+- l’action disponible depuis le détail ouvre une confirmation exigeant un motif,
+  puis appelle exclusivement `POST /api/stores/{id}/closure-request` ; elle ne
+  modifie jamais directement le statut Store vers `CLOSED` ;
+- le client typé valide et expose la réponse `StoreClosure` publiée par l’API :
+  statut (`REQUESTED`, `IN_PROGRESS`, `READY`, `COMPLETED` ou `CANCELLED`) et
+  blockers restent ceux fournis par Symfony ;
+- la réponse est présentée dans le détail, les contrôles sont verrouillés durant
+  la mutation et les erreurs de workflow ou réseau restent visibles dans le
+  dialogue ;
+- après succès, les caches détail/liste sont invalidés et rechargés, le
+  `StoreContext` actif est resynchronisé depuis la projection Store rechargée,
+  puis une notification confirme l’enregistrement de la demande.
+
+Validations : `pnpm --filter @zandu/api-client typecheck` OK ;
+`pnpm --filter @zandu/admin typecheck` OK ; `pnpm test:foundation` OK (19 tests) ;
+`pnpm test:component -- stores-list.test.tsx` OK (17 tests) ; `pnpm lint` OK ;
+Prettier ciblé F1.8 OK ; `pnpm --filter @zandu/admin build` OK ;
+`git diff --check` OK. Le contrôle Prettier global reste en échec sur
+`test/auth.test.js`, écart préexistant hors de cette tranche.
+
+Commit recommandé : `feat(stores): add store closure request workflow`.
