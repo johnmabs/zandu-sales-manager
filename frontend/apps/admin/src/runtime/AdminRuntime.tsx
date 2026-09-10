@@ -18,6 +18,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { AuthCredentials, AuthState } from "@zandu/auth";
 import type { OrganizationContextState } from "@zandu/organization-context";
 import type { StoreContextState } from "@zandu/store-context";
+import type { StoreResource } from "@zandu/api-client";
 import type { ReactNode } from "react";
 
 type ContextStatus = "IDLE" | "LOADING" | "READY" | "ERROR";
@@ -35,6 +36,7 @@ type AdminRuntime = Readonly<{
   selectOrganization: (organizationId: string) => Promise<void>;
   selectStore: (storeId: string) => void;
   storeState?: StoreContextState;
+  synchronizeStore: (store: StoreResource) => void;
 }>;
 
 type RuntimeServices = Readonly<{
@@ -164,6 +166,29 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
       if (storeManager !== undefined) {
         setStoreState(storeManager.selectStore(storeId));
       }
+    },
+    synchronizeStore(store) {
+      if (
+        storeManager === undefined ||
+        store.organizationId !== storeManager.getState().organizationId
+      ) {
+        return;
+      }
+
+      const stores = storeManager.getState().stores.map((currentStore) =>
+        currentStore.id === store.id
+          ? {
+              currency: store.currency,
+              id: store.id,
+              locale: store.locale,
+              name: store.name,
+              organizationId: store.organizationId,
+              status: store.status,
+              timeZone: store.timeZone,
+            }
+          : currentStore,
+      );
+      setStoreState(storeManager.setAccessibleStores(stores));
     },
     ...(storeState === undefined ? {} : { storeState }),
   };

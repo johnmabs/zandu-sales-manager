@@ -1,7 +1,7 @@
 "use client";
 
 import { ApiRequestError } from "@zandu/api-client";
-import { Badge, ErrorState, Spinner } from "@zandu/ui";
+import { Badge, Button, ErrorState, Spinner } from "@zandu/ui";
 import Link from "next/link";
 
 import type { StoreResource } from "@zandu/api-client";
@@ -17,10 +17,17 @@ type StoreDetailsProperties = Readonly<{
   actions: StoreActionAvailability;
   error?: unknown | undefined;
   isLoading: boolean;
+  onSuspend?: () => void;
   store?: StoreResource | undefined;
 }>;
 
-export function StoreDetails({ actions, error, isLoading, store }: StoreDetailsProperties) {
+export function StoreDetails({
+  actions,
+  error,
+  isLoading,
+  onSuspend,
+  store,
+}: StoreDetailsProperties) {
   if (isLoading) {
     return <Spinner label="Chargement du magasin" />;
   }
@@ -66,7 +73,11 @@ export function StoreDetails({ actions, error, isLoading, store }: StoreDetailsP
             : "Aucune demande de fermeture en cours."}
         </p>
       </section>
-      <AvailableActions actions={actions} storeId={store.id} />
+      <AvailableActions
+        actions={actions}
+        {...(onSuspend === undefined ? {} : { onSuspend })}
+        storeId={store.id}
+      />
     </>
   );
 }
@@ -99,8 +110,9 @@ export function storeDetailsErrorPresentation(error: unknown): Readonly<{
 
 function AvailableActions({
   actions,
+  onSuspend,
   storeId,
-}: Readonly<{ actions: StoreActionAvailability; storeId: string }>) {
+}: Readonly<{ actions: StoreActionAvailability; onSuspend?: () => void; storeId: string }>) {
   const labels = [
     ...(actions.edit ? ["Modifier"] : []),
     ...(actions.suspend ? ["Suspendre"] : []),
@@ -120,6 +132,10 @@ function AvailableActions({
           <li key={label}>
             {label === "Modifier" ? (
               <Link href={`/app/stores/${encodeURIComponent(storeId)}/edit`}>{label}</Link>
+            ) : label === "Suspendre" && onSuspend !== undefined ? (
+              <Button onClick={onSuspend} type="button">
+                {label}
+              </Button>
             ) : (
               label
             )}

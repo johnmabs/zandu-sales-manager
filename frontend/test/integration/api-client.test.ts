@@ -202,6 +202,25 @@ describe("ApiClient at the mocked API boundary", () => {
           version: 2,
         });
       }),
+      http.post("https://api.zandu.test/api/stores/store-1/suspend", async ({ request }) => {
+        expect(await request.text()).toBe("");
+        return HttpResponse.json(
+          {
+            address: "12 avenue du Port",
+            code: "CENTRE",
+            currency: "XAF",
+            id: "store-1",
+            locale: "fr_CG",
+            name: "Centre-ville",
+            organizationId,
+            status: "SUSPENDED",
+            timeZone: "Africa/Brazzaville",
+            updatedAt: "2026-09-10T10:00:00+00:00",
+            version: 2,
+          },
+          { status: 201 },
+        );
+      }),
     );
     const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
     const auth = new AuthenticationManager(
@@ -253,6 +272,10 @@ describe("ApiClient at the mocked API boundary", () => {
         timeZone: "Africa/Brazzaville",
       }),
     ).resolves.toMatchObject({ id: "store-1", version: 2 });
+    await expect(api.suspendStore("store-1")).resolves.toMatchObject({
+      id: "store-1",
+      status: "SUSPENDED",
+    });
   });
 });
 

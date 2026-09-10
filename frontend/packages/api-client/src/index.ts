@@ -372,6 +372,15 @@ export class FoundationApi {
 
     return decodeStore(response.data);
   }
+
+  async suspendStore(storeId: string): Promise<StoreResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `stores/${encodeURIComponent(storeId)}/suspend`,
+    });
+
+    return decodeStore(response.data);
+  }
 }
 
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {

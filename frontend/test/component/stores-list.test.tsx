@@ -13,6 +13,7 @@ import {
   storeListErrorPresentation,
 } from "../../apps/admin/src/features/stores/components/StoreList";
 import { StoreUpdateForm } from "../../apps/admin/src/features/stores/components/StoreUpdateForm";
+import { SuspendStoreDialog } from "../../apps/admin/src/features/stores/components/SuspendStoreDialog";
 import { ApiRequestError } from "../../packages/api-client/src/index";
 
 const store = {
@@ -236,5 +237,48 @@ describe("StoreUpdateForm", () => {
     ).toBeTruthy();
     await user.click(form.getByRole("button", { name: "Recharger les données" }));
     expect(onConflictReload).toHaveBeenCalledOnce();
+  });
+});
+
+describe("SuspendStoreDialog", () => {
+  it("requires confirmation and explains the operational consequence", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    const view = render(
+      <SuspendStoreDialog
+        isSuspending={false}
+        onClose={vi.fn()}
+        onConfirm={onConfirm}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Suspendre le magasin" }),
+    );
+
+    expect(dialog.getByText(/bloquera les nouvelles opérations/)).toBeTruthy();
+    await user.click(dialog.getByRole("button", { name: "Confirmer la suspension" }));
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
+
+  it("disables confirmation controls while the suspension is pending", () => {
+    const view = render(
+      <SuspendStoreDialog
+        isSuspending
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+        storeName="Centre-ville"
+      />,
+    );
+    const dialog = within(
+      within(view.container).getByRole("dialog", { name: "Suspendre le magasin" }),
+    );
+
+    expect(dialog.getByRole("button", { name: "Annuler" }).hasAttribute("disabled")).toBe(true);
+    expect(
+      dialog.getByRole("button", { name: "Suspension en cours" }).hasAttribute("disabled"),
+    ).toBe(true);
   });
 });
