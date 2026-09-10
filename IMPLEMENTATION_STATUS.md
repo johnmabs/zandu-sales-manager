@@ -10428,3 +10428,31 @@ Validations : `pnpm --filter @zandu/admin typecheck` OK ;
 `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add store update workflow`.
+
+## Epic F1.6 — Suspend Store
+
+**Statut : TERMINÉ — suspension explicite et synchronisation du magasin actif**
+
+- l’action Suspendre disponible sur le détail ouvre un dialogue de confirmation
+  qui prévient que les nouvelles opérations seront bloquées ; elle appelle
+  exclusivement `POST /api/stores/{id}/suspend`, sans émuler la transition par
+  un PATCH de statut ;
+- les contrôles de confirmation sont désactivés pendant la mutation. Les refus,
+  restrictions opérationnelles, erreurs réseau et autres erreurs serveur restent
+  affichés dans le dialogue via le contrat d’erreurs ;
+- après succès, les caches détail et liste tenant/version d’autorisation sont
+  invalidés puis rechargés, une notification est émise et le `StoreContext` est
+  synchronisé avec la projection retournée. Un magasin actif devenu suspendu
+  est donc retiré de la sélection opérationnelle par le Foundation ;
+- Symfony et son `StoreOperationalGuard` restent l’autorité : le garde
+  permissionnel frontend ne constitue qu’un confort d’UX.
+
+Validations : `pnpm --filter @zandu/admin typecheck` OK ;
+`pnpm --filter @zandu/api-client typecheck` OK ;
+`pnpm test:component -- stores-list.test.tsx` OK (14 tests) ;
+`pnpm test:integration -- api-client.test.ts` OK (3 tests) ;
+`pnpm test` OK (relancé après un délai ponctuel du test ESLint Foundation) ;
+`pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(stores): add store suspension workflow`.
