@@ -286,6 +286,7 @@ export type OrganizationResource = Readonly<{
 }>;
 
 export type StoreResource = Readonly<{
+  code: string;
   currency: string;
   id: string;
   locale: string;
@@ -434,6 +435,7 @@ function decodeStores(value: unknown): readonly StoreResource[] {
       throw new ApiContractError("A store response is invalid.");
     }
     return {
+      code: requiredString(item, "code", "A store response is invalid."),
       currency: requiredString(item, "currency", "A store response is invalid."),
       id: requiredString(item, "id", "A store response is invalid."),
       locale: requiredString(item, "locale", "A store response is invalid."),

@@ -59,7 +59,7 @@ describe("ApiClient at the mocked API boundary", () => {
     });
   });
 
-  it("connects AuthenticationManager to Symfony session, access, and store projections", async () => {
+  it("connects AuthenticationManager to scoped Symfony store projections", async () => {
     const organizationId = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
     const accessToken = jwt();
     server.use(
@@ -100,11 +100,32 @@ describe("ApiClient at the mocked API boundary", () => {
       http.get("https://api.zandu.test/api/stores", () =>
         HttpResponse.json([
           {
+            code: "CENTRE",
             currency: "XAF",
             id: "store-1",
             locale: "fr_CG",
             name: "Centre-ville",
             organizationId,
+            status: "ACTIVE",
+            timeZone: "Africa/Brazzaville",
+          },
+          {
+            code: "HORS-SCOPE",
+            currency: "XAF",
+            id: "store-out-of-scope",
+            locale: "fr_CG",
+            name: "Inaccessible",
+            organizationId,
+            status: "ACTIVE",
+            timeZone: "Africa/Brazzaville",
+          },
+          {
+            code: "AUTRE-TENANT",
+            currency: "XAF",
+            id: "store-other-organization",
+            locale: "fr_CG",
+            name: "Autre organisation",
+            organizationId: "organization-2",
             status: "ACTIVE",
             timeZone: "Africa/Brazzaville",
           },

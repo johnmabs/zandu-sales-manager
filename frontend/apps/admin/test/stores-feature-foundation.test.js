@@ -8,7 +8,7 @@ test("Stores owns its route composition and extension points", async () => {
   await Promise.all(
     [
       "api/.gitkeep",
-      "components/StoresFeaturePlaceholder.tsx",
+      "components/StoreListPage.tsx",
       "hooks/.gitkeep",
       "routes/StoresRoute.tsx",
       "schemas/.gitkeep",

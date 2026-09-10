@@ -10327,3 +10327,25 @@ Validations : `pnpm --filter @zandu/admin test` OK (7 tests) ;
 OK ; `pnpm lint` OK ; `pnpm format:check` OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(stores): establish admin feature boundary`.
+
+## Epic F1.2 — Store list
+
+**Statut : TERMINÉ — liste Stores tenant-scoped et états de lecture explicites**
+
+- la route Stores affiche la collection `GET /api/stores` via la feature, avec
+  les champs publiés `name`, `code` et `status`, sans pagination, filtre ou
+  propriété inventés côté client ;
+- le cache React Query emploie la clé `stores` de l’organisation active et la
+  version d’autorisation ; la projection initiale du runtime alimente cette
+  même clé et le client filtre défensivement toute ligne d’une autre
+  organisation ou hors scope accessible ;
+- loading, collection vide, refus `403`, erreur réseau et erreur API sont
+  rendus séparément ; le CTA de création n’est exposé dans l’état vide que si
+  la permission frontend `STORE_CREATE` est présente.
+
+Validations : `pnpm --filter @zandu/admin test` OK (7 tests) ;
+`pnpm test:component` OK (5 tests) ; `pnpm test:integration` OK (3 tests,
+scope tenant/store inclus) ; `pnpm test` OK ; `pnpm typecheck` OK ;
+`pnpm lint` OK ; `pnpm format:check` OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(stores): add tenant-scoped store list`.

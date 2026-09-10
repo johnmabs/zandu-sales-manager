@@ -4,7 +4,11 @@ import { ApiClient, FoundationApi, createAuthenticationTransport } from "@zandu/
 import { AuthenticationManager, AuthenticationRequiredError } from "@zandu/auth";
 import { publicRuntimeConfig } from "@zandu/config";
 import { OrganizationContextManager } from "@zandu/organization-context";
-import { createServerStateClient, transitionOrganizationCache } from "@zandu/server-state";
+import {
+  createServerStateClient,
+  queryKeys,
+  transitionOrganizationCache,
+} from "@zandu/server-state";
 import { StoreContextManager } from "@zandu/store-context";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -19,6 +23,7 @@ import type { ReactNode } from "react";
 type ContextStatus = "IDLE" | "LOADING" | "READY" | "ERROR";
 
 type AdminRuntime = Readonly<{
+  api?: FoundationApi;
   authState: AuthState;
   configurationError?: string;
   contextError?: string;
@@ -96,6 +101,12 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
         if (cancelled) {
           return;
         }
+        services.queryClient.setQueryData(
+          queryKeys.stores.list(actor.organizationId, {
+            authorizationVersion: actor.effectiveAccess.authorizationVersion,
+          }),
+          stores,
+        );
         setStoreManager(manager);
         setStoreState(manager.setAccessibleStores(stores));
         setContextStatus("READY");
@@ -113,6 +124,7 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
   }, [authState, services]);
 
   const runtime: AdminRuntime = {
+    ...(services === undefined ? {} : { api: services.api }),
     authState,
     ...(initialization.error === undefined ? {} : { configurationError: initialization.error }),
     ...(contextError === undefined ? {} : { contextError }),
