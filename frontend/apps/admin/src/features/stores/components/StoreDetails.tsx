@@ -23,6 +23,7 @@ type StoreDetailsProperties = Readonly<{
   error?: unknown | undefined;
   isLoading: boolean;
   onCancelClosure?: () => void;
+  onReactivate?: () => void;
   onSuspend?: () => void;
   onRequestClosure?: () => void;
   onRetry?: () => void;
@@ -35,6 +36,7 @@ export function StoreDetails({
   error,
   isLoading,
   onCancelClosure,
+  onReactivate,
   onSuspend,
   onRequestClosure,
   onRetry,
@@ -97,6 +99,7 @@ export function StoreDetails({
       <AvailableActions
         actions={actions}
         {...(onCancelClosure === undefined ? {} : { onCancelClosure })}
+        {...(onReactivate === undefined ? {} : { onReactivate })}
         {...(onSuspend === undefined ? {} : { onSuspend })}
         {...(onRequestClosure === undefined ? {} : { onRequestClosure })}
         storeId={store.id}
@@ -126,12 +129,14 @@ export function storeDetailsErrorPresentation(error: unknown): Readonly<{
 function AvailableActions({
   actions,
   onCancelClosure,
+  onReactivate,
   onSuspend,
   onRequestClosure,
   storeId,
 }: Readonly<{
   actions: StoreActionAvailability;
   onCancelClosure?: () => void;
+  onReactivate?: () => void;
   onRequestClosure?: () => void;
   onSuspend?: () => void;
   storeId: string;
@@ -166,6 +171,10 @@ function AvailableActions({
               </Button>
             ) : label === "Annuler la fermeture" && onCancelClosure !== undefined ? (
               <Button onClick={onCancelClosure} type="button">
+                {label}
+              </Button>
+            ) : label === "Réactiver" && onReactivate !== undefined ? (
+              <Button onClick={onReactivate} type="button">
                 {label}
               </Button>
             ) : (

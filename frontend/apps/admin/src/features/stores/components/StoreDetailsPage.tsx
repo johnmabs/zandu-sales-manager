@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useCancelStoreClosure } from "../hooks/useCancelStoreClosure";
+import { useReactivateStore } from "../hooks/useReactivateStore";
 import { useRequestStoreClosure } from "../hooks/useRequestStoreClosure";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useSuspendStore } from "../hooks/useSuspendStore";
@@ -15,6 +16,7 @@ import { useSingleFlight } from "../mutationSafety";
 import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { CancelStoreClosureDialog } from "./CancelStoreClosureDialog";
+import { ReactivateStoreDialog } from "./ReactivateStoreDialog";
 import { RequestStoreClosureDialog } from "./RequestStoreClosureDialog";
 import { StoreDetails } from "./StoreDetails";
 import { SuspendStoreDialog } from "./SuspendStoreDialog";
@@ -30,6 +32,7 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   const [isSuspendDialogOpen, setSuspendDialogOpen] = useState(false);
   const [isClosureDialogOpen, setClosureDialogOpen] = useState(false);
   const [isCancelClosureDialogOpen, setCancelClosureDialogOpen] = useState(false);
+  const [isReactivateDialogOpen, setReactivateDialogOpen] = useState(false);
   const [closure, setClosure] = useState<StoreClosureResource>();
   const readAccess = resolveStoreAccess(
     access,
@@ -60,6 +63,13 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
     storeId,
   });
   const requestClosure = useRequestStoreClosure({
+    api,
+    authorizationVersion: access?.authorizationVersion ?? 0,
+    organizationId: activeOrganizationId ?? "unresolved-organization",
+    queryClient,
+    storeId,
+  });
+  const reactivate = useReactivateStore({
     api,
     authorizationVersion: access?.authorizationVersion ?? 0,
     organizationId: activeOrganizationId ?? "unresolved-organization",
@@ -120,6 +130,19 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
     });
   };
 
+  const confirmReactivation = async () => {
+    await runSingleFlight(async () => {
+      try {
+        await reactivate.mutateAsync();
+        await refreshStoreContext();
+        notifications.notify({ message: "Magasin réactivé.", tone: "success" });
+        setReactivateDialogOpen(false);
+      } catch {
+        // The dialog remains open so the user retains the action context.
+      }
+    });
+  };
+
   if (readAccess === "UNRESOLVED") {
     return <Spinner label="Chargement des autorisations" />;
   }
@@ -156,6 +179,7 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
         error={details.error}
         isLoading={details.isLoading}
         onCancelClosure={() => setCancelClosureDialogOpen(true)}
+        onReactivate={() => setReactivateDialogOpen(true)}
         onRequestClosure={() => setClosureDialogOpen(true)}
         onRetry={() => void details.refetch()}
         onSuspend={() => setSuspendDialogOpen(true)}
@@ -175,6 +199,13 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
         onClose={() => setClosureDialogOpen(false)}
         onConfirm={(reason) => void confirmClosure(reason)}
         open={isClosureDialogOpen}
+        storeName={details.data?.name ?? "ce magasin"}
+      />
+      <ReactivateStoreDialog
+        isReactivating={reactivate.isPending}
+        onClose={() => setReactivateDialogOpen(false)}
+        onConfirm={() => void confirmReactivation()}
+        open={isReactivateDialogOpen}
         storeName={details.data?.name ?? "ce magasin"}
       />
       <CancelStoreClosureDialog

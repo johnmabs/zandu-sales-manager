@@ -10722,3 +10722,22 @@ OK (6 tests) ; `pnpm test:component` OK (33 tests) ;
 `pnpm format:check` OK ; `pnpm build` OK ; `git diff --check` OK.
 
 Commit recommandé : `test(stores): add integration coverage`.
+
+## Epic F1.19 — E2E vertical slice
+
+**Statut : IMPLÉMENTÉ — exécution E2E bloquée par l’image Playwright locale**
+
+- deux scénarios Playwright mockent exclusivement les frontières HTTP : le
+  parcours login, contexte organisation, création, édition, suspension,
+  réactivation et demande de fermeture avec blocker ; puis le refus d’accès
+  pour un utilisateur sans permission Store ;
+- l’action de réactivation est raccordée au contrat OpenAPI existant et suit le
+  pattern de mutation/invalidation déjà utilisé pour la suspension ;
+- `pnpm test:e2e -- stores-vertical-slice.spec.ts` ne peut pas lancer Chromium :
+  le binaire est absent et Playwright 1.57 ne fournit pas Chromium pour
+  `ubuntu26.04-x64` dans cette image. Les tests restent prêts pour CI.
+
+Validations frontend : typecheck Admin OK ; lint OK ; `git diff --check` OK.
+La validation E2E est à rejouer dans une image CI disposant de Chromium.
+
+Commit recommandé : `test(stores): add e2e vertical slice`.
