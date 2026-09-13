@@ -515,6 +515,51 @@ describe("ApiClient at the mocked API boundary", () => {
       (error: unknown) => error instanceof ApiRequestError && error.apiError.kind === "network",
     );
   });
+
+  it("returns the created invitation and one-time token from the API contract", async () => {
+    server.use(
+      http.post("https://api.zandu.test/api/member-invitations", () =>
+        HttpResponse.json({
+          invitation: {
+            acceptedAt: null,
+            email: "member@zandu.test",
+            expiresAt: "2026-10-01T08:00:00+00:00",
+            id: "invitation-1",
+            organizationId: "organization-1",
+            roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+            status: "PENDING",
+            version: 1,
+          },
+          token: "one-time-invitation-secret",
+        }),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+
+    await expect(
+      api.inviteMember({
+        email: "member@zandu.test",
+        expiresAt: null,
+        roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+      }),
+    ).resolves.toEqual({
+      invitation: {
+        acceptedAt: null,
+        email: "member@zandu.test",
+        expiresAt: "2026-10-01T08:00:00+00:00",
+        id: "invitation-1",
+        organizationId: "organization-1",
+        roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+        status: "PENDING",
+        version: 1,
+      },
+      token: "one-time-invitation-secret",
+    });
+  });
 });
 
 function jwt(): string {

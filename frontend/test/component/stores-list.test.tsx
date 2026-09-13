@@ -4,6 +4,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
 import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
@@ -318,6 +319,44 @@ describe("InviteMemberForm", () => {
       }),
     );
     expect(within(container).getByText(/n’accorde aucun droit/)).toBeTruthy();
+  });
+});
+
+describe("InvitationSuccessState", () => {
+  it("shows only the returned invitation data and copies the one-time secret on request", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const { container } = render(
+      <InvitationSuccessState
+        copySecret={writeText}
+        invitation={{
+          invitation: {
+            acceptedAt: null,
+            email: "member@zandu.test",
+            expiresAt: "2026-10-01T08:00:00+00:00",
+            id: "invitation-1",
+            organizationId: "organization-1",
+            roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+            status: "PENDING",
+            version: 1,
+          },
+          token: "one-time-invitation-secret",
+        }}
+      />,
+    );
+
+    expect(within(container).getByRole("heading", { name: "Invitation créée" })).toBeTruthy();
+    expect(
+      within(container).getByText(
+        (_, element) => element?.textContent === "L’invitation pour member@zandu.test a été créée.",
+      ),
+    ).toBeTruthy();
+    expect(within(container).getByText("PENDING")).toBeTruthy();
+    expect(within(container).getByText(/ne pourra peut-être pas être récupéré/)).toBeTruthy();
+    await user.click(within(container).getByRole("button", { name: "Copier le secret" }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("one-time-invitation-secret"));
+    expect(within(container).getByRole("status").textContent).toContain("Secret copié");
   });
 });
 

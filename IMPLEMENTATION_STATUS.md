@@ -10986,3 +10986,24 @@ sortie a été interrompue par la limite locale de 30 s après les packages ; le
 typecheck Admin concerné est vert.
 
 Commit recommandé : `feat(access): add store scope selector`.
+
+## Epic F2.10 — Invitation success state
+
+**Statut : TERMINÉ — réponse créée affichée et secret ponctuel maîtrisé**
+
+- le client API décode désormais la réponse réelle de création d’invitation,
+  incluant la projection publiée et le token retourné une seule fois ;
+- après création, l’Admin affiche l’état de succès et uniquement les données
+  retournées nécessaires à sa confirmation (email, statut et expiration) ;
+- le secret reste seulement dans l’état mémoire de l’écran de succès, sans
+  persistance, navigation automatique ou télémétrie, et peut être copié
+  volontairement avec un avertissement explicite d’absence de récupération
+  garantie ;
+- l’indisponibilité de la copie automatique laisse le secret visible pour une
+  copie manuelle, sans masquer le succès de création.
+
+Validations frontend : tests composants OK (41, dont écran de succès et copie
+volontaire) ; tests d’intégration API OK (9, dont décodage de la réponse créée)
+; typecheck Admin, lint, formatage et `git diff --check` OK.
+
+Commit recommandé : `feat(access): add invitation success state`.

@@ -378,6 +378,23 @@ export type InvitationCreateInput = Readonly<{
   roleAssignments: readonly Readonly<{ roleCode: string; storeIds: readonly string[] }>[];
 }>;
 
+export type InvitationResource = Readonly<{
+  acceptedAt: string | null;
+  email: string;
+  expiresAt: string;
+  id: string;
+  organizationId: string;
+  roleAssignments: readonly Readonly<{ roleCode: string; storeIds: readonly string[] }>[];
+  status: string;
+  version: number;
+}>;
+
+/** The invitation token is returned only by the create operation. Do not persist it. */
+export type CreatedInvitationResource = Readonly<{
+  invitation: InvitationResource;
+  token: string;
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -529,13 +546,15 @@ export class FoundationApi {
     return decodeRoles(response.data);
   }
 
-  async inviteMember(input: InvitationCreateInput): Promise<void> {
-    await this.client.request({
+  async inviteMember(input: InvitationCreateInput): Promise<CreatedInvitationResource> {
+    const response = await this.client.request({
       body: input,
       method: "POST",
       path: "member-invitations",
       telemetry: { feature: "access", operation: "invite", route: "/app/access/invite" },
     });
+
+    return decodeCreatedInvitation(response.data);
   }
 }
 
@@ -781,6 +800,56 @@ function decodeRole(value: unknown): RoleResource {
     status: value.status,
     type: value.type,
     version: requiredNumber(value, "version", "A role response is invalid."),
+  };
+}
+
+function decodeCreatedInvitation(value: unknown): CreatedInvitationResource {
+  if (!isRecord(value) || typeof value.token !== "string" || !isRecord(value.invitation)) {
+    throw new ApiContractError("The created invitation response is invalid.");
+  }
+
+  const invitation = value.invitation;
+  if (
+    !Array.isArray(invitation.roleAssignments) ||
+    (invitation.acceptedAt !== null && typeof invitation.acceptedAt !== "string")
+  ) {
+    throw new ApiContractError("The created invitation response is invalid.");
+  }
+
+  return {
+    invitation: {
+      acceptedAt: invitation.acceptedAt,
+      email: requiredString(invitation, "email", "The created invitation response is invalid."),
+      expiresAt: requiredString(
+        invitation,
+        "expiresAt",
+        "The created invitation response is invalid.",
+      ),
+      id: requiredString(invitation, "id", "The created invitation response is invalid."),
+      organizationId: requiredString(
+        invitation,
+        "organizationId",
+        "The created invitation response is invalid.",
+      ),
+      roleAssignments: invitation.roleAssignments.map(decodeInvitationRoleAssignment),
+      status: requiredString(invitation, "status", "The created invitation response is invalid."),
+      version: requiredNumber(invitation, "version", "The created invitation response is invalid."),
+    },
+    token: value.token,
+  };
+}
+
+function decodeInvitationRoleAssignment(value: unknown): Readonly<{
+  roleCode: string;
+  storeIds: readonly string[];
+}> {
+  if (!isRecord(value) || !isStringArray(value.storeIds)) {
+    throw new ApiContractError("The created invitation response is invalid.");
+  }
+
+  return {
+    roleCode: requiredString(value, "roleCode", "The created invitation response is invalid."),
+    storeIds: value.storeIds,
   };
 }
 

@@ -4,23 +4,24 @@ import { useEffectiveAccess } from "@zandu/authorization";
 import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
 import { Button, ErrorState, Spinner } from "@zandu/ui";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useStoreList } from "../../stores/hooks/useStoreList";
 import { useInviteMember } from "../hooks/useInviteMember";
 import { useRoleCatalog } from "../hooks/useRoleCatalog";
 
+import { InvitationSuccessState } from "./InvitationSuccessState";
 import { InviteMemberForm } from "./InviteMemberForm";
 
-import type { InvitationCreateInput } from "@zandu/api-client";
+import type { CreatedInvitationResource, InvitationCreateInput } from "@zandu/api-client";
 
 export function InviteMemberPage() {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
   const { api } = useAdminRuntime();
   const notifications = useNotifications();
-  const router = useRouter();
+  const [createdInvitation, setCreatedInvitation] = useState<CreatedInvitationResource>();
   const invite = useInviteMember(api);
   const unresolved = access === undefined || activeOrganizationId === undefined;
   const allowed =
@@ -75,10 +76,14 @@ export function InviteMemberPage() {
   }
 
   const onInvite = async (input: InvitationCreateInput) => {
-    await invite.mutateAsync(input);
+    const created = await invite.mutateAsync(input);
+    setCreatedInvitation(created);
     notifications.notify({ message: "Invitation créée.", tone: "success" });
-    router.push("/app/access/invitations");
   };
+
+  if (createdInvitation !== undefined) {
+    return <InvitationSuccessState invitation={createdInvitation} />;
+  }
 
   return (
     <InviteMemberForm

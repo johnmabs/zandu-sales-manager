@@ -12,7 +12,7 @@ export function useInviteMember(api: FoundationApi | undefined) {
       if (api === undefined) {
         throw new Error("Le client d’invitation est indisponible.");
       }
-      await inviteMember(api, input);
+      return inviteMember(api, input);
     },
   });
 }
