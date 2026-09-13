@@ -13,6 +13,7 @@ use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\OrganizationInvitation;
 use Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\DoctrineOrganizationInvitationRepository;
+use Zandu\Platform\Auth\Http\RefreshTokenCookie;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
 use Zandu\Platform\Persistence\DoctrineTenantTransaction;
 use Zandu\SharedKernel\Identity\ActorId;
@@ -95,7 +96,9 @@ final class UserOnboardingApiTest extends WebTestCase
         $login = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($login);
         self::assertArrayHasKey('token', $login);
-        self::assertArrayHasKey('refreshToken', $login);
+        self::assertArrayHasKey('refreshExpiresAt', $login);
+        self::assertArrayNotHasKey('refreshToken', $login);
+        self::assertNotNull($client->getCookieJar()->get(RefreshTokenCookie::NAME));
 
         $client->request('GET', '/api/session', server: [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $login['token'],
@@ -132,7 +135,7 @@ SQL, [self::FOREIGN_ORGANIZATION_ID, 'Foreign organization', $registration['user
             'UPDATE identity_access.organization_memberships SET authorization_version = authorization_version + 1 WHERE organization_id = ? AND user_id = ?',
             [$registration['organizationId'], $registration['userId']],
         );
-        $client->jsonRequest('POST', '/api/auth/refresh', ['refreshToken' => $login['refreshToken']]);
+        $client->jsonRequest('POST', '/api/auth/refresh');
         self::assertResponseStatusCodeSame(401);
         self::assertSame(
             'INVALID_REFRESH_TOKEN',
