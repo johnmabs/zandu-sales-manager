@@ -74,3 +74,11 @@ test("Admin runtime composes Symfony auth, tenant cache, contexts, and the prote
   assert.match(applicationShell, /ServerStateProvider/);
   assert.match(applicationShell, /<AdminShell/);
 });
+
+test("Admin runtime clears tenant state when authorization refresh cannot restore access", async () => {
+  const runtime = await readFile(runtimeUrl, "utf8");
+  assert.match(runtime, /revalidateSession/);
+  assert.match(runtime, /services\.auth\.refresh\(\)/);
+  assert.match(runtime, /services\.queryClient\.clear\(\)/);
+  assert.match(runtime, /services\.organizations\.clear\(\)/);
+});

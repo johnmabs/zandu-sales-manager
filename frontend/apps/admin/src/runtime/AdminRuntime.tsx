@@ -34,6 +34,7 @@ type AdminRuntime = Readonly<{
   organizationState: OrganizationContextState;
   queryClient: QueryClient;
   refreshStoreContext: () => Promise<void>;
+  revalidateSession: () => Promise<boolean>;
   selectOrganization: (organizationId: string) => Promise<void>;
   selectStore: (storeId: string) => void;
   storeState?: StoreContextState;
@@ -153,6 +154,19 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
     },
     organizationState,
     queryClient: services?.queryClient ?? fallbackQueryClient,
+    async revalidateSession() {
+      if (services === undefined) return false;
+      try {
+        await services.auth.refresh();
+        return services.auth.getState().status === "AUTHENTICATED";
+      } catch {
+        services.queryClient.clear();
+        services.organizations.clear();
+        setStoreManager(undefined);
+        setStoreState(undefined);
+        return false;
+      }
+    },
     async refreshStoreContext() {
       const actor = authState.actor;
       if (
