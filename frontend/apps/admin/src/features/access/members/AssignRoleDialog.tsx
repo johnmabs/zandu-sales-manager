@@ -2,7 +2,7 @@
 
 import { useZanduForm } from "@zandu/forms";
 import { Button, Dialog, Input, Select } from "@zandu/ui";
-import { useId } from "react";
+import { useId, useState } from "react";
 
 import { assignRoleSchema, toRoleAssignmentInput } from "../schemas/assignRoleSchema";
 import { StoreScopeSelector } from "../scopes/StoreScopeSelector";
@@ -32,6 +32,7 @@ export function AssignRoleDialog({
   const storeIds = form.watch("storeIds");
   const selectedRole = roles.find((role) => role.id === form.watch("roleId"));
   const ownerSelected = selectedRole?.code === "ORGANIZATION_OWNER";
+  const [ownerConfirmed, setOwnerConfirmed] = useState(false);
 
   return (
     <Dialog descriptionId={descriptionId} onClose={onClose} open={open} title="Attribuer un rôle">
@@ -61,9 +62,19 @@ export function AssignRoleDialog({
           </Select>
         </label>
         {ownerSelected ? (
-          <p role="status">
-            Le rôle propriétaire est sensible et couvre toujours toute l’organisation.
-          </p>
+          <>
+            <p role="status">
+              Le rôle propriétaire est sensible et couvre toujours toute l’organisation.
+            </p>
+            <label>
+              <input
+                checked={ownerConfirmed}
+                onChange={(event) => setOwnerConfirmed(event.target.checked)}
+                type="checkbox"
+              />
+              Je confirme l’attribution du rôle propriétaire sur toute l’organisation.
+            </label>
+          </>
         ) : null}
         {form.formState.errors.roleId === undefined ? null : (
           <p role="alert">{form.formState.errors.roleId.message}</p>
@@ -93,7 +104,7 @@ export function AssignRoleDialog({
         <Button disabled={isAssigning} onClick={onClose} type="button" variant="secondary">
           Annuler
         </Button>
-        <Button disabled={isAssigning} type="submit">
+        <Button disabled={isAssigning || (ownerSelected && !ownerConfirmed)} type="submit">
           {isAssigning ? "Attribution en cours" : "Attribuer le rôle"}
         </Button>
       </form>

@@ -86,6 +86,11 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
       <RemoveRoleDialog
         {...(assignmentToRemove === undefined ? {} : { assignment: assignmentToRemove })}
         isRemoving={remove.isPending}
+        isOwner={
+          roles.data?.some(
+            (role) => role.id === assignmentToRemove?.roleId && role.code === "ORGANIZATION_OWNER",
+          ) ?? false
+        }
         onClose={() => setAssignmentToRemove(undefined)}
         onConfirm={async () => {
           if (assignmentToRemove === undefined) return;

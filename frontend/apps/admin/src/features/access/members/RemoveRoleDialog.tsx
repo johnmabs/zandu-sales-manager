@@ -9,12 +9,14 @@ import type { MembershipRoleAssignment } from "@zandu/api-client";
 
 export function RemoveRoleDialog({
   assignment,
+  isOwner = false,
   isRemoving,
   onClose,
   onConfirm,
   open,
 }: Readonly<{
   assignment?: MembershipRoleAssignment;
+  isOwner?: boolean;
   isRemoving: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
@@ -27,11 +29,22 @@ export function RemoveRoleDialog({
       ? "toute l’organisation"
       : `${assignment.storeIds.length} magasin(s) (${assignment.storeIds.join(", ")})`;
   return (
-    <Dialog descriptionId={descriptionId} onClose={onClose} open={open} title="Retirer le rôle">
+    <Dialog
+      descriptionId={descriptionId}
+      onClose={onClose}
+      open={open}
+      title={isOwner ? "Retirer le rôle propriétaire" : "Retirer le rôle"}
+    >
       <p id={descriptionId}>
         Retirer le rôle {assignment.roleId} supprimera son accès sur {scope}.{" "}
         {expirationLabel(assignment.expiresAt)}.
       </p>
+      {isOwner ? (
+        <p role="alert">
+          Action sensible : le serveur refusera le retrait si ce membre est le dernier propriétaire
+          actif.
+        </p>
+      ) : null}
       <Button disabled={isRemoving} onClick={onClose} type="button" variant="secondary">
         Conserver le rôle
       </Button>

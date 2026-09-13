@@ -267,6 +267,29 @@ describe("AssignRoleDialog", () => {
       }),
     );
   });
+
+  it("requires reinforced confirmation for the organization owner role", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <AssignRoleDialog
+        isAssigning={false}
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+        roles={[{ ...role, code: "ORGANIZATION_OWNER", id: "owner-role", name: "Propriétaire" }]}
+        stores={[store]}
+      />,
+    );
+    await user.selectOptions(within(container).getByLabelText("Rôle"), "owner-role");
+    expect(
+      within(container).getByRole("button", { name: "Attribuer le rôle" }).hasAttribute("disabled"),
+    ).toBe(true);
+    expect(within(container).queryByLabelText("Magasins sélectionnés")).toBeNull();
+    await user.click(within(container).getByLabelText(/Je confirme l’attribution/));
+    expect(
+      within(container).getByRole("button", { name: "Attribuer le rôle" }).hasAttribute("disabled"),
+    ).toBe(false);
+  });
 });
 
 describe("RemoveRoleDialog", () => {
