@@ -560,6 +560,34 @@ describe("ApiClient at the mocked API boundary", () => {
       token: "one-time-invitation-secret",
     });
   });
+
+  it("cancels a returned invitation through the dedicated transition", async () => {
+    server.use(
+      http.post("https://api.zandu.test/api/member-invitations/invitation-1/cancel", () =>
+        HttpResponse.json({
+          acceptedAt: null,
+          email: "member@zandu.test",
+          expiresAt: "2026-10-01T08:00:00+00:00",
+          id: "invitation-1",
+          organizationId: "organization-1",
+          roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: [] }],
+          status: "CANCELLED",
+          version: 2,
+        }),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+
+    await expect(api.cancelInvitation("invitation-1")).resolves.toMatchObject({
+      id: "invitation-1",
+      status: "CANCELLED",
+      version: 2,
+    });
+  });
 });
 
 function jwt(): string {

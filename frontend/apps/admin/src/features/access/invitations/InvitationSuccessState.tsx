@@ -4,19 +4,31 @@ import { Button } from "@zandu/ui";
 import Link from "next/link";
 import { useState } from "react";
 
+import { CancelInvitationDialog } from "./CancelInvitationDialog";
+
 import type { CreatedInvitationResource } from "@zandu/api-client";
 
 type InvitationSuccessStateProperties = Readonly<{
+  canCancel?: boolean;
   copySecret?: (secret: string) => Promise<void>;
+  cancelError?: unknown;
   invitation: CreatedInvitationResource;
+  isCancelling?: boolean;
+  onCancel?: (() => Promise<void>) | undefined;
 }>;
 
 /** Keeps the one-time invitation token in memory only for this mounted screen. */
 export function InvitationSuccessState({
+  canCancel = false,
+  cancelError,
   copySecret = async (secret) => navigator.clipboard.writeText(secret),
   invitation,
+  isCancelling = false,
+  onCancel,
 }: InvitationSuccessStateProperties) {
   const [copyState, setCopyState] = useState<"COPIED" | "IDLE" | "UNAVAILABLE">("IDLE");
+  const [cancelled, setCancelled] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   const copyToken = async () => {
     try {
@@ -56,7 +68,26 @@ export function InvitationSuccessState({
           <p role="alert">La copie automatique est indisponible. Copiez le secret manuellement.</p>
         ) : null}
       </section>
+      {cancelled ? <p role="status">Invitation annulée.</p> : null}
+      {!cancelled && canCancel && onCancel !== undefined ? (
+        <Button onClick={() => setCancelDialogOpen(true)} type="button" variant="danger">
+          Annuler l’invitation
+        </Button>
+      ) : null}
       <Link href="/app/access/invitations">Retour aux invitations</Link>
+      <CancelInvitationDialog
+        email={invitation.invitation.email}
+        {...(cancelError === undefined ? {} : { error: cancelError })}
+        isCancelling={isCancelling}
+        onClose={() => setCancelDialogOpen(false)}
+        onConfirm={() =>
+          void onCancel?.().then(() => {
+            setCancelled(true);
+            setCancelDialogOpen(false);
+          })
+        }
+        open={cancelDialogOpen}
+      />
     </section>
   );
 }

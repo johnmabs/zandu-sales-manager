@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useStoreList } from "../../stores/hooks/useStoreList";
+import { useCancelInvitation } from "../hooks/useCancelInvitation";
 import { useInviteMember } from "../hooks/useInviteMember";
 import { useRoleCatalog } from "../hooks/useRoleCatalog";
 
@@ -23,6 +24,7 @@ export function InviteMemberPage() {
   const notifications = useNotifications();
   const [createdInvitation, setCreatedInvitation] = useState<CreatedInvitationResource>();
   const invite = useInviteMember(api);
+  const cancelInvitation = useCancelInvitation(api);
   const unresolved = access === undefined || activeOrganizationId === undefined;
   const allowed =
     !unresolved &&
@@ -82,7 +84,18 @@ export function InviteMemberPage() {
   };
 
   if (createdInvitation !== undefined) {
-    return <InvitationSuccessState invitation={createdInvitation} />;
+    return (
+      <InvitationSuccessState
+        canCancel={access.permissions.includes("MEMBER_INVITE")}
+        {...(cancelInvitation.error === null ? {} : { cancelError: cancelInvitation.error })}
+        invitation={createdInvitation}
+        isCancelling={cancelInvitation.isPending}
+        onCancel={async () => {
+          await cancelInvitation.mutateAsync(createdInvitation.invitation.id);
+          notifications.notify({ message: "Invitation annulée.", tone: "success" });
+        }}
+      />
+    );
   }
 
   return (

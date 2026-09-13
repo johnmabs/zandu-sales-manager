@@ -359,6 +359,33 @@ describe("InvitationSuccessState", () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("one-time-invitation-secret"));
     expect(within(container).getByRole("status").textContent).toContain("Secret copié");
   });
+
+  it("confirms the invitation target and consequence before cancellation", async () => {
+    const onCancel = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const invitation = {
+      invitation: {
+        acceptedAt: null,
+        email: "member@zandu.test",
+        expiresAt: "2026-10-01T08:00:00+00:00",
+        id: "invitation-1",
+        organizationId: "organization-1",
+        roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: [] }],
+        status: "PENDING",
+        version: 1,
+      },
+      token: "secret",
+    };
+
+    render(<InvitationSuccessState canCancel invitation={invitation} onCancel={onCancel} />);
+    await user.click(screen.getByRole("button", { name: "Annuler l’invitation" }));
+    expect(screen.getByRole("dialog").textContent).toContain("member@zandu.test");
+    expect(screen.getByRole("dialog").textContent).toContain("empêchera définitivement");
+    await user.click(screen.getByRole("button", { name: "Confirmer l’annulation" }));
+
+    await waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
+    expect(screen.getByText("Invitation annulée.")).toBeTruthy();
+  });
 });
 
 describe("InvitationLifecycleUnavailable", () => {

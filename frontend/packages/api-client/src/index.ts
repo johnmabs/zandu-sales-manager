@@ -556,6 +556,20 @@ export class FoundationApi {
 
     return decodeCreatedInvitation(response.data);
   }
+
+  async cancelInvitation(invitationId: string): Promise<InvitationResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `member-invitations/${encodeURIComponent(invitationId)}/cancel`,
+      telemetry: {
+        feature: "access",
+        operation: "cancel_invitation",
+        route: "/app/access/invite",
+      },
+    });
+
+    return decodeInvitation(response.data);
+  }
 }
 
 function storeTelemetry(operation: string, route: string) {
@@ -808,8 +822,13 @@ function decodeCreatedInvitation(value: unknown): CreatedInvitationResource {
     throw new ApiContractError("The created invitation response is invalid.");
   }
 
-  const invitation = value.invitation;
+  return { invitation: decodeInvitation(value.invitation), token: value.token };
+}
+
+function decodeInvitation(value: unknown): InvitationResource {
+  const invitation = value;
   if (
+    !isRecord(invitation) ||
     !Array.isArray(invitation.roleAssignments) ||
     (invitation.acceptedAt !== null && typeof invitation.acceptedAt !== "string")
   ) {
@@ -817,25 +836,18 @@ function decodeCreatedInvitation(value: unknown): CreatedInvitationResource {
   }
 
   return {
-    invitation: {
-      acceptedAt: invitation.acceptedAt,
-      email: requiredString(invitation, "email", "The created invitation response is invalid."),
-      expiresAt: requiredString(
-        invitation,
-        "expiresAt",
-        "The created invitation response is invalid.",
-      ),
-      id: requiredString(invitation, "id", "The created invitation response is invalid."),
-      organizationId: requiredString(
-        invitation,
-        "organizationId",
-        "The created invitation response is invalid.",
-      ),
-      roleAssignments: invitation.roleAssignments.map(decodeInvitationRoleAssignment),
-      status: requiredString(invitation, "status", "The created invitation response is invalid."),
-      version: requiredNumber(invitation, "version", "The created invitation response is invalid."),
-    },
-    token: value.token,
+    acceptedAt: invitation.acceptedAt,
+    email: requiredString(invitation, "email", "The invitation response is invalid."),
+    expiresAt: requiredString(invitation, "expiresAt", "The invitation response is invalid."),
+    id: requiredString(invitation, "id", "The invitation response is invalid."),
+    organizationId: requiredString(
+      invitation,
+      "organizationId",
+      "The invitation response is invalid.",
+    ),
+    roleAssignments: invitation.roleAssignments.map(decodeInvitationRoleAssignment),
+    status: requiredString(invitation, "status", "The invitation response is invalid."),
+    version: requiredNumber(invitation, "version", "The invitation response is invalid."),
   };
 }
 
