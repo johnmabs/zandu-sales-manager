@@ -207,7 +207,7 @@ describe("MemberList", () => {
 
 describe("MemberDetails", () => {
   it("renders the tenant-scoped membership projection without account credentials", () => {
-    render(
+    const { container } = render(
       <MemberDetails
         isLoading={false}
         member={{
@@ -228,7 +228,9 @@ describe("MemberDetails", () => {
 
     expect(screen.getByRole("heading", { name: "Membre" })).toBeTruthy();
     expect(screen.getByText("Identifiant utilisateur : user-1")).toBeTruthy();
-    expect(screen.getByText("Statut : ACTIVE")).toBeTruthy();
+    expect(
+      within(container).getByText((_, element) => element?.textContent === "Statut : ACTIVE"),
+    ).toBeTruthy();
     expect(screen.getByText("Rôle : ORGANIZATION_OWNER")).toBeTruthy();
     expect(screen.getByText("Portée : Organisation entière")).toBeTruthy();
     expect(screen.getByText("store-1")).toBeTruthy();
