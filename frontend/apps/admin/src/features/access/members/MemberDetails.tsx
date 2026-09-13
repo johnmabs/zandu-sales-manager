@@ -3,6 +3,8 @@
 import { ApiRequestError } from "@zandu/api-client";
 import { Button, ErrorState, Skeleton } from "@zandu/ui";
 
+import { expirationLabel } from "../expirationPresentation";
+
 import type { MembershipResource, MembershipRoleAssignment } from "@zandu/api-client";
 
 type MemberDetailsProperties = Readonly<{
@@ -97,7 +99,7 @@ function RoleAssignmentDetails({ assignment }: Readonly<{ assignment: Membership
           )}
         </>
       ) : null}
-      <p>Expiration : {assignment.expiresAt ?? "Sans expiration"}</p>
+      <p>{expirationLabel(assignment.expiresAt)}</p>
     </li>
   );
 }
