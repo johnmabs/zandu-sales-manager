@@ -10917,3 +10917,24 @@ interrompu pendant sa compilation par la fenêtre d’exécution locale de 30 s 
 à rejouer dans CI ou un environnement sans cette limite.
 
 Commit recommandé : `feat(access): add permission visualization`.
+
+## Epic F2.7 — Invite member
+
+**Statut : TERMINÉ — invitation minimale validée et soumise selon le contrat**
+
+- la route `/app/access/invite` est accessible depuis Invitations et applique
+  la projection UX `MEMBER_INVITE` ;
+- le formulaire valide l’email, une assignment de rôle obligatoire et une
+  expiration facultative, puis soumet exactement le payload OpenAPI ; la
+  portée initiale est l’organisation entière (`storeIds: []`) ;
+- après succès, une notification explicite confirme la création et ramène vers
+  Invitations ; le token retourné n’est ni persisté ni affiché, F2.10 restant
+  responsable de son affichage ponctuel et sécurisé ;
+- la sélection enrichie de rôles et les scopes magasins ne sont pas anticipés :
+  ils restent respectivement dans F2.8 et F2.9.
+
+Validations frontend : tests Admin OK (12) ; tests composants OK (38) ;
+intégration API OK (8) ; tests Foundation OK (20) ; typecheck, lint, formatage
+et `git diff --check` OK.
+
+Commit recommandé : `feat(access): add member invitation`.

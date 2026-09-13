@@ -372,6 +372,12 @@ export type RoleResource = Readonly<{
   version: number;
 }>;
 
+export type InvitationCreateInput = Readonly<{
+  email: string;
+  expiresAt: string | null;
+  roleAssignments: readonly Readonly<{ roleCode: string; storeIds: readonly string[] }>[];
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -521,6 +527,15 @@ export class FoundationApi {
     });
 
     return decodeRoles(response.data);
+  }
+
+  async inviteMember(input: InvitationCreateInput): Promise<void> {
+    await this.client.request({
+      body: input,
+      method: "POST",
+      path: "member-invitations",
+      telemetry: { feature: "access", operation: "invite", route: "/app/access/invite" },
+    });
   }
 }
 

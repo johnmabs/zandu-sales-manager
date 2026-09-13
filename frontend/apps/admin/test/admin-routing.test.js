@@ -15,6 +15,7 @@ const routes = [
   "/app/access/members",
   "/app/access/members/[memberId]",
   "/app/access/invitations",
+  "/app/access/invite",
   "/app/access/roles",
   "/app/catalog",
   "/app/pricing",
