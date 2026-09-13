@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { accessErrorPresentation } from "../../apps/admin/src/features/access/accessErrors";
+import { ApiRequestError } from "../../packages/api-client/src/index";
 import { ErrorMapper } from "../../packages/error-contract/src/index";
 
 describe("ErrorMapper", () => {
@@ -16,6 +18,22 @@ describe("ErrorMapper", () => {
       message: "Stock insuffisant pour finaliser la vente.",
       retryable: false,
       title: "Stock insuffisant",
+    });
+  });
+});
+
+describe("Access errors", () => {
+  it("maps authorization failures and preserves correlation", () => {
+    expect(
+      accessErrorPresentation(
+        new ApiRequestError(
+          { code: "FORBIDDEN", correlationId: "correlation-1", kind: "response", status: 403 },
+          false,
+        ),
+      ),
+    ).toMatchObject({
+      correlationId: "correlation-1",
+      title: "Action non autorisée",
     });
   });
 });

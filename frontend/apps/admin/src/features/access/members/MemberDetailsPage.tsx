@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useStoreList } from "../../stores/hooks/useStoreList";
+import { AccessMutationError } from "../accessErrors";
 import { useAssignMemberRole } from "../hooks/useAssignMemberRole";
 import { useMemberDetails } from "../hooks/useMemberDetails";
 import { useReactivateMember } from "../hooks/useReactivateMember";
@@ -70,6 +71,8 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
     }
     await details.refetch();
   };
+  const mutationError =
+    assign.error ?? remove.error ?? suspend.error ?? reactivate.error ?? revoke.error;
 
   if (readAccess === "UNRESOLVED") {
     return <Spinner label="Chargement des autorisations" />;
@@ -95,6 +98,9 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
 
   return (
     <>
+      {mutationError === null || mutationError === undefined ? null : (
+        <AccessMutationError error={mutationError} />
+      )}
       <MemberDetails
         {...(details.error === null ? {} : { error: details.error })}
         isLoading={details.isLoading}
