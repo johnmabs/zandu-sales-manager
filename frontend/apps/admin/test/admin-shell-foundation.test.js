@@ -82,3 +82,12 @@ test("Admin runtime clears tenant state when authorization refresh cannot restor
   assert.match(runtime, /services\.queryClient\.clear\(\)/);
   assert.match(runtime, /services\.organizations\.clear\(\)/);
 });
+
+test("member access mutations revalidate the current user's session", async () => {
+  const memberDetails = await readFile(
+    new URL("../src/features/access/members/MemberDetailsPage.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(memberDetails, /details\.data\?\.userId === authState\.actor\?\.userId/);
+  assert.match(memberDetails, /await revalidateSession\(\)/);
+});

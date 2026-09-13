@@ -29,7 +29,7 @@ import type { MembershipRoleAssignment } from "@zandu/api-client";
 export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: string }>) {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
-  const { api } = useAdminRuntime();
+  const { api, authState, revalidateSession } = useAdminRuntime();
   const notifications = useNotifications();
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignmentToRemove, setAssignmentToRemove] = useState<MembershipRoleAssignment>();
@@ -60,6 +60,13 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const suspend = useSuspendMember(api, membershipId);
   const reactivate = useReactivateMember(api, membershipId);
   const revoke = useRevokeMember(api, membershipId);
+  const refreshAfterAccessMutation = async () => {
+    if (details.data?.userId === authState.actor?.userId) {
+      await revalidateSession();
+      return;
+    }
+    await details.refetch();
+  };
 
   if (readAccess === "UNRESOLVED") {
     return <Spinner label="Chargement des autorisations" />;
@@ -116,7 +123,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         onClose={() => setRevokeOpen(false)}
         onConfirm={async () => {
           await revoke.mutateAsync();
-          await details.refetch();
+          await refreshAfterAccessMutation();
           notifications.notify({ message: "Membre révoqué.", tone: "success" });
           setRevokeOpen(false);
         }}
@@ -128,7 +135,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         onClose={() => setReactivateOpen(false)}
         onConfirm={async () => {
           await reactivate.mutateAsync();
-          await details.refetch();
+          await refreshAfterAccessMutation();
           notifications.notify({ message: "Membre réactivé.", tone: "success" });
           setReactivateOpen(false);
         }}
@@ -140,7 +147,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         onClose={() => setSuspendOpen(false)}
         onConfirm={async () => {
           await suspend.mutateAsync();
-          await details.refetch();
+          await refreshAfterAccessMutation();
           notifications.notify({ message: "Membre suspendu.", tone: "success" });
           setSuspendOpen(false);
         }}
@@ -158,7 +165,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         onConfirm={async () => {
           if (assignmentToRemove === undefined) return;
           await remove.mutateAsync(assignmentToRemove.assignmentId);
-          await details.refetch();
+          await refreshAfterAccessMutation();
           notifications.notify({ message: "Rôle retiré.", tone: "success" });
           setAssignmentToRemove(undefined);
         }}
@@ -169,7 +176,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         onClose={() => setAssignOpen(false)}
         onConfirm={async (input) => {
           await assign.mutateAsync(input);
-          await details.refetch();
+          await refreshAfterAccessMutation();
           notifications.notify({ message: "Rôle attribué.", tone: "success" });
           setAssignOpen(false);
         }}
