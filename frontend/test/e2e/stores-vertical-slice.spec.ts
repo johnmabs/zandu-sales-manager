@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import type { Page } from "@playwright/test";
+
 const organizationId = "organization-1";
 
 test("an authorized user completes the Stores vertical slice", async ({ page }) => {
@@ -102,6 +104,7 @@ test("an authorized user completes the Stores vertical slice", async ({ page }) 
   await page.getByRole("button", { name: "Réactiver" }).click();
   await page.getByRole("button", { name: "Confirmer la réactivation" }).click();
   await expect(page.getByText("ACTIVE", { exact: true })).toBeVisible();
+  await dismissNotifications(page);
 
   await page.getByRole("button", { name: "Demander la fermeture" }).click();
   await page.getByLabel("Motif de fermeture").fill("Fin d’activité");
@@ -137,6 +140,13 @@ test("a user without Store permission is kept out of the protected route", async
   await page.goto("/app/stores");
   await expect(page.getByRole("heading", { name: "Accès refusé" })).toBeVisible();
 });
+
+async function dismissNotifications(page: Page) {
+  const dismissButtons = page.getByRole("button", { name: "Fermer la notification" });
+  while ((await dismissButtons.count()) > 0) {
+    await dismissButtons.first().click();
+  }
+}
 
 function session(permissions: readonly string[]) {
   return {
