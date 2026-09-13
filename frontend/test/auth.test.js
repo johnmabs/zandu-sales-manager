@@ -178,6 +178,29 @@ test("an invalidated authorization version clears the stale session", async () =
   assert.equal(auth.getAccessToken(), undefined);
 });
 
+test("a 401 after authorizationVersion changes cannot restore stale access", async () => {
+  let retryCalls = 0;
+  const auth = new AuthenticationManager(
+    transport({
+      refresh: async () => {
+        throw new Error("refresh rejected after authorization change");
+      },
+    }),
+  );
+  await auth.login({ email: "owner@zandu.test", password: "password" });
+
+  await assert.rejects(
+    auth.refreshAndRetry(async () => {
+      retryCalls += 1;
+      return "stale access";
+    }),
+    /refresh rejected after authorization change/,
+  );
+  assert.equal(retryCalls, 0);
+  assert.equal(auth.getState().status, "UNAUTHENTICATED");
+  assert.equal(auth.getAccessToken(), undefined);
+});
+
 test("logout revokes the transport-managed refresh cookie before clearing the session", async () => {
   let logoutCalls = 0;
   const auth = new AuthenticationManager(
