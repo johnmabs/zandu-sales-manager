@@ -14,3 +14,14 @@ test("Admin keeps Stores usable at laptop and tablet widths", async () => {
   assert.match(styles, /\.zandu-store-details__section dl[\s\S]*grid-template-columns: 1fr/);
   assert.match(styles, /\.zandu-dialog[\s\S]*max-height: min\(90vh, 42rem\)/);
 });
+
+test("Access Management uses tablet spacing and progressive permission disclosure", async () => {
+  const [styles, catalog] = await Promise.all([
+    readFile(stylesUrl, "utf8"),
+    readFile(new URL("../src/features/access/roles/RoleCatalog.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(styles, /\.zandu-member-details/);
+  assert.match(styles, /\.zandu-invite-member-form/);
+  assert.match(catalog, /<details/);
+  assert.match(catalog, /<summary>/);
+});

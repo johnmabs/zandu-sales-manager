@@ -360,6 +360,8 @@ h1 {
 
   .zandu-store-list-page,
   .zandu-store-details,
+  .zandu-member-details,
+  .zandu-invite-member-form,
   .zandu-store-form {
     gap: var(--zandu-space-4);
   }
