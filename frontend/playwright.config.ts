@@ -8,6 +8,10 @@ export default defineConfig({
   },
   webServer: {
     command: "pnpm --filter @zandu/admin dev --hostname 127.0.0.1 --port 3100",
+    env: {
+      NEXT_PUBLIC_API_BASE_URL: "/api/",
+      NEXT_PUBLIC_APP_ENV: "test",
+    },
     port: 3100,
     reuseExistingServer: !process.env.CI,
   },
