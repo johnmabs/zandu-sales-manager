@@ -10771,3 +10771,31 @@ Validations frontend : test Observability Foundation OK ; tests Admin OK
 `git diff --check` OK.
 
 Commit recommandé : `feat(stores): add safe feature observability`.
+
+## Epic F2.1 — Access feature foundation
+
+**Statut : TERMINÉ — frontière Access Management coordonnée et routable**
+
+- `features/access` constitue désormais une frontière unique pour coordonner
+  Members, Invitations, Roles, RoleAssignments et Scopes, avec des points
+  d’extension explicites pour API, composants, hooks, schémas, routes et tests ;
+- les sous-domaines `members`, `invitations` et `roles` restent regroupés dans
+  cette feature comme le demande F2.1 ; aucun package partagé ou faux bounded
+  context frontend n’est créé prématurément ;
+- la page Next.js `/app/members` reste l’adaptateur mince établi par le routeur
+  Admin et importe maintenant le point d’entrée public `features/access` ; la
+  composition appartient à `routes/MembersRoute` puis au composant de page de
+  la feature ;
+- le placeholder existant est conservé derrière cette composition : F2.1
+  n’anticipe ni liste de membres, ni navigation Access, ni DTO, endpoint,
+  permission ou règle d’autorisation des Epics suivants ;
+- le README de frontière rend explicite que Symfony reste autoritaire et que
+  l’Admin ne calcule ni permissions effectives, ni légalité des assignments ou
+  scopes.
+
+Validations frontend : tests Admin OK (10 tests, dont 3 dédiés à la frontière
+Access) ; tests Foundation OK (20 tests) ; `pnpm test` OK (20 tests Foundation,
+6 unitaires, 33 composants, 5 intégration) ; `pnpm typecheck` OK ; `pnpm lint`
+OK ; `pnpm format:check` OK ; build Admin OK ; `git diff --check` OK.
+
+Commit recommandé : `feat(admin): add access management foundation`.

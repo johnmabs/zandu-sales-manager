@@ -5,7 +5,7 @@ import test from "node:test";
 const adminFeatureRoutes = [
   "organization/OrganizationRoute.tsx",
   "stores/routes/StoresRoute.tsx",
-  "access/MembersRoute.tsx",
+  "access/routes/MembersRoute.tsx",
   "catalog/CatalogRoute.tsx",
   "pricing/PricingRoute.tsx",
   "inventory/InventoryRoute.tsx",
