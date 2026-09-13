@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, EmptyState, ErrorState, Skeleton } from "@zandu/ui";
+import Link from "next/link";
 
 import { AdminTable } from "../../../components/tables/AdminTable";
 
@@ -15,7 +16,13 @@ type MemberListProperties = Readonly<{
 }>;
 
 const columns: readonly AdminTableColumn<MembershipResource>[] = [
-  { cell: (member) => member.userId, header: "Utilisateur", id: "userId" },
+  {
+    cell: (member) => (
+      <Link href={`/app/access/members/${encodeURIComponent(member.id)}`}>{member.userId}</Link>
+    ),
+    header: "Utilisateur",
+    id: "userId",
+  },
   { cell: (member) => member.status, header: "Statut", id: "status" },
   {
     cell: (member) => <RoleAssignmentsSummary assignments={member.roleAssignments} />,

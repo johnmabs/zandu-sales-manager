@@ -160,6 +160,39 @@ describe("ApiClient at the mocked API boundary", () => {
     expect(failures).toEqual([]);
   });
 
+  it("keeps an out-of-organization member detail unavailable to the UI", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/members/membership-other-organization", () =>
+        HttpResponse.json({
+          authorizationVersion: 1,
+          createdAt: "2026-09-10T08:00:00+00:00",
+          id: "membership-other-organization",
+          organizationId: "organization-2",
+          roleAssignments: [],
+          status: "SUSPENDED",
+          updatedAt: "2026-09-10T08:00:00+00:00",
+          userId: "user-2",
+          version: 1,
+        }),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+
+    await expect(
+      api.getOrganizationMember("membership-other-organization", {
+        accessibleStoreIds: [],
+        authorizationVersion: 1,
+        organizationId: "organization-1",
+        permissions: ["MEMBER_READ"],
+        scope: { type: "ORGANIZATION" },
+      }),
+    ).resolves.toBeUndefined();
+  });
+
   it("connects AuthenticationManager to scoped Symfony store projections", async () => {
     const organizationId = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
     const accessToken = jwt();

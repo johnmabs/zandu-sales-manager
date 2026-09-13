@@ -484,6 +484,20 @@ export class FoundationApi {
       (membership) => membership.organizationId === access.organizationId,
     );
   }
+
+  async getOrganizationMember(
+    membershipId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<MembershipResource | undefined> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `members/${encodeURIComponent(membershipId)}`,
+      telemetry: memberTelemetry("details", "/app/access/members/:id"),
+    });
+    const membership = decodeMembership(response.data);
+
+    return membership.organizationId === access.organizationId ? membership : undefined;
+  }
 }
 
 function storeTelemetry(operation: string, route: string) {

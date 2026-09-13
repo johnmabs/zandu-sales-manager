@@ -10848,3 +10848,28 @@ mais sa phase TypeScript finale a été interrompue par la fenêtre d’exécuti
 locale de 30 s ; à rejouer dans CI ou un environnement sans cette limite.
 
 Commit recommandé : `feat(access): add member list`.
+
+## Epic F2.4 — Member details
+
+**Statut : TERMINÉ — détail membership tenant-scoped en lecture seule**
+
+- la liste Membres mène vers `/app/access/members/{memberId}` ; le détail
+  consomme `GET /api/members/{id}` par le client typé et le cache React Query
+  reste isolé par organisation, membership et `authorizationVersion` ;
+- une réponse dont l’organisation ne correspond pas au contexte actif est
+  rendue indiscernable d’une absence ; le 404 affiche également « Membre
+  introuvable » sans révéler de donnée cross-tenant ;
+- l’écran présente seulement les données publiées : `userId`, statut,
+  identifiants de rôles, scope organisation ou magasins sélectionnés et
+  expiration brute. Aucun credential ou attribut du compte global n’est
+  affiché ;
+- aucune mutation d’accès n’est anticipée : attribution/retrait de rôle et
+  lifecycle du membership restent dans leurs Epics F2 dédiés.
+
+Validations frontend : tests composants OK (37) ; intégration API OK (7) ;
+tests Foundation OK (20) ; tests Admin OK (10) ; typecheck, lint, formatage et
+`git diff --check` OK. Le build Admin a compilé la production avec succès,
+mais sa phase TypeScript finale a été interrompue par la fenêtre d’exécution
+locale de 30 s ; à rejouer dans CI ou un environnement sans cette limite.
+
+Commit recommandé : `feat(access): add member details`.

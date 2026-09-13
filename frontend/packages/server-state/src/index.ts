@@ -32,8 +32,10 @@ const organizationScopedResources = new Set([
  */
 export const queryKeys = {
   members: {
-    detail: (organizationId: string, membershipId: string) =>
-      ["members", organizationId, membershipId] as const,
+    detail: (organizationId: string, membershipId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["members", organizationId, membershipId] as const)
+        : (["members", organizationId, membershipId, filters] as const),
     list: (organizationId: string, filters?: QueryParameters) =>
       filters === undefined
         ? (["members", organizationId] as const)

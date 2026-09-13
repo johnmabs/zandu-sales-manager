@@ -4,6 +4,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
@@ -178,6 +179,49 @@ describe("MemberList", () => {
 
     expect(screen.getByText("Aucun membre")).toBeTruthy();
     expect(screen.queryByRole("searchbox")).toBeNull();
+  });
+});
+
+describe("MemberDetails", () => {
+  it("renders the tenant-scoped membership projection without account credentials", () => {
+    render(
+      <MemberDetails
+        isLoading={false}
+        member={{
+          ...member,
+          roleAssignments: [
+            {
+              assignmentId: "assignment-organization",
+              expiresAt: "2026-12-31T00:00:00+00:00",
+              roleId: "ORGANIZATION_OWNER",
+              scopeType: "ORGANIZATION",
+              storeIds: [],
+            },
+            member.roleAssignments[0],
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Membre" })).toBeTruthy();
+    expect(screen.getByText("Identifiant utilisateur : user-1")).toBeTruthy();
+    expect(screen.getByText("Statut : ACTIVE")).toBeTruthy();
+    expect(screen.getByText("Rôle : ORGANIZATION_OWNER")).toBeTruthy();
+    expect(screen.getByText("Portée : Organisation entière")).toBeTruthy();
+    expect(screen.getByText("store-1")).toBeTruthy();
+    expect(screen.getByText("store-2")).toBeTruthy();
+    expect(screen.queryByText(/mot de passe|jeton|token/i)).toBeNull();
+  });
+
+  it("keeps a missing or cross-tenant member indistinguishable from not found", () => {
+    const { container } = render(
+      <MemberDetails
+        error={new ApiRequestError({ kind: "response", status: 404 }, false)}
+        isLoading={false}
+      />,
+    );
+
+    expect(within(container).getByRole("alert").textContent).toContain("Membre introuvable");
   });
 });
 

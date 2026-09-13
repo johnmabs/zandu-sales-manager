@@ -13,6 +13,7 @@ const routes = [
   "/app/members",
   "/app/access",
   "/app/access/members",
+  "/app/access/members/[memberId]",
   "/app/access/invitations",
   "/app/access/roles",
   "/app/catalog",
