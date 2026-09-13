@@ -15,6 +15,7 @@ type MemberDetailsProperties = Readonly<{
   onAssignRole?: (() => void) | undefined;
   onRemoveRole?: ((assignment: MembershipRoleAssignment) => void) | undefined;
   onSuspend?: (() => void) | undefined;
+  onReactivate?: (() => void) | undefined;
 }>;
 
 export function MemberDetails({
@@ -24,6 +25,7 @@ export function MemberDetails({
   onAssignRole,
   onRemoveRole,
   onSuspend,
+  onReactivate,
   onRetry,
 }: MemberDetailsProperties) {
   if (isLoading) {
@@ -52,6 +54,11 @@ export function MemberDetails({
         {member.status === "ACTIVE" && onSuspend !== undefined ? (
           <Button onClick={onSuspend} type="button" variant="danger">
             Suspendre le membre
+          </Button>
+        ) : null}
+        {member.status === "SUSPENDED" && onReactivate !== undefined ? (
+          <Button onClick={onReactivate} type="button">
+            Réactiver le membre
           </Button>
         ) : null}
       </header>

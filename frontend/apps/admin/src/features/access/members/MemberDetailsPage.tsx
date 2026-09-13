@@ -10,6 +10,7 @@ import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import { useStoreList } from "../../stores/hooks/useStoreList";
 import { useAssignMemberRole } from "../hooks/useAssignMemberRole";
 import { useMemberDetails } from "../hooks/useMemberDetails";
+import { useReactivateMember } from "../hooks/useReactivateMember";
 import { useRemoveMemberRole } from "../hooks/useRemoveMemberRole";
 import { useRoleCatalog } from "../hooks/useRoleCatalog";
 import { useSuspendMember } from "../hooks/useSuspendMember";
@@ -17,6 +18,7 @@ import { useSuspendMember } from "../hooks/useSuspendMember";
 import { AssignRoleDialog } from "./AssignRoleDialog";
 import { resolveMemberAccess } from "./memberAuthorization";
 import { MemberDetails } from "./MemberDetails";
+import { ReactivateMemberDialog } from "./ReactivateMemberDialog";
 import { RemoveRoleDialog } from "./RemoveRoleDialog";
 import { SuspendMemberDialog } from "./SuspendMemberDialog";
 
@@ -30,6 +32,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignmentToRemove, setAssignmentToRemove] = useState<MembershipRoleAssignment>();
   const [suspendOpen, setSuspendOpen] = useState(false);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
   const readAccess = resolveMemberAccess(access, activeOrganizationId);
   const details = useMemberDetails({
     access: readAccess === "ALLOWED" ? access : undefined,
@@ -52,6 +55,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const assign = useAssignMemberRole(api, membershipId);
   const remove = useRemoveMemberRole(api, membershipId);
   const suspend = useSuspendMember(api, membershipId);
+  const reactivate = useReactivateMember(api, membershipId);
 
   if (readAccess === "UNRESOLVED") {
     return <Spinner label="Chargement des autorisations" />;
@@ -91,6 +95,23 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
             ? () => setSuspendOpen(true)
             : undefined
         }
+        onReactivate={
+          access?.permissions.includes("MEMBER_SUSPEND") === true
+            ? () => setReactivateOpen(true)
+            : undefined
+        }
+      />
+      <ReactivateMemberDialog
+        isPending={reactivate.isPending}
+        memberLabel={details.data?.userId ?? "ce membre"}
+        onClose={() => setReactivateOpen(false)}
+        onConfirm={async () => {
+          await reactivate.mutateAsync();
+          await details.refetch();
+          notifications.notify({ message: "Membre réactivé.", tone: "success" });
+          setReactivateOpen(false);
+        }}
+        open={reactivateOpen}
       />
       <SuspendMemberDialog
         isPending={suspend.isPending}

@@ -231,6 +231,19 @@ describe("MemberDetails", () => {
     expect(screen.queryByText(/mot de passe|jeton|token/i)).toBeNull();
   });
 
+  it("offers reactivation only for a suspended membership", () => {
+    const onReactivate = vi.fn();
+    const { container } = render(
+      <MemberDetails
+        isLoading={false}
+        member={{ ...member, status: "SUSPENDED" }}
+        onReactivate={onReactivate}
+      />,
+    );
+    within(container).getByRole("button", { name: "Réactiver le membre" }).click();
+    expect(onReactivate).toHaveBeenCalledOnce();
+  });
+
   it("keeps a missing or cross-tenant member indistinguishable from not found", () => {
     const { container } = render(
       <MemberDetails
