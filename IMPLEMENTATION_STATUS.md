@@ -10938,3 +10938,26 @@ intégration API OK (8) ; tests Foundation OK (20) ; typecheck, lint, formatage
 et `git diff --check` OK.
 
 Commit recommandé : `feat(access): add member invitation`.
+
+## Epic F2.8 — Role selection during invitation
+
+**Statut : TERMINÉ — intentions de rôles multiples du catalogue serveur**
+
+- le formulaire d’invitation charge le catalogue déjà tenant/version-scoped et
+  ne propose que ses rôles `ACTIVE`, au lieu d’accepter un code libre ;
+- une ou plusieurs intentions sont collectées par cases à cocher et produisent
+  une assignment distincte par rôle dans le payload `roleAssignments` ;
+- chaque intention F2.8 utilise explicitement le scope organisation accepté
+  par le contrat (`storeIds: []`) ; aucune sélection de magasin ni combinaison
+  `SELECTED_STORES` n’est anticipée avant F2.9 ;
+- les états de chargement, erreur réessayable et absence de rôle actif rendent
+  l’invitation non soumettable tant que le contrat ne fournit pas de choix.
+
+Validations frontend : tests Admin OK (12) ; tests composants OK (39, dont
+sélection multi-rôles et payload organisationnel) ; intégration API OK (8) ;
+tests Foundation OK (20) ; typecheck, lint, formatage et `git diff --check` OK.
+Le build Admin a compilé, vérifié TypeScript et généré les pages statiques,
+mais n’a pas retourné avant la limite locale de 30 s ; à confirmer en CI ou
+dans un environnement sans cette limite.
+
+Commit recommandé : `feat(access): add invitation role selection`.

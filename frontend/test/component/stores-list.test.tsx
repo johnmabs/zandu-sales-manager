@@ -4,6 +4,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
 import { RoleCatalog } from "../../apps/admin/src/features/access/roles/RoleCatalog";
@@ -252,6 +253,43 @@ describe("RoleCatalog", () => {
     expect(table.textContent).toContain("ACTIVE");
     expect(table.textContent).toContain("Système (lecture seule)");
     expect(within(container).queryByRole("button", { name: /modifier|supprimer/i })).toBeNull();
+  });
+});
+
+describe("InviteMemberForm", () => {
+  it("collects one or more catalog roles as organization-scoped invitation intentions", async () => {
+    const onInvite = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const { container } = render(
+      <InviteMemberForm
+        onInvite={onInvite}
+        roles={[
+          role,
+          {
+            ...role,
+            code: "CASHIER",
+            id: "role-2",
+            name: "Caissier",
+          },
+        ]}
+      />,
+    );
+
+    await user.type(within(container).getByLabelText("Email"), "member@zandu.test");
+    await user.click(within(container).getByLabelText("Responsable de magasin (STORE_MANAGER)"));
+    await user.click(within(container).getByLabelText("Caissier (CASHIER)"));
+    await user.click(within(container).getByRole("button", { name: "Envoyer l’invitation" }));
+
+    await waitFor(() =>
+      expect(onInvite).toHaveBeenCalledWith({
+        email: "member@zandu.test",
+        expiresAt: null,
+        roleAssignments: [
+          { roleCode: "STORE_MANAGER", storeIds: [] },
+          { roleCode: "CASHIER", storeIds: [] },
+        ],
+      }),
+    );
   });
 });
 

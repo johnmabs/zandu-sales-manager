@@ -1,20 +1,23 @@
 "use client";
 
 import { useUnsavedChangesWarning, useZanduForm } from "@zandu/forms";
-import { Button, Input } from "@zandu/ui";
+import { Button, Checkbox, Input } from "@zandu/ui";
 import { useId } from "react";
 
 import { inviteMemberSchema, toInvitationCreateInput } from "../schemas/inviteMemberSchema";
 
+import type { RoleResource } from "@zandu/api-client";
+
 type InviteMemberFormProperties = Readonly<{
   onInvite: (input: ReturnType<typeof toInvitationCreateInput>) => Promise<void>;
+  roles: readonly RoleResource[];
 }>;
 
-export function InviteMemberForm({ onInvite }: InviteMemberFormProperties) {
+export function InviteMemberForm({ onInvite, roles }: InviteMemberFormProperties) {
   const emailErrorId = useId();
   const roleErrorId = useId();
   const form = useZanduForm(inviteMemberSchema, {
-    defaultValues: { email: "", expiresAt: "", roleCode: "" },
+    defaultValues: { email: "", expiresAt: "", roleCodes: [] },
   });
   useUnsavedChangesWarning(form.formState.isDirty);
 
@@ -36,22 +39,27 @@ export function InviteMemberForm({ onInvite }: InviteMemberFormProperties) {
         />
       </label>
       <FieldError id={emailErrorId} message={form.formState.errors.email?.message} />
-      <label>
-        Code du rôle
-        <Input
-          aria-invalid={form.formState.errors.roleCode === undefined ? undefined : true}
-          {...(form.formState.errors.roleCode === undefined
-            ? {}
-            : { "aria-describedby": roleErrorId })}
-          {...form.register("roleCode")}
-        />
-      </label>
-      <FieldError id={roleErrorId} message={form.formState.errors.roleCode?.message} />
+      <fieldset
+        {...(form.formState.errors.roleCodes === undefined
+          ? {}
+          : { "aria-describedby": roleErrorId, "aria-invalid": true })}
+      >
+        <legend>Rôles</legend>
+        {roles.map((role) => (
+          <Checkbox
+            key={role.id}
+            label={`${role.name} (${role.code})`}
+            value={role.code}
+            {...form.register("roleCodes")}
+          />
+        ))}
+      </fieldset>
+      <FieldError id={roleErrorId} message={form.formState.errors.roleCodes?.message} />
       <label>
         Expiration (facultative)
         <Input {...form.register("expiresAt")} type="datetime-local" />
       </label>
-      <p>Cette première invitation attribue le rôle à toute l’organisation.</p>
+      <p>Chaque rôle sélectionné s’applique à toute l’organisation.</p>
       <Button disabled={form.formState.isSubmitting} type="submit">
         {form.formState.isSubmitting ? "Invitation en cours" : "Envoyer l’invitation"}
       </Button>
