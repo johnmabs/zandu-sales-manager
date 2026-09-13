@@ -61,13 +61,15 @@ test("an owner administers invitation, roles and membership lifecycle", async ({
   );
 
   await login(page);
-  await page.goto("/app/access/invite");
+  await openAccess(page);
+  await page.getByRole("link", { name: "Invitations" }).click();
+  await page.getByRole("link", { name: "Inviter un membre" }).click();
   await page.getByLabel("Email").fill("member@zandu.test");
   await page.getByLabel("Responsable (STORE_MANAGER)").check();
   await page.getByRole("button", { name: "Envoyer l’invitation" }).click();
   await expect(page.getByRole("heading", { name: "Invitation créée" })).toBeVisible();
 
-  await page.goto("/app/access/members/membership-2");
+  await openMember(page);
   await page.getByRole("button", { name: "Attribuer un rôle" }).click();
   await page.getByLabel("Rôle").selectOption("role-manager");
   await page.getByRole("button", { name: "Attribuer le rôle" }).click();
@@ -76,10 +78,10 @@ test("an owner administers invitation, roles and membership lifecycle", async ({
   await page.getByRole("button", { name: "Confirmer le retrait" }).click();
   await page.getByRole("button", { name: "Suspendre le membre" }).click();
   await page.getByRole("button", { name: "Confirmer la suspension" }).click();
-  await expect(page.getByText("SUSPENDED")).toBeVisible();
+  await expect(page.getByText("SUSPENDED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Réactiver le membre" }).click();
   await page.getByRole("button", { name: "Confirmer la réactivation" }).click();
-  await expect(page.getByText("ACTIVE")).toBeVisible();
+  await expect(page.getByText("ACTIVE", { exact: true })).toBeVisible();
 });
 
 test("last owner refusal keeps the member UI coherent", async ({ page }) => {
@@ -110,7 +112,7 @@ test("last owner refusal keeps the member UI coherent", async ({ page }) => {
     () => member,
   );
   await login(page);
-  await page.goto("/app/access/members/membership-2");
+  await openMember(page);
   await page.getByRole("button", { name: "Retirer ce rôle" }).click();
   await page.getByRole("button", { name: "Confirmer le retrait" }).click();
   await expect(
@@ -125,6 +127,16 @@ async function login(page: Page) {
   await page.getByLabel("Mot de passe").fill("password");
   await page.getByRole("button", { name: "Se connecter" }).click();
   await expect(page).toHaveURL(/\/app$/);
+}
+
+async function openAccess(page: Page) {
+  await page.getByRole("link", { name: "Accès" }).click();
+}
+
+async function openMember(page: Page) {
+  await openAccess(page);
+  await page.getByRole("link", { name: "Membres" }).click();
+  await page.getByRole("link", { name: "member-user" }).click();
 }
 
 async function mockAccessApi(
