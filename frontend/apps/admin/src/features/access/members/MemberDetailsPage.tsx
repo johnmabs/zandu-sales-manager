@@ -12,6 +12,7 @@ import { useAssignMemberRole } from "../hooks/useAssignMemberRole";
 import { useMemberDetails } from "../hooks/useMemberDetails";
 import { useReactivateMember } from "../hooks/useReactivateMember";
 import { useRemoveMemberRole } from "../hooks/useRemoveMemberRole";
+import { useRevokeMember } from "../hooks/useRevokeMember";
 import { useRoleCatalog } from "../hooks/useRoleCatalog";
 import { useSuspendMember } from "../hooks/useSuspendMember";
 
@@ -20,6 +21,7 @@ import { resolveMemberAccess } from "./memberAuthorization";
 import { MemberDetails } from "./MemberDetails";
 import { ReactivateMemberDialog } from "./ReactivateMemberDialog";
 import { RemoveRoleDialog } from "./RemoveRoleDialog";
+import { RevokeMemberDialog } from "./RevokeMemberDialog";
 import { SuspendMemberDialog } from "./SuspendMemberDialog";
 
 import type { MembershipRoleAssignment } from "@zandu/api-client";
@@ -33,6 +35,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const [assignmentToRemove, setAssignmentToRemove] = useState<MembershipRoleAssignment>();
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [reactivateOpen, setReactivateOpen] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
   const readAccess = resolveMemberAccess(access, activeOrganizationId);
   const details = useMemberDetails({
     access: readAccess === "ALLOWED" ? access : undefined,
@@ -56,6 +59,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const remove = useRemoveMemberRole(api, membershipId);
   const suspend = useSuspendMember(api, membershipId);
   const reactivate = useReactivateMember(api, membershipId);
+  const revoke = useRevokeMember(api, membershipId);
 
   if (readAccess === "UNRESOLVED") {
     return <Spinner label="Chargement des autorisations" />;
@@ -100,6 +104,23 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
             ? () => setReactivateOpen(true)
             : undefined
         }
+        onRevoke={
+          access?.permissions.includes("MEMBER_REVOKE") === true
+            ? () => setRevokeOpen(true)
+            : undefined
+        }
+      />
+      <RevokeMemberDialog
+        isPending={revoke.isPending}
+        memberLabel={details.data?.userId ?? "ce membre"}
+        onClose={() => setRevokeOpen(false)}
+        onConfirm={async () => {
+          await revoke.mutateAsync();
+          await details.refetch();
+          notifications.notify({ message: "Membre révoqué.", tone: "success" });
+          setRevokeOpen(false);
+        }}
+        open={revokeOpen}
       />
       <ReactivateMemberDialog
         isPending={reactivate.isPending}

@@ -254,6 +254,18 @@ describe("MemberDetails", () => {
 
     expect(within(container).getByRole("alert").textContent).toContain("Membre introuvable");
   });
+
+  it("never offers lifecycle actions again after revocation", () => {
+    const { container } = render(
+      <MemberDetails
+        isLoading={false}
+        member={{ ...member, status: "REVOKED" }}
+        onReactivate={vi.fn()}
+        onRevoke={vi.fn()}
+      />,
+    );
+    expect(within(container).queryByRole("button", { name: /réactiver|révoquer/i })).toBeNull();
+  });
 });
 
 describe("AssignRoleDialog", () => {

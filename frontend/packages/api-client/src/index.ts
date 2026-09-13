@@ -583,6 +583,15 @@ export class FoundationApi {
     return decodeMembership(response.data);
   }
 
+  async revokeMember(membershipId: string): Promise<MembershipResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `members/${encodeURIComponent(membershipId)}/revoke`,
+      telemetry: memberTelemetry("revoke", "/app/access/members/:id"),
+    });
+    return decodeMembership(response.data);
+  }
+
   async listRoles(): Promise<readonly RoleResource[]> {
     const response = await this.client.request({
       method: "GET",
