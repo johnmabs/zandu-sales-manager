@@ -36,4 +36,25 @@ describe("Access errors", () => {
       title: "Action non autorisée",
     });
   });
+
+  it("explains the last-owner invariant only when the server identifies it", () => {
+    expect(
+      accessErrorPresentation(
+        new ApiRequestError(
+          {
+            code: "DOMAIN_RULE_VIOLATION",
+            correlationId: "correlation-owner",
+            kind: "response",
+            message: "The last active organization owner cannot be suspended or revoked.",
+            status: 409,
+          },
+          false,
+        ),
+      ),
+    ).toMatchObject({
+      correlationId: "correlation-owner",
+      message: "L’organisation doit conserver au moins un propriétaire actif.",
+      title: "Dernier propriétaire actif",
+    });
+  });
 });

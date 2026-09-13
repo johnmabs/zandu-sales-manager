@@ -7,6 +7,18 @@ const mapper = new ErrorMapper();
 export function accessErrorPresentation(error: unknown) {
   const apiError =
     error instanceof ApiRequestError ? error.apiError : { kind: "response" as const, status: 500 };
+  if (
+    apiError.kind === "response" &&
+    apiError.code === "DOMAIN_RULE_VIOLATION" &&
+    apiError.message?.toLowerCase().includes("last active organization owner")
+  ) {
+    return {
+      ...(apiError.correlationId === undefined ? {} : { correlationId: apiError.correlationId }),
+      message: "L’organisation doit conserver au moins un propriétaire actif.",
+      retryable: false,
+      title: "Dernier propriétaire actif",
+    };
+  }
   return mapper.map(apiError);
 }
 
