@@ -12,11 +12,13 @@ import { useAssignMemberRole } from "../hooks/useAssignMemberRole";
 import { useMemberDetails } from "../hooks/useMemberDetails";
 import { useRemoveMemberRole } from "../hooks/useRemoveMemberRole";
 import { useRoleCatalog } from "../hooks/useRoleCatalog";
+import { useSuspendMember } from "../hooks/useSuspendMember";
 
 import { AssignRoleDialog } from "./AssignRoleDialog";
 import { resolveMemberAccess } from "./memberAuthorization";
 import { MemberDetails } from "./MemberDetails";
 import { RemoveRoleDialog } from "./RemoveRoleDialog";
+import { SuspendMemberDialog } from "./SuspendMemberDialog";
 
 import type { MembershipRoleAssignment } from "@zandu/api-client";
 
@@ -27,6 +29,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const notifications = useNotifications();
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignmentToRemove, setAssignmentToRemove] = useState<MembershipRoleAssignment>();
+  const [suspendOpen, setSuspendOpen] = useState(false);
   const readAccess = resolveMemberAccess(access, activeOrganizationId);
   const details = useMemberDetails({
     access: readAccess === "ALLOWED" ? access : undefined,
@@ -48,6 +51,7 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   });
   const assign = useAssignMemberRole(api, membershipId);
   const remove = useRemoveMemberRole(api, membershipId);
+  const suspend = useSuspendMember(api, membershipId);
 
   if (readAccess === "UNRESOLVED") {
     return <Spinner label="Chargement des autorisations" />;
@@ -82,6 +86,23 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         onRemoveRole={
           access?.permissions.includes("ROLE_REVOKE") === true ? setAssignmentToRemove : undefined
         }
+        onSuspend={
+          access?.permissions.includes("MEMBER_SUSPEND") === true
+            ? () => setSuspendOpen(true)
+            : undefined
+        }
+      />
+      <SuspendMemberDialog
+        isPending={suspend.isPending}
+        memberLabel={details.data?.userId ?? "ce membre"}
+        onClose={() => setSuspendOpen(false)}
+        onConfirm={async () => {
+          await suspend.mutateAsync();
+          await details.refetch();
+          notifications.notify({ message: "Membre suspendu.", tone: "success" });
+          setSuspendOpen(false);
+        }}
+        open={suspendOpen}
       />
       <RemoveRoleDialog
         {...(assignmentToRemove === undefined ? {} : { assignment: assignmentToRemove })}

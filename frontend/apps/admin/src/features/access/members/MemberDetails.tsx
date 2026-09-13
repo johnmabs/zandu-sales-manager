@@ -14,6 +14,7 @@ type MemberDetailsProperties = Readonly<{
   onRetry?: (() => void) | undefined;
   onAssignRole?: (() => void) | undefined;
   onRemoveRole?: ((assignment: MembershipRoleAssignment) => void) | undefined;
+  onSuspend?: (() => void) | undefined;
 }>;
 
 export function MemberDetails({
@@ -22,6 +23,7 @@ export function MemberDetails({
   member,
   onAssignRole,
   onRemoveRole,
+  onSuspend,
   onRetry,
 }: MemberDetailsProperties) {
   if (isLoading) {
@@ -47,6 +49,11 @@ export function MemberDetails({
         <h1>Membre</h1>
         <p>Identifiant utilisateur : {member.userId}</p>
         <p>Statut : {member.status}</p>
+        {member.status === "ACTIVE" && onSuspend !== undefined ? (
+          <Button onClick={onSuspend} type="button" variant="danger">
+            Suspendre le membre
+          </Button>
+        ) : null}
       </header>
       <section aria-labelledby="member-roles-title" className="zandu-member-details__section">
         <h2 id="member-roles-title">Rôles et portées</h2>

@@ -11,6 +11,7 @@ import { AssignRoleDialog } from "../../apps/admin/src/features/access/members/A
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
 import { RemoveRoleDialog } from "../../apps/admin/src/features/access/members/RemoveRoleDialog";
+import { SuspendMemberDialog } from "../../apps/admin/src/features/access/members/SuspendMemberDialog";
 import { RoleCatalog } from "../../apps/admin/src/features/access/roles/RoleCatalog";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
@@ -309,6 +310,23 @@ describe("RemoveRoleDialog", () => {
     expect(within(container).getByRole("dialog").textContent).toContain("store-1, store-2");
     await user.click(within(container).getByRole("button", { name: "Confirmer le retrait" }));
     expect(onConfirm).toHaveBeenCalledOnce();
+  });
+});
+
+describe("SuspendMemberDialog", () => {
+  it("names the member, immediate consequence, and reversibility", () => {
+    const { container } = render(
+      <SuspendMemberDialog
+        isPending={false}
+        memberLabel="user-1"
+        onClose={vi.fn()}
+        onConfirm={vi.fn()}
+        open
+      />,
+    );
+    expect(within(container).getByRole("dialog").textContent).toContain("user-1");
+    expect(within(container).getByRole("dialog").textContent).toContain("immédiatement");
+    expect(within(container).getByRole("dialog").textContent).toContain("réversible");
   });
 });
 
