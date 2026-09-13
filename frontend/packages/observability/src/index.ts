@@ -24,12 +24,16 @@ export type RouteLoadEvent = TelemetryEventBase &
 
 export type ApiFailureEvent = TelemetryEventBase &
   Readonly<{
+    category?: string;
     correlationId?: string;
     failureKind: "network" | "response";
+    feature?: string;
     kind: "api_failure";
     method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+    operation?: string;
     outcomeUnknown: boolean;
     path: string;
+    route?: string;
     status?: number;
   }>;
 
@@ -48,12 +52,16 @@ type RouteLoadEventData = Readonly<{
 }>;
 
 type ApiFailureEventData = Readonly<{
+  category?: string;
   correlationId?: string;
   failureKind: "network" | "response";
+  feature?: string;
   kind: "api_failure";
   method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
+  operation?: string;
   outcomeUnknown: boolean;
   path: string;
+  route?: string;
   status?: number;
 }>;
 
@@ -96,7 +104,15 @@ export class FrontendObservability implements ApiFailureObserver {
   }
 
   recordApiFailure(observation: ApiFailureObservation): void {
-    this.emit({ ...observation, kind: "api_failure", path: sanitizeRoute(observation.path) });
+    this.emit({
+      ...observation,
+      ...(observation.category === undefined
+        ? {}
+        : { category: safeCategory(observation.category) }),
+      kind: "api_failure",
+      path: sanitizeRoute(observation.path),
+      ...(observation.route === undefined ? {} : { route: sanitizeRoute(observation.route) }),
+    });
   }
 
   recordTechnicalError(error: unknown, source: TechnicalErrorEvent["source"] = "unknown"): void {
@@ -133,6 +149,10 @@ export class FrontendObservability implements ApiFailureObserver {
 
     this.sink.emit(annotatedEvent);
   }
+}
+
+function safeCategory(category: string): string {
+  return /^[A-Z][A-Z0-9_]{0,63}$/.test(category) ? category : "UNKNOWN_RESPONSE";
 }
 
 function errorTypeFor(error: unknown): string {

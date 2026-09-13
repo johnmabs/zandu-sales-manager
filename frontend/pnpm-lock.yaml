@@ -83,6 +83,9 @@ importers:
       '@zandu/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications
+      '@zandu/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@zandu/organization-context':
         specifier: workspace:*
         version: link:../../packages/organization-context

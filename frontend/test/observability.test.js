@@ -66,20 +66,29 @@ test("API failures keep correlation and operational metadata but exclude credent
   });
 
   await assert.rejects(() =>
-    client.request({ body: { password: "never-exported" }, method: "POST", path: "stores" }),
+    client.request({
+      body: { password: "never-exported" },
+      method: "POST",
+      path: "stores",
+      telemetry: { feature: "stores", operation: "create", route: "/app/stores/new?email=secret" },
+    }),
   );
 
   assert.deepEqual(events, [
     {
       clientVersion: "2026.09.09",
+      category: "VALIDATION_ERROR",
       correlationId: "correlation-from-server",
       environment: "test",
       failureKind: "response",
+      feature: "stores",
       kind: "api_failure",
       method: "POST",
+      operation: "create",
       occurredAt: "1970-01-01T00:00:00.000Z",
       outcomeUnknown: false,
       path: "/stores",
+      route: "/app/stores/new",
       status: 422,
     },
   ]);

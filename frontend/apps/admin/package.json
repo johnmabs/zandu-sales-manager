@@ -21,6 +21,7 @@
     "@zandu/forms": "workspace:*",
     "@zandu/notifications": "workspace:*",
     "@zandu/organization-context": "workspace:*",
+    "@zandu/observability": "workspace:*",
     "@zandu/server-state": "workspace:*",
     "@zandu/shared": "workspace:*",
     "@zandu/store-context": "workspace:*",

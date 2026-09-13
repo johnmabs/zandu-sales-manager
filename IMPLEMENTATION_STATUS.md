@@ -10741,3 +10741,33 @@ Validations frontend : typecheck Admin OK ; lint OK ; `git diff --check` OK.
 La validation E2E est à rejouer dans une image CI disposant de Chromium.
 
 Commit recommandé : `test(stores): add e2e vertical slice`.
+
+## Epic F1.20 — Observability
+
+**Statut : TERMINÉ — erreurs Stores instrumentées avec un contexte sûr et borné**
+
+- le runtime Admin instancie désormais la primitive `FrontendObservability` du
+  Foundation avec l’environnement public, la version client et un sink
+  navigateur indépendant du fournisseur ; un futur adaptateur OpenTelemetry
+  peut consommer l’événement `zandu:telemetry` sans coupler la feature à un SDK ;
+- chaque lecture et mutation du client Stores annote ses échecs terminaux avec
+  `feature=stores`, l’opération, la route Admin normalisée, la catégorie serveur
+  sûre et le `correlationId` lorsqu’il existe ; les routes détails ne publient
+  aucun identifiant Store ni query string ;
+- l’instrumentation reste centralisée à la frontière `ApiClient` : elle couvre
+  liste, détail, création, modification, suspension, réactivation, demande et
+  annulation de fermeture sans dupliquer des `try/catch` dans les hooks ;
+- le vocabulaire de télémétrie n’accepte aucun body, header, acteur ou message
+  d’erreur. Les catégories non conformes au format borné sont remplacées par
+  `UNKNOWN_RESPONSE`, empêchant notamment l’export accidentel d’un secret ;
+- les tests prouvent la normalisation des routes, la conservation du contexte
+  opérationnel/corrélation, le sink Admin et l’absence structurelle de
+  credentials ou payloads dans les événements.
+
+Validations frontend : test Observability Foundation OK ; tests Admin OK
+(9 tests) ; tests d’intégration API OK (5 tests) ; `pnpm format:check` OK ;
+`pnpm lint` OK ; `pnpm typecheck` OK ; `pnpm test` OK (20 tests Foundation,
+6 unitaires, 33 composants, 5 intégration) ; build Admin OK ;
+`git diff --check` OK.
+
+Commit recommandé : `feat(stores): add safe feature observability`.

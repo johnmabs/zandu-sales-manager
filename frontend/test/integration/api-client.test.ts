@@ -60,6 +60,49 @@ describe("ApiClient at the mocked API boundary", () => {
     });
   });
 
+  it("attaches safe Stores feature context to terminal API failures", async () => {
+    const failures: unknown[] = [];
+    server.use(
+      http.get("https://api.zandu.test/api/stores", () =>
+        HttpResponse.json(
+          { code: "FORBIDDEN", correlationId: "correlation-from-server" },
+          { status: 403 },
+        ),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+        observability: { recordApiFailure: (failure) => failures.push(failure) },
+      }),
+    );
+
+    await expect(
+      api.listAccessibleStores({
+        accessibleStoreIds: [],
+        authorizationVersion: 1,
+        organizationId: "organization-1",
+        permissions: ["STORE_READ"],
+        scope: { type: "ORGANIZATION" },
+      }),
+    ).rejects.toBeInstanceOf(ApiRequestError);
+
+    expect(failures).toEqual([
+      {
+        category: "FORBIDDEN",
+        correlationId: "correlation-from-server",
+        failureKind: "response",
+        feature: "stores",
+        method: "GET",
+        operation: "list",
+        outcomeUnknown: false,
+        path: "stores",
+        route: "/app/stores",
+        status: 403,
+      },
+    ]);
+  });
+
   it("connects AuthenticationManager to scoped Symfony store projections", async () => {
     const organizationId = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
     const accessToken = jwt();

@@ -13,6 +13,7 @@ import { StoreContextManager } from "@zandu/store-context";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { resolveAdminApiBaseUrl } from "./adminApiBaseUrl";
+import { createAdminObservability } from "./adminObservability";
 
 import type { QueryClient } from "@tanstack/react-query";
 import type { AuthCredentials, AuthState } from "@zandu/auth";
@@ -217,9 +218,14 @@ function createRuntimeServices(): Readonly<{ error?: string; services?: RuntimeS
   const appEnvironment = process.env.NEXT_PUBLIC_APP_ENV ?? process.env.NODE_ENV;
   try {
     const config = publicRuntimeConfig({ API_BASE_URL: apiBaseUrl, APP_ENV: appEnvironment });
+    const observability = createAdminObservability(
+      config.appEnvironment,
+      process.env.NEXT_PUBLIC_CLIENT_VERSION ?? "0.0.0",
+    );
     const sessionReference: { auth: AuthenticationManager | undefined } = { auth: undefined };
     const client = new ApiClient({
       config,
+      observability,
       session: {
         getAccessToken: () => sessionReference.auth?.getAccessToken(),
         refreshAndRetry: async (retry) => {

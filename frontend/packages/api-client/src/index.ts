@@ -29,6 +29,11 @@ export type ApiRequest = Readonly<{
   method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
   path: string;
   requiresAuthentication?: boolean;
+  telemetry?: Readonly<{
+    feature: string;
+    operation: string;
+    route: string;
+  }>;
   timeoutMs?: number;
 }>;
 
@@ -193,10 +198,14 @@ export class ApiClient {
     }
 
     this.observability?.recordApiFailure({
+      ...(error.apiError.kind !== "response" || error.apiError.code === undefined
+        ? {}
+        : { category: error.apiError.code }),
       ...(error.apiError.correlationId === undefined
         ? {}
         : { correlationId: error.apiError.correlationId }),
       failureKind: error.apiError.kind,
+      ...(request.telemetry === undefined ? {} : request.telemetry),
       method: request.method,
       outcomeUnknown: error.outcomeUnknown,
       path: request.path,
@@ -344,7 +353,11 @@ export class FoundationApi {
   async listAccessibleStores(
     access: CurrentSession["effectiveAccess"],
   ): Promise<readonly StoreResource[]> {
-    const response = await this.client.request({ method: "GET", path: "stores" });
+    const response = await this.client.request({
+      method: "GET",
+      path: "stores",
+      telemetry: storeTelemetry("list", "/app/stores"),
+    });
     const stores = decodeStores(response.data);
     const accessible = new Set(access.accessibleStoreIds);
     return stores.filter(
@@ -359,6 +372,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: `stores/${encodeURIComponent(storeId)}`,
+      telemetry: storeTelemetry("details", "/app/stores/:id"),
     });
     const store = decodeStore(response.data);
 
@@ -369,7 +383,12 @@ export class FoundationApi {
   }
 
   async createStore(input: StoreCreateInput): Promise<StoreResource> {
-    const response = await this.client.request({ body: input, method: "POST", path: "stores" });
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: "stores",
+      telemetry: storeTelemetry("create", "/app/stores/new"),
+    });
 
     return decodeStore(response.data);
   }
@@ -379,6 +398,7 @@ export class FoundationApi {
       body: input,
       method: "PATCH",
       path: `stores/${encodeURIComponent(storeId)}`,
+      telemetry: storeTelemetry("update", "/app/stores/:id/edit"),
     });
 
     return decodeStore(response.data);
@@ -388,6 +408,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/suspend`,
+      telemetry: storeTelemetry("suspend", "/app/stores/:id"),
     });
 
     return decodeStore(response.data);
@@ -397,6 +418,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/reactivate`,
+      telemetry: storeTelemetry("reactivate", "/app/stores/:id"),
     });
 
     return decodeStore(response.data);
@@ -410,6 +432,7 @@ export class FoundationApi {
       body: input,
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/closure-request`,
+      telemetry: storeTelemetry("request_closure", "/app/stores/:id"),
     });
 
     return decodeStoreClosure(response.data);
@@ -419,10 +442,15 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/closure-request/cancel`,
+      telemetry: storeTelemetry("cancel_closure", "/app/stores/:id"),
     });
 
     return decodeStore(response.data);
   }
+}
+
+function storeTelemetry(operation: string, route: string) {
+  return { feature: "stores", operation, route } as const;
 }
 
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
