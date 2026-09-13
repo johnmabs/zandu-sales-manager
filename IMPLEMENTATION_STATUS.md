@@ -11024,3 +11024,231 @@ d’actions inventées) ; typecheck Admin, lint, formatage et `git diff --check`
 OK.
 
 Commit recommandé : `feat(access): clarify invitation lifecycle availability`.
+
+## Epic F2.12 — Cancel invitation
+
+**Statut : TERMINÉ — annulation contextualisée depuis le succès de création**
+
+- l’identifiant retourné une fois par Create alimente la transition dédiée, sans inventer de liste ;
+- la confirmation nomme l’email et la conséquence, puis affiche succès ou erreur corrélée.
+
+Commit : `2098e00 feat(access): add invitation cancellation`.
+
+## Epic F2.13 — Assign Role
+
+**Statut : TERMINÉ — attribution depuis le détail membre**
+
+- rôle actif, scope, Stores et expiration optionnelle produisent le payload OpenAPI réel ;
+- la mutation rafraîchit la projection membre et notifie le succès.
+
+Commit : `0ba13a4 feat(access): add role assignment`.
+
+## Epic F2.14 — Scope rules UX
+
+**Statut : TERMINÉ — payloads de portée non ambigus**
+
+- `ORGANIZATION` vide toujours `storeIds` ; `SELECTED_STORES` exige au moins un Store ;
+- Owner force la portée organisation sans remplacer les validations Symfony.
+
+Commit : `7bcec52 feat(access): enforce assignment scope rules`.
+
+## Epic F2.15 — Expiring assignment
+
+**Statut : TERMINÉ — expiration distinguée et lisible**
+
+- les formulaires distinguent « sans expiration » d’un instant ISO ;
+- les projections affichent « Sans expiration » ou une date/heure localisée, sans `BusinessDate` artificielle.
+
+Commit : `a49b4f5 feat(access): present expiring assignments`.
+
+## Epic F2.16 — Remove Role Assignment
+
+**Statut : TERMINÉ — retrait contextualisé**
+
+- le dialogue confirme rôle, portée, Stores et expiration avant le DELETE dédié ;
+- détail et feedback sont rafraîchis après succès.
+
+Commit : `e41ce5c feat(access): add role assignment removal`.
+
+## Epic F2.17 — Owner assignment protection
+
+**Statut : TERMINÉ — Owner explicitement sensible**
+
+- attribution Owner organisation-wide avec confirmation renforcée ;
+- retrait Owner avertit du contrôle serveur du dernier propriétaire actif.
+
+Commit : `61fd190 feat(access): protect owner role changes`.
+
+## Epic F2.18 — Suspend Membership
+
+**Statut : TERMINÉ — suspension réversible confirmée**
+
+- l’action est visible seulement pour un membership actif et la capacité effective requise ;
+- la confirmation explique le blocage immédiat de l’accès et utilise la transition dédiée.
+
+Commit : `90eb9fe feat(access): add membership suspension`.
+
+## Epic F2.19 — Reactivate Membership
+
+**Statut : TERMINÉ — réactivation des memberships suspendus**
+
+- l’action est absente hors statut `SUSPENDED` et rafraîchit le membre après succès.
+
+Commit : `ae12bdd feat(access): add membership reactivation`.
+
+## Epic F2.20 — Revoke Membership
+
+**Statut : TERMINÉ — révocation terminale**
+
+- le dialogue explique blocage immédiat, terminalité et conservation d’historique ;
+- un membership `REVOKED` ne propose plus aucune réactivation ou nouvelle révocation.
+
+Commit : `cc2a363 feat(access): add terminal membership revocation`.
+
+## Epic F2.21 — Immediate access invalidation
+
+**Statut : TERMINÉ — retour sûr après rejet de version**
+
+- le runtime tente une rotation/validation de session et nettoie auth, caches et contextes si l’accès ne peut être restauré.
+
+Commit : `45f38b8 feat(access): handle immediate access invalidation`.
+
+## Epic F2.22 — Current-user self-impact
+
+**Statut : TERMINÉ — mutations propres réévaluées**
+
+- toute mutation visant le `userId` courant réévalue la session au lieu de supposer l’accès encore valide.
+
+Commit : `2a58bb1 feat(access): secure current user access changes`.
+
+## Epic F2.23 — Permission-aware UI
+
+**Statut : TERMINÉ — actions projetées par permission et statut**
+
+- attribution/retrait, suspension/réactivation/révocation exigent leurs capacités effectives et un statut compatible.
+
+Commit : `4209a27 feat(access): enforce permission aware member actions`.
+
+## Epic F2.24 — Scope-aware UI
+
+**Statut : TERMINÉ — portée acteur visible**
+
+- Access Management distingue organisation entière et administration limitée, avec nombre et identifiants de Stores accessibles.
+
+Commit : `766cfae feat(access): expose administration scope limits`.
+
+## Epic F2.25 — RoleAssignment summary
+
+**Statut : TERMINÉ — résumé feature-local réutilisable**
+
+- rôle, portée, Stores et expiration sont regroupés dans une projection textuelle sûre.
+
+Commit : `63dec95 feat(access): add role assignment summary`.
+
+## Epic F2.26 — Status and access badges
+
+**Statut : TERMINÉ — badges textuels avec fallback**
+
+- Membership, Role, Scope et Expiration disposent de badges jamais fondés sur la couleur seule ;
+- les valeurs serveur inconnues restent visibles et diagnostiquables.
+
+Commit : `10fc9e0 feat(access): add accessible access badges`.
+
+## Epic F2.27 — Error handling
+
+**Statut : TERMINÉ — erreurs communes et corrélation préservées**
+
+- les mutations utilisent `ErrorMapper` pour authentification, autorisation, 404, validation, conflit et règle domaine ;
+- le `correlationId` est présenté sans exposer de payload sensible.
+
+Commit : `6657d92 feat(access): map access mutation errors`.
+
+## Epic F2.28 — Last Owner error
+
+**Statut : TERMINÉ — refus du dernier owner expliqué**
+
+- uniquement lorsque le code/message serveur l’identifie, l’Admin explique qu’un propriétaire actif doit subsister.
+
+Commit : `543b097 feat(access): explain last owner refusal`.
+
+## Epic F2.29 — Stale authorization state
+
+**Statut : TERMINÉ — caches Access invalidés sans dépendre de leur version**
+
+- liste et détail membre, toutes versions d’autorisation confondues, sont invalidés après mutation ; le self-impact déclenche la session.
+
+Commit : `b1f445e feat(access): invalidate stale authorization state`.
+
+## Epic F2.30 — Loading / empty states
+
+**Statut : TERMINÉ — états ressources distincts**
+
+- membres et invitations conservent leurs états loading/empty/indisponible explicites ;
+- un catalogue de rôles vide est désormais une anomalie réessayable, pas un vide métier normal.
+
+Commit : `29d1a93 feat(access): distinguish access resource states`.
+
+## Epic F2.31 — Sensitive confirmations
+
+**Statut : TERMINÉ — confirmation action/cible/conséquence vérifiée**
+
+- invitation, retrait de rôle, suspension et révocation disposent de confirmations contextualisées testées.
+
+Commit : `d159460 test(access): verify sensitive confirmations`.
+
+## Epic F2.32 — Accessibility
+
+**Statut : TERMINÉ — dialogues et restitution du focus**
+
+- clavier, piège de focus, Escape, associations accessibles et restitution au déclencheur sont couverts par les primitives UI ;
+- badges et états possèdent toujours un texte.
+
+Commit : `f8e8874 feat(access): restore focus after sensitive dialogs`.
+
+## Epic F2.33 — Responsive Admin
+
+**Statut : TERMINÉ — Access utilisable sur laptop et tablette**
+
+- tables restent défilables, formulaires/actions se replient et les permissions utilisent une divulgation progressive.
+
+Commit : `7f7dcb0 feat(access): improve responsive access administration`.
+
+## Epic F2.34 — Unit/component tests
+
+**Statut : TERMINÉ — primitives et actions Access couvertes**
+
+- badges, résumé, permissions, Owner, scopes, formulaires et disponibilité lifecycle sont couverts.
+
+Commit : `2c60a8f test(access): add focused unit coverage`.
+
+## Epic F2.35 — Integration tests
+
+**Statut : TERMINÉ — frontière HTTP Access couverte**
+
+- invitation/annulation, assignment/retrait, suspension/réactivation/révocation, refus et corrélation sont exercés via MSW.
+
+Commit : `3d73a68 test(access): cover administration integrations`.
+
+## Epic F2.36 — Session invalidation test
+
+**Statut : TERMINÉ — token obsolète non restaurable**
+
+- le test prouve authentification, rejet après changement de version, refresh refusé, absence de retry et nettoyage local.
+
+Commit : `5d74acb test(access): verify stale session invalidation`.
+
+## Epic F2.37 — E2E administration flow
+
+**Statut : IMPLÉMENTÉ — exécution Chromium CI requise**
+
+- scénario Owner : login, invitation rôle/scope, fixture membre acceptée, détail, ajout/retrait, suspension et réactivation ;
+- scénario dernier Owner : refus serveur corrélé et projection UI conservée ;
+- Playwright découvre 5 tests dont les 2 nouveaux. Leur exécution a atteint le lancement navigateur mais l’image locale ne fournit pas Chromium ; Playwright 1.57 refuse son installation sur `ubuntu26.04-x64`. À exécuter dans l’image CI supportée.
+
+Commit : `287bf72 test(access): add administration e2e flow`.
+
+## Gate F2 — Admin Users & Access
+
+**Statut : EN ATTENTE — seule l’exécution Chromium CI de F2.37 reste à confirmer**
+
+Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 intégration, suites Admin/POS OK) ; `pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ; build Admin OK (20 routes) ; `git diff --check` OK ; découverte Playwright OK (5 tests). Le correctif d’assertion consolidé est dans `6bf5570 test(access): align status badge assertion`.
