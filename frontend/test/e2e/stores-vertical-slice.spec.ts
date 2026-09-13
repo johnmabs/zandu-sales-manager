@@ -111,13 +111,15 @@ test("an authorized user completes the Stores vertical slice", async ({ page }) 
 });
 
 test("a user without Store permission is kept out of the protected route", async ({ page }) => {
+  let authenticated = false;
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/auth/refresh") {
-      await route.fulfill({ json: {}, status: 401 });
+      await route.fulfill(authenticated ? { json: { token: token() } } : { json: {}, status: 401 });
       return;
     }
     if (path === "/api/auth/login") {
+      authenticated = true;
       await route.fulfill({ json: { token: token() } });
       return;
     }
