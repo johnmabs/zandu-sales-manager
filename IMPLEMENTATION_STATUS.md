@@ -10895,3 +10895,25 @@ mais sa phase TypeScript finale a été interrompue par la fenêtre d’exécuti
 locale de 30 s ; à rejouer dans CI ou un environnement sans cette limite.
 
 Commit recommandé : `feat(access): add role catalog`.
+
+## Epic F2.6 — Permission visualization
+
+**Statut : TERMINÉ — vocabulaire de présentation des permissions sûr et traduit**
+
+- un mapping feature-local transforme les `PermissionCode` connus en libellé et
+  description français, uniquement au moment du rendu du catalogue de rôles ;
+- le mapping ne dépend d’aucun guard d’autorisation et ne participe à aucune
+  décision d’accès : Symfony et les projections `EffectiveAccess` restent
+  autoritaires ;
+- les permissions inconnues restent lisibles avec leur code serveur et une
+  explication de repli, sans exception ni masquage ;
+- le catalogue affiche désormais les libellés/descriptions plutôt que les codes
+  techniques bruts, tandis que les contrôles de rôle restent inchangés.
+
+Validations frontend : tests Admin OK (11, dont mapping connu/inconnu) ; tests
+composants OK (38) ; tests Foundation OK (20) ; intégration API OK (8) ;
+typecheck, lint, formatage et `git diff --check` OK. Le build Admin a été
+interrompu pendant sa compilation par la fenêtre d’exécution locale de 30 s ;
+à rejouer dans CI ou un environnement sans cette limite.
+
+Commit recommandé : `feat(access): add permission visualization`.

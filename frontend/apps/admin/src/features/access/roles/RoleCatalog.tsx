@@ -3,6 +3,7 @@
 import { Button, EmptyState, ErrorState, Skeleton } from "@zandu/ui";
 
 import { AdminTable } from "../../../components/tables/AdminTable";
+import { permissionPresentation } from "../permissions/permissionPresentation";
 
 import type { AdminTableColumn } from "../../../components/tables/AdminTable";
 import type { RoleResource } from "@zandu/api-client";
@@ -26,7 +27,10 @@ const columns: readonly AdminTableColumn<RoleResource>[] = [
     cell: (role) => (
       <ul className="zandu-role-catalog__permissions">
         {role.permissions.map((permission) => (
-          <li key={permission}>{permission}</li>
+          <li key={permission}>
+            <strong>{permissionPresentation(permission).label}</strong>
+            <span> — {permissionPresentation(permission).description}</span>
+          </li>
         ))}
       </ul>
     ),

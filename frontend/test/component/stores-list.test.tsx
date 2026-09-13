@@ -248,7 +248,7 @@ describe("RoleCatalog", () => {
     expect(table.textContent).toContain("Responsable de magasin");
     expect(table.textContent).toContain("STORE_MANAGER");
     expect(table.textContent).toContain("Gère les opérations d’un magasin.");
-    expect(table.textContent).toContain("INVENTORY_READ");
+    expect(table.textContent).toContain("Consulter le stock");
     expect(table.textContent).toContain("ACTIVE");
     expect(table.textContent).toContain("Système (lecture seule)");
     expect(within(container).queryByRole("button", { name: /modifier|supprimer/i })).toBeNull();
