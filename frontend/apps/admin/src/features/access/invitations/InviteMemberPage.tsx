@@ -7,6 +7,7 @@ import { Button, ErrorState, Spinner } from "@zandu/ui";
 import { useRouter } from "next/navigation";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
+import { useStoreList } from "../../stores/hooks/useStoreList";
 import { useInviteMember } from "../hooks/useInviteMember";
 import { useRoleCatalog } from "../hooks/useRoleCatalog";
 
@@ -29,6 +30,11 @@ export function InviteMemberPage() {
   const roleCatalog = useRoleCatalog({
     api: allowed ? api : undefined,
     authorizationVersion: allowed ? access?.authorizationVersion : undefined,
+    organizationId: activeOrganizationId,
+  });
+  const stores = useStoreList({
+    access: allowed ? access : undefined,
+    api: allowed ? api : undefined,
     organizationId: activeOrganizationId,
   });
 
@@ -74,5 +80,16 @@ export function InviteMemberPage() {
     router.push("/app/access/invitations");
   };
 
-  return <InviteMemberForm onInvite={onInvite} roles={activeRoles} />;
+  return (
+    <InviteMemberForm
+      onInvite={onInvite}
+      roles={activeRoles}
+      storeScope={{
+        error: stores.error === null ? undefined : "unavailable",
+        isLoading: stores.isLoading,
+        onRetry: () => void stores.refetch(),
+        stores: stores.data,
+      }}
+    />
+  );
 }

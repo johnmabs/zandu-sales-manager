@@ -10961,3 +10961,28 @@ mais n’a pas retourné avant la limite locale de 30 s ; à confirmer en CI ou
 dans un environnement sans cette limite.
 
 Commit recommandé : `feat(access): add invitation role selection`.
+
+## Epic F2.9 — Store scope selector
+
+**Statut : TERMINÉ — sélection de portée magasin réutilisant la collection F1**
+
+- `StoreScopeSelector` propose explicitement une portée organisationnelle ou
+  des magasins sélectionnés, depuis la collection Stores déjà filtrée par le
+  contexte de l’organisation active ;
+- l’invitation transmet les identifiants sélectionnés dans chaque intention de
+  rôle, ce qui construit le payload contractuel `SELECTED_STORES` sans
+  reproduire ni accorder de permissions côté client ;
+- la portée organisationnelle conserve un payload `storeIds: []` et une portée
+  magasin sans sélection est rejetée par la validation locale, avant la
+  validation serveur qui reste autoritaire ;
+- chargement, indisponibilité et absence de magasins sélectionnables restent
+  explicites, avec réessai de la requête Stores.
+
+Validations frontend : tests workspace/foundation OK (20) ; tests unitaires OK
+(6) ; tests composants OK (40, dont payload de magasins sélectionnés) ; tests
+d’intégration API OK (8) ; typecheck Admin OK ; lint, formatage et
+`git diff --check` OK. Le typecheck récursif du workspace a été lancé mais sa
+sortie a été interrompue par la limite locale de 30 s après les packages ; le
+typecheck Admin concerné est vert.
+
+Commit recommandé : `feat(access): add store scope selector`.

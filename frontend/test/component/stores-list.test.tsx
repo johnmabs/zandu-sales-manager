@@ -272,6 +272,7 @@ describe("InviteMemberForm", () => {
             name: "Caissier",
           },
         ]}
+        storeScope={{ isLoading: false, stores: [store] }}
       />,
     );
 
@@ -290,6 +291,33 @@ describe("InviteMemberForm", () => {
         ],
       }),
     );
+  });
+
+  it("builds selected-store invitation intentions without treating them as permissions", async () => {
+    const onInvite = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const { container } = render(
+      <InviteMemberForm
+        onInvite={onInvite}
+        roles={[role]}
+        storeScope={{ isLoading: false, stores: [store] }}
+      />,
+    );
+
+    await user.type(within(container).getByLabelText("Email"), "manager@zandu.test");
+    await user.click(within(container).getByLabelText("Responsable de magasin (STORE_MANAGER)"));
+    await user.click(within(container).getByLabelText("Magasins sélectionnés"));
+    await user.click(within(container).getByLabelText("Centre-ville (CENTRE)"));
+    await user.click(within(container).getByRole("button", { name: "Envoyer l’invitation" }));
+
+    await waitFor(() =>
+      expect(onInvite).toHaveBeenCalledWith({
+        email: "manager@zandu.test",
+        expiresAt: null,
+        roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+      }),
+    );
+    expect(within(container).getByText(/n’accorde aucun droit/)).toBeTruthy();
   });
 });
 

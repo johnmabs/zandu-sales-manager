@@ -5,19 +5,33 @@ import { Button, Checkbox, Input } from "@zandu/ui";
 import { useId } from "react";
 
 import { inviteMemberSchema, toInvitationCreateInput } from "../schemas/inviteMemberSchema";
+import { StoreScopeSelector } from "../scopes/StoreScopeSelector";
 
-import type { RoleResource } from "@zandu/api-client";
+import type { RoleResource, StoreResource } from "@zandu/api-client";
 
 type InviteMemberFormProperties = Readonly<{
   onInvite: (input: ReturnType<typeof toInvitationCreateInput>) => Promise<void>;
   roles: readonly RoleResource[];
+  storeScope: Readonly<{
+    error?: string | undefined;
+    isLoading: boolean;
+    onRetry?: (() => void) | undefined;
+    stores?: readonly StoreResource[] | undefined;
+  }>;
 }>;
 
-export function InviteMemberForm({ onInvite, roles }: InviteMemberFormProperties) {
+export function InviteMemberForm({ onInvite, roles, storeScope }: InviteMemberFormProperties) {
   const emailErrorId = useId();
   const roleErrorId = useId();
+  const storeScopeErrorId = useId();
   const form = useZanduForm(inviteMemberSchema, {
-    defaultValues: { email: "", expiresAt: "", roleCodes: [] },
+    defaultValues: {
+      email: "",
+      expiresAt: "",
+      roleCodes: [],
+      scopeType: "ORGANIZATION",
+      storeIds: [],
+    },
   });
   useUnsavedChangesWarning(form.formState.isDirty);
 
@@ -59,7 +73,24 @@ export function InviteMemberForm({ onInvite, roles }: InviteMemberFormProperties
         Expiration (facultative)
         <Input {...form.register("expiresAt")} type="datetime-local" />
       </label>
-      <p>Chaque rôle sélectionné s’applique à toute l’organisation.</p>
+      <StoreScopeSelector
+        error={storeScope.error}
+        isLoading={storeScope.isLoading}
+        onRetry={storeScope.onRetry}
+        onScopeTypeChange={(scopeType) => {
+          form.setValue("scopeType", scopeType, { shouldDirty: true, shouldValidate: true });
+          if (scopeType === "ORGANIZATION") {
+            form.setValue("storeIds", [], { shouldDirty: true, shouldValidate: true });
+          }
+        }}
+        onSelectedStoreIdsChange={(storeIds) =>
+          form.setValue("storeIds", [...storeIds], { shouldDirty: true, shouldValidate: true })
+        }
+        scopeType={form.watch("scopeType")}
+        selectedStoreIds={form.watch("storeIds")}
+        stores={storeScope.stores}
+      />
+      <FieldError id={storeScopeErrorId} message={form.formState.errors.storeIds?.message} />
       <Button disabled={form.formState.isSubmitting} type="submit">
         {form.formState.isSubmitting ? "Invitation en cours" : "Envoyer l’invitation"}
       </Button>
