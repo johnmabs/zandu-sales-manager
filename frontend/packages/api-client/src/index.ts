@@ -358,6 +358,13 @@ export type MembershipResource = Readonly<{
   version: number;
 }>;
 
+export type RoleAssignmentCreateInput = Readonly<{
+  expiresAt: string | null;
+  roleId: string;
+  scopeType: "ORGANIZATION" | "SELECTED_STORES";
+  storeIds: readonly string[];
+}>;
+
 export type RoleStatus = "ACTIVE" | "ARCHIVED";
 export type RoleType = "CUSTOM" | "SYSTEM";
 
@@ -534,6 +541,19 @@ export class FoundationApi {
     const membership = decodeMembership(response.data);
 
     return membership.organizationId === access.organizationId ? membership : undefined;
+  }
+
+  async assignMemberRole(
+    membershipId: string,
+    input: RoleAssignmentCreateInput,
+  ): Promise<MembershipResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `members/${encodeURIComponent(membershipId)}/role-assignments`,
+      telemetry: memberTelemetry("assign_role", "/app/access/members/:id"),
+    });
+    return decodeMembership(response.data);
   }
 
   async listRoles(): Promise<readonly RoleResource[]> {

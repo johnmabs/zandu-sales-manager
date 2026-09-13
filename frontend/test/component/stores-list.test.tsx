@@ -7,6 +7,7 @@ import { storeContextMessageForStatus } from "../../apps/admin/src/components/ad
 import { InvitationLifecycleUnavailable } from "../../apps/admin/src/features/access/invitations/InvitationLifecycleUnavailable";
 import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
 import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
+import { AssignRoleDialog } from "../../apps/admin/src/features/access/members/AssignRoleDialog";
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
 import { RoleCatalog } from "../../apps/admin/src/features/access/roles/RoleCatalog";
@@ -240,6 +241,33 @@ describe("MemberDetails", () => {
   });
 });
 
+describe("AssignRoleDialog", () => {
+  it("submits the selected role with an unambiguous organization scope", async () => {
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    render(
+      <AssignRoleDialog
+        isAssigning={false}
+        onClose={vi.fn()}
+        onConfirm={onConfirm}
+        open
+        roles={[role]}
+        stores={[store]}
+      />,
+    );
+    await user.selectOptions(screen.getByLabelText("Rôle"), "role-1");
+    await user.click(screen.getByRole("button", { name: "Attribuer le rôle" }));
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith({
+        expiresAt: null,
+        roleId: "role-1",
+        scopeType: "ORGANIZATION",
+        storeIds: [],
+      }),
+    );
+  });
+});
+
 describe("RoleCatalog", () => {
   it("renders published role fields and marks system roles as read-only", () => {
     const { container, rerender } = render(<RoleCatalog isLoading roles={undefined} />);
@@ -377,14 +405,16 @@ describe("InvitationSuccessState", () => {
       token: "secret",
     };
 
-    render(<InvitationSuccessState canCancel invitation={invitation} onCancel={onCancel} />);
-    await user.click(screen.getByRole("button", { name: "Annuler l’invitation" }));
-    expect(screen.getByRole("dialog").textContent).toContain("member@zandu.test");
-    expect(screen.getByRole("dialog").textContent).toContain("empêchera définitivement");
-    await user.click(screen.getByRole("button", { name: "Confirmer l’annulation" }));
+    const { container } = render(
+      <InvitationSuccessState canCancel invitation={invitation} onCancel={onCancel} />,
+    );
+    await user.click(within(container).getByRole("button", { name: "Annuler l’invitation" }));
+    expect(within(container).getByRole("dialog").textContent).toContain("member@zandu.test");
+    expect(within(container).getByRole("dialog").textContent).toContain("empêchera définitivement");
+    await user.click(within(container).getByRole("button", { name: "Confirmer l’annulation" }));
 
     await waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
-    expect(screen.getByText("Invitation annulée.")).toBeTruthy();
+    expect(within(container).getByText("Invitation annulée.")).toBeTruthy();
   });
 });
 

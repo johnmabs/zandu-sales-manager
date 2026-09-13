@@ -10,9 +10,16 @@ type MemberDetailsProperties = Readonly<{
   isLoading: boolean;
   member?: MembershipResource | undefined;
   onRetry?: (() => void) | undefined;
+  onAssignRole?: (() => void) | undefined;
 }>;
 
-export function MemberDetails({ error, isLoading, member, onRetry }: MemberDetailsProperties) {
+export function MemberDetails({
+  error,
+  isLoading,
+  member,
+  onAssignRole,
+  onRetry,
+}: MemberDetailsProperties) {
   if (isLoading) {
     return <MemberDetailsSkeleton />;
   }
@@ -39,6 +46,11 @@ export function MemberDetails({ error, isLoading, member, onRetry }: MemberDetai
       </header>
       <section aria-labelledby="member-roles-title" className="zandu-member-details__section">
         <h2 id="member-roles-title">Rôles et portées</h2>
+        {onAssignRole === undefined ? null : (
+          <Button onClick={onAssignRole} type="button">
+            Attribuer un rôle
+          </Button>
+        )}
         {member.roleAssignments.length === 0 ? (
           <p>Aucun rôle attribué.</p>
         ) : (
