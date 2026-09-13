@@ -4,6 +4,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import { RoleAssignmentSummary } from "../../apps/admin/src/features/access/components/RoleAssignmentSummary";
 import { InvitationLifecycleUnavailable } from "../../apps/admin/src/features/access/invitations/InvitationLifecycleUnavailable";
 import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
 import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
@@ -265,6 +266,15 @@ describe("MemberDetails", () => {
       />,
     );
     expect(within(container).queryByRole("button", { name: /réactiver|révoquer/i })).toBeNull();
+  });
+});
+
+describe("RoleAssignmentSummary", () => {
+  it("summarizes role, selected stores and expiry with text", () => {
+    const { container } = render(<RoleAssignmentSummary assignment={member.roleAssignments[0]} />);
+    expect(container.textContent).toContain("STORE_MANAGER");
+    expect(container.textContent).toContain("2 magasin(s)");
+    expect(container.textContent).toContain("Sans expiration");
   });
 });
 

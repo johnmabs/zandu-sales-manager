@@ -3,6 +3,7 @@
 import { ApiRequestError } from "@zandu/api-client";
 import { Button, ErrorState, Skeleton } from "@zandu/ui";
 
+import { RoleAssignmentSummary } from "../components/RoleAssignmentSummary";
 import { expirationLabel } from "../expirationPresentation";
 
 import type { MembershipResource, MembershipRoleAssignment } from "@zandu/api-client";
@@ -116,6 +117,7 @@ function RoleAssignmentDetails({
 
   return (
     <li>
+      <RoleAssignmentSummary assignment={assignment} />
       <p>Rôle : {assignment.roleId}</p>
       <p>Portée : {isOrganizationScope ? "Organisation entière" : assignment.scopeType}</p>
       {isSelectedStoresScope ? (
