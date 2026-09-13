@@ -30,6 +30,8 @@ export function AssignRoleDialog({
   });
   const scopeType = form.watch("scopeType");
   const storeIds = form.watch("storeIds");
+  const selectedRole = roles.find((role) => role.id === form.watch("roleId"));
+  const ownerSelected = selectedRole?.code === "ORGANIZATION_OWNER";
 
   return (
     <Dialog descriptionId={descriptionId} onClose={onClose} open={open} title="Attribuer un rôle">
@@ -37,7 +39,17 @@ export function AssignRoleDialog({
       <form onSubmit={form.handleSubmit((value) => onConfirm(toRoleAssignmentInput(value)))}>
         <label>
           Rôle
-          <Select {...form.register("roleId")}>
+          <Select
+            {...form.register("roleId", {
+              onChange: (event) => {
+                const role = roles.find((candidate) => candidate.id === event.target.value);
+                if (role?.code === "ORGANIZATION_OWNER") {
+                  form.setValue("scopeType", "ORGANIZATION", { shouldValidate: true });
+                  form.setValue("storeIds", [], { shouldValidate: true });
+                }
+              },
+            })}
+          >
             <option value="">Sélectionner</option>
             {roles
               .filter((role) => role.status === "ACTIVE")
@@ -48,22 +60,29 @@ export function AssignRoleDialog({
               ))}
           </Select>
         </label>
+        {ownerSelected ? (
+          <p role="status">
+            Le rôle propriétaire est sensible et couvre toujours toute l’organisation.
+          </p>
+        ) : null}
         {form.formState.errors.roleId === undefined ? null : (
           <p role="alert">{form.formState.errors.roleId.message}</p>
         )}
-        <StoreScopeSelector
-          isLoading={false}
-          onScopeTypeChange={(next) => {
-            form.setValue("scopeType", next, { shouldValidate: true });
-            if (next === "ORGANIZATION") form.setValue("storeIds", [], { shouldValidate: true });
-          }}
-          onSelectedStoreIdsChange={(ids) =>
-            form.setValue("storeIds", [...ids], { shouldValidate: true })
-          }
-          scopeType={scopeType}
-          selectedStoreIds={storeIds}
-          stores={stores}
-        />
+        {ownerSelected ? null : (
+          <StoreScopeSelector
+            isLoading={false}
+            onScopeTypeChange={(next) => {
+              form.setValue("scopeType", next, { shouldValidate: true });
+              if (next === "ORGANIZATION") form.setValue("storeIds", [], { shouldValidate: true });
+            }}
+            onSelectedStoreIdsChange={(ids) =>
+              form.setValue("storeIds", [...ids], { shouldValidate: true })
+            }
+            scopeType={scopeType}
+            selectedStoreIds={storeIds}
+            stores={stores}
+          />
+        )}
         {form.formState.errors.storeIds === undefined ? null : (
           <p role="alert">{form.formState.errors.storeIds.message}</p>
         )}
