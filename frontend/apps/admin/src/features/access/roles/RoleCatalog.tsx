@@ -3,6 +3,7 @@
 import { Button, EmptyState, ErrorState, Skeleton } from "@zandu/ui";
 
 import { AdminTable } from "../../../components/tables/AdminTable";
+import { RoleStatusBadge } from "../components/AccessBadges";
 import { permissionPresentation } from "../permissions/permissionPresentation";
 
 import type { AdminTableColumn } from "../../../components/tables/AdminTable";
@@ -37,7 +38,7 @@ const columns: readonly AdminTableColumn<RoleResource>[] = [
     header: "Permissions",
     id: "permissions",
   },
-  { cell: (role) => role.status, header: "Statut", id: "status" },
+  { cell: (role) => <RoleStatusBadge status={role.status} />, header: "Statut", id: "status" },
   {
     cell: (role) => (role.type === "SYSTEM" ? "Système (lecture seule)" : "Personnalisé"),
     header: "Type",

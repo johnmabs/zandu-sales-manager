@@ -4,6 +4,10 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import {
+  MembershipStatusBadge,
+  ScopeBadge,
+} from "../../apps/admin/src/features/access/components/AccessBadges";
 import { RoleAssignmentSummary } from "../../apps/admin/src/features/access/components/RoleAssignmentSummary";
 import { InvitationLifecycleUnavailable } from "../../apps/admin/src/features/access/invitations/InvitationLifecycleUnavailable";
 import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
@@ -275,6 +279,19 @@ describe("RoleAssignmentSummary", () => {
     expect(container.textContent).toContain("STORE_MANAGER");
     expect(container.textContent).toContain("2 magasin(s)");
     expect(container.textContent).toContain("Sans expiration");
+  });
+});
+
+describe("Access badges", () => {
+  it("always includes text and preserves unknown server values", () => {
+    const { container } = render(
+      <>
+        <MembershipStatusBadge status="FUTURE" />
+        <ScopeBadge scopeType="FUTURE_SCOPE" />
+      </>,
+    );
+    expect(container.textContent).toContain("Statut inconnu : FUTURE");
+    expect(container.textContent).toContain("Portée inconnue : FUTURE_SCOPE");
   });
 });
 

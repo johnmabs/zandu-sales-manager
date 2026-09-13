@@ -3,6 +3,7 @@
 import { ApiRequestError } from "@zandu/api-client";
 import { Button, ErrorState, Skeleton } from "@zandu/ui";
 
+import { MembershipStatusBadge } from "../components/AccessBadges";
 import { RoleAssignmentSummary } from "../components/RoleAssignmentSummary";
 import { expirationLabel } from "../expirationPresentation";
 
@@ -53,7 +54,9 @@ export function MemberDetails({
       <header className="zandu-member-details__header">
         <h1>Membre</h1>
         <p>Identifiant utilisateur : {member.userId}</p>
-        <p>Statut : {member.status}</p>
+        <p>
+          Statut : <MembershipStatusBadge status={member.status} />
+        </p>
         {member.status === "ACTIVE" && onSuspend !== undefined ? (
           <Button onClick={onSuspend} type="button" variant="danger">
             Suspendre le membre
