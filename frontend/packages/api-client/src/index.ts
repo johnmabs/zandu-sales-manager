@@ -556,6 +556,15 @@ export class FoundationApi {
     return decodeMembership(response.data);
   }
 
+  async removeMemberRole(membershipId: string, assignmentId: string): Promise<MembershipResource> {
+    const response = await this.client.request({
+      method: "DELETE",
+      path: `members/${encodeURIComponent(membershipId)}/role-assignments/${encodeURIComponent(assignmentId)}`,
+      telemetry: memberTelemetry("remove_role", "/app/access/members/:id"),
+    });
+    return decodeMembership(response.data);
+  }
+
   async listRoles(): Promise<readonly RoleResource[]> {
     const response = await this.client.request({
       method: "GET",

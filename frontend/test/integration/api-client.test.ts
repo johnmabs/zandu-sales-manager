@@ -636,6 +636,35 @@ describe("ApiClient at the mocked API boundary", () => {
       }),
     ).resolves.toMatchObject({ authorizationVersion: 3, id: "membership-1" });
   });
+
+  it("removes a role assignment through its contextual member endpoint", async () => {
+    server.use(
+      http.delete(
+        "https://api.zandu.test/api/members/membership-1/role-assignments/assignment-1",
+        () =>
+          HttpResponse.json({
+            authorizationVersion: 4,
+            createdAt: "2026-09-10T08:00:00+00:00",
+            id: "membership-1",
+            organizationId: "organization-1",
+            roleAssignments: [],
+            status: "ACTIVE",
+            updatedAt: "2026-09-13T08:00:00+00:00",
+            userId: "user-1",
+            version: 3,
+          }),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+    await expect(api.removeMemberRole("membership-1", "assignment-1")).resolves.toMatchObject({
+      authorizationVersion: 4,
+      roleAssignments: [],
+    });
+  });
 });
 
 function jwt(): string {

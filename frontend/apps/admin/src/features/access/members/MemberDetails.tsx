@@ -13,6 +13,7 @@ type MemberDetailsProperties = Readonly<{
   member?: MembershipResource | undefined;
   onRetry?: (() => void) | undefined;
   onAssignRole?: (() => void) | undefined;
+  onRemoveRole?: ((assignment: MembershipRoleAssignment) => void) | undefined;
 }>;
 
 export function MemberDetails({
@@ -20,6 +21,7 @@ export function MemberDetails({
   isLoading,
   member,
   onAssignRole,
+  onRemoveRole,
   onRetry,
 }: MemberDetailsProperties) {
   if (isLoading) {
@@ -58,7 +60,11 @@ export function MemberDetails({
         ) : (
           <ul>
             {member.roleAssignments.map((assignment) => (
-              <RoleAssignmentDetails assignment={assignment} key={assignment.assignmentId} />
+              <RoleAssignmentDetails
+                assignment={assignment}
+                key={assignment.assignmentId}
+                onRemove={onRemoveRole}
+              />
             ))}
           </ul>
         )}
@@ -77,7 +83,13 @@ export function MemberDetailsSkeleton() {
   );
 }
 
-function RoleAssignmentDetails({ assignment }: Readonly<{ assignment: MembershipRoleAssignment }>) {
+function RoleAssignmentDetails({
+  assignment,
+  onRemove,
+}: Readonly<{
+  assignment: MembershipRoleAssignment;
+  onRemove?: ((assignment: MembershipRoleAssignment) => void) | undefined;
+}>) {
   const isOrganizationScope = assignment.scopeType === "ORGANIZATION";
   const isSelectedStoresScope = assignment.scopeType === "SELECTED_STORES";
 
@@ -100,6 +112,11 @@ function RoleAssignmentDetails({ assignment }: Readonly<{ assignment: Membership
         </>
       ) : null}
       <p>{expirationLabel(assignment.expiresAt)}</p>
+      {onRemove === undefined ? null : (
+        <Button onClick={() => onRemove(assignment)} type="button" variant="danger">
+          Retirer ce rôle
+        </Button>
+      )}
     </li>
   );
 }

@@ -10,6 +10,7 @@ import { InviteMemberForm } from "../../apps/admin/src/features/access/invitatio
 import { AssignRoleDialog } from "../../apps/admin/src/features/access/members/AssignRoleDialog";
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
+import { RemoveRoleDialog } from "../../apps/admin/src/features/access/members/RemoveRoleDialog";
 import { RoleCatalog } from "../../apps/admin/src/features/access/roles/RoleCatalog";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
@@ -265,6 +266,26 @@ describe("AssignRoleDialog", () => {
         storeIds: [],
       }),
     );
+  });
+});
+
+describe("RemoveRoleDialog", () => {
+  it("names the role, scope and affected stores before removal", async () => {
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    const { container } = render(
+      <RemoveRoleDialog
+        assignment={member.roleAssignments[0]}
+        isRemoving={false}
+        onClose={vi.fn()}
+        onConfirm={onConfirm}
+        open
+      />,
+    );
+    expect(within(container).getByRole("dialog").textContent).toContain("STORE_MANAGER");
+    expect(within(container).getByRole("dialog").textContent).toContain("store-1, store-2");
+    await user.click(within(container).getByRole("button", { name: "Confirmer le retrait" }));
+    expect(onConfirm).toHaveBeenCalledOnce();
   });
 });
 
