@@ -11007,3 +11007,20 @@ volontaire) ; tests d’intégration API OK (9, dont décodage de la réponse cr
 ; typecheck Admin, lint, formatage et `git diff --check` OK.
 
 Commit recommandé : `feat(access): add invitation success state`.
+
+## Epic F2.11 — Invitation lifecycle
+
+**Statut : TERMINÉ — cycle de vie limité au contrat API effectivement exposé**
+
+- l’inspection du contrat OpenAPI confirme l’absence de lecture tenant-scoped
+  des invitations ; l’Admin n’invente donc ni liste, ni détail, ni filtre ;
+- la route Invitations explique explicitement cette limite et conserve le seul
+  parcours Create réellement disponible ;
+- Cancel, resend, extend et edit ne sont pas affichés : Cancel reste
+  inexploitable sans invitation cible fournie par une lecture serveur.
+
+Validations frontend : tests composants OK (42, dont absence de liste et
+d’actions inventées) ; typecheck Admin, lint, formatage et `git diff --check`
+OK.
+
+Commit recommandé : `feat(access): clarify invitation lifecycle availability`.

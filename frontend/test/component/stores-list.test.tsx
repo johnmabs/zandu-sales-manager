@@ -4,6 +4,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import { InvitationLifecycleUnavailable } from "../../apps/admin/src/features/access/invitations/InvitationLifecycleUnavailable";
 import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
 import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
@@ -357,6 +358,24 @@ describe("InvitationSuccessState", () => {
 
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("one-time-invitation-secret"));
     expect(within(container).getByRole("status").textContent).toContain("Secret copié");
+  });
+});
+
+describe("InvitationLifecycleUnavailable", () => {
+  it("does not invent a list or lifecycle actions when the API exposes no invitation read operation", () => {
+    const { container } = render(<InvitationLifecycleUnavailable />);
+
+    expect(
+      within(container).getByRole("heading", { name: "Suivi des invitations indisponible" }),
+    ).toBeTruthy();
+    expect(within(container).getByRole("status").textContent).toContain("ne permet pas");
+    expect(
+      within(container).getByRole("link", { name: "Inviter un membre" }).getAttribute("href"),
+    ).toBe("/app/access/invite");
+    expect(within(container).queryByRole("table")).toBeNull();
+    expect(
+      within(container).queryByRole("button", { name: /annuler|renvoyer|prolonger|modifier/i }),
+    ).toBeNull();
   });
 });
 
