@@ -3,6 +3,7 @@
 import { useEffectiveAccess } from "@zandu/authorization";
 import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
+import { queryKeys } from "@zandu/server-state";
 import { ErrorState, Spinner } from "@zandu/ui";
 import { useState } from "react";
 
@@ -30,7 +31,7 @@ import type { MembershipRoleAssignment } from "@zandu/api-client";
 export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: string }>) {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
-  const { api, authState, revalidateSession } = useAdminRuntime();
+  const { api, authState, queryClient, revalidateSession } = useAdminRuntime();
   const notifications = useNotifications();
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignmentToRemove, setAssignmentToRemove] = useState<MembershipRoleAssignment>();
@@ -65,6 +66,14 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
   const reactivate = useReactivateMember(api, membershipId);
   const revoke = useRevokeMember(api, membershipId);
   const refreshAfterAccessMutation = async () => {
+    if (activeOrganizationId !== undefined) {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.members.list(activeOrganizationId),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["members", activeOrganizationId, membershipId],
+      });
+    }
     if (details.data?.userId === authState.actor?.userId) {
       await revalidateSession();
       return;

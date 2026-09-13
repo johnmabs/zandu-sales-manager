@@ -91,3 +91,12 @@ test("member access mutations revalidate the current user's session", async () =
   assert.match(memberDetails, /details\.data\?\.userId === authState\.actor\?\.userId/);
   assert.match(memberDetails, /await revalidateSession\(\)/);
 });
+
+test("member access mutations invalidate list and every versioned detail cache", async () => {
+  const memberDetails = await readFile(
+    new URL("../src/features/access/members/MemberDetailsPage.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(memberDetails, /queryKeys\.members\.list/);
+  assert.match(memberDetails, /\["members", activeOrganizationId, membershipId\]/);
+});
