@@ -87,3 +87,9 @@ test("the foundation documents backend authority without inventing Access contra
   assert.doesNotMatch(page, /fetch\(|ApiClient|RoleAssignment/);
   assert.doesNotMatch(navigation, /fetch\(|ApiClient|RoleAssignment/);
 });
+
+test("Access Management makes a selected-store actor scope explicit", async () => {
+  const page = await readFile(new URL("components/AccessManagementPage.tsx", featureRoot), "utf8");
+  assert.match(page, /access\?\.scope\.type === "SELECTED_STORES"/);
+  assert.match(page, /accessibleStoreIds\.join/);
+});
