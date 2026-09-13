@@ -9,7 +9,7 @@ export default defineConfig({
       {
         test: {
           environment: "node",
-          include: ["test/unit/**/*.test.ts"],
+          include: ["test/unit/**/*.test.{ts,tsx}"],
           maxWorkers: 1,
           name: "unit",
           pool: "threads",
