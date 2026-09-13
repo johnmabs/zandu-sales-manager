@@ -17,6 +17,7 @@ export type ServerStateProviderProps = Readonly<{
 
 const organizationScopedResources = new Set([
   "organizations",
+  "members",
   "stores",
   "products",
   "stock",
@@ -30,6 +31,14 @@ const organizationScopedResources = new Set([
  * second, and every store-dependent key places storeId third.
  */
 export const queryKeys = {
+  members: {
+    detail: (organizationId: string, membershipId: string) =>
+      ["members", organizationId, membershipId] as const,
+    list: (organizationId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["members", organizationId] as const)
+        : (["members", organizationId, filters] as const),
+  },
   organizations: {
     all: () => ["organizations"] as const,
     detail: (organizationId: string) => ["organizations", organizationId] as const,

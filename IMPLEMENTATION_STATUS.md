@@ -10825,3 +10825,26 @@ Admin a compilé la production avec succès, mais sa phase TypeScript finale a
 ou un environnement sans cette limite.
 
 Commit recommandé : `feat(admin): add access management navigation`.
+
+## Epic F2.3 — Member list
+
+**Statut : TERMINÉ — liste des memberships tenant-scoped depuis le contrat API**
+
+- `GET /api/members` est consommé au travers du client typé et décodé ; la
+  projection client ignore défensivement toute réponse hors de l’organisation
+  active, sans se substituer à l’autorisation Symfony ;
+- la table Membres affiche seulement l’identité effectivement publiée par le
+  contrat (`userId`), le statut, les identifiants de rôles et un résumé de leur
+  portée (organisation entière ou nombre de magasins) ;
+- aucune recherche, aucun filtre ni tri local n’est ajouté : le contrat actuel
+  ne les expose pas, et la collection n’est donc jamais filtrée en mémoire ;
+- la lecture est protégée par la projection UX `MEMBER_READ`, avec cache
+  React Query tenant/version-scoped, états chargement/vide/erreur et retry.
+
+Validations frontend : tests composants OK (35) ; intégration API OK (6) ;
+tests Foundation OK (20) ; tests Admin OK (10) ; typecheck, lint, formatage et
+`git diff --check` OK. Le build Admin a compilé la production avec succès,
+mais sa phase TypeScript finale a été interrompue par la fenêtre d’exécution
+locale de 30 s ; à rejouer dans CI ou un environnement sans cette limite.
+
+Commit recommandé : `feat(access): add member list`.

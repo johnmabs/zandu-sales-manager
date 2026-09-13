@@ -17,6 +17,7 @@ test("query keys centrally include organization and store scopes", () => {
     organizationA,
     { page: 2 },
   ]);
+  assert.deepEqual(queryKeys.members.list(organizationA), ["members", organizationA]);
   assert.deepEqual(queryKeys.stock.list(organizationA, "store-1", { search: "rice" }), [
     "stock",
     organizationA,

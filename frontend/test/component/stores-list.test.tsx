@@ -4,6 +4,7 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
+import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
 import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
@@ -35,6 +36,26 @@ const store = {
   status: "ACTIVE" as const,
   timeZone: "Africa/Brazzaville",
   updatedAt: "2026-09-10T08:00:00+00:00",
+  version: 1,
+};
+
+const member = {
+  authorizationVersion: 2,
+  createdAt: "2026-09-10T08:00:00+00:00",
+  id: "membership-1",
+  organizationId: "organization-1",
+  roleAssignments: [
+    {
+      assignmentId: "assignment-1",
+      expiresAt: null,
+      roleId: "STORE_MANAGER",
+      scopeType: "SELECTED_STORES",
+      storeIds: ["store-1", "store-2"],
+    },
+  ],
+  status: "ACTIVE" as const,
+  updatedAt: "2026-09-10T08:00:00+00:00",
+  userId: "user-1",
   version: 1,
 };
 
@@ -135,6 +156,28 @@ describe("StoreList", () => {
     );
     screen.getByRole("button", { name: "Réessayer" }).click();
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+});
+
+describe("MemberList", () => {
+  it("renders only the published member identity, status, role IDs, and scope summary", () => {
+    const { container, rerender } = render(<MemberList isLoading members={undefined} />);
+
+    expect(screen.getByRole("status", { name: "Chargement des membres" })).toBeTruthy();
+
+    rerender(<MemberList isLoading={false} members={[member]} />);
+    const table = within(container).getByRole("table");
+    expect(table.textContent).toContain("user-1");
+    expect(table.textContent).toContain("ACTIVE");
+    expect(table.textContent).toContain("STORE_MANAGER");
+    expect(table.textContent).toContain("2 magasins");
+  });
+
+  it("does not add local search or filters when the member API does not expose them", () => {
+    render(<MemberList isLoading={false} members={[]} />);
+
+    expect(screen.getByText("Aucun membre")).toBeTruthy();
+    expect(screen.queryByRole("searchbox")).toBeNull();
   });
 });
 

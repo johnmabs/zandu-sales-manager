@@ -335,6 +335,29 @@ export type StoreClosureResource = Readonly<{
   version: number;
 }>;
 
+export type MembershipStatus = "ACTIVE" | "INVITED" | "SUSPENDED" | "REVOKED";
+
+/** Server-published role assignment summary; role labels remain a later catalog concern. */
+export type MembershipRoleAssignment = Readonly<{
+  assignmentId: string;
+  expiresAt: string | null;
+  roleId: string;
+  scopeType: string;
+  storeIds: readonly string[];
+}>;
+
+export type MembershipResource = Readonly<{
+  authorizationVersion: number;
+  createdAt: string;
+  id: string;
+  organizationId: string;
+  roleAssignments: readonly MembershipRoleAssignment[];
+  status: MembershipStatus;
+  updatedAt: string;
+  userId: string;
+  version: number;
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -447,10 +470,28 @@ export class FoundationApi {
 
     return decodeStore(response.data);
   }
+
+  async listOrganizationMembers(
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly MembershipResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: "members",
+      telemetry: memberTelemetry("list", "/app/access/members"),
+    });
+
+    return decodeMemberships(response.data).filter(
+      (membership) => membership.organizationId === access.organizationId,
+    );
+  }
 }
 
 function storeTelemetry(operation: string, route: string) {
   return { feature: "stores", operation, route } as const;
+}
+
+function memberTelemetry(operation: string, route: string) {
+  return { feature: "access", operation, route } as const;
 }
 
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
@@ -594,6 +635,62 @@ function decodeStoreClosure(value: unknown): StoreClosureResource {
   };
 }
 
+function decodeMemberships(value: unknown): readonly MembershipResource[] {
+  const items = Array.isArray(value)
+    ? value
+    : isRecord(value) && Array.isArray(value.member)
+      ? value.member
+      : undefined;
+  if (items === undefined) {
+    throw new ApiContractError("The member collection response is invalid.");
+  }
+
+  return items.map(decodeMembership);
+}
+
+function decodeMembership(value: unknown): MembershipResource {
+  if (
+    !isRecord(value) ||
+    !isMembershipStatus(value.status) ||
+    !Array.isArray(value.roleAssignments)
+  ) {
+    throw new ApiContractError("A member response is invalid.");
+  }
+
+  return {
+    authorizationVersion: requiredNumber(
+      value,
+      "authorizationVersion",
+      "A member response is invalid.",
+    ),
+    createdAt: requiredString(value, "createdAt", "A member response is invalid."),
+    id: requiredString(value, "id", "A member response is invalid."),
+    organizationId: requiredString(value, "organizationId", "A member response is invalid."),
+    roleAssignments: value.roleAssignments.map(decodeMembershipRoleAssignment),
+    status: value.status,
+    updatedAt: requiredString(value, "updatedAt", "A member response is invalid."),
+    userId: requiredString(value, "userId", "A member response is invalid."),
+    version: requiredNumber(value, "version", "A member response is invalid."),
+  };
+}
+
+function decodeMembershipRoleAssignment(value: unknown): MembershipRoleAssignment {
+  if (!isRecord(value) || !isStringArray(value.storeIds)) {
+    throw new ApiContractError("A member role assignment is invalid.");
+  }
+  if (value.expiresAt !== null && typeof value.expiresAt !== "string") {
+    throw new ApiContractError("A member role assignment is invalid.");
+  }
+
+  return {
+    assignmentId: requiredString(value, "assignmentId", "A member role assignment is invalid."),
+    expiresAt: value.expiresAt,
+    roleId: requiredString(value, "roleId", "A member role assignment is invalid."),
+    scopeType: requiredString(value, "scopeType", "A member role assignment is invalid."),
+    storeIds: value.storeIds,
+  };
+}
+
 export class ApiContractError extends Error {
   constructor(message: string) {
     super(message);
@@ -603,6 +700,10 @@ export class ApiContractError extends Error {
 
 function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isMembershipStatus(value: unknown): value is MembershipStatus {
+  return value === "ACTIVE" || value === "INVITED" || value === "SUSPENDED" || value === "REVOKED";
 }
 
 function requiredString(value: Record<string, unknown>, property: string, message: string): string {

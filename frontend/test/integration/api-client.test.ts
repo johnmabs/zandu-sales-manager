@@ -103,6 +103,63 @@ describe("ApiClient at the mocked API boundary", () => {
     ]);
   });
 
+  it("decodes only current-organization members and records bounded Access telemetry", async () => {
+    const failures: unknown[] = [];
+    server.use(
+      http.get("https://api.zandu.test/api/members", () =>
+        HttpResponse.json([
+          {
+            authorizationVersion: 2,
+            createdAt: "2026-09-10T08:00:00+00:00",
+            id: "membership-1",
+            organizationId: "organization-1",
+            roleAssignments: [
+              {
+                assignmentId: "assignment-1",
+                expiresAt: null,
+                roleId: "STORE_MANAGER",
+                scopeType: "SELECTED_STORES",
+                storeIds: ["store-1"],
+              },
+            ],
+            status: "ACTIVE",
+            updatedAt: "2026-09-10T08:00:00+00:00",
+            userId: "user-1",
+            version: 1,
+          },
+          {
+            authorizationVersion: 1,
+            createdAt: "2026-09-10T08:00:00+00:00",
+            id: "membership-other-organization",
+            organizationId: "organization-2",
+            roleAssignments: [],
+            status: "SUSPENDED",
+            updatedAt: "2026-09-10T08:00:00+00:00",
+            userId: "user-2",
+            version: 1,
+          },
+        ]),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+        observability: { recordApiFailure: (failure) => failures.push(failure) },
+      }),
+    );
+
+    await expect(
+      api.listOrganizationMembers({
+        accessibleStoreIds: [],
+        authorizationVersion: 2,
+        organizationId: "organization-1",
+        permissions: ["MEMBER_READ"],
+        scope: { type: "ORGANIZATION" },
+      }),
+    ).resolves.toMatchObject([{ id: "membership-1", userId: "user-1" }]);
+    expect(failures).toEqual([]);
+  });
+
   it("connects AuthenticationManager to scoped Symfony store projections", async () => {
     const organizationId = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
     const accessToken = jwt();
