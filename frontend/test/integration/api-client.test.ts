@@ -193,6 +193,34 @@ describe("ApiClient at the mocked API boundary", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("decodes the published read-only role catalog", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/roles", () =>
+        HttpResponse.json([
+          {
+            code: "STORE_MANAGER",
+            description: "Gère les opérations d’un magasin.",
+            id: "role-1",
+            name: "Responsable de magasin",
+            permissions: ["STORE_READ", "INVENTORY_READ"],
+            status: "ACTIVE",
+            type: "SYSTEM",
+            version: 1,
+          },
+        ]),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+
+    await expect(api.listRoles()).resolves.toMatchObject([
+      { code: "STORE_MANAGER", permissions: ["STORE_READ", "INVENTORY_READ"], type: "SYSTEM" },
+    ]);
+  });
+
   it("connects AuthenticationManager to scoped Symfony store projections", async () => {
     const organizationId = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
     const accessToken = jwt();

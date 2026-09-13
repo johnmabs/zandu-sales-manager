@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
 import { MemberDetails } from "../../apps/admin/src/features/access/members/MemberDetails";
 import { MemberList } from "../../apps/admin/src/features/access/members/MemberList";
+import { RoleCatalog } from "../../apps/admin/src/features/access/roles/RoleCatalog";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
 import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
@@ -57,6 +58,17 @@ const member = {
   status: "ACTIVE" as const,
   updatedAt: "2026-09-10T08:00:00+00:00",
   userId: "user-1",
+  version: 1,
+};
+
+const role = {
+  code: "STORE_MANAGER",
+  description: "Gère les opérations d’un magasin.",
+  id: "role-1",
+  name: "Responsable de magasin",
+  permissions: ["STORE_READ", "INVENTORY_READ"],
+  status: "ACTIVE" as const,
+  type: "SYSTEM" as const,
   version: 1,
 };
 
@@ -222,6 +234,24 @@ describe("MemberDetails", () => {
     );
 
     expect(within(container).getByRole("alert").textContent).toContain("Membre introuvable");
+  });
+});
+
+describe("RoleCatalog", () => {
+  it("renders published role fields and marks system roles as read-only", () => {
+    const { container, rerender } = render(<RoleCatalog isLoading roles={undefined} />);
+
+    expect(within(container).getByRole("status", { name: "Chargement des rôles" })).toBeTruthy();
+
+    rerender(<RoleCatalog isLoading={false} roles={[role]} />);
+    const table = within(container).getByRole("table");
+    expect(table.textContent).toContain("Responsable de magasin");
+    expect(table.textContent).toContain("STORE_MANAGER");
+    expect(table.textContent).toContain("Gère les opérations d’un magasin.");
+    expect(table.textContent).toContain("INVENTORY_READ");
+    expect(table.textContent).toContain("ACTIVE");
+    expect(table.textContent).toContain("Système (lecture seule)");
+    expect(within(container).queryByRole("button", { name: /modifier|supprimer/i })).toBeNull();
   });
 });
 

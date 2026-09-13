@@ -358,6 +358,20 @@ export type MembershipResource = Readonly<{
   version: number;
 }>;
 
+export type RoleStatus = "ACTIVE" | "ARCHIVED";
+export type RoleType = "CUSTOM" | "SYSTEM";
+
+export type RoleResource = Readonly<{
+  code: string;
+  description: string | null;
+  id: string;
+  name: string;
+  permissions: readonly string[];
+  status: RoleStatus;
+  type: RoleType;
+  version: number;
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -498,6 +512,16 @@ export class FoundationApi {
 
     return membership.organizationId === access.organizationId ? membership : undefined;
   }
+
+  async listRoles(): Promise<readonly RoleResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: "roles",
+      telemetry: roleTelemetry("list", "/app/access/roles"),
+    });
+
+    return decodeRoles(response.data);
+  }
 }
 
 function storeTelemetry(operation: string, route: string) {
@@ -505,6 +529,10 @@ function storeTelemetry(operation: string, route: string) {
 }
 
 function memberTelemetry(operation: string, route: string) {
+  return { feature: "access", operation, route } as const;
+}
+
+function roleTelemetry(operation: string, route: string) {
   return { feature: "access", operation, route } as const;
 }
 
@@ -705,6 +733,42 @@ function decodeMembershipRoleAssignment(value: unknown): MembershipRoleAssignmen
   };
 }
 
+function decodeRoles(value: unknown): readonly RoleResource[] {
+  const items = Array.isArray(value)
+    ? value
+    : isRecord(value) && Array.isArray(value.member)
+      ? value.member
+      : undefined;
+  if (items === undefined) {
+    throw new ApiContractError("The role collection response is invalid.");
+  }
+
+  return items.map(decodeRole);
+}
+
+function decodeRole(value: unknown): RoleResource {
+  if (!isRecord(value) || !isRoleStatus(value.status) || !isRoleType(value.type)) {
+    throw new ApiContractError("A role response is invalid.");
+  }
+  if (value.description !== null && typeof value.description !== "string") {
+    throw new ApiContractError("A role response is invalid.");
+  }
+  if (!isStringArray(value.permissions)) {
+    throw new ApiContractError("A role response is invalid.");
+  }
+
+  return {
+    code: requiredString(value, "code", "A role response is invalid."),
+    description: value.description,
+    id: requiredString(value, "id", "A role response is invalid."),
+    name: requiredString(value, "name", "A role response is invalid."),
+    permissions: value.permissions,
+    status: value.status,
+    type: value.type,
+    version: requiredNumber(value, "version", "A role response is invalid."),
+  };
+}
+
 export class ApiContractError extends Error {
   constructor(message: string) {
     super(message);
@@ -718,6 +782,14 @@ function isStringArray(value: unknown): value is readonly string[] {
 
 function isMembershipStatus(value: unknown): value is MembershipStatus {
   return value === "ACTIVE" || value === "INVITED" || value === "SUSPENDED" || value === "REVOKED";
+}
+
+function isRoleStatus(value: unknown): value is RoleStatus {
+  return value === "ACTIVE" || value === "ARCHIVED";
+}
+
+function isRoleType(value: unknown): value is RoleType {
+  return value === "CUSTOM" || value === "SYSTEM";
 }
 
 function requiredString(value: Record<string, unknown>, property: string, message: string): string {

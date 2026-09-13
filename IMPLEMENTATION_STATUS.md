@@ -10873,3 +10873,25 @@ mais sa phase TypeScript finale a été interrompue par la fenêtre d’exécuti
 locale de 30 s ; à rejouer dans CI ou un environnement sans cette limite.
 
 Commit recommandé : `feat(access): add member details`.
+
+## Epic F2.5 — Role catalog
+
+**Statut : TERMINÉ — catalogue de rôles serveur, tenant/version-scoped et read-only**
+
+- `GET /api/roles` est consommé via le client typé, avec validation des rôles,
+  types, statuts et permissions publiés par Symfony ;
+- le catalogue est protégé par la projection UX `ROLE_READ` et mis en cache par
+  organisation et `authorizationVersion`, pour ne pas conserver une projection
+  d’accès devenue obsolète ;
+- la table expose nom, code, description, permissions, statut et type ; les
+  rôles `SYSTEM` portent un libellé explicite de lecture seule ;
+- aucune action de création, édition ou suppression n’est proposée, y compris
+  pour les rôles `CUSTOM`, car le contrat courant ne les expose pas.
+
+Validations frontend : tests composants OK (38) ; intégration API OK (8) ;
+tests Foundation OK (20) ; tests Admin OK (10) ; typecheck, lint, formatage et
+`git diff --check` OK. Le build Admin a compilé la production avec succès,
+mais sa phase TypeScript finale a été interrompue par la fenêtre d’exécution
+locale de 30 s ; à rejouer dans CI ou un environnement sans cette limite.
+
+Commit recommandé : `feat(access): add role catalog`.

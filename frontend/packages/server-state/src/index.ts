@@ -23,6 +23,7 @@ const organizationScopedResources = new Set([
   "stock",
   "suppliers",
   "purchaseOrders",
+  "roles",
   "sales",
 ]);
 
@@ -31,6 +32,12 @@ const organizationScopedResources = new Set([
  * second, and every store-dependent key places storeId third.
  */
 export const queryKeys = {
+  roles: {
+    list: (organizationId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["roles", organizationId] as const)
+        : (["roles", organizationId, filters] as const),
+  },
   members: {
     detail: (organizationId: string, membershipId: string, filters?: QueryParameters) =>
       filters === undefined
