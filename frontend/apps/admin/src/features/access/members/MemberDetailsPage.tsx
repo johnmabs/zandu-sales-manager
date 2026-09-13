@@ -17,7 +17,7 @@ import { useRoleCatalog } from "../hooks/useRoleCatalog";
 import { useSuspendMember } from "../hooks/useSuspendMember";
 
 import { AssignRoleDialog } from "./AssignRoleDialog";
-import { resolveMemberAccess } from "./memberAuthorization";
+import { availableMemberActions, resolveMemberAccess } from "./memberAuthorization";
 import { MemberDetails } from "./MemberDetails";
 import { ReactivateMemberDialog } from "./ReactivateMemberDialog";
 import { RemoveRoleDialog } from "./RemoveRoleDialog";
@@ -43,8 +43,11 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
     membershipId,
     organizationId: activeOrganizationId,
   });
-  const canAssign =
-    readAccess === "ALLOWED" && access?.permissions.includes("ROLE_ASSIGN") === true;
+  const actions = availableMemberActions(
+    details.data?.status ?? "UNKNOWN",
+    access?.permissions ?? [],
+  );
+  const canAssign = readAccess === "ALLOWED" && actions.assignRole;
   const roles = useRoleCatalog({
     api: canAssign ? api : undefined,
     authorizationVersion: canAssign ? access?.authorizationVersion : undefined,
@@ -98,24 +101,10 @@ export function MemberDetailsPage({ membershipId }: Readonly<{ membershipId: str
         {...(details.data === undefined ? {} : { member: details.data })}
         onRetry={() => void details.refetch()}
         onAssignRole={canAssign ? () => setAssignOpen(true) : undefined}
-        onRemoveRole={
-          access?.permissions.includes("ROLE_REVOKE") === true ? setAssignmentToRemove : undefined
-        }
-        onSuspend={
-          access?.permissions.includes("MEMBER_SUSPEND") === true
-            ? () => setSuspendOpen(true)
-            : undefined
-        }
-        onReactivate={
-          access?.permissions.includes("MEMBER_SUSPEND") === true
-            ? () => setReactivateOpen(true)
-            : undefined
-        }
-        onRevoke={
-          access?.permissions.includes("MEMBER_REVOKE") === true
-            ? () => setRevokeOpen(true)
-            : undefined
-        }
+        onRemoveRole={actions.removeRole ? setAssignmentToRemove : undefined}
+        onSuspend={actions.suspend ? () => setSuspendOpen(true) : undefined}
+        onReactivate={actions.reactivate ? () => setReactivateOpen(true) : undefined}
+        onRevoke={actions.revoke ? () => setRevokeOpen(true) : undefined}
       />
       <RevokeMemberDialog
         isPending={revoke.isPending}

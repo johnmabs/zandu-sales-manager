@@ -3,8 +3,23 @@ import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { visibleAccessNavigation } from "../src/features/access/access-navigation.ts";
+import { availableMemberActions } from "../src/features/access/members/memberAuthorization.ts";
 
 const featureRoot = new URL("../src/features/access/", import.meta.url);
+
+test("member actions require both server status and projected permission", () => {
+  assert.deepEqual(availableMemberActions("ACTIVE", ["MEMBER_SUSPEND", "ROLE_ASSIGN"]), {
+    assignRole: true,
+    reactivate: false,
+    removeRole: false,
+    revoke: false,
+    suspend: true,
+  });
+  assert.equal(
+    availableMemberActions("REVOKED", ["MEMBER_SUSPEND", "MEMBER_REVOKE"]).reactivate,
+    false,
+  );
+});
 
 test("Access Management owns one coordinated feature boundary", async () => {
   await Promise.all(
