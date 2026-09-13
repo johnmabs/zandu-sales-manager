@@ -98,10 +98,10 @@ test("an authorized user completes the Stores vertical slice", async ({ page }) 
 
   await page.getByRole("button", { name: "Suspendre" }).click();
   await page.getByRole("button", { name: "Confirmer la suspension" }).click();
-  await expect(page.getByText("SUSPENDED")).toBeVisible();
+  await expect(page.getByText("SUSPENDED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Réactiver" }).click();
   await page.getByRole("button", { name: "Confirmer la réactivation" }).click();
-  await expect(page.getByText("ACTIVE")).toBeVisible();
+  await expect(page.getByText("ACTIVE", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Demander la fermeture" }).click();
   await page.getByLabel("Motif de fermeture").fill("Fin d’activité");
