@@ -10799,3 +10799,29 @@ Access) ; tests Foundation OK (20 tests) ; `pnpm test` OK (20 tests Foundation,
 OK ; `pnpm format:check` OK ; build Admin OK ; `git diff --check` OK.
 
 Commit recommandé : `feat(admin): add access management foundation`.
+
+## Epic F2.2 — Access Management navigation
+
+**Statut : TERMINÉ — section Accès et sous-navigation projetées par capacités**
+
+- la navigation principale regroupe désormais l’administration des accès sous
+  `Accès`, visible lorsqu’au moins une des capacités `MEMBER_READ`,
+  `MEMBER_INVITE` ou `ROLE_READ` est présente ;
+- `/app/access` présente les sous-routes Membres, Invitations et Rôles ; chacune
+  est visible dans la navigation locale seulement lorsque sa capacité effective
+  le permet, sans transformer ce guard UX en frontière de sécurité ;
+- l’ancien lien direct `/app/members` redirige vers le nouveau chemin pour
+  préserver les favoris existants ; le fil d’Ariane et l’état actif de la
+  sidebar reconnaissent les sous-routes Accès ;
+- les écrans restent des points de composition sans lecture API ni règles
+  métier : listes, catalogue et actions seront traités par leurs Epics F2
+  dédiés.
+
+Validations frontend : tests Admin OK (10 fichiers, dont projection des
+permissions Access et routes) ; `pnpm --filter @zandu/admin typecheck` OK ;
+`pnpm lint` OK ; `pnpm format:check` OK ; `git diff --check` OK. Le build
+Admin a compilé la production avec succès, mais sa phase TypeScript finale a
+été interrompue par la fenêtre d’exécution locale de 30 s ; à rejouer dans CI
+ou un environnement sans cette limite.
+
+Commit recommandé : `feat(admin): add access management navigation`.

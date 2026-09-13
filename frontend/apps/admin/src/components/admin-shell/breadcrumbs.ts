@@ -9,7 +9,9 @@ export function breadcrumbsForPath(
   pathname: string,
   navigation: readonly AdminNavigationItem[],
 ): readonly Breadcrumb[] {
-  const item = navigation.find((candidate) => candidate.href === pathname);
+  const item = navigation.find(
+    (candidate) => pathname === candidate.href || pathname.startsWith(`${candidate.href}/`),
+  );
 
   return item === undefined
     ? [{ href: "/app", label: "Accueil" }]

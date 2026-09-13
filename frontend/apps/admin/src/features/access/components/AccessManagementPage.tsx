@@ -1,6 +1,18 @@
-import { RoutePlaceholder } from "../../../components/routes/RoutePlaceholder";
+import { AccessNavigation } from "./AccessNavigation";
 
-/** Temporary F2.1 composition point; member data starts in F2.3. */
-export function AccessManagementPage() {
-  return <RoutePlaceholder title="Membres" />;
+type AccessManagementPageProperties = Readonly<{
+  title: string;
+}>;
+
+/**
+ * Shared F2.2 screen frame. Data and actions remain in their later feature
+ * slices; this component only exposes routes the server projection permits.
+ */
+export function AccessManagementPage({ title }: AccessManagementPageProperties) {
+  return (
+    <section>
+      <h1>{title}</h1>
+      <AccessNavigation />
+    </section>
+  );
 }

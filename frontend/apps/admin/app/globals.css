@@ -70,6 +70,27 @@ main {
   color: var(--zandu-color-text-inverse);
 }
 
+.zandu-access-navigation ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zandu-space-2);
+  list-style: none;
+  margin: var(--zandu-space-4) 0 0;
+  padding: 0;
+}
+
+.zandu-access-navigation a {
+  border-radius: var(--zandu-radius-md);
+  color: var(--zandu-color-text-primary);
+  display: block;
+  padding: var(--zandu-space-2) var(--zandu-space-3);
+}
+
+.zandu-access-navigation a[aria-current="page"] {
+  background: var(--zandu-color-surface-muted);
+  font-weight: 700;
+}
+
 .zandu-admin-shell__workspace {
   min-width: 0;
 }

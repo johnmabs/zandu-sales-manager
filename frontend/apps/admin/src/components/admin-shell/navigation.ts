@@ -20,9 +20,13 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     label: "Magasins",
   },
   {
-    capabilities: [{ permission: "MEMBER_READ" }],
-    href: "/app/members",
-    label: "Membres",
+    capabilities: [
+      { permission: "MEMBER_READ" },
+      { permission: "MEMBER_INVITE" },
+      { permission: "ROLE_READ" },
+    ],
+    href: "/app/access",
+    label: "Accès",
   },
   {
     capabilities: [{ permission: "CATALOG_READ" }, { permission: "PRODUCT_READ" }],

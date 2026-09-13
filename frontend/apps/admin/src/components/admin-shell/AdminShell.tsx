@@ -66,7 +66,14 @@ export function AdminShell({
           <ul className="zandu-admin-shell__navigation-list">
             {navigation.map((item) => (
               <li key={item.href}>
-                <Link aria-current={pathname === item.href ? "page" : undefined} href={item.href}>
+                <Link
+                  aria-current={
+                    pathname === item.href || pathname.startsWith(`${item.href}/`)
+                      ? "page"
+                      : undefined
+                  }
+                  href={item.href}
+                >
                   {item.label}
                 </Link>
               </li>

@@ -34,6 +34,10 @@ test("Admin shell navigation is projected from effective capabilities", () => {
     { href: "/app", label: "Accueil" },
     { href: "/app/catalog", label: "Catalogue" },
   ]);
+  assert.deepEqual(breadcrumbsForPath("/app/access/members", adminNavigation), [
+    { href: "/app", label: "Accueil" },
+    { href: "/app/access", label: "Accès" },
+  ]);
 });
 
 test("Admin shell provides accessible desktop controls and protects unresolved sessions", async () => {

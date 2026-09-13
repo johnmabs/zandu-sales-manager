@@ -1,5 +1,6 @@
-import { MembersRoute } from "../../../src/features/access";
+import { redirect } from "next/navigation";
 
-export default function MembersPage() {
-  return <MembersRoute />;
+/** Compatibility route kept for existing bookmarks while Access owns its navigation. */
+export default function MembersPage(): never {
+  redirect("/app/access/members");
 }
