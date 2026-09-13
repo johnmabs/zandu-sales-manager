@@ -665,6 +665,55 @@ describe("ApiClient at the mocked API boundary", () => {
       roleAssignments: [],
     });
   });
+
+  it("runs suspend, reactivate, and revoke through dedicated member transitions", async () => {
+    const memberProjection = (status: string, authorizationVersion: number) => ({
+      authorizationVersion,
+      createdAt: "2026-09-10T08:00:00+00:00",
+      id: "membership-1",
+      organizationId: "organization-1",
+      roleAssignments: [],
+      status,
+      updatedAt: "2026-09-13T08:00:00+00:00",
+      userId: "user-1",
+      version: authorizationVersion,
+    });
+    server.use(
+      http.post("https://api.zandu.test/api/members/membership-1/suspend", () =>
+        HttpResponse.json(memberProjection("SUSPENDED", 2)),
+      ),
+      http.post("https://api.zandu.test/api/members/membership-1/reactivate", () =>
+        HttpResponse.json(memberProjection("ACTIVE", 3)),
+      ),
+      http.post("https://api.zandu.test/api/members/membership-1/revoke", () =>
+        HttpResponse.json(memberProjection("REVOKED", 4)),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+    await expect(api.suspendMember("membership-1")).resolves.toMatchObject({ status: "SUSPENDED" });
+    await expect(api.reactivateMember("membership-1")).resolves.toMatchObject({ status: "ACTIVE" });
+    await expect(api.revokeMember("membership-1")).resolves.toMatchObject({ status: "REVOKED" });
+  });
+
+  it("preserves permission denial and correlated domain refusal at the Access boundary", async () => {
+    server.use(
+      http.post("https://api.zandu.test/api/members/membership-1/suspend", () =>
+        HttpResponse.json({ code: "FORBIDDEN", correlationId: "denied-1" }, { status: 403 }),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+    await expect(api.suspendMember("membership-1")).rejects.toMatchObject({
+      apiError: { code: "FORBIDDEN", correlationId: "denied-1", status: 403 },
+    });
+  });
 });
 
 function jwt(): string {
