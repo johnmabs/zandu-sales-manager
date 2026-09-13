@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, EmptyState, ErrorState, Skeleton } from "@zandu/ui";
+import { Button, ErrorState, Skeleton } from "@zandu/ui";
 
 import { AdminTable } from "../../../components/tables/AdminTable";
 import { RoleStatusBadge } from "../components/AccessBadges";
@@ -26,14 +26,17 @@ const columns: readonly AdminTableColumn<RoleResource>[] = [
   },
   {
     cell: (role) => (
-      <ul className="zandu-role-catalog__permissions">
-        {role.permissions.map((permission) => (
-          <li key={permission}>
-            <strong>{permissionPresentation(permission).label}</strong>
-            <span> — {permissionPresentation(permission).description}</span>
-          </li>
-        ))}
-      </ul>
+      <details className="zandu-role-catalog__permissions">
+        <summary>{role.permissions.length} permission(s)</summary>
+        <ul>
+          {role.permissions.map((permission) => (
+            <li key={permission}>
+              <strong>{permissionPresentation(permission).label}</strong>
+              <span> — {permissionPresentation(permission).description}</span>
+            </li>
+          ))}
+        </ul>
+      </details>
     ),
     header: "Permissions",
     id: "permissions",
@@ -58,7 +61,21 @@ export function RoleCatalog({ error, isLoading, onRetry, roles }: RoleCatalogPro
   }
 
   if (roles === undefined || roles.length === 0) {
-    return <EmptyState description="Les rôles publiés apparaîtront ici." title="Aucun rôle" />;
+    return (
+      <ErrorState
+        {...(onRetry === undefined
+          ? {}
+          : {
+              action: (
+                <Button onClick={onRetry} type="button" variant="secondary">
+                  Réessayer
+                </Button>
+              ),
+            })}
+        description="Le catalogue système ne contient aucun rôle actif ou archivé. Cette situation doit être diagnostiquée."
+        title="Catalogue de rôles indisponible"
+      />
+    );
   }
 
   return (
