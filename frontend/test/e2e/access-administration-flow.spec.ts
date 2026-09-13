@@ -130,7 +130,10 @@ async function login(page: Page) {
 }
 
 async function openAccess(page: Page) {
-  await page.getByRole("link", { name: "Accès" }).click();
+  await page
+    .getByRole("navigation", { name: "Navigation principale" })
+    .getByRole("link", { name: "Accès" })
+    .click();
 }
 
 async function openMember(page: Page) {
