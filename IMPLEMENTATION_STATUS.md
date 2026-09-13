@@ -11243,6 +11243,7 @@ Commit : `5d74acb test(access): verify stale session invalidation`.
 
 - scénario Owner : login, invitation rôle/scope, fixture membre acceptée, détail, ajout/retrait, suspension et réactivation ;
 - scénario dernier Owner : refus serveur corrélé et projection UI conservée ;
+- retour CI : 4 scénarios sur 5 passent ; le sélecteur d’attribution ambigu est corrigé en ciblant le combobox « Rôle » dans son dialogue, avec attente de fermeture après soumission. La validation Chromium du parcours Owner complet reste à confirmer ;
 - Playwright découvre 5 tests dont les 2 nouveaux. Leur exécution a atteint le lancement navigateur mais l’image locale ne fournit pas Chromium ; Playwright 1.57 refuse son installation sur `ubuntu26.04-x64`. À exécuter dans l’image CI supportée.
 
 Commit : `287bf72 test(access): add administration e2e flow`.

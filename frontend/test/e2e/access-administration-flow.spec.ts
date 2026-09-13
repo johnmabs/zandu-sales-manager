@@ -71,8 +71,12 @@ test("an owner administers invitation, roles and membership lifecycle", async ({
 
   await openMember(page);
   await page.getByRole("button", { name: "Attribuer un rôle" }).click();
-  await page.getByLabel("Rôle").selectOption("role-manager");
-  await page.getByRole("button", { name: "Attribuer le rôle" }).click();
+  const assignRoleDialog = page.getByRole("dialog", { name: "Attribuer un rôle", exact: true });
+  await assignRoleDialog
+    .getByRole("combobox", { name: "Rôle", exact: true })
+    .selectOption("role-manager");
+  await assignRoleDialog.getByRole("button", { name: "Attribuer le rôle", exact: true }).click();
+  await expect(assignRoleDialog).toBeHidden();
   await expect(page.getByText("role-manager", { exact: true }).first()).toBeVisible();
   await page.getByRole("button", { name: "Retirer ce rôle" }).click();
   await page.getByRole("button", { name: "Confirmer le retrait" }).click();
