@@ -92,12 +92,15 @@ type OverlayProps = {
 
 function useOverlayFocus(open: boolean, onClose: () => void) {
   const reference = useRef<HTMLDivElement>(null);
+  const returnFocusReference = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    returnFocusReference.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     reference.current?.focus();
 
     const manageKeyboardFocus = (event: KeyboardEvent) => {
@@ -142,7 +145,11 @@ function useOverlayFocus(open: boolean, onClose: () => void) {
 
     document.addEventListener("keydown", manageKeyboardFocus);
 
-    return () => document.removeEventListener("keydown", manageKeyboardFocus);
+    return () => {
+      document.removeEventListener("keydown", manageKeyboardFocus);
+      returnFocusReference.current?.focus();
+      returnFocusReference.current = null;
+    };
   }, [onClose, open]);
 
   return reference;

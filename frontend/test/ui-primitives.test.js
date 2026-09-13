@@ -42,6 +42,7 @@ test("UI primitives use shared tokens and accessible interaction contracts", asy
   assert.match(components, /aria-modal="true"/);
   assert.match(components, /document\.addEventListener\("keydown", manageKeyboardFocus\)/);
   assert.match(components, /event\.key !== "Tab"/);
+  assert.match(components, /returnFocusReference\.current\?\.focus\(\)/);
   assert.match(components, /aria-label="Pagination"/);
   assert.match(styles, /@import "@zandu\/design-tokens\/tokens\.css"/);
   assert.match(styles, /:focus-visible/);
