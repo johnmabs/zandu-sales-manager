@@ -475,6 +475,8 @@ Admin → Create Price List → Activate Price List → Select Product → Selec
 
 # 58. Routing proposé
 
+Décision d’intégration F3.3 : le préfixe retenu est `/app`, conformément au shell Admin existant. Les routes proposées ci-dessous se déclinent sous `/app/catalog` et `/app/pricing` ; aucune migration globale vers `/admin`.
+
 ```text
 /admin/catalog/products
 /admin/catalog/products/new

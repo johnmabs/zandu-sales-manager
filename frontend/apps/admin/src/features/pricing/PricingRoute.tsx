@@ -1,5 +1,9 @@
-import { RoutePlaceholder } from "../../components/routes/RoutePlaceholder";
+import { PricingSection } from "./components/PricingSection";
 
 export function PricingRoute() {
-  return <RoutePlaceholder title="Tarification" />;
+  return (
+    <PricingSection title="Tarification">
+      <p>Sélectionnez une section dans la navigation.</p>
+    </PricingSection>
+  );
 }

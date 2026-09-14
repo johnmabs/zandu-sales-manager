@@ -1,5 +1,9 @@
-import { RoutePlaceholder } from "../../components/routes/RoutePlaceholder";
+import { CatalogSection } from "./components/CatalogSection";
 
 export function CatalogRoute() {
-  return <RoutePlaceholder title="Catalogue" />;
+  return (
+    <CatalogSection title="Catalogue">
+      <p>Sélectionnez une section dans la navigation.</p>
+    </CatalogSection>
+  );
 }

@@ -11288,3 +11288,14 @@ Commit : `feat(admin): add catalog feature foundation`.
 - Validation : 4 tests d’intégration Pricing, frontières Catalog/Pricing, typecheck api-client et lint ciblé.
 
 Commit : `feat(admin): add pricing feature foundation`.
+
+## Epic F3.3 — Catalog navigation
+
+**Statut : TERMINÉ — navigation Catalog/Pricing dans le shell Admin**
+
+- Routes `/app/catalog/products`, `/app/catalog/categories`, `/app/pricing/price-lists`, `/app/pricing/product-prices` avec sous-navigation et aria-current ; `/admin` reste le préfixe initialement proposé, remplacé par le pattern `/app` existant.
+- Permissions réelles PRODUCT_READ, CATALOG_READ, PRICE_LIST_READ et PRODUCT_PRICE_READ ; accès directs refusés sans permission ou sur organisation incohérente. Les capacités des Epics ultérieurs restent explicitement à venir.
+- Alignement React de @zandu/authorization sur 19.2.4 déjà utilisé par Admin ; supprime le conflit de hooks révélé par les tests des providers réels.
+- Validation : 5 tests composants navigation/permissions/tenant, lint ciblé et typecheck Admin.
+
+Commit : `feat(admin): add catalog and pricing navigation`.

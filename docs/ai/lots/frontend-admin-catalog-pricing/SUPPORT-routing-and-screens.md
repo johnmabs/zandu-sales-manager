@@ -17,7 +17,7 @@
 ```
 
 Le préfixe /admin est une proposition du backlog ; l’Admin existant utilise /app.
-Lors de l’implémentation, réutiliser le shell/routage établi et expliciter la correspondance, sans lancer une migration globale de routes.
+F3.3 retient le shell/routage établi : remplacer /admin par /app dans ces routes. Les entrées Catalogue et Tarification possèdent leurs sous-navigations ; seuls les écrans livrés dans IMPLEMENTATION_STATUS.md exposent leurs capacités métier.
 
 ## Navigation et vues
 
