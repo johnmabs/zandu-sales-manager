@@ -1,4 +1,30 @@
 services:
+  admin:
+    build:
+      context: ./frontend
+    ports:
+      - "${ADMIN_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: /api/
+      NEXT_PUBLIC_APP_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      ZANDU_BACKEND_URL: http://backend:8080
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000/login').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   backend:
     build:
       context: ./backend

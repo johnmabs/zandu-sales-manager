@@ -33,7 +33,7 @@ Le projet suit une architecture en **monolithe modulaire inspirée du Domain-Dri
 | 5   | Inventory Costing et Returns      | Terminé — Gate CI validé |
 | 6   | Purchasing et Goods Receipts      | Terminé — Gate CI validé |
 | 7   | StockTransfer et StockCount       | Terminé — Gate M3 validé |
-| F0  | Frontend Foundation              | En cours                 |
+| F0  | Frontend Foundation               | En cours                 |
 
 Les Lots backend 0 à 7 sont clos. Le Frontend Foundation dispose des shells
 Admin et POS, des conventions TypeScript et qualité, des tokens et primitives UI,
@@ -145,9 +145,11 @@ La machine de développement doit disposer de :
 
 PHP, Composer et PostgreSQL n'ont pas besoin d'être installés directement sur la machine hôte.
 
-Pour le frontend, prévoir Node.js 24 (version utilisée en CI) et pnpm 11.25.0,
-épinglé dans `frontend/package.json`. Le lancement desktop du POS nécessite
-également Rust et les dépendances système de Tauri pour la plateforme hôte.
+L'Admin peut être lancé dans Compose sans installation locale de Node.js. Pour
+exécuter directement le workspace frontend sur l'hôte, prévoir Node.js 24
+(version utilisée en CI) et pnpm 11.25.0, épinglé dans
+`frontend/package.json`. Le lancement desktop du POS nécessite également Rust
+et les dépendances système de Tauri pour la plateforme hôte.
 
 ---
 
@@ -164,8 +166,9 @@ make database-migrate
 ```
 
 `make install` construit l'image backend, installe les dépendances Composer et génère les clés nécessaires à l'authentification JWT.
-`make start` démarre PostgreSQL et l'API Symfony servie par FrankenPHP/Caddy sur
-le port `8080` ; aucun serveur PHP supplémentaire n'est nécessaire.
+`make start` démarre PostgreSQL, l'API Symfony servie par FrankenPHP/Caddy sur
+le port `8080` et l'Admin Next.js sur le port `3000` ; aucun serveur PHP ou Node
+supplémentaire n'est nécessaire pour ce parcours.
 
 Les données PostgreSQL sont conservées dans le volume Docker prévu à cet effet.
 
@@ -214,6 +217,21 @@ Ces interfaces de documentation sont actives uniquement en environnement de dév
 ---
 
 ## Démarrer les interfaces frontend
+
+L'Admin fait partie de la stack Compose. Depuis la racine :
+
+```bash
+make start
+docker compose logs -f admin
+```
+
+Il est accessible sur `http://localhost:3000`. Le proxy Next.js relaie `/api/*`
+vers `http://backend:8080` sur le réseau Compose. Le port hôte peut être changé
+avec `ADMIN_PORT` dans `.env`. Après une modification du frontend, reconstruire
+et relancer l'Admin avec `docker compose up -d --build admin`.
+
+Le lancement local reste disponible pour développer l'Admin ou le POS hors
+conteneur :
 
 Installer les dépendances depuis le workspace :
 
