@@ -11239,20 +11239,20 @@ Commit : `5d74acb test(access): verify stale session invalidation`.
 
 ## Epic F2.37 — E2E administration flow
 
-**Statut : IMPLÉMENTÉ — exécution Chromium CI requise**
+**Statut : TERMINÉ — parcours E2E validés en CI**
 
 - scénario Owner : login, invitation rôle/scope, fixture membre acceptée, détail, ajout/retrait, suspension et réactivation ;
 - scénario dernier Owner : refus serveur corrélé et projection UI conservée ;
-- retour CI : 4 scénarios sur 5 passent ; le sélecteur d’attribution ambigu est corrigé en ciblant le combobox « Rôle » dans son dialogue, avec attente de fermeture après soumission. La validation Chromium du parcours Owner complet reste à confirmer ;
-- Playwright découvre 5 tests dont les 2 nouveaux. Leur exécution a atteint le lancement navigateur mais l’image locale ne fournit pas Chromium ; Playwright 1.57 refuse son installation sur `ubuntu26.04-x64`. À exécuter dans l’image CI supportée.
+- le sélecteur d’attribution cible le combobox « Rôle » dans son dialogue et attend sa fermeture après soumission ;
+- validation CI Chromium : `pnpm test:e2e` OK, 5 scénarios sur 5. L’absence de Chromium compatible avec Playwright 1.57 sur l’image locale Ubuntu 26.04 n’est plus bloquante.
 
 Commit : `287bf72 test(access): add administration e2e flow`.
 
 ## Gate F2 — Admin Users & Access
 
-**Statut : EN ATTENTE — seule l’exécution Chromium CI de F2.37 reste à confirmer**
+**Statut : VALIDÉ — administration Users & Access livrée**
 
-Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 intégration, suites Admin/POS OK) ; `pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ; build Admin OK (20 routes) ; `git diff --check` OK ; découverte Playwright OK (5 tests). Le correctif d’assertion consolidé est dans `6bf5570 test(access): align status badge assertion`.
+Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 intégration, suites Admin/POS OK) ; `pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ; build Admin OK (20 routes) ; `git diff --check` OK ; `pnpm test:e2e` OK en CI (5/5). Le correctif d’assertion consolidé est dans `6bf5570 test(access): align status badge assertion`.
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
@@ -11260,7 +11260,7 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
-- F3.1 à F3.5 sont traités ci-dessous ; F3.6 à F3.43 restent à implémenter. Foundation et Gates F1/F2 validés restent des prérequis à vérifier ; le démarrage F3 demandé ne valide pas Gate F2.
+- F3.1 à F3.5 sont traités ci-dessous ; F3.6 à F3.43 restent à implémenter. Foundation et Gates F1/F2 sont validés.
 - Les routes utilisent le préfixe `/app/...` existant, conformément à la décision F3.3. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
 - Gate F3 : en attente ; tests Catalog/Pricing, E2E, lint, typecheck et build Admin seront exigés lors de la livraison.
 
@@ -11320,7 +11320,7 @@ Commit : `0a5c16f feat(admin): add server-backed product list`.
 - Normalisation des paramètres sans conversion des identifiants/codes ; clés de cache propres aux filtres, tenant et authorizationVersion. Réinitialisation des contrôles sur changement de contexte et purge tenant des catégories via la primitive Foundation.
 - Validation ciblée : 5 tests de filtres/réinitialisation/permissions/tenant et test de purge du cache catégories.
 
-Commit : `feat(admin): add server-side product filters`.
+Commit : `fea8806 feat(admin): add server-side product filters`.
 
 ### Validation consolidée F3.1–F3.5 — 2026-09-14
 
@@ -11330,4 +11330,4 @@ Commit : `feat(admin): add server-side product filters`.
 - `make architecture` : OK, zéro violation pour les vues couches et modules.
 - `git diff --check` : OK.
 - Une première exécution des composants en parallèle du build a dépassé les délais sur deux interactions ; la suite complète rejouée seule passe, sans augmentation des délais.
-- Les E2E Chromium ne sont pas revalidés par cette livraison ; Gate F2 conserve son statut existant et les parcours F3 complets relèvent de F3.42/F3.43.
+- Les E2E Chromium F2 passent en CI ; les parcours F3 complets relèvent de F3.42/F3.43.
