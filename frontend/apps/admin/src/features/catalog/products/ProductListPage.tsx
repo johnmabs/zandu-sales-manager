@@ -3,21 +3,19 @@ import { useEffectiveAccess } from "@zandu/authorization";
 import { useOrganizationContext } from "@zandu/organization-context";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
-import { useProductList } from "../hooks/useProductList";
 
-import { ProductList } from "./ProductList";
+import { ProductListWorkspace } from "./ProductListWorkspace";
 
 export function ProductListPage() {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
   const { api } = useAdminRuntime();
-  const products = useProductList({ api, access, organizationId: activeOrganizationId });
   return (
-    <ProductList
-      products={products.data}
-      isLoading={products.isLoading}
-      error={products.error}
-      onRetry={() => void products.refetch()}
+    <ProductListWorkspace
+      key={`${activeOrganizationId}:${access?.authorizationVersion}`}
+      api={api}
+      access={access}
+      organizationId={activeOrganizationId}
     />
   );
 }

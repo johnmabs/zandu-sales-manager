@@ -385,3 +385,18 @@ h1 {
     overflow-y: auto;
   }
 }
+
+.zandu-product-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--zandu-space-3);
+  margin-block: var(--zandu-space-4);
+}
+
+.zandu-product-filters > div {
+  display: grid;
+  flex: 1 1 12rem;
+  gap: var(--zandu-space-2);
+  min-width: 0;
+}

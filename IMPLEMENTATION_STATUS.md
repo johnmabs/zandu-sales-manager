@@ -11256,17 +11256,17 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
-**Statut : EN COURS — premières fondations en implémentation**
+**Statut : EN COURS — F3.1 à F3.5 terminés**
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
 - F3.1 à F3.5 sont traités ci-dessous ; F3.6 à F3.43 restent à implémenter. Foundation et Gates F1/F2 validés restent des prérequis à vérifier ; le démarrage F3 demandé ne valide pas Gate F2.
-- Les routes `/admin/...` restent des propositions à confronter au préfixe `/app/...` existant. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
+- Les routes utilisent le préfixe `/app/...` existant, conformément à la décision F3.3. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
 - Gate F3 : en attente ; tests Catalog/Pricing, E2E, lint, typecheck et build Admin seront exigés lors de la livraison.
 
 Validation documentaire : numérotation des 67 sections, unicité des 43 Epics, correspondance index/fichiers, liens locaux et 47 critères Gate contrôlés ; `git diff --check`.
 
-Commit prévu : `docs(planning): add frontend catalog and pricing lot F3`.
+Commit documentaire : `1f3c548 docs(planning): add frontend catalog and pricing lot F3`.
 
 ## Epic F3.1 — Catalog feature foundation
 
@@ -11277,7 +11277,7 @@ Commit prévu : `docs(planning): add frontend catalog and pricing lot F3`.
 - Filtres ProductProvider : status, type, categoryId, productCode, search. Le provider ne pagine pas réellement ; aucun tri/filtrage local ni pagination fictive. Les filtres métier ne sont pas encore déclarés dans l’OpenAPI généré : la signature frontend suit le provider réel.
 - Validation : 5 tests d’intégration Catalog, contrôle des frontières de feature, typecheck api-client et lint ciblé.
 
-Commit : `feat(admin): add catalog feature foundation`.
+Commit : `96accc1 feat(admin): add catalog feature foundation`.
 
 ## Epic F3.2 — Pricing feature foundation
 
@@ -11287,7 +11287,7 @@ Commit : `feat(admin): add catalog feature foundation`.
 - Montants conservés en chaînes exactes ; absence de prix propagée comme erreur métier et jamais convertie en zéro ; date at encodée sans perte de fuseau.
 - Validation : 4 tests d’intégration Pricing, frontières Catalog/Pricing, typecheck api-client et lint ciblé.
 
-Commit : `feat(admin): add pricing feature foundation`.
+Commit : `7127813 feat(admin): add pricing feature foundation`.
 
 ## Epic F3.3 — Catalog navigation
 
@@ -11298,7 +11298,7 @@ Commit : `feat(admin): add pricing feature foundation`.
 - Alignement React de @zandu/authorization sur 19.2.4 déjà utilisé par Admin ; supprime le conflit de hooks révélé par les tests des providers réels.
 - Validation : 5 tests composants navigation/permissions/tenant, lint ciblé et typecheck Admin.
 
-Commit : `feat(admin): add catalog and pricing navigation`.
+Commit : `2e6ac3a feat(admin): add catalog and pricing navigation`.
 
 ## Epic F3.4 — Product list
 
@@ -11309,4 +11309,25 @@ Commit : `feat(admin): add catalog and pricing navigation`.
 - Requêtes conditionnées par PRODUCT_READ et organisation active ; clés séparées par tenant, filtres et authorizationVersion.
 - Validation : 5 tests composants/query couvrent ordre, vide, réessai, permissions et isolation du cache ; typecheck Admin et lint ciblé.
 
-Commit : `feat(admin): add server-backed product list`.
+Commit : `0a5c16f feat(admin): add server-backed product list`.
+
+## Epic F3.5 — Product filters
+
+**Statut : TERMINÉ — filtres Produits exécutés côté serveur**
+
+- Recherche code/nom, statut, type et catégorie avec labels associés, application explicite et réinitialisation. Aucun filtrage local des produits.
+- Options catégories chargées uniquement avec CATALOG_READ ; états chargement, indisponibilité et réessai indépendants de la liste Produits.
+- Normalisation des paramètres sans conversion des identifiants/codes ; clés de cache propres aux filtres, tenant et authorizationVersion. Réinitialisation des contrôles sur changement de contexte et purge tenant des catégories via la primitive Foundation.
+- Validation ciblée : 5 tests de filtres/réinitialisation/permissions/tenant et test de purge du cache catégories.
+
+Commit : `feat(admin): add server-side product filters`.
+
+### Validation consolidée F3.1–F3.5 — 2026-09-14
+
+- `pnpm test` : OK (suites Admin/POS, 20 fichiers Foundation, 10 tests unitaires, 66 composants et 23 intégration).
+- `pnpm lint`, `pnpm format:check`, `pnpm typecheck` : OK.
+- `pnpm --filter @zandu/admin build` : OK, nouvelles routes Catalog/Pricing générées.
+- `make architecture` : OK, zéro violation pour les vues couches et modules.
+- `git diff --check` : OK.
+- Une première exécution des composants en parallèle du build a dépassé les délais sur deux interactions ; la suite complète rejouée seule passe, sans augmentation des délais.
+- Les E2E Chromium ne sont pas revalidés par cette livraison ; Gate F2 conserve son statut existant et les parcours F3 complets relèvent de F3.42/F3.43.

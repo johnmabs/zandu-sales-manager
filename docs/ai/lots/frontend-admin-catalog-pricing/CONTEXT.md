@@ -35,7 +35,7 @@ Lire uniquement les décisions qui gouvernent l’Epic courant via docs/ai/ADR_I
 - Autorisation, unicité, hiérarchie et lifecycle restent serveur ; le frontend reflète les capacités du contrat.
 - Utiliser les filtres serveur et la pagination si disponible ; invalider les caches dépendants après mutation.
 - Les ressources archivées restent consultables historiquement.
-- Les routes /admin sont proposées dans la source ; confronter ce préfixe au /app existant lors de l’implémentation.
+- F3.3 retient le préfixe /app du shell existant pour les routes Catalog/Pricing ; /admin reste la proposition initiale de la source (voir SUPPORT-routing-and-screens.md).
 
 ## Source of truth
 

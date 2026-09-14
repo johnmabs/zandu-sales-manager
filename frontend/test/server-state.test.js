@@ -48,10 +48,12 @@ test("an organization transition removes other tenant data and invalidates retai
 
   client.setQueryData(productsA, [{ id: "product-a" }]);
   client.setQueryData(stockB, [{ id: "stock-b" }]);
+  client.setQueryData(queryKeys.categories.list(organizationB), [{ id: "category-b" }]);
 
   await transitionOrganizationCache(client, organizationA);
 
   assert.deepEqual(client.getQueryData(productsA), [{ id: "product-a" }]);
   assert.equal(client.getQueryState(productsA)?.isInvalidated, true);
   assert.equal(client.getQueryData(stockB), undefined);
+  assert.equal(client.getQueryData(queryKeys.categories.list(organizationB)), undefined);
 });
