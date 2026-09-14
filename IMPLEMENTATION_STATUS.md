@@ -11256,11 +11256,11 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
-**Statut : EN COURS — F3.1 à F3.5 terminés**
+**Statut : EN COURS — F3.1 à F3.15 terminés**
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
-- F3.1 à F3.5 sont traités ci-dessous ; F3.6 à F3.43 restent à implémenter. Foundation et Gates F1/F2 sont validés.
+- F3.1 à F3.15 sont traités ci-dessous ; F3.16 à F3.43 restent à implémenter. Foundation et Gates F1/F2 sont validés.
 - Les routes utilisent le préfixe `/app/...` existant, conformément à la décision F3.3. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
 - Gate F3 : en attente ; tests Catalog/Pricing, E2E, lint, typecheck et build Admin seront exigés lors de la livraison.
 
@@ -11331,3 +11331,80 @@ Commit : `fea8806 feat(admin): add server-side product filters`.
 - `git diff --check` : OK.
 - Une première exécution des composants en parallèle du build a dépassé les délais sur deux interactions ; la suite complète rejouée seule passe, sans augmentation des délais.
 - Les E2E Chromium F2 passent en CI ; les parcours F3 complets relèvent de F3.42/F3.43.
+
+## Epic F3.6 — Product details
+
+**Statut : TERMINÉ — détail Produit tenant-safe**
+
+- Route `/app/catalog/products/{productId}` et liens depuis la liste ; sections Général, Conditionnements, Codes-barres, Résumé tarifaire et Cycle de vie.
+- Lecture typée, contrôle PRODUCT_READ et projection défensive sur l’organisation active.
+
+## Epic F3.7 — Create Product
+
+**Statut : TERMINÉ — création Produit selon OpenAPI**
+
+- Route `/app/catalog/products/new`, payload strict du contrat et redirection vers le détail créé.
+- Accès conditionné par PRODUCT_CREATE ; identifiants d’unité et catégorie conservés sans API inventée.
+
+## Epic F3.8 — Update Product
+
+**Statut : TERMINÉ — édition adaptée au lifecycle**
+
+- Route d’édition et payload merge-patch ; code et unité de base présentés en lecture seule hors DRAFT.
+
+## Epic F3.9 — Product lifecycle
+
+**Statut : TERMINÉ — transitions Produit explicites**
+
+- Activate, Deactivate, Reactivate et Archive suivent les endpoints et permissions dédiés ; confirmation pour désactivation et archivage.
+
+## Epic F3.10 — Category tree
+
+**Statut : TERMINÉ — hiérarchie Catégories rendue depuis le serveur**
+
+- Arbre parent/enfants basé sur `parentCategoryId`, sans validation métier locale des cycles.
+
+## Epic F3.11 — Category management
+
+**Statut : TERMINÉ — gestion complète des Catégories**
+
+- Create, Update, Move, Activate, Deactivate et Archive utilisent les opérations backend réelles et les permissions CATEGORY_*.
+
+## Epic F3.12 — Packaging list
+
+**Statut : TERMINÉ — conditionnements visibles dans le détail Produit**
+
+- Code, nom, facteur exact, vente, achat et statut sont affichés ; collections filtrées défensivement par tenant et produit.
+
+## Epic F3.13 — Create Packaging
+
+**Statut : TERMINÉ — création de conditionnement exacte**
+
+- Tous les champs OpenAPI sont couverts ; facteurs et quantités restent des chaînes décimales exactes.
+
+## Epic F3.14 — Edit Packaging
+
+**Statut : TERMINÉ — seules les propriétés commerciales sont éditables**
+
+- Le formulaire merge-patch exclut code, unité et conversionFactor et explique qu’une nouvelle conversion exige un nouveau conditionnement.
+
+## Epic F3.15 — Packaging lifecycle
+
+**Statut : TERMINÉ — désactivation et archivage explicites**
+
+- Confirmations, endpoints dédiés et conservation des projections archivées dans les listes serveur.
+
+### Validation consolidée F3.6–F3.15 — 2026-09-14
+
+- `pnpm test` : OK (20 Foundation, 10 unitaires, 66 composants, 26 intégration).
+- `pnpm lint`, `pnpm typecheck` : OK.
+- Prettier ciblé F3 : OK ; le contrôle global signale `features/stores/components/StoreList.tsx`, fichier hors périmètre non modifié.
+- `pnpm --filter @zandu/admin build` : OK, 25 routes dont les trois nouvelles routes Produit.
+- `make architecture` : OK, zéro violation couches/modules ; `git diff --check` : OK.
+
+Commits :
+
+- F3.6–F3.9 : `01210f5 feat(catalog): deliver product and packaging workflows` ;
+- F3.10–F3.11 : `a3ed574 feat(catalog): manage category hierarchy` ;
+- F3.12–F3.15 : `01210f5 feat(catalog): deliver product and packaging workflows` ;
+- contrats OpenAPI et tests F3.6–F3.15 : `a743100 feat(catalog): add product management contracts`.
