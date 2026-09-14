@@ -11278,3 +11278,13 @@ Commit prévu : `docs(planning): add frontend catalog and pricing lot F3`.
 - Validation : 5 tests d’intégration Catalog, contrôle des frontières de feature, typecheck api-client et lint ciblé.
 
 Commit : `feat(admin): add catalog feature foundation`.
+
+## Epic F3.2 — Pricing feature foundation
+
+**Statut : TERMINÉ — frontière Pricing distincte de Catalog**
+
+- PriceLists, ProductPrices et EffectivePrice réutilisent les types OpenAPI et FoundationApi ; collections tenant-scoped et résolution effective exclusivement serveur.
+- Montants conservés en chaînes exactes ; absence de prix propagée comme erreur métier et jamais convertie en zéro ; date at encodée sans perte de fuseau.
+- Validation : 4 tests d’intégration Pricing, frontières Catalog/Pricing, typecheck api-client et lint ciblé.
+
+Commit : `feat(admin): add pricing feature foundation`.

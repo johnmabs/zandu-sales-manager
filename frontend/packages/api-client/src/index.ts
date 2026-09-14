@@ -413,6 +413,16 @@ export type ProductBarcodeResource = Readonly<
   Required<GeneratedComponents["schemas"]["ProductBarcodeResource"]>
 >;
 
+export type PriceListResource = Readonly<
+  Required<GeneratedComponents["schemas"]["PriceListResource"]>
+>;
+export type ProductPriceResource = Readonly<
+  Required<GeneratedComponents["schemas"]["ProductPriceResource"]>
+>;
+export type EffectiveProductPriceResource = Readonly<
+  Required<GeneratedComponents["schemas"]["EffectiveProductPriceResource"]>
+>;
+
 export type ProductFilters = Readonly<{
   status?: string;
   type?: string;
@@ -532,6 +542,58 @@ export class FoundationApi {
     });
 
     return decodeStore(response.data);
+  }
+
+  async listPriceLists(
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly PriceListResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: "price-lists",
+      telemetry: {
+        feature: "pricing",
+        operation: "list_price_lists",
+        route: "/app/pricing/price-lists",
+      },
+    });
+    return decodeCatalogCollection(response.data, decodePriceList).filter(
+      (item) => item.organizationId === access.organizationId,
+    );
+  }
+
+  async listProductPrices(
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly ProductPriceResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: "product-prices",
+      telemetry: {
+        feature: "pricing",
+        operation: "list_product_prices",
+        route: "/app/pricing/product-prices",
+      },
+    });
+    return decodeCatalogCollection(response.data, decodeProductPrice).filter(
+      (item) => item.organizationId === access.organizationId,
+    );
+  }
+
+  async getEffectiveProductPrice(
+    productId: string,
+    packagingId: string,
+    at?: string,
+  ): Promise<EffectiveProductPriceResource> {
+    const query = at === undefined ? "" : `?${new URLSearchParams({ at })}`;
+    const response = await this.client.request({
+      method: "GET",
+      path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}/effective-price${query}`,
+      telemetry: {
+        feature: "pricing",
+        operation: "effective_price",
+        route: "/app/pricing/product-prices",
+      },
+    });
+    return decodeEffectiveProductPrice(response.data);
   }
 
   async listProducts(
@@ -712,6 +774,57 @@ function decodeCatalogCollection<Resource>(
 function catalogNullableString(value: Record<string, unknown>, key: string): string | null {
   if (value[key] === null) return null;
   return requiredString(value, key, "The catalog response is invalid.");
+}
+
+function decodePriceList(value: unknown): PriceListResource {
+  const message = "The pricing response is invalid.";
+  if (!isRecord(value)) throw new ApiContractError(message);
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    code: requiredString(value, "code", message),
+    name: requiredString(value, "name", message),
+    currency: requiredString(value, "currency", message),
+    status: requiredString(value, "status", message),
+    scope: requiredString(value, "scope", message),
+    createdAt: requiredString(value, "createdAt", message),
+    validFrom: catalogNullableString(value, "validFrom"),
+    validTo: catalogNullableString(value, "validTo"),
+    priority: requiredNumber(value, "priority", message),
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeProductPrice(value: unknown): ProductPriceResource {
+  const message = "The pricing response is invalid.";
+  if (!isRecord(value)) throw new ApiContractError(message);
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    priceListId: requiredString(value, "priceListId", message),
+    productId: requiredString(value, "productId", message),
+    packagingId: requiredString(value, "packagingId", message),
+    amount: requiredString(value, "amount", message),
+    currency: requiredString(value, "currency", message),
+    status: requiredString(value, "status", message),
+    createdAt: requiredString(value, "createdAt", message),
+    validFrom: catalogNullableString(value, "validFrom"),
+    validTo: catalogNullableString(value, "validTo"),
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeEffectiveProductPrice(value: unknown): EffectiveProductPriceResource {
+  const message = "The pricing response is invalid.";
+  if (!isRecord(value)) throw new ApiContractError(message);
+  return {
+    priceListId: requiredString(value, "priceListId", message),
+    productPriceId: requiredString(value, "productPriceId", message),
+    amount: requiredString(value, "amount", message),
+    currency: requiredString(value, "currency", message),
+
+    sourceVersion: requiredNumber(value, "sourceVersion", message),
+  };
 }
 
 function decodeProduct(value: unknown): ProductResource {

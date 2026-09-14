@@ -17,6 +17,14 @@ async function sources(directory) {
   return nested.flat();
 }
 
+test("Pricing does not embed Catalog or Inventory internals", async () => {
+  const files = await sources(new URL("../src/features/pricing/", import.meta.url));
+  for (const source of files) {
+    assert.doesNotMatch(source, /from\s+["'][^"']*(?:catalog|inventory)\//);
+    assert.doesNotMatch(source, /\bcostPrice\b|parseFloat\(/);
+  }
+});
+
 test("Catalog does not embed Pricing or Inventory internals", async () => {
   const files = await sources(new URL("../src/features/catalog/", import.meta.url));
   for (const source of files) {
