@@ -20,6 +20,7 @@ const organizationScopedResources = new Set([
   "members",
   "stores",
   "products",
+  "productPackagings",
   "categories",
   "stock",
   "suppliers",
@@ -34,6 +35,8 @@ const organizationScopedResources = new Set([
  */
 export const queryKeys = {
   categories: {
+    detail: (organizationId: string, categoryId: string) =>
+      ["categories", organizationId, categoryId] as const,
     list: (organizationId: string, filters?: QueryParameters) =>
       filters === undefined
         ? (["categories", organizationId] as const)
@@ -66,6 +69,10 @@ export const queryKeys = {
       filters === undefined
         ? (["products", organizationId] as const)
         : (["products", organizationId, filters] as const),
+  },
+  productPackagings: {
+    list: (organizationId: string, productId: string) =>
+      ["productPackagings", organizationId, productId] as const,
   },
   purchaseOrders: {
     detail: (organizationId: string, purchaseOrderId: string) =>

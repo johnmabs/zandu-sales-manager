@@ -430,6 +430,24 @@ export type ProductFilters = Readonly<{
   productCode?: string;
   search?: string;
 }>;
+export type ProductCreateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductResource.ProductCreateInput"]
+>;
+export type ProductUpdateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductResource.ProductUpdateInput.jsonMergePatch"]
+>;
+export type CategoryCreateInput = Readonly<
+  GeneratedComponents["schemas"]["CategoryResource.CategoryCreateInput"]
+>;
+export type CategoryUpdateInput = Readonly<
+  GeneratedComponents["schemas"]["CategoryResource.CategoryUpdateInput.jsonMergePatch"]
+>;
+export type PackagingCreateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductPackagingResource.ProductPackagingCreateInput"]
+>;
+export type PackagingUpdateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductPackagingResource.ProductPackagingUpdateInput.jsonMergePatch"]
+>;
 
 export class FoundationApi {
   private readonly client: ApiClient;
@@ -608,7 +626,11 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: `products${query.size === 0 ? "" : `?${query}`}`,
-      telemetry: { feature: "catalog", operation: "list_products", route: "/admin/catalog/products" },
+      telemetry: {
+        feature: "catalog",
+        operation: "list_products",
+        route: "/admin/catalog/products",
+      },
     });
     return decodeCatalogCollection(response.data, decodeProduct).filter(
       (product) => product.organizationId === access.organizationId,
@@ -630,6 +652,130 @@ export class FoundationApi {
     return decodeCatalogCollection(response.data, decodeCategory).filter(
       (category) => category.organizationId === access.organizationId,
     );
+  }
+
+  async getProduct(
+    productId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<ProductResource | undefined> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `products/${encodeURIComponent(productId)}`,
+    });
+    const product = decodeProduct(response.data);
+    return product.organizationId === access.organizationId ? product : undefined;
+  }
+
+  async createProduct(input: ProductCreateInput): Promise<ProductResource> {
+    const response = await this.client.request({ body: input, method: "POST", path: "products" });
+    return decodeProduct(response.data);
+  }
+
+  async updateProduct(productId: string, input: ProductUpdateInput): Promise<ProductResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `products/${encodeURIComponent(productId)}`,
+    });
+    return decodeProduct(response.data);
+  }
+
+  async transitionProduct(
+    productId: string,
+    transition: "activate" | "archive" | "deactivate" | "reactivate",
+  ): Promise<ProductResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `products/${encodeURIComponent(productId)}/${transition}`,
+    });
+    return decodeProduct(response.data);
+  }
+
+  async listProductPackagings(
+    productId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly ProductPackagingResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `products/${encodeURIComponent(productId)}/packagings`,
+    });
+    return decodeCatalogCollection(response.data, decodeProductPackaging).filter(
+      (item) => item.organizationId === access.organizationId && item.productId === productId,
+    );
+  }
+
+  async createProductPackaging(
+    productId: string,
+    input: PackagingCreateInput,
+  ): Promise<ProductPackagingResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `products/${encodeURIComponent(productId)}/packagings`,
+    });
+    return decodeProductPackaging(response.data);
+  }
+
+  async updateProductPackaging(
+    productId: string,
+    packagingId: string,
+    input: PackagingUpdateInput,
+  ): Promise<ProductPackagingResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}`,
+    });
+    return decodeProductPackaging(response.data);
+  }
+
+  async transitionProductPackaging(
+    productId: string,
+    packagingId: string,
+    transition: "archive" | "deactivate",
+  ): Promise<ProductPackagingResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}/${transition}`,
+    });
+    return decodeProductPackaging(response.data);
+  }
+
+  async createCategory(input: CategoryCreateInput): Promise<CategoryResource> {
+    const response = await this.client.request({ body: input, method: "POST", path: "categories" });
+    return decodeCategory(response.data);
+  }
+
+  async updateCategory(categoryId: string, input: CategoryUpdateInput): Promise<CategoryResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `categories/${encodeURIComponent(categoryId)}`,
+    });
+    return decodeCategory(response.data);
+  }
+
+  async moveCategory(
+    categoryId: string,
+    parentCategoryId: string | null,
+  ): Promise<CategoryResource> {
+    const response = await this.client.request({
+      body: { parentCategoryId },
+      method: "POST",
+      path: `categories/${encodeURIComponent(categoryId)}/move`,
+    });
+    return decodeCategory(response.data);
+  }
+
+  async transitionCategory(
+    categoryId: string,
+    transition: "activate" | "archive" | "deactivate",
+  ): Promise<CategoryResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `categories/${encodeURIComponent(categoryId)}/${transition}`,
+    });
+    return decodeCategory(response.data);
   }
 
   async listOrganizationMembers(
@@ -860,6 +1006,36 @@ function decodeCategory(value: unknown): CategoryResource {
     status: requiredString(value, "status", message),
     createdAt: requiredString(value, "createdAt", message),
     parentCategoryId: catalogNullableString(value, "parentCategoryId"),
+    updatedAt: catalogNullableString(value, "updatedAt"),
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeProductPackaging(value: unknown): ProductPackagingResource {
+  const message = "The product packaging response is invalid.";
+  if (
+    !isRecord(value) ||
+    typeof value.base !== "boolean" ||
+    typeof value.allowedForSale !== "boolean" ||
+    typeof value.allowedForPurchase !== "boolean"
+  )
+    throw new ApiContractError(message);
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    productId: requiredString(value, "productId", message),
+    base: value.base,
+    code: requiredString(value, "code", message),
+    name: requiredString(value, "name", message),
+    unitId: requiredString(value, "unitId", message),
+    conversionFactor: requiredString(value, "conversionFactor", message),
+    precision: requiredNumber(value, "precision", message),
+    minimumQuantity: requiredString(value, "minimumQuantity", message),
+    quantityIncrement: requiredString(value, "quantityIncrement", message),
+    allowedForSale: value.allowedForSale,
+    allowedForPurchase: value.allowedForPurchase,
+    status: requiredString(value, "status", message),
+    createdAt: requiredString(value, "createdAt", message),
     updatedAt: catalogNullableString(value, "updatedAt"),
     version: requiredNumber(value, "version", message),
   };
