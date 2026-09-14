@@ -10,7 +10,11 @@ import type { ProductResource } from "@zandu/api-client";
 
 const columns: readonly AdminTableColumn<ProductResource>[] = [
   { id: "productCode", header: "Code", cell: (p) => p.productCode },
-  { id: "name", header: "Nom", cell: (p) => p.name },
+  {
+    id: "name",
+    header: "Nom",
+    cell: (p) => <a href={`/app/catalog/products/${p.id}`}>{p.name}</a>,
+  },
   { id: "status", header: "Statut", cell: (p) => p.status },
   { id: "type", header: "Type", cell: (p) => p.type },
   { id: "categoryId", header: "Catégorie", cell: (p) => p.categoryId ?? "Sans catégorie" },

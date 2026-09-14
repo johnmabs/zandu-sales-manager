@@ -4,6 +4,9 @@ import { ProductListPage } from "../products/ProductListPage";
 export function ProductsRoute() {
   return (
     <CatalogSection title="Produits" permission="PRODUCT_READ">
+      <p>
+        <a href="/app/catalog/products/new">Nouveau produit</a>
+      </p>
       <ProductListPage />
     </CatalogSection>
   );
