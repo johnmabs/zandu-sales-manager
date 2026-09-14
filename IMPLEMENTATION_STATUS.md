@@ -11299,3 +11299,14 @@ Commit : `feat(admin): add pricing feature foundation`.
 - Validation : 5 tests composants navigation/permissions/tenant, lint ciblé et typecheck Admin.
 
 Commit : `feat(admin): add catalog and pricing navigation`.
+
+## Epic F3.4 — Product list
+
+**Statut : TERMINÉ — liste Produits serveur accessible**
+
+- `/app/catalog/products` utilise AdminTable et le hook TanStack Query ; ordre serveur préservé, sans pagination fictive ni filtre local.
+- Colonnes code, nom, statut, type et catégorie ; chargement, résultat vide, erreur corrélée et réessai. Aucun lien vers un détail non encore livré.
+- Requêtes conditionnées par PRODUCT_READ et organisation active ; clés séparées par tenant, filtres et authorizationVersion.
+- Validation : 5 tests composants/query couvrent ordre, vide, réessai, permissions et isolation du cache ; typecheck Admin et lint ciblé.
+
+Commit : `feat(admin): add server-backed product list`.
