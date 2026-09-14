@@ -141,7 +141,7 @@ describe("StoreList", () => {
 
     rerender(<StoreList canCreate isLoading={false} stores={[]} />);
     expect(screen.getByRole("link", { name: "Créer un magasin" }).getAttribute("href")).toBe(
-      "/app/stores/new",
+      "/admin/stores/new",
     );
   });
 
@@ -544,7 +544,7 @@ describe("InvitationLifecycleUnavailable", () => {
     expect(within(container).getByRole("status").textContent).toContain("ne permet pas");
     expect(
       within(container).getByRole("link", { name: "Inviter un membre" }).getAttribute("href"),
-    ).toBe("/app/access/invite");
+    ).toBe("/admin/access/invite");
     expect(within(container).queryByRole("table")).toBeNull();
     expect(
       within(container).queryByRole("button", { name: /annuler|renvoyer|prolonger|modifier/i }),
@@ -574,7 +574,7 @@ describe("StoreDetails", () => {
     expect(screen.getByText("Aucune demande de fermeture en cours.")).toBeTruthy();
     expect(screen.queryByText("Erreur du service")).toBeNull();
     expect(screen.getByRole("link", { name: "Modifier" }).getAttribute("href")).toBe(
-      "/app/stores/store-1/edit",
+      "/admin/stores/store-1/edit",
     );
     expect(screen.getByText("Suspendre")).toBeTruthy();
     expect(screen.getByText("Demander la fermeture")).toBeTruthy();

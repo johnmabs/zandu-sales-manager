@@ -17,7 +17,7 @@ test("frontend observability emits bounded route and technical events without us
   const clock = [1_000, 1_125, 2_000, 2_000];
   const telemetry = observability(events, () => clock.shift());
   const complete = telemetry.startRouteLoad(
-    "/app/stores/0198c728-8f2d-7f43-92d8-3f0c75b80186?customer=secret",
+    "/admin/stores/0198c728-8f2d-7f43-92d8-3f0c75b80186?customer=secret",
   );
 
   complete();
@@ -31,7 +31,7 @@ test("frontend observability emits bounded route and technical events without us
       environment: "test",
       kind: "route_load",
       occurredAt: "1970-01-01T00:00:02.000Z",
-      route: "/app/stores/:id",
+      route: "/admin/stores/:id",
     },
     {
       clientVersion: "2026.09.09",
@@ -70,7 +70,7 @@ test("API failures keep correlation and operational metadata but exclude credent
       body: { password: "never-exported" },
       method: "POST",
       path: "stores",
-      telemetry: { feature: "stores", operation: "create", route: "/app/stores/new?email=secret" },
+      telemetry: { feature: "stores", operation: "create", route: "/admin/stores/new?email=secret" },
     }),
   );
 
@@ -88,7 +88,7 @@ test("API failures keep correlation and operational metadata but exclude credent
       occurredAt: "1970-01-01T00:00:00.000Z",
       outcomeUnknown: false,
       path: "/stores",
-      route: "/app/stores/new",
+      route: "/admin/stores/new",
       status: 422,
     },
   ]);

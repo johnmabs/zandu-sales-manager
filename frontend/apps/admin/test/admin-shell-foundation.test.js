@@ -13,7 +13,7 @@ const protectedShellUrl = new URL(
   "../src/components/admin-shell/ProtectedAdminShell.tsx",
   import.meta.url,
 );
-const errorBoundaryUrl = new URL("../app/app/error.tsx", import.meta.url);
+const errorBoundaryUrl = new URL("../app/admin/error.tsx", import.meta.url);
 const runtimeUrl = new URL("../src/runtime/AdminRuntime.tsx", import.meta.url);
 const applicationShellUrl = new URL("../src/runtime/AdminApplicationShell.tsx", import.meta.url);
 
@@ -28,15 +28,15 @@ const access = {
 test("Admin shell navigation is projected from effective capabilities", () => {
   assert.deepEqual(
     visibleAdminNavigation(access).map((item) => item.href),
-    ["/app/catalog", "/app/sales"],
+    ["/admin/catalog", "/admin/sales"],
   );
-  assert.deepEqual(breadcrumbsForPath("/app/catalog", adminNavigation), [
-    { href: "/app", label: "Accueil" },
-    { href: "/app/catalog", label: "Catalogue" },
+  assert.deepEqual(breadcrumbsForPath("/admin/catalog", adminNavigation), [
+    { href: "/admin", label: "Accueil" },
+    { href: "/admin/catalog", label: "Catalogue" },
   ]);
-  assert.deepEqual(breadcrumbsForPath("/app/access/members", adminNavigation), [
-    { href: "/app", label: "Accueil" },
-    { href: "/app/access", label: "Accès" },
+  assert.deepEqual(breadcrumbsForPath("/admin/access/members", adminNavigation), [
+    { href: "/admin", label: "Accueil" },
+    { href: "/admin/access", label: "Accès" },
   ]);
 });
 

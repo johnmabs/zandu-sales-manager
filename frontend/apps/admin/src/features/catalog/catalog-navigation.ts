@@ -4,12 +4,12 @@ import type { EffectiveAccess } from "@zandu/authorization";
 
 export const catalogNavigation = [
   {
-    href: "/app/catalog/products",
+    href: "/admin/catalog/products",
     label: "Produits",
     capabilities: [{ permission: "PRODUCT_READ" }],
   },
   {
-    href: "/app/catalog/categories",
+    href: "/admin/catalog/categories",
     label: "Catégories",
     capabilities: [{ permission: "CATALOG_READ" }],
   },

@@ -54,7 +54,7 @@ export function CreateStorePage() {
     }
 
     notifications.notify({ message: "Magasin créé.", tone: "success" });
-    router.push(`/app/stores/${encodeURIComponent(store.id)}`);
+    router.push(`/admin/stores/${encodeURIComponent(store.id)}`);
   };
 
   return (

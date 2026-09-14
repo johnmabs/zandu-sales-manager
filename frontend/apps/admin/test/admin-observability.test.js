@@ -24,7 +24,7 @@ test("Admin dispatches bounded Stores telemetry for an observability adapter", (
     operation: "request_closure",
     outcomeUnknown: false,
     path: "/stores/0198c728-8f2d-7f43-92d8-3f0c75b80186/closure-request",
-    route: "/app/stores/0198c728-8f2d-7f43-92d8-3f0c75b80186?token=secret",
+    route: "/admin/stores/0198c728-8f2d-7f43-92d8-3f0c75b80186?token=secret",
     status: 422,
   });
 
@@ -43,7 +43,7 @@ test("Admin dispatches bounded Stores telemetry for an observability adapter", (
     operation: "request_closure",
     outcomeUnknown: false,
     path: "/stores/:id/closure-request",
-    route: "/app/stores/:id",
+    route: "/admin/stores/:id",
     status: 422,
   });
 });

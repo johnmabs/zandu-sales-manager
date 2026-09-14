@@ -18,7 +18,7 @@ test("Stores owns its route composition and extension points", async () => {
 });
 
 test("the Next.js Stores page delegates to the feature route", async () => {
-  const page = await readFile(new URL("../app/app/stores/page.tsx", import.meta.url), "utf8");
+  const page = await readFile(new URL("../app/admin/stores/page.tsx", import.meta.url), "utf8");
 
   assert.match(page, /features\/stores\/routes\/StoresRoute/);
   assert.match(page, /<StoresRoute\s*\/>/);

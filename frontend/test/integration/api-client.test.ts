@@ -97,7 +97,7 @@ describe("ApiClient at the mocked API boundary", () => {
         operation: "list",
         outcomeUnknown: false,
         path: "stores",
-        route: "/app/stores",
+        route: "/admin/stores",
         status: 403,
       },
     ]);

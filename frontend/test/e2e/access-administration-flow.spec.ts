@@ -130,7 +130,7 @@ async function login(page: Page) {
   await page.getByLabel("Adresse e-mail").fill("owner@zandu.test");
   await page.getByLabel("Mot de passe").fill("password");
   await page.getByRole("button", { name: "Se connecter" }).click();
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/admin$/);
 }
 
 async function openAccess(page: Page) {

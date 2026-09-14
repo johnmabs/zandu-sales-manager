@@ -20,7 +20,7 @@ type StoreListProperties = Readonly<{
 
 const columns: readonly AdminTableColumn<StoreResource>[] = [
   {
-    cell: (store) => <Link href={`/app/stores/${encodeURIComponent(store.id)}`}>{store.name}</Link>,
+    cell: (store) => <Link href={`/admin/stores/${encodeURIComponent(store.id)}`}>{store.name}</Link>,
     header: "Nom",
     id: "name",
   },
@@ -56,7 +56,7 @@ export function StoreList({
       <EmptyState
         {...(canCreate
           ? {
-              action: <Link href="/app/stores/new">Créer un magasin</Link>,
+              action: <Link href="/admin/stores/new">Créer un magasin</Link>,
             }
           : {})}
         description="Les magasins permettent de séparer les opérations et le stock de chaque point de vente."

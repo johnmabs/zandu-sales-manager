@@ -452,7 +452,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: "stores",
-      telemetry: storeTelemetry("list", "/app/stores"),
+      telemetry: storeTelemetry("list", "/admin/stores"),
     });
     const stores = decodeStores(response.data);
     const accessible = new Set(access.accessibleStoreIds);
@@ -468,7 +468,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: `stores/${encodeURIComponent(storeId)}`,
-      telemetry: storeTelemetry("details", "/app/stores/:id"),
+      telemetry: storeTelemetry("details", "/admin/stores/:id"),
     });
     const store = decodeStore(response.data);
 
@@ -483,7 +483,7 @@ export class FoundationApi {
       body: input,
       method: "POST",
       path: "stores",
-      telemetry: storeTelemetry("create", "/app/stores/new"),
+      telemetry: storeTelemetry("create", "/admin/stores/new"),
     });
 
     return decodeStore(response.data);
@@ -494,7 +494,7 @@ export class FoundationApi {
       body: input,
       method: "PATCH",
       path: `stores/${encodeURIComponent(storeId)}`,
-      telemetry: storeTelemetry("update", "/app/stores/:id/edit"),
+      telemetry: storeTelemetry("update", "/admin/stores/:id/edit"),
     });
 
     return decodeStore(response.data);
@@ -504,7 +504,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/suspend`,
-      telemetry: storeTelemetry("suspend", "/app/stores/:id"),
+      telemetry: storeTelemetry("suspend", "/admin/stores/:id"),
     });
 
     return decodeStore(response.data);
@@ -514,7 +514,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/reactivate`,
-      telemetry: storeTelemetry("reactivate", "/app/stores/:id"),
+      telemetry: storeTelemetry("reactivate", "/admin/stores/:id"),
     });
 
     return decodeStore(response.data);
@@ -528,7 +528,7 @@ export class FoundationApi {
       body: input,
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/closure-request`,
-      telemetry: storeTelemetry("request_closure", "/app/stores/:id"),
+      telemetry: storeTelemetry("request_closure", "/admin/stores/:id"),
     });
 
     return decodeStoreClosure(response.data);
@@ -538,7 +538,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `stores/${encodeURIComponent(storeId)}/closure-request/cancel`,
-      telemetry: storeTelemetry("cancel_closure", "/app/stores/:id"),
+      telemetry: storeTelemetry("cancel_closure", "/admin/stores/:id"),
     });
 
     return decodeStore(response.data);
@@ -553,7 +553,7 @@ export class FoundationApi {
       telemetry: {
         feature: "pricing",
         operation: "list_price_lists",
-        route: "/app/pricing/price-lists",
+        route: "/admin/pricing/price-lists",
       },
     });
     return decodeCatalogCollection(response.data, decodePriceList).filter(
@@ -570,7 +570,7 @@ export class FoundationApi {
       telemetry: {
         feature: "pricing",
         operation: "list_product_prices",
-        route: "/app/pricing/product-prices",
+        route: "/admin/pricing/product-prices",
       },
     });
     return decodeCatalogCollection(response.data, decodeProductPrice).filter(
@@ -590,7 +590,7 @@ export class FoundationApi {
       telemetry: {
         feature: "pricing",
         operation: "effective_price",
-        route: "/app/pricing/product-prices",
+        route: "/admin/pricing/product-prices",
       },
     });
     return decodeEffectiveProductPrice(response.data);
@@ -608,7 +608,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: `products${query.size === 0 ? "" : `?${query}`}`,
-      telemetry: { feature: "catalog", operation: "list_products", route: "/app/catalog/products" },
+      telemetry: { feature: "catalog", operation: "list_products", route: "/admin/catalog/products" },
     });
     return decodeCatalogCollection(response.data, decodeProduct).filter(
       (product) => product.organizationId === access.organizationId,
@@ -624,7 +624,7 @@ export class FoundationApi {
       telemetry: {
         feature: "catalog",
         operation: "list_categories",
-        route: "/app/catalog/categories",
+        route: "/admin/catalog/categories",
       },
     });
     return decodeCatalogCollection(response.data, decodeCategory).filter(
@@ -638,7 +638,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: "members",
-      telemetry: memberTelemetry("list", "/app/access/members"),
+      telemetry: memberTelemetry("list", "/admin/access/members"),
     });
 
     return decodeMemberships(response.data).filter(
@@ -653,7 +653,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: `members/${encodeURIComponent(membershipId)}`,
-      telemetry: memberTelemetry("details", "/app/access/members/:id"),
+      telemetry: memberTelemetry("details", "/admin/access/members/:id"),
     });
     const membership = decodeMembership(response.data);
 
@@ -668,7 +668,7 @@ export class FoundationApi {
       body: input,
       method: "POST",
       path: `members/${encodeURIComponent(membershipId)}/role-assignments`,
-      telemetry: memberTelemetry("assign_role", "/app/access/members/:id"),
+      telemetry: memberTelemetry("assign_role", "/admin/access/members/:id"),
     });
     return decodeMembership(response.data);
   }
@@ -677,7 +677,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "DELETE",
       path: `members/${encodeURIComponent(membershipId)}/role-assignments/${encodeURIComponent(assignmentId)}`,
-      telemetry: memberTelemetry("remove_role", "/app/access/members/:id"),
+      telemetry: memberTelemetry("remove_role", "/admin/access/members/:id"),
     });
     return decodeMembership(response.data);
   }
@@ -686,7 +686,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `members/${encodeURIComponent(membershipId)}/suspend`,
-      telemetry: memberTelemetry("suspend", "/app/access/members/:id"),
+      telemetry: memberTelemetry("suspend", "/admin/access/members/:id"),
     });
     return decodeMembership(response.data);
   }
@@ -695,7 +695,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `members/${encodeURIComponent(membershipId)}/reactivate`,
-      telemetry: memberTelemetry("reactivate", "/app/access/members/:id"),
+      telemetry: memberTelemetry("reactivate", "/admin/access/members/:id"),
     });
     return decodeMembership(response.data);
   }
@@ -704,7 +704,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "POST",
       path: `members/${encodeURIComponent(membershipId)}/revoke`,
-      telemetry: memberTelemetry("revoke", "/app/access/members/:id"),
+      telemetry: memberTelemetry("revoke", "/admin/access/members/:id"),
     });
     return decodeMembership(response.data);
   }
@@ -713,7 +713,7 @@ export class FoundationApi {
     const response = await this.client.request({
       method: "GET",
       path: "roles",
-      telemetry: roleTelemetry("list", "/app/access/roles"),
+      telemetry: roleTelemetry("list", "/admin/access/roles"),
     });
 
     return decodeRoles(response.data);
@@ -724,7 +724,7 @@ export class FoundationApi {
       body: input,
       method: "POST",
       path: "member-invitations",
-      telemetry: { feature: "access", operation: "invite", route: "/app/access/invite" },
+      telemetry: { feature: "access", operation: "invite", route: "/admin/access/invite" },
     });
 
     return decodeCreatedInvitation(response.data);
@@ -737,7 +737,7 @@ export class FoundationApi {
       telemetry: {
         feature: "access",
         operation: "cancel_invitation",
-        route: "/app/access/invite",
+        route: "/admin/access/invite",
       },
     });
 

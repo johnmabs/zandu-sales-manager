@@ -11,12 +11,12 @@ export type AdminNavigationItem = NavigationItem &
 export const adminNavigation: readonly AdminNavigationItem[] = [
   {
     capabilities: [{ permission: "ORGANIZATION_READ" }],
-    href: "/app/organization",
+    href: "/admin/organization",
     label: "Organisation",
   },
   {
     capabilities: [{ permission: "STORE_READ" }],
-    href: "/app/stores",
+    href: "/admin/stores",
     label: "Magasins",
   },
   {
@@ -25,37 +25,37 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
       { permission: "MEMBER_INVITE" },
       { permission: "ROLE_READ" },
     ],
-    href: "/app/access",
+    href: "/admin/access",
     label: "Accès",
   },
   {
     capabilities: [{ permission: "CATALOG_READ" }, { permission: "PRODUCT_READ" }],
-    href: "/app/catalog",
+    href: "/admin/catalog",
     label: "Catalogue",
   },
   {
     capabilities: [{ permission: "PRICE_LIST_READ" }, { permission: "PRODUCT_PRICE_READ" }],
-    href: "/app/pricing",
+    href: "/admin/pricing",
     label: "Tarification",
   },
   {
     capabilities: [{ permission: "INVENTORY_READ" }],
-    href: "/app/inventory",
+    href: "/admin/inventory",
     label: "Stock",
   },
   {
     capabilities: [{ permission: "SUPPLIER_READ" }, { permission: "PURCHASE_ORDER_READ" }],
-    href: "/app/purchasing",
+    href: "/admin/purchasing",
     label: "Approvisionnements",
   },
   {
     capabilities: [{ permission: "CASH_REGISTER_READ" }, { permission: "CASH_SESSION_READ" }],
-    href: "/app/cash",
+    href: "/admin/cash",
     label: "Caisse",
   },
   {
     capabilities: [{ permission: "SALE_READ" }],
-    href: "/app/sales",
+    href: "/admin/sales",
     label: "Ventes",
   },
 ];

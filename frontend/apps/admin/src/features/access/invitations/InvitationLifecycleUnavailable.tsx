@@ -16,7 +16,7 @@ export function InvitationLifecycleUnavailable() {
         Vous pouvez créer une invitation. Son annulation sera proposée lorsqu’une API de lecture
         tenant-scoped fournira une invitation cible.
       </p>
-      <Link href="/app/access/invite">Inviter un membre</Link>
+      <Link href="/admin/access/invite">Inviter un membre</Link>
     </section>
   );
 }

@@ -25,7 +25,7 @@ export default function LoginPage() {
               email: String(form.get("email") ?? ""),
               password: String(form.get("password") ?? ""),
             })
-            .then(() => router.replace("/app"))
+            .then(() => router.replace("/admin"))
             .catch((loginError: unknown) => setError(loginErrorMessage(loginError)));
         }}
       >

@@ -74,7 +74,7 @@ export function InvitationSuccessState({
           Annuler l’invitation
         </Button>
       ) : null}
-      <Link href="/app/access/invitations">Retour aux invitations</Link>
+      <Link href="/admin/access/invitations">Retour aux invitations</Link>
       <CancelInvitationDialog
         email={invitation.invitation.email}
         {...(cancelError === undefined ? {} : { error: cancelError })}

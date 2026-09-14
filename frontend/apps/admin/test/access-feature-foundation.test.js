@@ -54,21 +54,21 @@ test("Access navigation exposes only sections backed by effective permissions", 
 
   assert.deepEqual(
     visibleAccessNavigation(access).map((item) => item.href),
-    ["/app/access/members", "/app/access/roles"],
+    ["/admin/access/members", "/admin/access/roles"],
   );
   assert.deepEqual(visibleAccessNavigation(undefined), []);
 });
 
 test("the Next.js Members page delegates through the Access feature public entry", async () => {
-  const page = await readFile(new URL("../app/app/members/page.tsx", import.meta.url), "utf8");
+  const page = await readFile(new URL("../app/admin/members/page.tsx", import.meta.url), "utf8");
   const membersPage = await readFile(
-    new URL("../app/app/access/members/page.tsx", import.meta.url),
+    new URL("../app/admin/access/members/page.tsx", import.meta.url),
     "utf8",
   );
   const publicEntry = await readFile(new URL("index.ts", featureRoot), "utf8");
   const route = await readFile(new URL("routes/MembersRoute.tsx", featureRoot), "utf8");
 
-  assert.match(page, /redirect\("\/app\/access\/members"\)/);
+  assert.match(page, /redirect\("\/admin\/access\/members"\)/);
   assert.match(membersPage, /features\/access/);
   assert.match(membersPage, /<MembersRoute\s*\/>/);
   assert.match(publicEntry, /\.\/routes\/MembersRoute/);

@@ -160,7 +160,7 @@ function AvailableActions({
         {labels.map((label) => (
           <li key={label}>
             {label === "Modifier" ? (
-              <Link href={`/app/stores/${encodeURIComponent(storeId)}/edit`}>{label}</Link>
+              <Link href={`/admin/stores/${encodeURIComponent(storeId)}/edit`}>{label}</Link>
             ) : label === "Suspendre" && onSuspend !== undefined ? (
               <Button onClick={onSuspend} type="button">
                 {label}

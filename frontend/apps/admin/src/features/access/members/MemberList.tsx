@@ -18,7 +18,7 @@ type MemberListProperties = Readonly<{
 const columns: readonly AdminTableColumn<MembershipResource>[] = [
   {
     cell: (member) => (
-      <Link href={`/app/access/members/${encodeURIComponent(member.id)}`}>{member.userId}</Link>
+      <Link href={`/admin/access/members/${encodeURIComponent(member.id)}`}>{member.userId}</Link>
     ),
     header: "Utilisateur",
     id: "userId",

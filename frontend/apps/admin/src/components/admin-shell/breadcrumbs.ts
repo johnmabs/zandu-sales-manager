@@ -14,9 +14,9 @@ export function breadcrumbsForPath(
   );
 
   return item === undefined
-    ? [{ href: "/app", label: "Accueil" }]
+    ? [{ href: "/admin", label: "Accueil" }]
     : [
-        { href: "/app", label: "Accueil" },
+        { href: "/admin", label: "Accueil" },
         { href: item.href, label: item.label },
       ];
 }

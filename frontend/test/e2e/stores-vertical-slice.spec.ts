@@ -90,7 +90,7 @@ test("an authorized user completes the Stores vertical slice", async ({ page }) 
   await page.getByLabel("Code").fill("CENTRE");
   await page.getByLabel("Nom").fill("Nouveau magasin");
   await page.getByRole("button", { name: "Créer le magasin" }).click();
-  await expect(page).toHaveURL(/\/app\/stores\/store-1$/);
+  await expect(page).toHaveURL(/\/admin\/stores\/store-1$/);
   await expect(page.getByRole("heading", { name: "Nouveau magasin" })).toBeVisible();
 
   await page.getByRole("link", { name: "Modifier" }).click();
@@ -137,7 +137,7 @@ test("a user without Store permission is kept out of the protected route", async
   await page.getByLabel("Adresse e-mail").fill("denied@zandu.test");
   await page.getByLabel("Mot de passe").fill("password");
   await page.getByRole("button", { name: "Se connecter" }).click();
-  await page.goto("/app/stores");
+  await page.goto("/admin/stores");
   await expect(page.getByRole("heading", { name: "Accès refusé" })).toBeVisible();
 });
 

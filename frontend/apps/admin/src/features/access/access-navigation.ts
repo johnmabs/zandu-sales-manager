@@ -11,17 +11,17 @@ export type AccessNavigationItem = NavigationItem &
 export const accessNavigation: readonly AccessNavigationItem[] = [
   {
     capabilities: [{ permission: "MEMBER_READ" }],
-    href: "/app/access/members",
+    href: "/admin/access/members",
     label: "Membres",
   },
   {
     capabilities: [{ permission: "MEMBER_INVITE" }],
-    href: "/app/access/invitations",
+    href: "/admin/access/invitations",
     label: "Invitations",
   },
   {
     capabilities: [{ permission: "ROLE_READ" }],
-    href: "/app/access/roles",
+    href: "/admin/access/roles",
     label: "Rôles",
   },
 ];

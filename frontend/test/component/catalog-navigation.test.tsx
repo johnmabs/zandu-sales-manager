@@ -9,7 +9,7 @@ import { EffectiveAccessProvider } from "../../packages/authorization/src/index"
 import { OrganizationContextProvider } from "../../packages/organization-context/src/index";
 
 vi.mock("../../apps/admin/node_modules/next/navigation.js", () => ({
-  usePathname: () => "/app/catalog/products",
+  usePathname: () => "/admin/catalog/products",
 }));
 afterEach(cleanup);
 function renderSection(
@@ -54,7 +54,7 @@ describe("Catalog and Pricing navigation", () => {
   it("uses CATALOG_READ for categories", () => {
     renderSection(["CATALOG_READ"]);
     expect(screen.getByRole("link", { name: "Catégories" }).getAttribute("href")).toBe(
-      "/app/catalog/categories",
+      "/admin/catalog/categories",
     );
     expect(screen.queryByRole("link", { name: "Produits" })).toBeNull();
   });

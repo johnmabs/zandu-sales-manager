@@ -59,7 +59,7 @@ export function AdminShell({
         Aller au contenu
       </a>
       <aside className="zandu-admin-shell__sidebar">
-        <Link className="zandu-admin-shell__brand" href="/app">
+        <Link className="zandu-admin-shell__brand" href="/admin">
           Zandu Admin
         </Link>
         <nav aria-label="Navigation principale">

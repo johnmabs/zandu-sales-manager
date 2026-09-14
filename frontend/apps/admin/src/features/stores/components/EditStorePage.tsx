@@ -93,7 +93,7 @@ export function EditStorePage({ storeId }: Readonly<{ storeId: string }>) {
       return;
     }
     notifications.notify({ message: "Magasin mis à jour.", tone: "success" });
-    router.push(`/app/stores/${encodeURIComponent(storeId)}`);
+    router.push(`/admin/stores/${encodeURIComponent(storeId)}`);
   };
 
   return (
