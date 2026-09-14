@@ -11352,9 +11352,14 @@ Commit : `fea8806 feat(admin): add server-side product filters`.
 
 ## Epic F3.8 — Update Product
 
-**Statut : TERMINÉ — édition adaptée au lifecycle**
+**Statut : TERMINÉ — édition Produit consolidée selon le lifecycle**
 
-- Route d’édition et payload merge-patch ; code et unité de base présentés en lecture seule hors DRAFT.
+- Route d’édition protégée par PRODUCT_UPDATE, lecture tenant-safe et lien d’action masqué sans permission.
+- Formulaire Foundation initialisé par la projection/version serveur ; validation structurelle, avertissement de modifications non sauvegardées et payload merge-patch strict.
+- En DRAFT, code et unité de base restent éditables ; après activation, ils deviennent des informations métier en lecture seule et sont exclus du payload.
+- Mise à jour single-flight, invalidation/refetch des caches liste et détail, notification puis retour au détail.
+- Erreurs serveur corrélées, erreurs de champs, conflit concurrent avec rechargement explicite et résultat PATCH inconnu sans rejeu aveugle.
+- Validation F3.8 : 4 tests composants couvrent DRAFT, immutabilité post-activation, conflit concurrent et timeout à résultat inconnu ; PATCH couvert par l’intégration Catalog.
 
 ## Epic F3.9 — Product lifecycle
 
