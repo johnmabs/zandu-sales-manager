@@ -402,15 +402,31 @@ export type CreatedInvitationResource = Readonly<{
   token: string;
 }>;
 
-export type ProductResource = Readonly<Required<GeneratedComponents["schemas"]["ProductResource"]>>;
+export type ProductStatus = "ACTIVE" | "ARCHIVED" | "DRAFT" | "INACTIVE";
+export type ProductType = "PHYSICAL" | "SERVICE";
+export type CategoryStatus = "ACTIVE" | "ARCHIVED" | "INACTIVE";
+export type ProductPackagingStatus = CategoryStatus;
+export type ProductBarcodeStatus = "ACTIVE" | "REMOVED";
+export type ProductResource = Readonly<
+  Omit<Required<GeneratedComponents["schemas"]["ProductResource"]>, "status" | "type"> & {
+    status: ProductStatus;
+    type: ProductType;
+  }
+>;
 export type CategoryResource = Readonly<
-  Required<GeneratedComponents["schemas"]["CategoryResource"]>
+  Omit<Required<GeneratedComponents["schemas"]["CategoryResource"]>, "status"> & {
+    status: CategoryStatus;
+  }
 >;
 export type ProductPackagingResource = Readonly<
-  Required<GeneratedComponents["schemas"]["ProductPackagingResource"]>
+  Omit<Required<GeneratedComponents["schemas"]["ProductPackagingResource"]>, "status"> & {
+    status: ProductPackagingStatus;
+  }
 >;
 export type ProductBarcodeResource = Readonly<
-  Required<GeneratedComponents["schemas"]["ProductBarcodeResource"]>
+  Omit<Required<GeneratedComponents["schemas"]["ProductBarcodeResource"]>, "status"> & {
+    status: ProductBarcodeStatus;
+  }
 >;
 
 export type PriceListResource = Readonly<
@@ -982,8 +998,8 @@ function decodeProduct(value: unknown): ProductResource {
     organizationId: requiredString(value, "organizationId", message),
     productCode: requiredString(value, "productCode", message),
     name: requiredString(value, "name", message),
-    status: requiredString(value, "status", message),
-    type: requiredString(value, "type", message),
+    status: requiredProductStatus(value, "status", message),
+    type: requiredProductType(value, "type", message),
     baseUnitId: requiredString(value, "baseUnitId", message),
     createdAt: requiredString(value, "createdAt", message),
     description: catalogNullableString(value, "description"),
@@ -1003,7 +1019,7 @@ function decodeCategory(value: unknown): CategoryResource {
     id: requiredString(value, "id", message),
     organizationId: requiredString(value, "organizationId", message),
     name: requiredString(value, "name", message),
-    status: requiredString(value, "status", message),
+    status: requiredCategoryStatus(value, "status", message),
     createdAt: requiredString(value, "createdAt", message),
     parentCategoryId: catalogNullableString(value, "parentCategoryId"),
     updatedAt: catalogNullableString(value, "updatedAt"),
@@ -1034,7 +1050,7 @@ function decodeProductPackaging(value: unknown): ProductPackagingResource {
     quantityIncrement: requiredString(value, "quantityIncrement", message),
     allowedForSale: value.allowedForSale,
     allowedForPurchase: value.allowedForPurchase,
-    status: requiredString(value, "status", message),
+    status: requiredCategoryStatus(value, "status", message),
     createdAt: requiredString(value, "createdAt", message),
     updatedAt: catalogNullableString(value, "updatedAt"),
     version: requiredNumber(value, "version", message),
@@ -1351,6 +1367,43 @@ function requiredString(value: Record<string, unknown>, property: string, messag
     throw new ApiContractError(message);
   }
   return propertyValue;
+}
+
+function requiredProductStatus(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): ProductStatus {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "ACTIVE" ||
+    propertyValue === "ARCHIVED" ||
+    propertyValue === "DRAFT" ||
+    propertyValue === "INACTIVE"
+  )
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredProductType(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): ProductType {
+  const propertyValue = value[property];
+  if (propertyValue === "PHYSICAL" || propertyValue === "SERVICE") return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredCategoryStatus(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): CategoryStatus {
+  const propertyValue = value[property];
+  if (propertyValue === "ACTIVE" || propertyValue === "ARCHIVED" || propertyValue === "INACTIVE")
+    return propertyValue;
+  throw new ApiContractError(message);
 }
 
 function requiredNumber(value: Record<string, unknown>, property: string, message: string): number {

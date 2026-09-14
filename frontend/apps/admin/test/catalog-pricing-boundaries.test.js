@@ -32,3 +32,19 @@ test("Catalog does not embed Pricing or Inventory internals", async () => {
     assert.doesNotMatch(source, /\bcostPrice\b|parseFloat\(/);
   }
 });
+
+test("Catalog exposes every aggregate family through its public contract", async () => {
+  const source = await readFile(
+    new URL("../src/features/catalog/index.ts", import.meta.url),
+    "utf8",
+  );
+  for (const contract of [
+    "CategoryResource",
+    "ProductResource",
+    "ProductPackagingResource",
+    "ProductBarcodeResource",
+  ]) {
+    assert.match(source, new RegExp(`\\b${contract}\\b`));
+  }
+  assert.doesNotMatch(source, /PriceList|ProductPrice|InventoryCost/);
+});

@@ -106,6 +106,20 @@ describe("Catalog API contracts", () => {
     );
     await expect(api.listProducts(access)).rejects.toBeInstanceOf(ApiContractError);
   });
+  it("rejects unknown Product type and lifecycle values", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/products", () =>
+        HttpResponse.json([{ ...product, status: "DELETED" }]),
+      ),
+    );
+    await expect(api.listProducts(access)).rejects.toBeInstanceOf(ApiContractError);
+    server.use(
+      http.get("https://api.zandu.test/api/products", () =>
+        HttpResponse.json([{ ...product, type: "DIGITAL" }]),
+      ),
+    );
+    await expect(api.listProducts(access)).rejects.toBeInstanceOf(ApiContractError);
+  });
   it("keeps server errors and their correlation ID", async () => {
     server.use(
       http.get("https://api.zandu.test/api/products", () =>
@@ -135,6 +149,33 @@ describe("Catalog API contracts", () => {
       ),
     );
     await expect(api.listCategories(access)).resolves.toEqual([category]);
+  });
+  it("rejects unknown Category and Packaging lifecycle values", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/categories", () =>
+        HttpResponse.json([
+          {
+            id: "category-1",
+            organizationId: "org-1",
+            name: "Santé",
+            parentCategoryId: null,
+            status: "DELETED",
+            createdAt: "2026-09-14T10:00:00Z",
+            updatedAt: null,
+            version: 1,
+          },
+        ]),
+      ),
+    );
+    await expect(api.listCategories(access)).rejects.toBeInstanceOf(ApiContractError);
+    server.use(
+      http.get("https://api.zandu.test/api/products/product-1/packagings", () =>
+        HttpResponse.json([{ ...packaging, status: "REMOVED" }]),
+      ),
+    );
+    await expect(api.listProductPackagings("product-1", access)).rejects.toBeInstanceOf(
+      ApiContractError,
+    );
   });
   it("supports product details, writes and explicit lifecycle operations", async () => {
     const requests: string[] = [];

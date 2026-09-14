@@ -7,3 +7,5 @@ Pricing rules and Inventory Costing do not belong here. No generic costPrice on 
 Product filters are server-owned: status, type, categoryId, productCode and search. ProductProvider currently returns an array sorted by code, without server pagination; do not invent pagination or sort parameters. Keep server order and tenant-filter defensively, as Stores/Access do.
 
 Packagings and barcodes are separate server resources, not embedded arrays on the ProductResource response. Decimal fields and barcodes remain strings.
+
+The public barrel exports the four Catalog resource families, their mutation inputs and their closed lifecycle/type unions. Runtime decoders reject unknown Product, Category and ProductPackaging lifecycle values instead of letting invalid server projections leak into the UI.

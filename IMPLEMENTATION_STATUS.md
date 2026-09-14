@@ -11270,12 +11270,14 @@ Commit documentaire : `1f3c548 docs(planning): add frontend catalog and pricing 
 
 ## Epic F3.1 — Catalog feature foundation
 
-**Statut : TERMINÉ — contrats et frontière Catalog établis**
+**Statut : TERMINÉ — contrats et frontière Catalog établis et consolidés**
 
 - Feature Catalog coordonnée : produits, catégories, conditionnements et codes-barres ; types dérivés du schéma OpenAPI existant, sans Pricing ni Inventory Costing.
 - Lectures Products/Categories via FoundationApi, décodage contrôlé, session/corrélation existantes et projection tenant défensive.
 - Filtres ProductProvider : status, type, categoryId, productCode, search. Le provider ne pagine pas réellement ; aucun tri/filtrage local ni pagination fictive. Les filtres métier ne sont pas encore déclarés dans l’OpenAPI généré : la signature frontend suit le provider réel.
 - Validation : 5 tests d’intégration Catalog, contrôle des frontières de feature, typecheck api-client et lint ciblé.
+- Consolidation : le barrel public expose les quatre familles Catalog, leurs inputs et unions fermées ; les décodeurs refusent désormais les statuts/type Product, Category et ProductPackaging inconnus.
+- Validation de consolidation : 10 tests d’intégration Catalog et 3 tests de frontière Catalog/Pricing, avec typecheck et lint complets.
 
 Commit : `96accc1 feat(admin): add catalog feature foundation`.
 
