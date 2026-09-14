@@ -11341,10 +11341,14 @@ Commit : `fea8806 feat(admin): add server-side product filters`.
 
 ## Epic F3.7 — Create Product
 
-**Statut : TERMINÉ — création Produit selon OpenAPI**
+**Statut : TERMINÉ — création Produit consolidée selon OpenAPI et Foundation**
 
-- Route `/app/catalog/products/new`, payload strict du contrat et redirection vers le détail créé.
+- Route `/app/catalog/products/new`, page dédiée, payload strict du contrat et redirection vers le détail créé.
+- Schéma runtime limité aux contraintes structurelles ; normalisation des champs optionnels sans dupliquer les invariants serveur.
 - Accès conditionné par PRODUCT_CREATE ; identifiants d’unité et catégorie conservés sans API inventée.
+- Mutation single-flight et tenant-scoped ; invalidation de la liste tenant/authorizationVersion, notification de succès et protection contre le rejeu aveugle lorsque le résultat POST est inconnu.
+- Erreurs de validation serveur appliquées aux champs ; conflits métier, erreur racine et correlationId restent visibles.
+- Validation F3.7 : 3 tests composants couvrent validation/payload, erreurs serveur corrélées et timeout à résultat inconnu ; contrat POST couvert par l’intégration Catalog.
 
 ## Epic F3.8 — Update Product
 

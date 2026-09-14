@@ -1,4 +1,4 @@
-import { ProductFormPage } from "../../../../../src/features/catalog/products/ProductDetailsPage";
+import { CreateProductPage } from "../../../../../src/features/catalog/products/CreateProductPage";
 export default function NewProductPage() {
-  return <ProductFormPage />;
+  return <CreateProductPage />;
 }
