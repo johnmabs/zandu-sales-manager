@@ -11256,14 +11256,25 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
-**Statut : BACKLOG DOCUMENTÉ — implémentation non commencée**
+**Statut : EN COURS — premières fondations en implémentation**
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
-- F3.1 à F3.43 restent à implémenter ; Foundation et Gates F1/F2 validés restent des prérequis à vérifier. L’ajout documentaire ne valide pas Gate F2.
+- F3.1 à F3.5 sont traités ci-dessous ; F3.6 à F3.43 restent à implémenter. Foundation et Gates F1/F2 validés restent des prérequis à vérifier ; le démarrage F3 demandé ne valide pas Gate F2.
 - Les routes `/admin/...` restent des propositions à confronter au préfixe `/app/...` existant. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
 - Gate F3 : en attente ; tests Catalog/Pricing, E2E, lint, typecheck et build Admin seront exigés lors de la livraison.
 
 Validation documentaire : numérotation des 67 sections, unicité des 43 Epics, correspondance index/fichiers, liens locaux et 47 critères Gate contrôlés ; `git diff --check`.
 
 Commit prévu : `docs(planning): add frontend catalog and pricing lot F3`.
+
+## Epic F3.1 — Catalog feature foundation
+
+**Statut : TERMINÉ — contrats et frontière Catalog établis**
+
+- Feature Catalog coordonnée : produits, catégories, conditionnements et codes-barres ; types dérivés du schéma OpenAPI existant, sans Pricing ni Inventory Costing.
+- Lectures Products/Categories via FoundationApi, décodage contrôlé, session/corrélation existantes et projection tenant défensive.
+- Filtres ProductProvider : status, type, categoryId, productCode, search. Le provider ne pagine pas réellement ; aucun tri/filtrage local ni pagination fictive. Les filtres métier ne sont pas encore déclarés dans l’OpenAPI généré : la signature frontend suit le provider réel.
+- Validation : 5 tests d’intégration Catalog, contrôle des frontières de feature, typecheck api-client et lint ciblé.
+
+Commit : `feat(admin): add catalog feature foundation`.

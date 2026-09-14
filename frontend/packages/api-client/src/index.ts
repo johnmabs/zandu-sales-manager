@@ -402,6 +402,25 @@ export type CreatedInvitationResource = Readonly<{
   token: string;
 }>;
 
+export type ProductResource = Readonly<Required<GeneratedComponents["schemas"]["ProductResource"]>>;
+export type CategoryResource = Readonly<
+  Required<GeneratedComponents["schemas"]["CategoryResource"]>
+>;
+export type ProductPackagingResource = Readonly<
+  Required<GeneratedComponents["schemas"]["ProductPackagingResource"]>
+>;
+export type ProductBarcodeResource = Readonly<
+  Required<GeneratedComponents["schemas"]["ProductBarcodeResource"]>
+>;
+
+export type ProductFilters = Readonly<{
+  status?: string;
+  type?: string;
+  categoryId?: string;
+  productCode?: string;
+  search?: string;
+}>;
+
 export class FoundationApi {
   private readonly client: ApiClient;
 
@@ -513,6 +532,42 @@ export class FoundationApi {
     });
 
     return decodeStore(response.data);
+  }
+
+  async listProducts(
+    access: CurrentSession["effectiveAccess"],
+    filters: ProductFilters = {},
+  ): Promise<readonly ProductResource[]> {
+    const query = new URLSearchParams();
+    for (const key of ["status", "type", "categoryId", "productCode", "search"] as const) {
+      const value = filters[key];
+      if (value !== undefined && value !== "") query.set(key, value);
+    }
+    const response = await this.client.request({
+      method: "GET",
+      path: `products${query.size === 0 ? "" : `?${query}`}`,
+      telemetry: { feature: "catalog", operation: "list_products", route: "/app/catalog/products" },
+    });
+    return decodeCatalogCollection(response.data, decodeProduct).filter(
+      (product) => product.organizationId === access.organizationId,
+    );
+  }
+
+  async listCategories(
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly CategoryResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: "categories",
+      telemetry: {
+        feature: "catalog",
+        operation: "list_categories",
+        route: "/app/catalog/categories",
+      },
+    });
+    return decodeCatalogCollection(response.data, decodeCategory).filter(
+      (category) => category.organizationId === access.organizationId,
+    );
   }
 
   async listOrganizationMembers(
@@ -638,6 +693,63 @@ function memberTelemetry(operation: string, route: string) {
 
 function roleTelemetry(operation: string, route: string) {
   return { feature: "access", operation, route } as const;
+}
+
+function decodeCatalogCollection<Resource>(
+  value: unknown,
+  decode: (value: unknown) => Resource,
+): readonly Resource[] {
+  const items = Array.isArray(value)
+    ? value
+    : isRecord(value) && Array.isArray(value.member)
+      ? value.member
+      : undefined;
+  if (items === undefined)
+    throw new ApiContractError("The catalog collection response is invalid.");
+  return items.map(decode);
+}
+
+function catalogNullableString(value: Record<string, unknown>, key: string): string | null {
+  if (value[key] === null) return null;
+  return requiredString(value, key, "The catalog response is invalid.");
+}
+
+function decodeProduct(value: unknown): ProductResource {
+  if (!isRecord(value) || typeof value.inventoryTracked !== "boolean")
+    throw new ApiContractError("The product response is invalid.");
+  const message = "The product response is invalid.";
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    productCode: requiredString(value, "productCode", message),
+    name: requiredString(value, "name", message),
+    status: requiredString(value, "status", message),
+    type: requiredString(value, "type", message),
+    baseUnitId: requiredString(value, "baseUnitId", message),
+    createdAt: requiredString(value, "createdAt", message),
+    description: catalogNullableString(value, "description"),
+    taxCategoryId: catalogNullableString(value, "taxCategoryId"),
+    categoryId: catalogNullableString(value, "categoryId"),
+    activatedAt: catalogNullableString(value, "activatedAt"),
+    updatedAt: catalogNullableString(value, "updatedAt"),
+    inventoryTracked: value.inventoryTracked,
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeCategory(value: unknown): CategoryResource {
+  if (!isRecord(value)) throw new ApiContractError("The category response is invalid.");
+  const message = "The category response is invalid.";
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    name: requiredString(value, "name", message),
+    status: requiredString(value, "status", message),
+    createdAt: requiredString(value, "createdAt", message),
+    parentCategoryId: catalogNullableString(value, "parentCategoryId"),
+    updatedAt: catalogNullableString(value, "updatedAt"),
+    version: requiredNumber(value, "version", message),
+  };
 }
 
 function decodeAuthenticationTokens(value: unknown): AuthenticationTokens {
