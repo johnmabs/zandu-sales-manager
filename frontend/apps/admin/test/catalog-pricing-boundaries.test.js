@@ -48,3 +48,18 @@ test("Catalog exposes every aggregate family through its public contract", async
   }
   assert.doesNotMatch(source, /PriceList|ProductPrice|InventoryCost/);
 });
+
+test("Pricing exposes its three resource families through its public contract", async () => {
+  const source = await readFile(
+    new URL("../src/features/pricing/index.ts", import.meta.url),
+    "utf8",
+  );
+  for (const contract of [
+    "PriceListResource",
+    "ProductPriceResource",
+    "EffectiveProductPriceResource",
+  ]) {
+    assert.match(source, new RegExp(`\\b${contract}\\b`));
+  }
+  assert.doesNotMatch(source, /CategoryResource|ProductPackagingResource|InventoryCost/);
+});

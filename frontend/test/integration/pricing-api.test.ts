@@ -106,4 +106,54 @@ describe("Pricing API foundation", () => {
     await expect(api.listPriceLists(access)).resolves.toEqual([list]);
     await expect(api.listProductPrices(access)).resolves.toEqual([price]);
   });
+  it("rejects unknown Pricing lifecycle and scope projections", async () => {
+    const list = {
+      id: "list",
+      organizationId: "org-1",
+      code: "RETAIL",
+      name: "Détail",
+      currency: "XAF",
+      status: "DELETED",
+      scope: "ORGANIZATION",
+      validFrom: null,
+      validTo: null,
+      priority: 1,
+      createdAt: "2026-09-14",
+      version: 1,
+    };
+    server.use(http.get("https://api.zandu.test/api/price-lists", () => HttpResponse.json([list])));
+    await expect(api.listPriceLists(access)).rejects.toBeInstanceOf(ApiContractError);
+    server.use(
+      http.get("https://api.zandu.test/api/price-lists", () =>
+        HttpResponse.json([{ ...list, status: "ACTIVE", scope: "STORE" }]),
+      ),
+    );
+    await expect(api.listPriceLists(access)).rejects.toBeInstanceOf(ApiContractError);
+  });
+  it("rejects numeric collection amounts and unknown ProductPrice statuses", async () => {
+    const price = {
+      id: "price",
+      organizationId: "org-1",
+      priceListId: "list",
+      productId: "p1",
+      packagingId: "pack1",
+      amount: 12.5,
+      currency: "XAF",
+      status: "ACTIVE",
+      validFrom: null,
+      validTo: null,
+      createdAt: "2026-09-14",
+      version: 1,
+    };
+    server.use(
+      http.get("https://api.zandu.test/api/product-prices", () => HttpResponse.json([price])),
+    );
+    await expect(api.listProductPrices(access)).rejects.toBeInstanceOf(ApiContractError);
+    server.use(
+      http.get("https://api.zandu.test/api/product-prices", () =>
+        HttpResponse.json([{ ...price, amount: "12.50", status: "DRAFT" }]),
+      ),
+    );
+    await expect(api.listProductPrices(access)).rejects.toBeInstanceOf(ApiContractError);
+  });
 });

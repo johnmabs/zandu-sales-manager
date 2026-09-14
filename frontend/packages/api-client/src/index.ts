@@ -429,14 +429,34 @@ export type ProductBarcodeResource = Readonly<
   }
 >;
 
+export type PriceListStatus = "ACTIVE" | "ARCHIVED" | "DRAFT" | "INACTIVE";
+export type PriceListScope = "ORGANIZATION";
+export type ProductPriceStatus = "ACTIVE" | "ARCHIVED" | "INACTIVE";
 export type PriceListResource = Readonly<
-  Required<GeneratedComponents["schemas"]["PriceListResource"]>
+  Omit<Required<GeneratedComponents["schemas"]["PriceListResource"]>, "scope" | "status"> & {
+    scope: PriceListScope;
+    status: PriceListStatus;
+  }
 >;
 export type ProductPriceResource = Readonly<
-  Required<GeneratedComponents["schemas"]["ProductPriceResource"]>
+  Omit<Required<GeneratedComponents["schemas"]["ProductPriceResource"]>, "status"> & {
+    status: ProductPriceStatus;
+  }
 >;
 export type EffectiveProductPriceResource = Readonly<
   Required<GeneratedComponents["schemas"]["EffectiveProductPriceResource"]>
+>;
+export type PriceListCreateInput = Readonly<
+  GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
+>;
+export type PriceListUpdateInput = Readonly<
+  GeneratedComponents["schemas"]["PriceListResource.PriceListUpdateInput.jsonMergePatch"]
+>;
+export type ProductPriceCreateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductPriceResource.ProductPriceCreateInput"]
+>;
+export type ProductPriceUpdateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductPriceResource.ProductPriceUpdateInput.jsonMergePatch"]
 >;
 
 export type ProductFilters = Readonly<{
@@ -947,8 +967,8 @@ function decodePriceList(value: unknown): PriceListResource {
     code: requiredString(value, "code", message),
     name: requiredString(value, "name", message),
     currency: requiredString(value, "currency", message),
-    status: requiredString(value, "status", message),
-    scope: requiredString(value, "scope", message),
+    status: requiredPriceListStatus(value, "status", message),
+    scope: requiredPriceListScope(value, "scope", message),
     createdAt: requiredString(value, "createdAt", message),
     validFrom: catalogNullableString(value, "validFrom"),
     validTo: catalogNullableString(value, "validTo"),
@@ -968,7 +988,7 @@ function decodeProductPrice(value: unknown): ProductPriceResource {
     packagingId: requiredString(value, "packagingId", message),
     amount: requiredString(value, "amount", message),
     currency: requiredString(value, "currency", message),
-    status: requiredString(value, "status", message),
+    status: requiredProductPriceStatus(value, "status", message),
     createdAt: requiredString(value, "createdAt", message),
     validFrom: catalogNullableString(value, "validFrom"),
     validTo: catalogNullableString(value, "validTo"),
@@ -1400,6 +1420,42 @@ function requiredCategoryStatus(
   property: string,
   message: string,
 ): CategoryStatus {
+  const propertyValue = value[property];
+  if (propertyValue === "ACTIVE" || propertyValue === "ARCHIVED" || propertyValue === "INACTIVE")
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredPriceListStatus(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): PriceListStatus {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "ACTIVE" ||
+    propertyValue === "ARCHIVED" ||
+    propertyValue === "DRAFT" ||
+    propertyValue === "INACTIVE"
+  )
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredPriceListScope(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): PriceListScope {
+  if (value[property] === "ORGANIZATION") return "ORGANIZATION";
+  throw new ApiContractError(message);
+}
+
+function requiredProductPriceStatus(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): ProductPriceStatus {
   const propertyValue = value[property];
   if (propertyValue === "ACTIVE" || propertyValue === "ARCHIVED" || propertyValue === "INACTIVE")
     return propertyValue;

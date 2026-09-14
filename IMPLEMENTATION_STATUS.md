@@ -11283,11 +11283,14 @@ Commit : `96accc1 feat(admin): add catalog feature foundation`.
 
 ## Epic F3.2 — Pricing feature foundation
 
-**Statut : TERMINÉ — frontière Pricing distincte de Catalog**
+**Statut : TERMINÉ — frontière Pricing distincte et contrats consolidés**
 
 - PriceLists, ProductPrices et EffectivePrice réutilisent les types OpenAPI et FoundationApi ; collections tenant-scoped et résolution effective exclusivement serveur.
 - Montants conservés en chaînes exactes ; absence de prix propagée comme erreur métier et jamais convertie en zéro ; date at encodée sans perte de fuseau.
 - Validation : 4 tests d’intégration Pricing, frontières Catalog/Pricing, typecheck api-client et lint ciblé.
+- Consolidation : barrel public complété avec inputs OpenAPI et unions fermées PriceList/ProductPrice ; scope limité à ORGANIZATION conformément au backend réel.
+- Les décodeurs refusent les statuts/scopes inconnus et les montants numériques aussi bien pour EffectivePrice que pour les collections ProductPrice.
+- Validation de consolidation : 6 tests d’intégration Pricing et 4 tests de frontière publique Catalog/Pricing, avec typecheck et lint complets.
 
 Commit : `7127813 feat(admin): add pricing feature foundation`.
 
