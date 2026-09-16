@@ -6,7 +6,6 @@ namespace Zandu\Modules\Catalog\Domain;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use InvalidArgumentException;
 use LogicException;
 use Zandu\Modules\Catalog\Domain\Event\UnitOfMeasureActivated;
 use Zandu\Modules\Catalog\Domain\Event\UnitOfMeasureCreated;
@@ -17,9 +16,12 @@ use Zandu\SharedKernel\Decimal\RoundingMode;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class UnitOfMeasure
+final class UnitOfMeasure implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<UnitOfMeasureEvent> */
     private array $recordedEvents = [];
 
@@ -34,9 +36,7 @@ final class UnitOfMeasure
         private UnitOfMeasureStatus $status,
         private int $version,
     ) {
-        if ($version < 1) {
-            throw new InvalidArgumentException('Unit of measure version must be positive.');
-        }
+        $this->assertValidVersion();
     }
 
     public static function create(
@@ -94,7 +94,7 @@ final class UnitOfMeasure
         $this->dimension = $dimension;
         $this->precision = $precision;
         $this->roundingMode = $roundingMode;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new UnitOfMeasureUpdated(
             $this->organizationId,
             $this->id,
@@ -107,7 +107,7 @@ final class UnitOfMeasure
     {
         $this->requireStatus(UnitOfMeasureStatus::Active, 'Only an active unit of measure can be deactivated.');
         $this->status = UnitOfMeasureStatus::Inactive;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new UnitOfMeasureDeactivated(
             $this->organizationId,
             $this->id,
@@ -120,7 +120,7 @@ final class UnitOfMeasure
     {
         $this->requireStatus(UnitOfMeasureStatus::Inactive, 'Only an inactive unit of measure can be activated.');
         $this->status = UnitOfMeasureStatus::Active;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new UnitOfMeasureActivated(
             $this->organizationId,
             $this->id,
@@ -174,10 +174,6 @@ final class UnitOfMeasure
     public function status(): UnitOfMeasureStatus
     {
         return $this->status;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 
     private function requireStatus(UnitOfMeasureStatus $status, string $message): void

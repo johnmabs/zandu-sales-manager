@@ -19,9 +19,12 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\PurchaseOrderId;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\SupplierId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class GoodsReceipt
+final class GoodsReceipt implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<GoodsReceiptEvent> */
     private array $recordedEvents = [];
 
@@ -45,9 +48,7 @@ final class GoodsReceipt
         private int $version,
         private array $lines,
     ) {
-        if ($version < 1) {
-            throw new InvalidArgumentException('Goods receipt version must be positive.');
-        }
+        $this->assertValidVersion();
         $this->supplierDeliveryNote = self::optional($supplierDeliveryNote, 128, 'supplier delivery note');
         $this->notes = self::optional($notes, 2000, 'notes');
     }
@@ -99,7 +100,7 @@ final class GoodsReceipt
         $this->ensureDraft();
         $this->assertLine($line, null);
         $this->lines[] = $line;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function updateLine(GoodsReceiptLine $replacement): void
@@ -109,7 +110,7 @@ final class GoodsReceipt
             if ($line->id()->equals($replacement->id())) {
                 $this->assertLine($replacement, $replacement->id());
                 $this->lines[$index] = $replacement;
-                ++$this->version;
+                $this->advanceVersion();
 
                 return;
             }
@@ -123,7 +124,7 @@ final class GoodsReceipt
         foreach ($this->lines as $index => $line) {
             if ($line->id()->equals($lineId)) {
                 array_splice($this->lines, $index, 1);
-                ++$this->version;
+                $this->advanceVersion();
 
                 return;
             }
@@ -141,7 +142,7 @@ final class GoodsReceipt
         $this->status = GoodsReceiptStatus::Posted;
         $this->postedBy = $actorId;
         $this->postedAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new GoodsReceiptPosted($this->organizationId, $this->id, $actorId, $occurredAt);
     }
 
@@ -152,7 +153,7 @@ final class GoodsReceipt
         $this->status = GoodsReceiptStatus::Cancelled;
         $this->cancelledBy = $actorId;
         $this->cancelledAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new GoodsReceiptCancelled($this->organizationId, $this->id, $actorId, $occurredAt);
     }
 
@@ -249,10 +250,6 @@ final class GoodsReceipt
     public function cancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
     /** @return list<GoodsReceiptLine> */ public function lines(): array
     {

@@ -8,11 +8,17 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, StockTransferId, StoreId};
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class StockTransfer
+final class StockTransfer implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @param list<StockTransferLine> $lines */
-    private function __construct(private readonly StockTransferId $id, private readonly OrganizationId $organizationId, private readonly StoreId $sourceStoreId, private readonly StoreId $destinationStoreId, private StockTransferStatus $status, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?ActorId $shippedBy, private ?DateTimeImmutable $shippedAt, private ?ActorId $receivedBy, private ?DateTimeImmutable $receivedAt, private ?string $cancellationReason, private ?ActorId $cancelledBy, private ?DateTimeImmutable $cancelledAt, private int $version, private array $lines) {}
+    private function __construct(private readonly StockTransferId $id, private readonly OrganizationId $organizationId, private readonly StoreId $sourceStoreId, private readonly StoreId $destinationStoreId, private StockTransferStatus $status, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?ActorId $shippedBy, private ?DateTimeImmutable $shippedAt, private ?ActorId $receivedBy, private ?DateTimeImmutable $receivedAt, private ?string $cancellationReason, private ?ActorId $cancelledBy, private ?DateTimeImmutable $cancelledAt, private int $version, private array $lines)
+    {
+        $this->assertValidVersion();
+    }
 
     public static function create(StockTransferId $id, OrganizationId $organizationId, StoreId $sourceStoreId, StoreId $destinationStoreId, ActorId $createdBy, DateTimeImmutable $createdAt): self
     {
@@ -43,7 +49,7 @@ final class StockTransfer
             }
         }
         $this->lines[] = $line;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function updateLine(\Zandu\SharedKernel\Identity\StockTransferLineId $lineId, \Zandu\SharedKernel\Quantity\Quantity $requestedQuantity): void
@@ -52,7 +58,7 @@ final class StockTransfer
         foreach ($this->lines as $index => $line) {
             if ($line->id()->equals($lineId)) {
                 $this->lines[$index] = $line->withRequestedQuantity($requestedQuantity);
-                ++$this->version;
+                $this->advanceVersion();
                 return;
             }
         }
@@ -65,7 +71,7 @@ final class StockTransfer
         foreach ($this->lines as $index => $line) {
             if ($line->id()->equals($lineId)) {
                 array_splice($this->lines, $index, 1);
-                ++$this->version;
+                $this->advanceVersion();
                 return;
             }
         }
@@ -83,7 +89,7 @@ final class StockTransfer
         $this->cancellationReason = $reason;
         $this->cancelledBy = $actorId;
         $this->cancelledAt = $at->setTimezone(new DateTimeZone('UTC'));
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     /** @param array<string, \Zandu\SharedKernel\Quantity\Quantity> $shippedQuantities keyed by StockTransferLineId */
@@ -107,7 +113,7 @@ final class StockTransfer
         $this->status = StockTransferStatus::Shipped;
         $this->shippedBy = $actorId;
         $this->shippedAt = $at->setTimezone(new DateTimeZone('UTC'));
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     /** @param array<string, \Zandu\SharedKernel\Quantity\Quantity> $receivedQuantities keyed by StockTransferLineId */
@@ -130,7 +136,7 @@ final class StockTransfer
         $this->status = StockTransferStatus::Received;
         $this->receivedBy = $actorId;
         $this->receivedAt = $at->setTimezone(new DateTimeZone('UTC'));
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function hasTransitDiscrepancy(): bool
@@ -258,10 +264,6 @@ final class StockTransfer
     public function cancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
     /** @return list<StockTransferLine> */ public function lines(): array
     {

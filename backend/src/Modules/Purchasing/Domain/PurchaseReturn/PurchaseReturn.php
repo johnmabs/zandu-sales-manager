@@ -8,11 +8,17 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Zandu\Modules\Purchasing\Domain\PurchasingRuleViolation;
 use Zandu\SharedKernel\Identity\{ActorId, GoodsReceiptId, OrganizationId, PurchaseOrderId, PurchaseReturnId, StoreId, SupplierId};
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class PurchaseReturn
+final class PurchaseReturn implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @param list<PurchaseReturnLine> $lines */
-    private function __construct(private readonly PurchaseReturnId $id, private readonly OrganizationId $organizationId, private readonly StoreId $sourceStoreId, private readonly SupplierId $supplierId, private readonly ?GoodsReceiptId $goodsReceiptId, private readonly ?PurchaseOrderId $purchaseOrderId, private PurchaseReturnStatus $status, private readonly string $reason, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?ActorId $shippedBy, private ?DateTimeImmutable $shippedAt, private ?ActorId $cancelledBy, private ?DateTimeImmutable $cancelledAt, private int $version, private array $lines) {}
+    private function __construct(private readonly PurchaseReturnId $id, private readonly OrganizationId $organizationId, private readonly StoreId $sourceStoreId, private readonly SupplierId $supplierId, private readonly ?GoodsReceiptId $goodsReceiptId, private readonly ?PurchaseOrderId $purchaseOrderId, private PurchaseReturnStatus $status, private readonly string $reason, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?ActorId $shippedBy, private ?DateTimeImmutable $shippedAt, private ?ActorId $cancelledBy, private ?DateTimeImmutable $cancelledAt, private int $version, private array $lines)
+    {
+        $this->assertValidVersion();
+    }
 
     public static function create(PurchaseReturnId $id, OrganizationId $organizationId, StoreId $sourceStoreId, SupplierId $supplierId, ?GoodsReceiptId $goodsReceiptId, ?PurchaseOrderId $purchaseOrderId, string $reason, ActorId $createdBy, DateTimeImmutable $createdAt): self
     {
@@ -47,7 +53,7 @@ final class PurchaseReturn
             }
         }
         $this->lines[] = $line;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function ship(ActorId $actorId, DateTimeImmutable $at): void
@@ -59,7 +65,7 @@ final class PurchaseReturn
         $this->status = PurchaseReturnStatus::Shipped;
         $this->shippedBy = $actorId;
         $this->shippedAt = $at->setTimezone(new DateTimeZone('UTC'));
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function cancel(ActorId $actorId, DateTimeImmutable $at): void
     {
@@ -67,7 +73,7 @@ final class PurchaseReturn
         $this->status = PurchaseReturnStatus::Cancelled;
         $this->cancelledBy = $actorId;
         $this->cancelledAt = $at->setTimezone(new DateTimeZone('UTC'));
-        ++$this->version;
+        $this->advanceVersion();
     }
     private function ensureDraft(): void
     {
@@ -131,10 +137,6 @@ final class PurchaseReturn
     public function cancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
     /** @return list<PurchaseReturnLine> */ public function lines(): array
     {

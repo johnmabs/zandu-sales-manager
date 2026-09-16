@@ -21,9 +21,12 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\TaxCategoryId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Product
+final class Product implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<ProductEvent> */
     private array $recordedEvents = [];
 
@@ -47,10 +50,8 @@ final class Product
         private ?ActorId $updatedBy,
         private int $version,
     ) {
+        $this->assertValidVersion();
         self::assertTypeAndInventoryTracking($type, $inventoryTracked);
-        if ($version < 1) {
-            throw new InvalidArgumentException('Product version must be positive.');
-        }
         if ((null === $activatedAt) !== (null === $activatedBy)) {
             throw new InvalidArgumentException('Product activation audit fields must both be null or both be set.');
         }
@@ -296,10 +297,6 @@ final class Product
     {
         return $this->updatedBy;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private static function assertTypeAndInventoryTracking(ProductType $type, bool $inventoryTracked): void
     {
@@ -330,7 +327,7 @@ final class Product
     {
         $this->updatedAt = $occurredAt;
         $this->updatedBy = $actorId;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private function requireStatus(ProductStatus $status, string $message): void

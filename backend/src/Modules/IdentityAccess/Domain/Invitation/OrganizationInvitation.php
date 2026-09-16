@@ -15,9 +15,12 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 use Zandu\SharedKernel\Identity\UserId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class OrganizationInvitation
+final class OrganizationInvitation implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<OrganizationInvitationEvent> */
     private array $recordedEvents = [];
 
@@ -34,7 +37,9 @@ final class OrganizationInvitation
         private ?UserId $acceptedBy,
         private ?DateTimeImmutable $acceptedAt,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     /** @param list<IntendedRoleAssignment> $intendedRoleAssignments */
     public static function invite(
@@ -102,7 +107,7 @@ final class OrganizationInvitation
         $this->status = InvitationStatus::Accepted;
         $this->acceptedBy = $userId;
         $this->acceptedAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new OrganizationInvitationAccepted($this->id, $this->organizationId, $actorId, $occurredAt);
     }
 
@@ -111,14 +116,14 @@ final class OrganizationInvitation
         $this->expireWhenDue(self::utc($occurredAt));
         $this->requirePending('Only a pending invitation can be cancelled.');
         $this->status = InvitationStatus::Cancelled;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function expireWhenDue(DateTimeImmutable $occurredAt): bool
     {
         if (InvitationStatus::Pending === $this->status && self::utc($occurredAt) >= $this->expiresAt) {
             $this->status = InvitationStatus::Expired;
-            ++$this->version;
+            $this->advanceVersion();
             return true;
         }
         return false;
@@ -171,10 +176,6 @@ final class OrganizationInvitation
     public function acceptedAt(): ?DateTimeImmutable
     {
         return $this->acceptedAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 
     private function requirePending(string $message): void

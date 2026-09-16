@@ -25,9 +25,12 @@ use Zandu\SharedKernel\Identity\SupplierId;
 use Zandu\SharedKernel\Money\Currency;
 use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class PurchaseOrder
+final class PurchaseOrder implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<PurchaseOrderEvent> */
     private array $recordedEvents = [];
 
@@ -53,9 +56,7 @@ final class PurchaseOrder
         private int $version,
         private array $lines,
     ) {
-        if ($version < 1) {
-            throw new InvalidArgumentException('Purchase order version must be positive.');
-        }
+        $this->assertValidVersion();
         if (!$expectedTotal->currency()->equals($currency) || $expectedTotal->amount()->isNegative()) {
             throw new InvalidArgumentException('Purchase order total must be non-negative and use its currency.');
         }
@@ -114,7 +115,7 @@ final class PurchaseOrder
         $this->assertLine($line, null);
         $this->lines[] = $line;
         $this->expectedTotal = $this->expectedTotal->add($line->expectedTotal());
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function updateLine(PurchaseOrderLine $replacement): void
@@ -125,7 +126,7 @@ final class PurchaseOrder
                 $this->assertLine($replacement, $replacement->id());
                 $this->expectedTotal = $this->expectedTotal->subtract($line->expectedTotal())->add($replacement->expectedTotal());
                 $this->lines[$index] = $replacement;
-                ++$this->version;
+                $this->advanceVersion();
 
                 return;
             }
@@ -141,7 +142,7 @@ final class PurchaseOrder
             if ($line->id()->equals($lineId)) {
                 $this->expectedTotal = $this->expectedTotal->subtract($line->expectedTotal());
                 array_splice($this->lines, $index, 1);
-                ++$this->version;
+                $this->advanceVersion();
 
                 return;
             }
@@ -160,7 +161,7 @@ final class PurchaseOrder
         $this->status = PurchaseOrderStatus::Confirmed;
         $this->confirmedBy = $actorId;
         $this->confirmedAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new PurchaseOrderConfirmed($this->organizationId, $this->id, $actorId, $occurredAt);
     }
 
@@ -178,7 +179,7 @@ final class PurchaseOrder
                 );
                 $occurredAt = self::utc($occurredAt);
                 $this->status = $fullyReceived ? PurchaseOrderStatus::FullyReceived : PurchaseOrderStatus::PartiallyReceived;
-                ++$this->version;
+                $this->advanceVersion();
                 $event = $fullyReceived ? new PurchaseOrderFullyReceived($this->organizationId, $this->id, $actorId, $occurredAt) : new PurchaseOrderPartiallyReceived($this->organizationId, $this->id, $actorId, $occurredAt);
                 $this->recordedEvents[] = $event;
 
@@ -199,7 +200,7 @@ final class PurchaseOrder
                 $this->lines[$index] = $line->withReceiptCorrection($difference);
                 $fullyReceived = array_all($this->lines, static fn(PurchaseOrderLine $candidate): bool => $candidate->receivedQuantity()->compareTo($candidate->orderedBaseQuantity()) >= 0);
                 $this->status = $fullyReceived ? PurchaseOrderStatus::FullyReceived : PurchaseOrderStatus::PartiallyReceived;
-                ++$this->version;
+                $this->advanceVersion();
                 $occurredAt = self::utc($occurredAt);
                 $this->recordedEvents[] = $fullyReceived ? new PurchaseOrderFullyReceived($this->organizationId, $this->id, $actorId, $occurredAt) : new PurchaseOrderPartiallyReceived($this->organizationId, $this->id, $actorId, $occurredAt);
                 return;
@@ -220,7 +221,7 @@ final class PurchaseOrder
         $this->status = PurchaseOrderStatus::Cancelled;
         $this->cancelledBy = $actorId;
         $this->cancelledAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new PurchaseOrderCancelled($this->organizationId, $this->id, $actorId, $occurredAt);
     }
 
@@ -241,7 +242,7 @@ final class PurchaseOrder
         $this->closedBy = $actorId;
         $this->closedAt = $occurredAt;
         $this->closedReason = '' === $reason ? null : $reason;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new PurchaseOrderClosed($this->organizationId, $this->id, $actorId, $occurredAt);
     }
 
@@ -343,10 +344,6 @@ final class PurchaseOrder
     public function cancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
     /** @return list<PurchaseOrderLine> */
     public function lines(): array

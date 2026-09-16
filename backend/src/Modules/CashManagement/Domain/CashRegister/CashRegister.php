@@ -8,15 +8,16 @@ use DateTimeImmutable;
 use InvalidArgumentException;
 use LogicException;
 use Zandu\SharedKernel\Identity\{ActorId,CashRegisterId,OrganizationId,StoreId};
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class CashRegister
+final class CashRegister implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(private readonly CashRegisterId $id, private readonly OrganizationId $organizationId, private readonly StoreId $storeId, private string $code, private string $name, private CashRegisterStatus $status, private readonly DateTimeImmutable $createdAt, private readonly ActorId $createdBy, private ?DateTimeImmutable $updatedAt, private ?ActorId $updatedBy, private int $version)
     {
+        $this->assertValidVersion();
         self::valid($code, $name);
-        if ($version < 1) {
-            throw new InvalidArgumentException('Cash register version must be positive.');
-        }
     }
     public static function create(CashRegisterId $id, OrganizationId $organizationId, StoreId $storeId, string $code, string $name, ActorId $actor, DateTimeImmutable $at): self
     {
@@ -34,26 +35,26 @@ final class CashRegister
         $this->name = trim($name);
         $this->updatedAt = $at;
         $this->updatedBy = $actor;
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function activate(): void
     {
         if (CashRegisterStatus::Archived === $this->status) {
             throw new LogicException('Archived cash register cannot be activated.');
         }$this->status = CashRegisterStatus::Active;
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function deactivate(): void
     {
         if (CashRegisterStatus::Archived === $this->status) {
             throw new LogicException('Archived cash register cannot be deactivated.');
         }$this->status = CashRegisterStatus::Inactive;
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function archive(): void
     {
         $this->status = CashRegisterStatus::Archived;
-        ++$this->version;
+        $this->advanceVersion();
     }
     private function requireMutable(): void
     {
@@ -99,8 +100,5 @@ final class CashRegister
     } public function updatedBy(): ?ActorId
     {
         return $this->updatedBy;
-    } public function version(): int
-    {
-        return $this->version;
     }
 }

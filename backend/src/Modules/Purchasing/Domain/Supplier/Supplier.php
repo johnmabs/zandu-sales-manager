@@ -17,9 +17,12 @@ use Zandu\Modules\Purchasing\Domain\Supplier\Event\SupplierUpdated;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\SupplierId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Supplier
+final class Supplier implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<SupplierEvent> */
     private array $recordedEvents = [];
 
@@ -38,9 +41,7 @@ final class Supplier
         private ?ActorId $updatedBy,
         private int $version,
     ) {
-        if ($version < 1) {
-            throw new InvalidArgumentException('Supplier version must be positive.');
-        }
+        $this->assertValidVersion();
         $this->phone = self::optional($phone, 64, 'phone');
         $this->email = self::normalizedEmail($email);
         $this->address = self::optional($address, 500, 'address');
@@ -216,17 +217,13 @@ final class Supplier
     {
         return $this->updatedBy;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private function changedBy(ActorId $actorId, DateTimeImmutable $occurredAt): DateTimeImmutable
     {
         $occurredAt = self::utc($occurredAt);
         $this->updatedAt = $occurredAt;
         $this->updatedBy = $actorId;
-        ++$this->version;
+        $this->advanceVersion();
 
         return $occurredAt;
     }

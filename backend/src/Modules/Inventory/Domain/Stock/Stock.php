@@ -14,9 +14,12 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\StockId;
 use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Stock
+final class Stock implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly StockId $id,
         private readonly OrganizationId $organizationId,
@@ -28,10 +31,8 @@ final class Stock
         private ?ActorId $initializedBy,
         private int $version,
     ) {
+        $this->assertValidVersion();
         self::assertQuantity($quantityOnHand);
-        if ($version < 1) {
-            throw new InvalidArgumentException('Stock version must be positive.');
-        }
         if (!$initialized && (null !== $initializedAt || null !== $initializedBy)) {
             throw new InvalidArgumentException('An uninitialized stock cannot have initialization audit fields.');
         }
@@ -74,14 +75,14 @@ final class Stock
         $this->initialized = true;
         $this->initializedAt = self::utc($occurredAt);
         $this->initializedBy = $actorId;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function increase(MovementQuantity $quantity): void
     {
         $this->requireInitialized();
         $this->quantityOnHand = $this->quantityOnHand->add($quantity);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function decrease(MovementQuantity $quantity): void
@@ -90,7 +91,7 @@ final class Stock
         $result = $this->quantityOnHand->subtract($quantity);
         self::assertQuantity($result);
         $this->quantityOnHand = $result;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function reconcile(StockQuantity $expectedQuantity, StockQuantity $countedQuantity): void
@@ -103,7 +104,7 @@ final class Stock
             return;
         }
         $this->quantityOnHand = $countedQuantity;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function id(): StockId
@@ -137,10 +138,6 @@ final class Stock
     public function initializedBy(): ?ActorId
     {
         return $this->initializedBy;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 
     private function requireInitialized(): void

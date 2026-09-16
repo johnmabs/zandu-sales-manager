@@ -9,9 +9,12 @@ use DateTimeZone;
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ProductId, StockCountId, StockCountLineId, StoreId};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class StockCountLine
+final class StockCountLine implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly StockCountLineId $id,
         private readonly StockCountId $stockCountId,
@@ -25,7 +28,9 @@ final class StockCountLine
         private int $revision,
         private StockCountReconciliationStatus $reconciliationStatus,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function create(StockCountLineId $id, StockCountId $stockCountId, OrganizationId $organizationId, StoreId $storeId, ProductId $productId, Quantity $expectedQuantity): self
     {
@@ -53,7 +58,7 @@ final class StockCountLine
         $this->countedBy = $actorId;
         $this->countedAt = $at->setTimezone(new DateTimeZone('UTC'));
         ++$this->revision;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function markReconciled(): void
@@ -65,7 +70,7 @@ final class StockCountLine
             throw InventoryRuleViolation::with('STOCK_COUNT_LINE_RECONCILED', 'A stock count line can be reconciled only once.');
         }
         $this->reconciliationStatus = StockCountReconciliationStatus::Reconciled;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function id(): StockCountLineId
@@ -111,9 +116,5 @@ final class StockCountLine
     public function reconciliationStatus(): StockCountReconciliationStatus
     {
         return $this->reconciliationStatus;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 }

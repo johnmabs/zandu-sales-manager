@@ -13,9 +13,12 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\OrganizationMembershipId;
 use Zandu\SharedKernel\Identity\RoleId;
 use Zandu\SharedKernel\Identity\UserId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class OrganizationMembership
+final class OrganizationMembership implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @param non-empty-list<RoleAssignment> $roleAssignments */
     private function __construct(
         private readonly OrganizationMembershipId $id,
@@ -33,7 +36,9 @@ final class OrganizationMembership
         private ?ActorId $revokedBy,
         private ?DateTimeImmutable $revokedAt,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     /** @param non-empty-list<RoleAssignment> $roleAssignments */
     public static function activateFromInvitation(
@@ -222,17 +227,13 @@ final class OrganizationMembership
     {
         return $this->revokedAt;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private function changedBy(ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
         $this->updatedBy = $actorId;
         $this->updatedAt = self::utc($occurredAt);
         ++$this->authorizationVersion;
-        ++$this->version;
+        $this->advanceVersion();
     }
     private static function utc(DateTimeImmutable $dateTime): DateTimeImmutable
     {

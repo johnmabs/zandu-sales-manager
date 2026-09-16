@@ -11,9 +11,12 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\GoodsReceiptCorrectionId;
 use Zandu\SharedKernel\Identity\GoodsReceiptId;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class GoodsReceiptCorrection
+final class GoodsReceiptCorrection implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @param list<GoodsReceiptCorrectionLine> $lines */
     private function __construct(
         private readonly GoodsReceiptCorrectionId $id,
@@ -27,7 +30,9 @@ final class GoodsReceiptCorrection
         private ?DateTimeImmutable $postedAt,
         private int $version,
         private array $lines,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function create(GoodsReceiptCorrectionId $id, OrganizationId $organizationId, GoodsReceiptId $goodsReceiptId, string $reason, ActorId $createdBy, DateTimeImmutable $createdAt): self
     {
@@ -52,7 +57,7 @@ final class GoodsReceiptCorrection
             }
         }
         $this->lines[] = $line;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function post(ActorId $actorId, DateTimeImmutable $postedAt): void
@@ -64,7 +69,7 @@ final class GoodsReceiptCorrection
         $this->status = GoodsReceiptCorrectionStatus::Posted;
         $this->postedBy = $actorId;
         $this->postedAt = self::utc($postedAt);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private function ensureDraft(): void
@@ -126,10 +131,6 @@ final class GoodsReceiptCorrection
     public function postedAt(): ?DateTimeImmutable
     {
         return $this->postedAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
     /** @return list<GoodsReceiptCorrectionLine> */ public function lines(): array
     {

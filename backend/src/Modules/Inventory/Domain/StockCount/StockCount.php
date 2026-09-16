@@ -8,9 +8,12 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Zandu\Modules\Inventory\Domain\InventoryRuleViolation;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, StockCountId, StoreId};
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class StockCount
+final class StockCount implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private StockCountId $id,
         private OrganizationId $organizationId,
@@ -34,7 +37,9 @@ final class StockCount
         private ?ActorId $cancelledBy,
         private ?DateTimeImmutable $cancelledAt,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     /** @param list<\Zandu\SharedKernel\Identity\ProductId> $requestedProductIds */
     public static function create(StockCountId $id, OrganizationId $organizationId, StoreId $storeId, StockCountScopeType $scopeType, ActorId $createdBy, DateTimeImmutable $createdAt, StockCountMode $mode = StockCountMode::Blind, array $requestedProductIds = []): self
@@ -74,7 +79,7 @@ final class StockCount
         $this->totalLineCount = $totalLineCount;
         $this->startedBy = $actorId;
         $this->startedAt = self::utc($at);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function registerCountedLines(int $newlyCountedLineCount): void
@@ -89,7 +94,7 @@ final class StockCount
             return;
         }
         $this->countedLineCount += $newlyCountedLineCount;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function beginFinalization(ActorId $actorId, DateTimeImmutable $at): void
@@ -103,7 +108,7 @@ final class StockCount
         $this->status = StockCountStatus::Finalizing;
         $this->finalizationStartedBy = $actorId;
         $this->finalizationStartedAt = self::utc($at);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function registerReconciledLines(int $lineCount): void
@@ -118,7 +123,7 @@ final class StockCount
             return;
         }
         $this->reconciledLineCount += $lineCount;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function complete(ActorId $actorId, DateTimeImmutable $at): void
@@ -132,7 +137,7 @@ final class StockCount
         $this->status = StockCountStatus::Completed;
         $this->completedBy = $actorId;
         $this->completedAt = self::utc($at);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function cancel(ActorId $actorId, DateTimeImmutable $at): void
@@ -143,7 +148,7 @@ final class StockCount
         $this->status = StockCountStatus::Cancelled;
         $this->cancelledBy = $actorId;
         $this->cancelledAt = self::utc($at);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private static function utc(DateTimeImmutable $date): DateTimeImmutable
@@ -236,9 +241,5 @@ final class StockCount
     public function cancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 }

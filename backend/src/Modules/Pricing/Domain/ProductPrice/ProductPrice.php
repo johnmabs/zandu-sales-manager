@@ -22,9 +22,12 @@ use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
 use Zandu\SharedKernel\Identity\ProductPriceId;
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class ProductPrice
+final class ProductPrice implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<ProductPriceEvent> */
     private array $recordedEvents = [];
 
@@ -42,11 +45,9 @@ final class ProductPrice
         private readonly ActorId $createdBy,
         private int $version,
     ) {
+        $this->assertValidVersion();
         self::assertAmount($amount);
         self::assertPeriod($validFrom, $validTo);
-        if ($version < 1) {
-            throw new InvalidArgumentException('Product price version must be positive.');
-        }
     }
 
     public static function createActive(
@@ -225,10 +226,6 @@ final class ProductPrice
     {
         return $this->createdBy;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private static function assertOwnershipAndCurrency(PriceList $priceList, ProductPriceTarget $target, Money $amount): void
     {
@@ -256,7 +253,7 @@ final class ProductPrice
 
     private function changedAt(DateTimeImmutable $occurredAt): DateTimeImmutable
     {
-        ++$this->version;
+        $this->advanceVersion();
 
         return self::utc($occurredAt);
     }

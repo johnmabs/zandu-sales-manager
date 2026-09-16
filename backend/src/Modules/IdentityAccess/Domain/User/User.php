@@ -9,9 +9,12 @@ use LogicException;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UserId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class User
+final class User implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly UserId $id,
         private readonly ActorId $actorId,
@@ -23,6 +26,7 @@ final class User
         private DateTimeImmutable $updatedAt,
         private int $version,
     ) {
+        $this->assertValidVersion();
         if ('' === trim($passwordHash)) {
             throw new LogicException('A password hash is required.');
         }
@@ -91,10 +95,5 @@ final class User
     public function updatedAt(): DateTimeImmutable
     {
         return $this->updatedAt;
-    }
-
-    public function version(): int
-    {
-        return $this->version;
     }
 }

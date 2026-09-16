@@ -41,6 +41,8 @@ Un ADR accepté n’est pas réécrit pour masquer l’historique d’une nouvel
 | [ADR-0021](0021-inventory-costing-activation-policy.md) | Politique d’activation de la valorisation Inventory | ACCEPTED |
 | [ADR-0022](0022-cash-refund-ownership-and-workflow.md) | Ownership et workflow du remboursement cash | ACCEPTED |
 | [ADR-0023](0023-purchasing-receipt-policy.md) | Politique de réception fournisseur du MVP | ACCEPTED |
+| [ADR-0024](0024-pnpm-frontend-workspace.md) | pnpm et lockfile unique pour le workspace frontend | ACCEPTED |
+| [ADR-0025](0025-shared-aggregate-versioning.md) | Versionnement commun des agrégats mutables | ACCEPTED |
 
 ## Décisions encore ouvertes ou proposées
 

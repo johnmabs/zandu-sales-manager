@@ -16,12 +16,18 @@ use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\ProductBarcodeId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class ProductBarcode
+final class ProductBarcode implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<ProductBarcodeEvent> */
     private array $recordedEvents = [];
-    private function __construct(private readonly ProductBarcodeId $id, private readonly OrganizationId $organizationId, private readonly ProductId $productId, private readonly ProductPackagingId $packagingId, private readonly Barcode $barcode, private ProductBarcodeStatus $status, private readonly DateTimeImmutable $createdAt, private readonly ActorId $createdBy, private ?DateTimeImmutable $removedAt, private ?ActorId $removedBy, private int $version) {}
+    private function __construct(private readonly ProductBarcodeId $id, private readonly OrganizationId $organizationId, private readonly ProductId $productId, private readonly ProductPackagingId $packagingId, private readonly Barcode $barcode, private ProductBarcodeStatus $status, private readonly DateTimeImmutable $createdAt, private readonly ActorId $createdBy, private ?DateTimeImmutable $removedAt, private ?ActorId $removedBy, private int $version)
+    {
+        $this->assertValidVersion();
+    }
     public static function add(ProductBarcodeId $id, ProductPackaging $packaging, Barcode $barcode, ActorId $actor, DateTimeImmutable $at): self
     {
         $barcodeAggregate = new self($id, $packaging->organizationId(), $packaging->productId(), $packaging->id(), $barcode, ProductBarcodeStatus::Active, self::utc($at), $actor, null, null, 1);
@@ -40,7 +46,7 @@ final class ProductBarcode
         $removedAt = self::utc($at);
         $this->removedAt = $removedAt;
         $this->removedBy = $actor;
-        ++$this->version;
+        $this->advanceVersion();
         $this->recordedEvents[] = new ProductBarcodeRemoved($this->organizationId, $this->id, $actor, $removedAt);
     }
     /** @return list<ProductBarcodeEvent> */
@@ -80,9 +86,6 @@ final class ProductBarcode
     } public function removedBy(): ?ActorId
     {
         return $this->removedBy;
-    } public function version(): int
-    {
-        return $this->version;
     }
     private static function utc(DateTimeImmutable $at): DateTimeImmutable
     {

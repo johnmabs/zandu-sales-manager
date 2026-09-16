@@ -8,11 +8,15 @@ use DateTimeImmutable;
 use LogicException;
 use Zandu\SharedKernel\Identity\{ActorId,CashRegisterId,CashSessionId,OrganizationId,StoreId};
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class CashSession
+final class CashSession implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(private readonly CashSessionId $id, private readonly OrganizationId $organizationId, private readonly StoreId $storeId, private readonly CashRegisterId $cashRegisterId, private readonly ActorId $cashierId, private Money $openingBalance, private DateTimeImmutable $openedAt, private CashSessionStatus $status, private ?Money $countedClosingBalance, private ?Money $expectedClosingBalance, private ?Money $discrepancy, private ?DateTimeImmutable $closedAt, private ?ActorId $closedBy, private int $version)
     {
+        $this->assertValidVersion();
         if ($openingBalance->amount()->isNegative()) {
             throw new \InvalidArgumentException('Opening balance cannot be negative.');
         }
@@ -37,7 +41,7 @@ final class CashSession
         $this->closedAt = $at;
         $this->closedBy = $actor;
         $this->status = CashSessionStatus::Closed;
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function calculateExpectedBalance(Money $netMovement): Money
     {
@@ -84,8 +88,5 @@ final class CashSession
     }public function closedBy(): ?ActorId
     {
         return $this->closedBy;
-    }public function version(): int
-    {
-        return $this->version;
     }
 }

@@ -15,9 +15,12 @@ use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class ProductPackaging
+final class ProductPackaging implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly ProductPackagingId $id,
         private readonly OrganizationId $organizationId,
@@ -39,15 +42,13 @@ final class ProductPackaging
         private ?ActorId $updatedBy,
         private int $version,
     ) {
+        $this->assertValidVersion();
         self::assertPositiveQuantity($minimumQuantity, 'Minimum quantity');
         self::assertPositiveQuantity($quantityIncrement, 'Quantity increment');
         self::assertCompatiblePrecision($minimumQuantity, $precision, 'Minimum quantity');
         self::assertCompatiblePrecision($quantityIncrement, $precision, 'Quantity increment');
         if ((null === $updatedAt) !== (null === $updatedBy)) {
             throw new InvalidArgumentException('Product packaging update audit fields must both be null or both be set.');
-        }
-        if ($version < 1) {
-            throw new InvalidArgumentException('Product packaging version must be positive.');
         }
     }
 
@@ -319,10 +320,6 @@ final class ProductPackaging
     {
         return $this->updatedBy;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private static function assertPositiveQuantity(Quantity $quantity, string $field): void
     {
@@ -344,7 +341,7 @@ final class ProductPackaging
     {
         $this->updatedAt = self::utc($occurredAt);
         $this->updatedBy = $actorId;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private function requireStatus(ProductPackagingStatus $status, string $message): void

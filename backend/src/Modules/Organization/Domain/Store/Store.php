@@ -20,9 +20,12 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Store
+final class Store implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<StoreEvent> */
     private array $recordedEvents = [];
 
@@ -48,7 +51,9 @@ final class Store
         private ?ActorId $closedBy,
         private ?DateTimeImmutable $closedAt,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function create(
         StoreId $id,
@@ -299,16 +304,12 @@ final class Store
     {
         return $this->closedAt;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private function changedBy(ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
         $this->updatedBy = $actorId;
         $this->updatedAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private function requireStatus(StoreStatus $status, string $message): void

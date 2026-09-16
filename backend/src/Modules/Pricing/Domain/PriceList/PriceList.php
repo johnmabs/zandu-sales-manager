@@ -18,9 +18,12 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\PriceListId;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class PriceList
+final class PriceList implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<PriceListEvent> */
     private array $recordedEvents = [];
 
@@ -39,10 +42,8 @@ final class PriceList
         private readonly ActorId $createdBy,
         private int $version,
     ) {
+        $this->assertValidVersion();
         self::assertPeriod($validFrom, $validTo);
-        if ($version < 1) {
-            throw new InvalidArgumentException('Price list version must be positive.');
-        }
     }
 
     public static function createDraft(
@@ -230,10 +231,6 @@ final class PriceList
     {
         return $this->createdBy;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private static function assertPeriod(?DateTimeImmutable $validFrom, ?DateTimeImmutable $validTo): void
     {
@@ -244,7 +241,7 @@ final class PriceList
 
     private function changedAt(DateTimeImmutable $occurredAt): DateTimeImmutable
     {
-        ++$this->version;
+        $this->advanceVersion();
 
         return self::utc($occurredAt);
     }

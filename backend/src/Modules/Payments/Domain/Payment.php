@@ -8,10 +8,16 @@ use DateTimeImmutable;
 use LogicException;
 use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,PaymentId,SaleId};
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Payment
+final class Payment implements VersionedAggregate
 {
-    private function __construct(private readonly PaymentId $id, private readonly OrganizationId $organizationId, private readonly SaleId $targetReference, private readonly Money $amount, private PaymentStatus $status, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?DateTimeImmutable $confirmedAt = null, private int $version = 1) {}
+    use TracksAggregateVersion;
+
+    private function __construct(private readonly PaymentId $id, private readonly OrganizationId $organizationId, private readonly SaleId $targetReference, private readonly Money $amount, private PaymentStatus $status, private readonly ActorId $createdBy, private readonly DateTimeImmutable $createdAt, private ?DateTimeImmutable $confirmedAt = null, private int $version = 1)
+    {
+        $this->assertValidVersion();
+    }
 
     public static function createCashSale(PaymentId $id, OrganizationId $organizationId, SaleId $saleId, Money $amount, ActorId $actor, DateTimeImmutable $at): self
     {
@@ -33,7 +39,7 @@ final class Payment
         }
         $this->status = PaymentStatus::Confirmed;
         $this->confirmedAt = $at;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function id(): PaymentId
@@ -75,9 +81,5 @@ final class Payment
     public function confirmedAt(): ?DateTimeImmutable
     {
         return $this->confirmedAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 }

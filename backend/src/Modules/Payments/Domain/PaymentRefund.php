@@ -9,9 +9,12 @@ use LogicException;
 use Zandu\SharedKernel\Idempotency\IdempotencyKey;
 use Zandu\SharedKernel\Identity\{ActorId, CashSessionId, OrganizationId, PaymentId, PaymentRefundId, ReturnSaleId};
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class PaymentRefund
+final class PaymentRefund implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly PaymentRefundId $id,
         private readonly OrganizationId $organizationId,
@@ -28,6 +31,7 @@ final class PaymentRefund
         private ?DateTimeImmutable $confirmedAt = null,
         private int $version = 1,
     ) {
+        $this->assertValidVersion();
         if ($amount->amount()->isNegative() || $amount->amount()->isZero()) {
             throw PaymentRuleViolation::with('REFUND_AMOUNT_INVALID', 'Refund amount must be greater than zero.');
         }
@@ -78,7 +82,7 @@ final class PaymentRefund
         }
         $this->status = PaymentRefundStatus::Confirmed;
         $this->confirmedAt = $at;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function matchesPayload(string $payloadHash): bool
@@ -137,10 +141,6 @@ final class PaymentRefund
     public function confirmedAt(): ?DateTimeImmutable
     {
         return $this->confirmedAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 
     private static function normalizeReason(?string $reason): ?string

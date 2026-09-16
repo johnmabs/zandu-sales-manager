@@ -9,9 +9,12 @@ use LogicException;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\{ActorId,OrganizationId,SaleId,SaleLineId,StoreId};
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Sale
+final class Sale implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly SaleId $id,
         private readonly OrganizationId $organizationId,
@@ -32,7 +35,9 @@ final class Sale
         private int $version = 1,
         /** @var list<SaleLine> */
         private array $lines = [],
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function create(SaleId $id, OrganizationId $organizationId, StoreId $storeId, string $currency, Money $zero, ActorContext $actor, DateTimeImmutable $at): self
     {
@@ -59,7 +64,7 @@ final class Sale
         }
         $this->lines[] = $line;
         $this->addLineTotals($line);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function replaceLine(SaleLine $replacement): void
@@ -73,7 +78,7 @@ final class Sale
                 $this->subtractLineTotals($line);
                 $this->lines[$index] = $replacement;
                 $this->addLineTotals($replacement);
-                ++$this->version;
+                $this->advanceVersion();
 
                 return;
             }
@@ -88,7 +93,7 @@ final class Sale
             if ($line->id()->equals($lineId)) {
                 $this->subtractLineTotals($line);
                 array_splice($this->lines, $index, 1);
-                ++$this->version;
+                $this->advanceVersion();
 
                 return;
             }
@@ -139,7 +144,7 @@ final class Sale
         $this->businessDate = $businessDate;
         $this->completedBy = $actor->actorId();
         $this->completedAt = $at;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function cancel(ActorContext $actor, DateTimeImmutable $at): void
@@ -153,7 +158,7 @@ final class Sale
         $this->status = SaleStatus::Cancelled;
         $this->cancelledBy = $actor->actorId();
         $this->cancelledAt = $at;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private function ensureEditable(): void
@@ -202,10 +207,6 @@ final class Sale
     public function businessDate(): ?string
     {
         return $this->businessDate;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
     public function lineCount(): int
     {

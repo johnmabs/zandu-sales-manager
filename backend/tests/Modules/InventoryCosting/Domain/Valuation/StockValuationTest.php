@@ -122,7 +122,7 @@ final class StockValuationTest extends TestCase
     public function testReconstitutionRejectsANonPositiveVersion(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Stock valuation version must be positive.');
+        $this->expectExceptionMessage('Aggregate version must be positive.');
 
         $this->reconstitute($this->quantity('1'), $this->money('1'), 0);
     }

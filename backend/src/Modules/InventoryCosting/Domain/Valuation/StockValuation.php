@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Zandu\Modules\InventoryCosting\Domain\Valuation;
 
-use InvalidArgumentException;
 use Zandu\Modules\InventoryCosting\Domain\InventoryCostingRuleViolation;
 use Zandu\SharedKernel\Decimal\RoundingMode;
 use Zandu\SharedKernel\Identity\{OrganizationId, ProductId, StockId, StockValuationId, StoreId};
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class StockValuation
+final class StockValuation implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private const int VALUE_SCALE = 6;
     private const int UNIT_COST_SCALE = 12;
 
@@ -26,10 +28,8 @@ final class StockValuation
         private Money $totalValue,
         private int $version,
     ) {
+        $this->assertValidVersion();
         self::assertState($quantityOnHand, $totalValue);
-        if ($version < 1) {
-            throw new InvalidArgumentException('Stock valuation version must be positive.');
-        }
     }
 
     public static function initialize(
@@ -166,17 +166,12 @@ final class StockValuation
         return $this->totalValue->currency();
     }
 
-    public function version(): int
-    {
-        return $this->version;
-    }
-
     private function apply(MovingWeightedAverageResult $result): void
     {
         self::assertState($result->resultingQuantity, $result->resultingTotalValue);
         $this->quantityOnHand = $result->resultingQuantity;
         $this->totalValue = $result->resultingTotalValue;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private static function assertState(Quantity $quantity, Money $totalValue): void

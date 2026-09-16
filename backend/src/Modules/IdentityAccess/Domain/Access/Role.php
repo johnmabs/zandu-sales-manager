@@ -9,9 +9,12 @@ use LogicException;
 use Zandu\SharedKernel\Access\PermissionCode;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\RoleId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Role
+final class Role implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @param non-empty-list<PermissionCode> $permissions */
     private function __construct(
         private readonly RoleId $id,
@@ -23,7 +26,9 @@ final class Role
         private ?string $description,
         private array $permissions,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     /** @param non-empty-list<PermissionCode> $permissions */
     public static function system(RoleId $id, RoleCode $code, string $name, ?string $description, array $permissions): self
@@ -48,13 +53,13 @@ final class Role
         $this->name = self::normalizeName($name);
         $this->description = self::normalizeDescription($description);
         $this->permissions = self::unique($permissions);
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function archive(): void
     {
         $this->requireCustomActive();
         $this->status = RoleStatus::Archived;
-        ++$this->version;
+        $this->advanceVersion();
     }
     public function grants(PermissionCode $permission): bool
     {
@@ -91,10 +96,6 @@ final class Role
     /** @return non-empty-list<PermissionCode> */ public function permissions(): array
     {
         return $this->permissions;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 
     private function requireCustomActive(): void

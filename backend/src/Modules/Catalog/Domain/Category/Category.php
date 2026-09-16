@@ -6,7 +6,6 @@ namespace Zandu\Modules\Catalog\Domain\Category;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use InvalidArgumentException;
 use LogicException;
 use Zandu\Modules\Catalog\Domain\Category\Event\CategoryActivated;
 use Zandu\Modules\Catalog\Domain\Category\Event\CategoryArchived;
@@ -18,9 +17,12 @@ use Zandu\Modules\Catalog\Domain\Category\Event\CategoryUpdated;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\CategoryId;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Category
+final class Category implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<CategoryEvent> */
     private array $recordedEvents = [];
 
@@ -36,9 +38,7 @@ final class Category
         private ?ActorId $updatedBy,
         private int $version,
     ) {
-        if ($version < 1) {
-            throw new InvalidArgumentException('Category version must be positive.');
-        }
+        $this->assertValidVersion();
         if ($parentCategoryId?->equals($id)) {
             throw new LogicException('A category cannot be its own parent.');
         }
@@ -202,11 +202,6 @@ final class Category
         return $this->updatedBy;
     }
 
-    public function version(): int
-    {
-        return $this->version;
-    }
-
     /** @param list<CategoryId> $parentAncestorIds */
     private static function assertValidParent(
         CategoryId $id,
@@ -239,7 +234,7 @@ final class Category
         $occurredAt = self::utc($occurredAt);
         $this->updatedBy = $actorId;
         $this->updatedAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
 
         return $occurredAt;
     }

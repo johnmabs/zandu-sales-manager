@@ -16,9 +16,12 @@ use Zandu\Modules\Organization\Domain\Event\OrganizationUpdated;
 use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Money\Currency;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class Organization
+final class Organization implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @var list<OrganizationEvent> */
     private array $recordedEvents = [];
 
@@ -41,7 +44,9 @@ final class Organization
         private ?ActorId $closedBy,
         private ?DateTimeImmutable $closedAt,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function create(
         OrganizationId $id,
@@ -259,16 +264,12 @@ final class Organization
     {
         return $this->closedAt;
     }
-    public function version(): int
-    {
-        return $this->version;
-    }
 
     private function changedBy(ActorId $actorId, DateTimeImmutable $occurredAt): void
     {
         $this->updatedBy = $actorId;
         $this->updatedAt = $occurredAt;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     private function requireStatus(OrganizationStatus $status, string $message): void

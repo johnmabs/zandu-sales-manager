@@ -12,9 +12,12 @@ use Zandu\SharedKernel\Identity\ActorId;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\StoreClosureId;
 use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class StoreClosure
+final class StoreClosure implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     /** @param list<string> $blockers */
     private function __construct(
         private readonly StoreClosureId $id,
@@ -28,7 +31,9 @@ final class StoreClosure
         private ?ActorId $completedBy,
         private ?DateTimeImmutable $completedAt,
         private int $version,
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function request(
         StoreClosureId $id,
@@ -67,7 +72,7 @@ final class StoreClosure
 
         $this->blockers = array_values(array_unique($blockers));
         $this->status = [] === $this->blockers ? StoreClosureStatus::Ready : StoreClosureStatus::InProgress;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function cancel(): void
@@ -76,7 +81,7 @@ final class StoreClosure
             throw new LogicException('Only an open store closure can be cancelled.');
         }
         $this->status = StoreClosureStatus::Cancelled;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function complete(ActorId $actorId, DateTimeImmutable $occurredAt): void
@@ -87,7 +92,7 @@ final class StoreClosure
         $this->status = StoreClosureStatus::Completed;
         $this->completedBy = $actorId;
         $this->completedAt = self::utc($occurredAt);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     /** @param list<string> $blockers */
@@ -147,10 +152,6 @@ final class StoreClosure
     public function completedAt(): ?DateTimeImmutable
     {
         return $this->completedAt;
-    }
-    public function version(): int
-    {
-        return $this->version;
     }
 
     private static function utc(DateTimeImmutable $dateTime): DateTimeImmutable

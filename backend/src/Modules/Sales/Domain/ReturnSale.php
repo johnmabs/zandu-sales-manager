@@ -9,9 +9,12 @@ use DateTimeZone;
 use LogicException;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\{ActorId, OrganizationId, ReturnSaleId, ReturnSaleLineId, SaleId, StoreId};
+use Zandu\SharedKernel\Versioning\{TracksAggregateVersion, VersionedAggregate};
 
-final class ReturnSale
+final class ReturnSale implements VersionedAggregate
 {
+    use TracksAggregateVersion;
+
     private function __construct(
         private readonly ReturnSaleId $id,
         private readonly OrganizationId $organizationId,
@@ -29,7 +32,9 @@ final class ReturnSale
         private int $version = 1,
         /** @var list<ReturnSaleLine> */
         private array $lines = [],
-    ) {}
+    ) {
+        $this->assertValidVersion();
+    }
 
     public static function create(
         ReturnSaleId $id,
@@ -91,7 +96,7 @@ final class ReturnSale
         }
 
         $this->lines[] = $line;
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     /** @param array<string, ReturnAmounts> $lineAmounts indexed by return sale line id */
@@ -123,7 +128,7 @@ final class ReturnSale
         $this->businessDate = $businessDate;
         $this->completedBy = $actor->actorId();
         $this->completedAt = self::utc($at);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function cancel(ActorContext $actor, DateTimeImmutable $at): void
@@ -134,7 +139,7 @@ final class ReturnSale
         $this->status = ReturnSaleStatus::Cancelled;
         $this->cancelledBy = $actor->actorId();
         $this->cancelledAt = self::utc($at);
-        ++$this->version;
+        $this->advanceVersion();
     }
 
     public function line(ReturnSaleLineId $lineId): ReturnSaleLine
@@ -211,11 +216,6 @@ final class ReturnSale
     public function cancelledAt(): ?DateTimeImmutable
     {
         return $this->cancelledAt;
-    }
-
-    public function version(): int
-    {
-        return $this->version;
     }
 
     public function lineCount(): int
