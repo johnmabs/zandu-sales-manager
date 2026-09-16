@@ -314,6 +314,10 @@ final class PurchaseOrderUseCaseRepository implements PurchaseOrderRepository
 
         return $order instanceof PurchaseOrder && $order->organizationId()->equals($organizationId) ? $order : null;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_values(array_filter($this->orders, static fn(PurchaseOrder $order): bool => $order->organizationId()->equals($organizationId)));
+    }
     public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
     {
         return false;

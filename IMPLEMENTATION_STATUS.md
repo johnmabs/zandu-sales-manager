@@ -69,6 +69,7 @@ Epic 6.12   TERMINÉ   Sur-réception autorisée et auditée
 Epic 6.13   TERMINÉ   Corrections immuables de réception
 Epic 6.14   TERMINÉ   Retours fournisseur, preuves PostgreSQL incluses
 Epic 6.15   TERMINÉ   Blockers Purchasing composés dans StoreClosure
+API Lot 6   TERMINÉ   Supplier, PurchaseOrder, GoodsReceipt et corrections exposés
 Gate Lot 6  TERMINÉ   Deuxième partie de M3 — approvisionnements fournisseurs
 ```
 

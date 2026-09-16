@@ -31,12 +31,13 @@ final readonly class GoodsReceiptLineFactory
         ?ProductPackagingId $packagingId,
         Quantity $enteredReceivedQuantity,
         Money $inventoryUnitCost,
+        ?GoodsReceiptLineId $lineId = null,
     ): GoodsReceiptLine {
         $snapshot = $this->catalog->provide($organizationId, $productId, $packagingId);
         $conversionFactor = new Quantity($snapshot->conversionFactor);
 
         return new GoodsReceiptLine(
-            GoodsReceiptLineId::generate($this->idGenerator),
+            $lineId ?? GoodsReceiptLineId::generate($this->idGenerator),
             $goodsReceiptId,
             $productId,
             $packagingId,
@@ -54,6 +55,7 @@ final readonly class GoodsReceiptLineFactory
         PurchaseOrderLine $purchaseOrderLine,
         Quantity $enteredReceivedQuantity,
         ?Money $actualUnitCost,
+        ?GoodsReceiptLineId $lineId = null,
     ): GoodsReceiptLine {
         $conversionFactor = $purchaseOrderLine->conversionFactorSnapshot();
         $inventoryUnitCost = null === $actualUnitCost
@@ -61,7 +63,7 @@ final readonly class GoodsReceiptLineFactory
             : $actualUnitCost->divide($conversionFactor->value(), 12, RoundingMode::HalfEven);
 
         return new GoodsReceiptLine(
-            GoodsReceiptLineId::generate($this->idGenerator),
+            $lineId ?? GoodsReceiptLineId::generate($this->idGenerator),
             $goodsReceiptId,
             $purchaseOrderLine->productId(),
             $purchaseOrderLine->productPackagingId(),

@@ -239,6 +239,11 @@ final class DirectGoodsReceiptRepository implements GoodsReceiptRepository
         return $receipt instanceof GoodsReceipt && $receipt->organizationId()->equals($organizationId) ? $receipt : null;
     }
 
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_values(array_filter($this->receipts, static fn(GoodsReceipt $receipt): bool => $receipt->organizationId()->equals($organizationId)));
+    }
+
     public function hasDraftForStore(OrganizationId $organizationId, StoreId $storeId): bool
     {
         return false;

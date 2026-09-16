@@ -14,6 +14,7 @@ api_platform:
             - '%kernel.project_dir%/src/Modules/InventoryCosting/Presentation/Api'
             - '%kernel.project_dir%/src/Modules/CashManagement/Presentation/Api'
             - '%kernel.project_dir%/src/Modules/Sales/Presentation/Api'
+            - '%kernel.project_dir%/src/Modules/Purchasing/Presentation/Api'
     formats:
         jsonld: ['application/ld+json']
         json: ['application/json']

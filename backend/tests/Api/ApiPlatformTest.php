@@ -95,6 +95,43 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/stock-counts/{id}/cancel')->getPost());
     }
 
+    public function testPurchasingWorkflowsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/suppliers')->getGet());
+        self::assertNotNull($paths->getPath('/api/suppliers')->getPost());
+        self::assertNotNull($paths->getPath('/api/suppliers/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/suppliers/{id}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/suppliers/{id}/activate')->getPost());
+        self::assertNotNull($paths->getPath('/api/suppliers/{id}/deactivate')->getPost());
+        self::assertNotNull($paths->getPath('/api/suppliers/{id}/archive')->getPost());
+
+        self::assertNotNull($paths->getPath('/api/purchase-orders')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/purchase-orders')->getPost());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}/lines')->getPost());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}/lines/{lineId}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}/lines/{lineId}')->getDelete());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}/confirm')->getPost());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}/cancel')->getPost());
+        self::assertNotNull($paths->getPath('/api/purchase-orders/{id}/close')->getPost());
+
+        self::assertNotNull($paths->getPath('/api/goods-receipts')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/goods-receipts')->getPost());
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}/lines')->getPost());
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}/lines/{lineId}')->getPatch());
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}/lines/{lineId}')->getDelete());
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}/post')->getPost());
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}/cancel')->getPost());
+
+        self::assertNotNull($paths->getPath('/api/goods-receipts/{id}/corrections')->getPost());
+        self::assertNotNull($paths->getPath('/api/goods-receipt-corrections/{id}')->getGet());
+        self::assertNotNull($paths->getPath('/api/goods-receipt-corrections/{id}/post')->getPost());
+    }
+
     public function testOrganizationPatchAcceptsJsonAndMergePatchJson(): void
     {
         self::bootKernel();

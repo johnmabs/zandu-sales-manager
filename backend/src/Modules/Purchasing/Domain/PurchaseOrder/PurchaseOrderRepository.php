@@ -19,5 +19,8 @@ interface PurchaseOrderRepository
 
     public function find(OrganizationId $organizationId, PurchaseOrderId $purchaseOrderId): ?PurchaseOrder;
 
+    /** @return list<PurchaseOrder> */
+    public function findAll(OrganizationId $organizationId): array;
+
     public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool;
 }

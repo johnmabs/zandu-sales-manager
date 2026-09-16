@@ -144,6 +144,19 @@ final readonly class DbalPurchaseOrderRepository implements PurchaseOrderReposit
         );
     }
 
+    public function findAll(OrganizationId $organizationId): array
+    {
+        $ids = $this->connection->fetchFirstColumn(
+            'SELECT id FROM purchasing.purchase_order WHERE organization_id = ? ORDER BY created_at DESC, id',
+            [$organizationId->toString()],
+        );
+
+        return array_map(
+            fn(mixed $id): PurchaseOrder => $this->get($organizationId, PurchaseOrderId::fromString((string) $id, $this->uuids)),
+            $ids,
+        );
+    }
+
     public function hasOpenForStore(OrganizationId $organizationId, StoreId $storeId): bool
     {
         return false !== $this->connection->fetchOne("SELECT 1 FROM purchasing.purchase_order WHERE organization_id=? AND destination_store_id=? AND status IN ('DRAFT','CONFIRMED','PARTIALLY_RECEIVED') LIMIT 1", [$organizationId->toString(), $storeId->toString()]);

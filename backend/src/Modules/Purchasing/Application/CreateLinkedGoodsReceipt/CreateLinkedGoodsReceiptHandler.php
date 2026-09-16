@@ -44,6 +44,12 @@ final readonly class CreateLinkedGoodsReceiptHandler
 
         return $this->transaction->transactional($organizationId, function () use ($command, $organizationId): GoodsReceipt {
             $order = $this->purchaseOrders->getForUpdate($organizationId, $command->purchaseOrderId);
+            if (null !== $command->expectedStoreId && !$order->destinationStoreId()->equals($command->expectedStoreId)) {
+                throw PurchasingRuleViolation::with('GOODS_RECEIPT_STORE_MISMATCH', 'Receipt store must match its purchase order.');
+            }
+            if (null !== $command->expectedSupplierId && !$order->supplierId()->equals($command->expectedSupplierId)) {
+                throw PurchasingRuleViolation::with('GOODS_RECEIPT_SUPPLIER_MISMATCH', 'Receipt supplier must match its purchase order.');
+            }
             $scope = ResourceScope::store($organizationId, $order->destinationStoreId());
             $this->authorization->authorize($command->actorContext, PermissionCode::GoodsReceiptCreate, $scope);
             $this->operationalGuard->assertStore($command->actorContext, $order->destinationStoreId());

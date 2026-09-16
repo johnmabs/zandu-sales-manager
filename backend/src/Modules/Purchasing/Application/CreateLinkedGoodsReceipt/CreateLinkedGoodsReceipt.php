@@ -6,6 +6,8 @@ namespace Zandu\Modules\Purchasing\Application\CreateLinkedGoodsReceipt;
 
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\PurchaseOrderId;
+use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\Identity\SupplierId;
 
 final readonly class CreateLinkedGoodsReceipt
 {
@@ -17,5 +19,7 @@ final readonly class CreateLinkedGoodsReceipt
         public ?string $notes,
         public array $lines,
         public ActorContext $actorContext,
+        public ?StoreId $expectedStoreId = null,
+        public ?SupplierId $expectedSupplierId = null,
     ) {}
 }
