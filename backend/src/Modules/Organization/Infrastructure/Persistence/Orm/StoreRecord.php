@@ -55,7 +55,8 @@ final class StoreRecord
         private ?string $closedBy,
         #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
         private ?DateTimeImmutable $closedAt,
-        #[ORM\Column]
+        #[ORM\Version]
+        #[ORM\Column(type: 'integer')]
         private int $version,
     ) {}
 
@@ -104,7 +105,6 @@ final class StoreRecord
         $this->closureRequestedAt = $current->closureRequestedAt;
         $this->closedBy = $current->closedBy;
         $this->closedAt = $current->closedAt;
-        $this->version = $current->version;
     }
 
     public function id(): string

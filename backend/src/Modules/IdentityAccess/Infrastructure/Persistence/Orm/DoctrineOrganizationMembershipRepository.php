@@ -6,6 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm;
 
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Zandu\Modules\IdentityAccess\Domain\Access\AccessScope;
 use Zandu\Modules\IdentityAccess\Domain\Access\AccessScopeType;
 use Zandu\Modules\IdentityAccess\Domain\Access\RoleAssignment;
@@ -28,7 +29,15 @@ final readonly class DoctrineOrganizationMembershipRepository implements Organiz
     public function save(OrganizationMembership $membership): void
     {
         $record = $this->entityManager->find(OrganizationMembershipRecord::class, $membership->id()->toString());
-        $record instanceof OrganizationMembershipRecord ? $record->synchronize($membership) : $this->entityManager->persist(OrganizationMembershipRecord::fromAggregate($membership));
+        if ($record instanceof OrganizationMembershipRecord) {
+            $expectedVersion = $membership->version() - 1;
+            if ($record->version() !== $expectedVersion) {
+                throw OptimisticLockException::lockFailedVersionMismatch($record, $expectedVersion, $record->version());
+            }
+            $record->synchronize($membership);
+        } else {
+            $this->entityManager->persist(OrganizationMembershipRecord::fromAggregate($membership));
+        }
         $this->entityManager->flush();
     }
     public function findByUser(OrganizationId $organizationId, UserId $userId): ?OrganizationMembership

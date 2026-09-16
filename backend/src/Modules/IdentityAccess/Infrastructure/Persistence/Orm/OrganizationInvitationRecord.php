@@ -35,7 +35,8 @@ final class OrganizationInvitationRecord
         private ?string $acceptedBy,
         #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
         private ?DateTimeImmutable $acceptedAt,
-        #[ORM\Column]
+        #[ORM\Version]
+        #[ORM\Column(type: 'integer')]
         private int $version,
     ) {}
 
@@ -67,7 +68,6 @@ final class OrganizationInvitationRecord
         $this->status = $current->status;
         $this->acceptedBy = $current->acceptedBy;
         $this->acceptedAt = $current->acceptedAt;
-        $this->version = $current->version;
     }
 
     public function id(): string

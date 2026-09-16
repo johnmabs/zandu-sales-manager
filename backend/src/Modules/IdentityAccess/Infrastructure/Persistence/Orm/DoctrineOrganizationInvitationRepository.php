@@ -6,6 +6,7 @@ namespace Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm;
 
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\IntendedRoleAssignment;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationEmail;
 use Zandu\Modules\IdentityAccess\Domain\Invitation\InvitationStatus;
@@ -25,7 +26,15 @@ final readonly class DoctrineOrganizationInvitationRepository implements Organiz
     public function save(OrganizationInvitation $invitation): void
     {
         $record = $this->entityManager->find(OrganizationInvitationRecord::class, $invitation->id()->toString());
-        $record instanceof OrganizationInvitationRecord ? $record->synchronize($invitation) : $this->entityManager->persist(OrganizationInvitationRecord::fromAggregate($invitation));
+        if ($record instanceof OrganizationInvitationRecord) {
+            $expectedVersion = $invitation->version() - 1;
+            if ($record->version() !== $expectedVersion) {
+                throw OptimisticLockException::lockFailedVersionMismatch($record, $expectedVersion, $record->version());
+            }
+            $record->synchronize($invitation);
+        } else {
+            $this->entityManager->persist(OrganizationInvitationRecord::fromAggregate($invitation));
+        }
         $this->entityManager->flush();
     }
     public function get(OrganizationId $organizationId, OrganizationInvitationId $invitationId): OrganizationInvitation

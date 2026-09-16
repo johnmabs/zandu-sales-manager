@@ -44,7 +44,8 @@ final class OrganizationMembershipRecord
         private ?string $revokedBy,
         #[ORM\Column(type: 'datetimetz_immutable', nullable: true)]
         private ?DateTimeImmutable $revokedAt,
-        #[ORM\Column]
+        #[ORM\Version]
+        #[ORM\Column(type: 'integer')]
         private int $version,
     ) {}
 
@@ -88,7 +89,6 @@ final class OrganizationMembershipRecord
         $this->suspendedAt = $current->suspendedAt;
         $this->revokedBy = $current->revokedBy;
         $this->revokedAt = $current->revokedAt;
-        $this->version = $current->version;
     }
     public function id(): string
     {

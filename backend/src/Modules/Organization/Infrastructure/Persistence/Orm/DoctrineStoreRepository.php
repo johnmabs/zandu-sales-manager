@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Modules\Organization\Infrastructure\Persistence\Orm;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Zandu\Modules\Organization\Domain\Locale;
 use Zandu\Modules\Organization\Domain\Store\Store;
 use Zandu\Modules\Organization\Domain\Store\StoreAddress;
@@ -31,6 +32,10 @@ final readonly class DoctrineStoreRepository implements StoreRepository
     {
         $record = $this->entityManager->find(StoreRecord::class, $store->id()->toString());
         if ($record instanceof StoreRecord) {
+            $expectedVersion = $store->version() - 1;
+            if ($record->version() !== $expectedVersion) {
+                throw OptimisticLockException::lockFailedVersionMismatch($record, $expectedVersion, $record->version());
+            }
             $record->synchronize($store);
         } else {
             $this->entityManager->persist(StoreRecord::fromAggregate($store));
