@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Zandu\Tests\Platform\Api\EventSubscriber;
 
+use Doctrine\DBAL\Driver\Exception as DriverException;
+use Doctrine\DBAL\Exception\DeadlockException;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\ORM\OptimisticLockException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -38,13 +43,16 @@ final class ApiExceptionSubscriberTest extends TestCase
 
         (new ApiExceptionSubscriber())->onKernelException($event);
 
-        self::assertSame($status, $event->getResponse()?->getStatusCode());
-        $payload = json_decode((string) $event->getResponse()?->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $response = $event->getResponse();
+        self::assertNotNull($response);
+        self::assertSame($status, $response->getStatusCode());
+        $payload = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame($code, $payload['code']);
         self::assertSame('0198e463-147c-72d5-b75a-a936797ff9c8', $payload['correlationId']);
         self::assertStringNotContainsString('sensitive detail', $payload['message']);
     }
 
+    /** @return iterable<string, array{\Throwable, int, string}> */
     public static function mappedExceptions(): iterable
     {
         yield 'validation' => [new \InvalidArgumentException('sensitive detail'), 400, 'VALIDATION_ERROR'];
@@ -52,6 +60,10 @@ final class ApiExceptionSubscriberTest extends TestCase
         yield 'authorization' => [new AccessDeniedException('sensitive detail'), 403, 'FORBIDDEN'];
         yield 'not found' => [new TestResourceNotFound('sensitive detail'), 404, 'NOT_FOUND'];
         yield 'conflict' => [new TestResourceConflict('sensitive detail'), 409, 'CONFLICT'];
+        yield 'optimistic lock conflict' => [OptimisticLockException::lockFailed(new \stdClass()), 409, 'CONFLICT'];
+        yield 'unique constraint conflict' => [new UniqueConstraintViolationException(new TestDriverException('sensitive detail'), null), 409, 'CONFLICT'];
+        yield 'foreign key conflict' => [new ForeignKeyConstraintViolationException(new TestDriverException('sensitive detail'), null), 409, 'CONFLICT'];
+        yield 'retryable database conflict' => [new DeadlockException(new TestDriverException('sensitive detail'), null), 409, 'CONFLICT'];
         yield 'domain rule' => [new \LogicException('sensitive detail'), 422, 'DOMAIN_RULE_VIOLATION'];
     }
 
@@ -73,3 +85,11 @@ final class ApiExceptionSubscriberTest extends TestCase
 final class TestResourceNotFound extends RuntimeException implements ResourceNotFound {}
 
 final class TestResourceConflict extends RuntimeException implements ResourceConflict {}
+
+final class TestDriverException extends RuntimeException implements DriverException
+{
+    public function getSQLState(): ?string
+    {
+        return null;
+    }
+}

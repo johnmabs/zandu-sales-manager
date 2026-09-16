@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Zandu\Platform\Api\EventSubscriber;
 
 use ApiPlatform\Validator\Exception\ValidationException;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
+use Doctrine\DBAL\Exception\RetryableException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\ORM\OptimisticLockException;
 use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -71,6 +75,14 @@ final class ApiExceptionSubscriber implements EventSubscriberInterface
                 'status' => Response::HTTP_NOT_FOUND,
             ],
             $exception instanceof ResourceConflict => [
+                'code' => 'CONFLICT',
+                'message' => 'The request conflicts with the current resource state.',
+                'status' => Response::HTTP_CONFLICT,
+            ],
+            $exception instanceof OptimisticLockException,
+            $exception instanceof UniqueConstraintViolationException,
+            $exception instanceof ForeignKeyConstraintViolationException,
+            $exception instanceof RetryableException => [
                 'code' => 'CONFLICT',
                 'message' => 'The request conflicts with the current resource state.',
                 'status' => Response::HTTP_CONFLICT,
