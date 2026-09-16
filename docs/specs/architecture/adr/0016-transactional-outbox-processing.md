@@ -9,6 +9,10 @@ Les messages d’intégration sont insérés dans l’outbox dans la même trans
 locale que les effets métier. Les workers réclament des lots avec
 `FOR UPDATE SKIP LOCKED` et une échéance de claim.
 
+Chaque claim reçoit également un jeton unique. L'acquittement et la mise en
+échec vérifient ce jeton : après expiration et reprise d'un message, un worker
+retardataire ne peut donc plus modifier le claim du nouveau worker.
+
 La livraison est **at-least-once**. Chaque consumer persiste une clé unique
 `(consumer, message_id)` avant d’appliquer son effet. Les échecs incrémentent le
 nombre de tentatives, utilisent un délai avant retry et passent en dead letter

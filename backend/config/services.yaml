@@ -59,6 +59,9 @@ services:
     Zandu\SharedKernel\Messaging\OutboxRepository:
         alias: Zandu\Platform\Persistence\DbalOutboxRepository
 
+    Zandu\Platform\Messaging\OutboxQueue:
+        alias: Zandu\Platform\Persistence\DbalOutboxQueue
+
     Zandu\Platform\Persistence\DoctrineTenantTransaction:
         arguments:
             $runtimeRole: "%env(TENANT_DATABASE_ROLE)%"
