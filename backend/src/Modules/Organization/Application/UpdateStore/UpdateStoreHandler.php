@@ -40,6 +40,7 @@ final readonly class UpdateStoreHandler
             $store = $this->loader->get($command->storeId, $command->actorContext);
             $this->authorization->authorize($command->actorContext, PermissionCode::StoreUpdate, ResourceScope::store($store->organizationId(), $store->id()));
             $this->operationalGuard->assertStore($command->actorContext, $store->id());
+            $command->expectedVersion->assertMatches($store);
             $now = $this->clock->now();
             $store->update(
                 StoreName::fromString($command->name),

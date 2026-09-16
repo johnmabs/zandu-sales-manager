@@ -21,6 +21,7 @@ use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, ProductPackagingResource> */
 final readonly class ProductPackagingProcessor implements ProcessorInterface
@@ -48,7 +49,7 @@ final readonly class ProductPackagingProcessor implements ProcessorInterface
             $id = ProductPackagingId::fromString($this->variable($uriVariables, 'id'), $this->uuidFactory);
             if ('packaging_update' === $name) {
                 $input = $data instanceof ProductPackagingUpdateInput ? $data : throw new InvalidArgumentException('Packaging update input is required.');
-                $packaging = ($this->update)(new UpdateProductPackaging($id, $input->name, $input->minimumQuantity, $input->quantityIncrement, $input->allowedForSale, $input->allowedForPurchase, $actor));
+                $packaging = ($this->update)(new UpdateProductPackaging($id, $input->name, $input->minimumQuantity, $input->quantityIncrement, $input->allowedForSale, $input->allowedForPurchase, ExpectedVersion::fromInt($input->expectedVersion), $actor));
             } else {
                 $packaging = match ($name) {
                     'packaging_deactivate' => ($this->deactivate)(new DeactivateProductPackaging($id, $actor)),

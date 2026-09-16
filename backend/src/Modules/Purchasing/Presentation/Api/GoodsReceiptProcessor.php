@@ -19,6 +19,7 @@ use Zandu\SharedKernel\Idempotency\IdempotencyKey;
 use Zandu\SharedKernel\Identity\{GoodsReceiptId, GoodsReceiptLineId, ProductId, ProductPackagingId, PurchaseOrderId, PurchaseOrderLineId, StoreId, SupplierId, UuidFactory};
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, GoodsReceiptResource> */
 final readonly class GoodsReceiptProcessor implements ProcessorInterface
@@ -40,10 +41,12 @@ final readonly class GoodsReceiptProcessor implements ProcessorInterface
         }
 
         $receiptId = GoodsReceiptId::fromString($this->variable($uriVariables, 'id'), $this->uuids);
-        if (in_array($name, ['goods_receipt_line_add', 'goods_receipt_line_update'], true) && $data instanceof GoodsReceiptLineInput) {
-            $receipt = 'goods_receipt_line_add' === $name
-                ? $this->draft->add(new AddGoodsReceiptLine($receiptId, $this->product($data->productId), $this->packaging($data->productPackagingId), $this->orderLine($data->purchaseOrderLineId), $this->quantity($data->enteredReceivedQuantity), $this->money($data->unitCost, $data->currency), $actor))
-                : $this->draft->update(new UpdateGoodsReceiptLine($receiptId, GoodsReceiptLineId::fromString($this->variable($uriVariables, 'lineId'), $this->uuids), $this->product($data->productId), $this->packaging($data->productPackagingId), $this->orderLine($data->purchaseOrderLineId), $this->quantity($data->enteredReceivedQuantity), $this->money($data->unitCost, $data->currency), $actor));
+        if ('goods_receipt_line_add' === $name && $data instanceof GoodsReceiptLineInput) {
+            $receipt = $this->draft->add(new AddGoodsReceiptLine($receiptId, $this->product($data->productId), $this->packaging($data->productPackagingId), $this->orderLine($data->purchaseOrderLineId), $this->quantity($data->enteredReceivedQuantity), $this->money($data->unitCost, $data->currency), $actor));
+            return $this->mapper->map($this->views->create($receipt));
+        }
+        if ('goods_receipt_line_update' === $name && $data instanceof GoodsReceiptLineUpdateInput) {
+            $receipt = $this->draft->update(new UpdateGoodsReceiptLine($receiptId, GoodsReceiptLineId::fromString($this->variable($uriVariables, 'lineId'), $this->uuids), $this->product($data->productId), $this->packaging($data->productPackagingId), $this->orderLine($data->purchaseOrderLineId), $this->quantity($data->enteredReceivedQuantity), $this->money($data->unitCost, $data->currency), ExpectedVersion::fromInt($data->expectedVersion), $actor));
             return $this->mapper->map($this->views->create($receipt));
         }
         $receipt = match ($name) {

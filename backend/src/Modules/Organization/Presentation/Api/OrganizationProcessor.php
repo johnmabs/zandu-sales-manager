@@ -19,6 +19,7 @@ use Zandu\Modules\Organization\Application\UpdateOrganization\UpdateOrganization
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, OrganizationResource> */
 final readonly class OrganizationProcessor implements ProcessorInterface
@@ -41,7 +42,7 @@ final readonly class OrganizationProcessor implements ProcessorInterface
         $id = OrganizationId::fromString($this->id($uriVariables), $this->uuidFactory);
         if ('organization_update' === $name) {
             $input = $this->input($data);
-            $organization = ($this->update)(new UpdateOrganization($id, $input->name, $input->countryCode, $input->defaultCurrency, $input->defaultTimeZone, $input->defaultLocale, $actor));
+            $organization = ($this->update)(new UpdateOrganization($id, $input->name, $input->countryCode, $input->defaultCurrency, $input->defaultTimeZone, $input->defaultLocale, ExpectedVersion::fromInt($input->expectedVersion), $actor));
 
             return $this->resources->fromView($this->views->fromAggregate($organization));
         }

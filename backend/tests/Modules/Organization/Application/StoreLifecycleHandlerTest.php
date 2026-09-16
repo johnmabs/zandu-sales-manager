@@ -126,7 +126,7 @@ final class StoreLifecycleHandlerTest extends TestCase
         $loader = new TenantStoreLoader($this->stores);
 
         $update = new UpdateStoreHandler($loader, $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
-        $store = $update(new UpdateStore($store->id(), 'Centre-ville', 'Plateau', 'Africa/Brazzaville', 'fr_CG', $this->context()));
+        $store = $update(new UpdateStore($store->id(), 'Centre-ville', 'Plateau', 'Africa/Brazzaville', 'fr_CG', \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt($store->version()), $this->context()));
         self::assertSame('Centre-ville', $store->name()->value());
         self::assertSame('Plateau', $store->address()?->value());
 
@@ -138,6 +138,16 @@ final class StoreLifecycleHandlerTest extends TestCase
         $store = $reactivate(new ReactivateStore($store->id(), $this->context()));
         self::assertSame(StoreStatus::Active, $store->status());
         self::assertSame(4, $store->version());
+    }
+
+    public function testUpdateRejectsAStaleInteractiveVersionBeforeMutation(): void
+    {
+        $store = $this->createHandler()(new CreateStore('CENTRE', 'Centre', null, 'Africa/Brazzaville', 'XAF', 'fr_CG', $this->context()));
+        $update = new UpdateStoreHandler(new TenantStoreLoader($this->stores), $this->stores, $this->clock, $this->transaction, new AllowAllAuthorizationService(), new AllowAllOperationalGuard(), new RecordingSecurityAuditTrail());
+
+        $this->expectException(\Zandu\SharedKernel\Versioning\AggregateVersionMismatch::class);
+
+        $update(new UpdateStore($store->id(), 'Écrasement obsolète', null, 'Africa/Brazzaville', 'fr_CG', \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt(2), $this->context()));
     }
 
     private function createHandler(): CreateStoreHandler

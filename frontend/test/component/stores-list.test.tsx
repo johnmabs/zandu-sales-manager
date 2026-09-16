@@ -983,6 +983,7 @@ describe("StoreUpdateForm", () => {
     await waitFor(() =>
       expect(onUpdate).toHaveBeenCalledWith({
         address: "15 avenue du Port",
+        expectedVersion: 1,
         locale: "fr_CG",
         name: "Centre rénové",
         timeZone: "Africa/Brazzaville",

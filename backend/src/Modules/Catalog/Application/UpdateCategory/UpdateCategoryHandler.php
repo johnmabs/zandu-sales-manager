@@ -34,6 +34,7 @@ final readonly class UpdateCategoryHandler
             $this->authorization->authorize($command->actorContext, PermissionCode::CategoryUpdate, ResourceScope::organization($organizationId));
             $this->operationalGuard->assertTenant($command->actorContext);
             $category = $this->loader->get($command->categoryId, $command->actorContext);
+            $command->expectedVersion->assertMatches($category);
             $category->update(
                 CategoryName::fromString($command->name),
                 $command->actorContext->actorId(),

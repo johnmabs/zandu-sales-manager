@@ -267,7 +267,7 @@ final class CreateProductHandlerTest extends TestCase
         $units->method('get')->willReturn($this->unit());
         $categories = $this->createStub(CategoryRepository::class);
         $categories->method('get')->willReturn($this->category());
-        $command = $this->updateCommand($this->context(), 'SKU-002');
+        $command = $this->updateCommand($this->context(), 'SKU-002', 2);
 
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('code is immutable after first activation');
@@ -562,7 +562,7 @@ final class CreateProductHandlerTest extends TestCase
         );
     }
 
-    private function updateCommand(ActorContext $context, string $code = 'SKU-001'): UpdateProduct
+    private function updateCommand(ActorContext $context, string $code = 'SKU-001', int $expectedVersion = 1): UpdateProduct
     {
         $factory = new SymfonyUuidFactory();
 
@@ -576,6 +576,7 @@ final class CreateProductHandlerTest extends TestCase
             true,
             CategoryId::fromString(self::CATEGORY_ID, $factory),
             TaxCategoryId::fromString(self::TAX_CATEGORY_ID, $factory),
+            \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt($expectedVersion),
             $context,
         );
     }

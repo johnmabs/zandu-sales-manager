@@ -15,6 +15,7 @@ use Zandu\Modules\Purchasing\Application\SupplierViewFactory;
 use Zandu\Modules\Purchasing\Application\UpdateSupplier\{UpdateSupplier, UpdateSupplierHandler};
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\{SupplierId, UuidFactory};
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, SupplierResource> */
 final readonly class SupplierProcessor implements ProcessorInterface
@@ -32,8 +33,8 @@ final readonly class SupplierProcessor implements ProcessorInterface
             throw new InvalidArgumentException('Supplier identifier is required.');
         }
         $id = SupplierId::fromString($rawId, $this->uuids);
-        if ('supplier_update' === $operation->getName() && $data instanceof SupplierInput) {
-            return $this->mapper->map($this->views->create(($this->update)(new UpdateSupplier($id, $data->name, $data->phone, $data->email, $data->address, $data->notes, $actor))));
+        if ('supplier_update' === $operation->getName() && $data instanceof SupplierUpdateInput) {
+            return $this->mapper->map($this->views->create(($this->update)(new UpdateSupplier($id, $data->name, $data->phone, $data->email, $data->address, $data->notes, ExpectedVersion::fromInt($data->expectedVersion), $actor))));
         }
         $supplier = match ($operation->getName()) {
             'supplier_activate' => ($this->activate)(new ActivateSupplier($id, $actor)),

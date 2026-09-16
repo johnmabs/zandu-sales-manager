@@ -10,7 +10,7 @@ use ApiPlatform\Metadata\{ApiResource, Get, GetCollection, Patch, Post};
     new GetCollection(name: 'supplier_list', uriTemplate: '/suppliers', provider: SupplierProvider::class),
     new Post(name: 'supplier_create', uriTemplate: '/suppliers', input: SupplierInput::class, processor: SupplierProcessor::class),
     new Get(name: 'supplier_get', uriTemplate: '/suppliers/{id}', provider: SupplierProvider::class),
-    new Patch(name: 'supplier_update', uriTemplate: '/suppliers/{id}', read: false, input: SupplierInput::class, processor: SupplierProcessor::class),
+    new Patch(name: 'supplier_update', uriTemplate: '/suppliers/{id}', read: false, input: SupplierUpdateInput::class, processor: SupplierProcessor::class),
     new Post(name: 'supplier_activate', uriTemplate: '/suppliers/{id}/activate', read: false, input: false, processor: SupplierProcessor::class),
     new Post(name: 'supplier_deactivate', uriTemplate: '/suppliers/{id}/deactivate', read: false, input: false, processor: SupplierProcessor::class),
     new Post(name: 'supplier_archive', uriTemplate: '/suppliers/{id}/archive', read: false, input: false, processor: SupplierProcessor::class),

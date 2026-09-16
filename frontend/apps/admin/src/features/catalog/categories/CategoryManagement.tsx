@@ -28,7 +28,11 @@ export function CategoryManagement() {
   const mutate = async (category: CategoryResource, action: string) => {
     if (action === "rename") {
       const value = window.prompt("Nouveau nom", category.name);
-      if (value) await api!.updateCategory(category.id, { name: value });
+      if (value)
+        await api!.updateCategory(category.id, {
+          expectedVersion: category.version,
+          name: value,
+        });
     } else if (action === "move") {
       const value = window.prompt(
         "Identifiant de la catégorie parente (vide pour racine)",

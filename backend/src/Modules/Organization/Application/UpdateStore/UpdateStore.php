@@ -6,6 +6,7 @@ namespace Zandu\Modules\Organization\Application\UpdateStore;
 
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\StoreId;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateStore
 {
@@ -15,6 +16,7 @@ final readonly class UpdateStore
         public ?string $address,
         public string $timeZone,
         public string $locale,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

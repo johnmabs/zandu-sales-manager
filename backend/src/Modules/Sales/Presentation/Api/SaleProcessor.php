@@ -15,6 +15,7 @@ use Zandu\SharedKernel\Idempotency\IdempotencyKey;
 use Zandu\SharedKernel\Identity\{CashSessionId,ProductId,ProductPackagingId,SaleId,SaleLineId,StoreId,UuidFactory};
 use Zandu\SharedKernel\Money\{Currency,Money};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed,SaleResource|CompleteSaleResultResource> */
 final readonly class SaleProcessor implements ProcessorInterface
@@ -44,7 +45,7 @@ final readonly class SaleProcessor implements ProcessorInterface
             if (!$data instanceof UpdateSaleLineInput || null === $lineId) {
                 throw new InvalidArgumentException('Sale line update input is required.');
             }
-            return $this->mapper->map($this->views->create(($this->updateLine)(new UpdateSaleLine($saleId, $lineId, Quantity::fromString($data->quantity, $this->decimals), $actor))));
+            return $this->mapper->map($this->views->create(($this->updateLine)(new UpdateSaleLine($saleId, $lineId, Quantity::fromString($data->quantity, $this->decimals), ExpectedVersion::fromInt($data->expectedVersion), $actor))));
         }
         if ('sale_line_remove' === $name) {
             return $this->mapper->map($this->views->create(($this->removeLine)(new RemoveSaleLine($saleId, $lineId ?? throw new InvalidArgumentException('Sale line identifier is required.'), $actor))));

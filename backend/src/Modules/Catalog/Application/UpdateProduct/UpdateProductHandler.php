@@ -46,6 +46,7 @@ final readonly class UpdateProductHandler
             $this->operationalGuard->assertTenant($command->actorContext);
 
             $product = $this->loader->get($command->productId, $command->actorContext);
+            $command->expectedVersion->assertMatches($product);
             $code = ProductCode::fromString($command->productCode);
             $sameCodeProduct = $this->products->findByCode($organizationId, $code);
             if (null !== $sameCodeProduct && !$sameCodeProduct->id()->equals($product->id())) {

@@ -64,6 +64,7 @@ final class OrganizationLifecycleHandlerTest extends TestCase
             'XAF',
             'Africa/Brazzaville',
             'fr_CG',
+            \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt(1),
             $this->actorContext(),
         ));
 

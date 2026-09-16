@@ -35,6 +35,7 @@ final readonly class UpdateProductPackagingHandler
             $this->authorization->authorize($command->actorContext, PermissionCode::ProductUpdate, ResourceScope::organization($organizationId));
             $this->guard->assertTenant($command->actorContext);
             $packaging = $this->packagings->get($organizationId, $command->packagingId);
+            $command->expectedVersion->assertMatches($packaging);
             $packaging->updateCommercialSettings(ProductPackagingName::fromString($command->name), Quantity::fromString($command->minimumQuantity, $this->decimals), Quantity::fromString($command->quantityIncrement, $this->decimals), $command->allowedForSale, $command->allowedForPurchase, $command->actorContext->actorId(), $this->clock->now());
             $this->packagings->save($packaging);
 

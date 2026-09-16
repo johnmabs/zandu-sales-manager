@@ -34,6 +34,7 @@ final readonly class UpdateSupplierHandler
             $this->authorization->authorize($command->actorContext, PermissionCode::SupplierUpdate, ResourceScope::organization($organizationId));
             $this->operationalGuard->assertTenant($command->actorContext);
             $supplier = $this->loader->get($command->supplierId, $command->actorContext);
+            $command->expectedVersion->assertMatches($supplier);
             $supplier->update(
                 SupplierName::fromString($command->name),
                 $command->phone,

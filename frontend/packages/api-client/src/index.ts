@@ -314,6 +314,7 @@ export type StoreCreateInput = Readonly<{
 
 export type StoreUpdateInput = Readonly<{
   address: string | null;
+  expectedVersion: number;
   locale: string;
   name: string;
   timeZone: string;

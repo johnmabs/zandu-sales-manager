@@ -6,6 +6,7 @@ namespace Zandu\Modules\Organization\Application\UpdateOrganization;
 
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\OrganizationId;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateOrganization
 {
@@ -16,6 +17,7 @@ final readonly class UpdateOrganization
         public string $defaultCurrency,
         public string $defaultTimeZone,
         public string $defaultLocale,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

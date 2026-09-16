@@ -41,8 +41,37 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
 
         $this->documentAuthentication($openApi);
         $this->documentOnboarding($openApi);
+        $this->requireExpectedVersionOnPatches($openApi);
 
         return $openApi;
+    }
+
+    private function requireExpectedVersionOnPatches(OpenApi $openApi): void
+    {
+        $schemas = $openApi->getComponents()->getSchemas();
+        foreach ($openApi->getPaths()->getPaths() as $pathItem) {
+            $requestBody = $pathItem->getPatch()?->getRequestBody();
+            if (null === $requestBody) {
+                continue;
+            }
+
+            foreach ($requestBody->getContent() as $mediaType) {
+                $schema = $mediaType->getSchema();
+                $reference = $schema['$ref'] ?? null;
+                if (!is_string($reference)) {
+                    continue;
+                }
+
+                $name = basename($reference);
+                $component = $schemas[$name] ?? null;
+                if (!$component instanceof \ArrayObject || !isset($component['properties']['expectedVersion'])) {
+                    continue;
+                }
+
+                $required = $component['required'] ?? [];
+                $component['required'] = array_values(array_unique([...$required, 'expectedVersion']));
+            }
+        }
     }
 
     private function withoutInvalidLoginPath(OpenApi $openApi): OpenApi

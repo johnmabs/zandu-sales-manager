@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\ProductPriceId;
 use Zandu\SharedKernel\Money\Money;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateProductPrice
 {
@@ -16,6 +17,7 @@ final readonly class UpdateProductPrice
         public Money $amount,
         public ?DateTimeImmutable $validFrom,
         public ?DateTimeImmutable $validTo,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

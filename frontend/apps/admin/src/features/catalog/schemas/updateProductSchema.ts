@@ -31,10 +31,12 @@ export function productUpdateDefaults(product: ProductResource): UpdateProductFo
 export function toProductUpdateInput(
   values: UpdateProductFormValues,
   status: string,
+  expectedVersion: number,
 ): ProductUpdateInput {
   const editable = {
     categoryId: values.categoryId.trim() || null,
     description: values.description.trim() || null,
+    expectedVersion,
     inventoryTracked: values.inventoryTracked,
     name: values.name.trim(),
     taxCategoryId: values.taxCategoryId.trim() || null,

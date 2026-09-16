@@ -105,7 +105,7 @@ final class CategoryHandlerTest extends TestCase
         $loader = new TenantCategoryLoader($this->categories);
 
         $update = new UpdateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);
-        $category = $update(new UpdateCategory($category->id(), 'Boissons fraîches', $this->context()));
+        $category = $update(new UpdateCategory($category->id(), 'Boissons fraîches', \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt($category->version()), $this->context()));
         self::assertSame('Boissons fraîches', $category->name()->value());
 
         $deactivate = new DeactivateCategoryHandler($loader, $this->categories, $this->clock, $this->transaction, $this->authorization, $this->operationalGuard);

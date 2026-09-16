@@ -43,6 +43,7 @@ final readonly class UpdateOrganizationHandler
                 $organization = $this->loader->get($command->organizationId, $command->actorContext);
                 $this->authorization->authorize($command->actorContext, PermissionCode::OrganizationUpdate, ResourceScope::organization($organization->id()));
                 $this->operationalGuard->assertTenant($command->actorContext);
+                $command->expectedVersion->assertMatches($organization);
                 $now = $this->clock->now();
                 $organization->updateProfile(
                     OrganizationName::fromString($command->name),

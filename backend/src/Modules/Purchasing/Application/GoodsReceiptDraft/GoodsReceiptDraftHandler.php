@@ -32,6 +32,7 @@ final readonly class GoodsReceiptDraftHandler
     public function update(UpdateGoodsReceiptLine $command): GoodsReceipt
     {
         return $this->change($command->receiptId, $command->actor, function (GoodsReceipt $receipt) use ($command): void {
+            $command->expectedVersion->assertMatches($receipt);
             $receipt->updateLine($this->line($receipt, $command->productId, $command->packagingId, $command->purchaseOrderLineId, $command->quantity, $command->unitCost, $command->lineId));
         });
     }

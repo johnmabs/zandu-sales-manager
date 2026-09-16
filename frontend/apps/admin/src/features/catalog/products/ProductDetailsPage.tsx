@@ -253,6 +253,7 @@ function PackagingActions({
         e.preventDefault();
         const d = new FormData(e.currentTarget);
         void onSave({
+          expectedVersion: packaging.version,
           name: String(d.get("name")),
           minimumQuantity: String(d.get("minimumQuantity")),
           quantityIncrement: String(d.get("quantityIncrement")),

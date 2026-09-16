@@ -88,7 +88,7 @@ final class SupplierManagementTest extends TestCase
         $loader = new TenantSupplierLoader($this->suppliers);
 
         $supplier = (new UpdateSupplierHandler($loader, $this->suppliers, $this->clock, $this->transaction, $this->authorization, $this->guard))(
-            new UpdateSupplier($supplier->id(), 'Acme Distribution', '+242 06 000 0000', null, 'Brazzaville', null, $this->context()),
+            new UpdateSupplier($supplier->id(), 'Acme Distribution', '+242 06 000 0000', null, 'Brazzaville', null, \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt($supplier->version()), $this->context()),
         );
         $supplier = (new DeactivateSupplierHandler($loader, $this->suppliers, $this->clock, $this->transaction, $this->authorization, $this->guard))(
             new DeactivateSupplier($supplier->id(), $this->context()),

@@ -30,7 +30,10 @@ final readonly class StockTransferDraftHandler
     }
     public function update(UpdateStockTransferLine $c): StockTransfer
     {
-        return $this->mutate($c->transferId, $c->actorContext, PermissionCode::StockTransferUpdate, fn(StockTransfer $t) => $t->updateLine($c->lineId, $c->requestedQuantity));
+        return $this->mutate($c->transferId, $c->actorContext, PermissionCode::StockTransferUpdate, function (StockTransfer $transfer) use ($c): void {
+            $c->expectedVersion->assertMatches($transfer);
+            $transfer->updateLine($c->lineId, $c->requestedQuantity);
+        });
     }
     public function remove(RemoveStockTransferLine $c): StockTransfer
     {

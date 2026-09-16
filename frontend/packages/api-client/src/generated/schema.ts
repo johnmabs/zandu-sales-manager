@@ -2880,9 +2880,11 @@ export interface components {
       code?: string;
       name?: string;
     };
-    "CashRegisterResource.CashRegisterInput.jsonMergePatch": {
+    "CashRegisterResource.CashRegisterUpdateInput.jsonMergePatch": {
       code?: string;
       name?: string;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "CashRegisterResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -2942,6 +2944,8 @@ export interface components {
     };
     "CategoryResource.CategoryUpdateInput.jsonMergePatch": {
       name?: string;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "CategoryResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3145,28 +3149,30 @@ export interface components {
       version?: number;
     };
     "GoodsReceiptResource.GoodsReceiptCreateInput": {
-      supplierId?: string;
-      purchaseOrderId?: string | null;
       number?: string;
+      lines?: (string | null)[];
+      supplierId?: string | null;
+      purchaseOrderId?: string | null;
       supplierDeliveryNote?: string | null;
       notes?: string | null;
-      lines?: (string | null)[];
     };
     "GoodsReceiptResource.GoodsReceiptLineInput": {
-      productId?: string | null;
-      productPackagingId?: string | null;
-      purchaseOrderLineId?: string | null;
       enteredReceivedQuantity?: string;
       unitCost?: string;
       currency?: string;
+      productId?: string | null;
+      productPackagingId?: string | null;
+      purchaseOrderLineId?: string | null;
     };
-    "GoodsReceiptResource.GoodsReceiptLineInput.jsonMergePatch": {
-      productId?: string | null;
-      productPackagingId?: string | null;
-      purchaseOrderLineId?: string | null;
+    "GoodsReceiptResource.GoodsReceiptLineUpdateInput.jsonMergePatch": {
       enteredReceivedQuantity?: string;
       unitCost?: string;
       currency?: string;
+      productId?: string | null;
+      productPackagingId?: string | null;
+      purchaseOrderLineId?: string | null;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "GoodsReceiptResource.GoodsReceiptPostInput": {
       overReceiptReason?: string | null;
@@ -3409,16 +3415,13 @@ export interface components {
       version?: number;
     };
     "OrganizationResource.OrganizationInput.jsonMergePatch": {
-      /** @default  */
-      name: string;
-      /** @default  */
-      countryCode: string;
-      /** @default  */
-      defaultCurrency: string;
-      /** @default  */
-      defaultTimeZone: string;
-      /** @default  */
-      defaultLocale: string;
+      name?: string;
+      countryCode?: string;
+      defaultCurrency?: string;
+      defaultTimeZone?: string;
+      defaultLocale?: string;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "OrganizationResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3490,6 +3493,8 @@ export interface components {
       validFrom?: string | null;
       validTo?: string | null;
       priority?: number;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "PriceListResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3560,6 +3565,8 @@ export interface components {
       quantityIncrement?: string;
       allowedForSale?: boolean;
       allowedForPurchase?: boolean;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "ProductPackagingResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3608,6 +3615,8 @@ export interface components {
       currency?: string;
       validFrom?: string | null;
       validTo?: string | null;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "ProductPriceResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3659,6 +3668,8 @@ export interface components {
       inventoryTracked?: boolean;
       categoryId?: string | null;
       taxCategoryId?: string | null;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "ProductResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3703,17 +3714,19 @@ export interface components {
     };
     "PurchaseOrderResource.PurchaseOrderLineInput": {
       productId?: string;
-      productPackagingId?: string | null;
       enteredQuantity?: string;
       unitCost?: string;
       currency?: string;
+      productPackagingId?: string | null;
     };
-    "PurchaseOrderResource.PurchaseOrderLineInput.jsonMergePatch": {
+    "PurchaseOrderResource.PurchaseOrderLineUpdateInput.jsonMergePatch": {
       productId?: string;
-      productPackagingId?: string | null;
       enteredQuantity?: string;
       unitCost?: string;
       currency?: string;
+      productPackagingId?: string | null;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "PurchaseOrderResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3861,6 +3874,8 @@ export interface components {
     };
     "SaleResource.UpdateSaleLineInput.jsonMergePatch": {
       quantity?: string;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "SaleResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -4009,6 +4024,8 @@ export interface components {
     };
     "StockTransferResource.StockTransferLineUpdateInput.jsonMergePatch": {
       requestedQuantity?: string;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "StockTransferResource.StockTransferReceiveInput": {
       lines?: (string | null)[];
@@ -4077,6 +4094,8 @@ export interface components {
       address?: string | null;
       timeZone?: string;
       locale?: string;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "StoreResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -4110,12 +4129,14 @@ export interface components {
       address?: string | null;
       notes?: string | null;
     };
-    "SupplierResource.SupplierInput.jsonMergePatch": {
+    "SupplierResource.SupplierUpdateInput.jsonMergePatch": {
       name?: string;
       phone?: string | null;
       email?: string | null;
       address?: string | null;
       notes?: string | null;
+      /** @description Version read by the client before editing. */
+      expectedVersion: number;
     };
     "SupplierResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -5557,8 +5578,8 @@ export interface operations {
     /** @description The updated CashRegisterResource resource */
     requestBody: {
       content: {
-        "application/merge-patch+json": components["schemas"]["CashRegisterResource.CashRegisterInput.jsonMergePatch"];
-        "application/json": components["schemas"]["CashRegisterResource.CashRegisterInput.jsonMergePatch"];
+        "application/merge-patch+json": components["schemas"]["CashRegisterResource.CashRegisterUpdateInput.jsonMergePatch"];
+        "application/json": components["schemas"]["CashRegisterResource.CashRegisterUpdateInput.jsonMergePatch"];
       };
     };
     responses: {
@@ -8583,8 +8604,8 @@ export interface operations {
     /** @description The updated GoodsReceiptResource resource */
     requestBody: {
       content: {
-        "application/merge-patch+json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineInput.jsonMergePatch"];
-        "application/json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineInput.jsonMergePatch"];
+        "application/merge-patch+json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineUpdateInput.jsonMergePatch"];
+        "application/json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineUpdateInput.jsonMergePatch"];
       };
     };
     responses: {
@@ -17082,8 +17103,8 @@ export interface operations {
     /** @description The updated PurchaseOrderResource resource */
     requestBody: {
       content: {
-        "application/merge-patch+json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineInput.jsonMergePatch"];
-        "application/json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineInput.jsonMergePatch"];
+        "application/merge-patch+json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineUpdateInput.jsonMergePatch"];
+        "application/json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineUpdateInput.jsonMergePatch"];
       };
     };
     responses: {
@@ -23601,8 +23622,8 @@ export interface operations {
     /** @description The updated SupplierResource resource */
     requestBody: {
       content: {
-        "application/merge-patch+json": components["schemas"]["SupplierResource.SupplierInput.jsonMergePatch"];
-        "application/json": components["schemas"]["SupplierResource.SupplierInput.jsonMergePatch"];
+        "application/merge-patch+json": components["schemas"]["SupplierResource.SupplierUpdateInput.jsonMergePatch"];
+        "application/json": components["schemas"]["SupplierResource.SupplierUpdateInput.jsonMergePatch"];
       };
     };
     responses: {

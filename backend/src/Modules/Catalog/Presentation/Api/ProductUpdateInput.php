@@ -15,5 +15,8 @@ final readonly class ProductUpdateInput
         public bool $inventoryTracked,
         public ?string $categoryId,
         public ?string $taxCategoryId,
+        #[\ApiPlatform\Metadata\ApiProperty(required: true, description: 'Version read by the client before editing.')]
+        #[\Symfony\Component\Validator\Constraints\Positive]
+        public int $expectedVersion,
     ) {}
 }

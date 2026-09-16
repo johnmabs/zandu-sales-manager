@@ -26,6 +26,7 @@ use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\TaxCategoryId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, ProductResource> */
 final readonly class ProductProcessor implements ProcessorInterface
@@ -56,7 +57,7 @@ final readonly class ProductProcessor implements ProcessorInterface
         $id = ProductId::fromString($this->id($uriVariables), $this->uuidFactory);
         if ('product_update' === $name) {
             $input = $data instanceof ProductUpdateInput ? $data : throw new InvalidArgumentException('Product update input is required.');
-            $product = ($this->update)(new UpdateProduct($id, $input->productCode, $input->name, $input->description, $input->type, $this->unitId($input->baseUnitId), $input->inventoryTracked, $this->nullableCategory($input->categoryId), $this->nullableTax($input->taxCategoryId), $actor));
+            $product = ($this->update)(new UpdateProduct($id, $input->productCode, $input->name, $input->description, $input->type, $this->unitId($input->baseUnitId), $input->inventoryTracked, $this->nullableCategory($input->categoryId), $this->nullableTax($input->taxCategoryId), ExpectedVersion::fromInt($input->expectedVersion), $actor));
             return $this->resources->fromView($this->views->fromAggregate($product));
         }
 

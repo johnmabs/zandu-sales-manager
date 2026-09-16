@@ -20,6 +20,7 @@ final readonly class UpdateSaleLineHandler
             $sale = $this->sales->getForUpdate($command->actor->organizationId(), $command->saleId);
             $this->authorization->authorize($command->actor, PermissionCode::SaleUpdateDraft, ResourceScope::store($sale->organizationId(), $sale->storeId()));
             $this->guard->assertStore($command->actor, $sale->storeId());
+            $command->expectedVersion->assertMatches($sale);
             $current = $sale->line($command->lineId);
             $sale->replaceLine($this->lines->create($sale, $current->productId(), $current->productPackagingId(), $command->quantity, $current->id()));
             $this->sales->save($sale);

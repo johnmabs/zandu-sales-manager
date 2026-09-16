@@ -6,6 +6,7 @@ namespace Zandu\Modules\Purchasing\Application\UpdateSupplier;
 
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\SupplierId;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateSupplier
 {
@@ -16,6 +17,7 @@ final readonly class UpdateSupplier
         public ?string $email,
         public ?string $address,
         public ?string $notes,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

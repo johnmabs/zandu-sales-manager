@@ -176,10 +176,11 @@ final class InventoryValuationBootstrapWorkflowTest extends WebTestCase
 
         $client->jsonRequest('POST', '/api/stock-transfers/' . $transfer['id'] . '/lines', ['productId' => self::PRODUCT, 'requestedQuantity' => '5'], $this->headers($token));
         self::assertResponseStatusCodeSame(201);
-        $line = $this->payload($client)['lines'][0];
+        $transfer = $this->payload($client);
+        $line = $transfer['lines'][0];
         self::assertIsArray($line);
 
-        $client->jsonRequest('PATCH', sprintf('/api/stock-transfers/%s/lines/%s', $transfer['id'], $line['id']), ['requestedQuantity' => '4'], [...$this->headers($token), 'CONTENT_TYPE' => 'application/merge-patch+json']);
+        $client->jsonRequest('PATCH', sprintf('/api/stock-transfers/%s/lines/%s', $transfer['id'], $line['id']), ['requestedQuantity' => '4', 'expectedVersion' => $transfer['version']], [...$this->headers($token), 'CONTENT_TYPE' => 'application/merge-patch+json']);
         self::assertResponseIsSuccessful();
         self::assertSame('4', $this->payload($client)['lines'][0]['requestedQuantity']);
 

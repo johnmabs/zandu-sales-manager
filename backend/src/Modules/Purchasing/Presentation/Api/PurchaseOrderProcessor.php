@@ -20,6 +20,7 @@ use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{ProductId, ProductPackagingId, PurchaseOrderId, PurchaseOrderLineId, StoreId, SupplierId, UuidFactory};
 use Zandu\SharedKernel\Money\{Currency, Money};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, PurchaseOrderResource> */
 final readonly class PurchaseOrderProcessor implements ProcessorInterface
@@ -38,8 +39,8 @@ final readonly class PurchaseOrderProcessor implements ProcessorInterface
         if ('purchase_order_line_add' === $name && $data instanceof PurchaseOrderLineInput) {
             return $this->mapper->map($this->views->create(($this->addLine)(new AddPurchaseOrderLine($orderId, ProductId::fromString($data->productId, $this->uuids), $this->packaging($data->productPackagingId), $this->quantity($data->enteredQuantity), $this->money($data), $actor))));
         }
-        if ('purchase_order_line_update' === $name && $data instanceof PurchaseOrderLineInput) {
-            return $this->mapper->map($this->views->create(($this->updateLine)(new UpdatePurchaseOrderLine($orderId, PurchaseOrderLineId::fromString($this->variable($uriVariables, 'lineId'), $this->uuids), ProductId::fromString($data->productId, $this->uuids), $this->packaging($data->productPackagingId), $this->quantity($data->enteredQuantity), $this->money($data), $actor))));
+        if ('purchase_order_line_update' === $name && $data instanceof PurchaseOrderLineUpdateInput) {
+            return $this->mapper->map($this->views->create(($this->updateLine)(new UpdatePurchaseOrderLine($orderId, PurchaseOrderLineId::fromString($this->variable($uriVariables, 'lineId'), $this->uuids), ProductId::fromString($data->productId, $this->uuids), $this->packaging($data->productPackagingId), $this->quantity($data->enteredQuantity), $this->money($data), ExpectedVersion::fromInt($data->expectedVersion), $actor))));
         }
         $order = match ($name) {
             'purchase_order_line_remove' => ($this->removeLine)(new RemovePurchaseOrderLine($orderId, PurchaseOrderLineId::fromString($this->variable($uriVariables, 'lineId'), $this->uuids), $actor)),
@@ -71,7 +72,7 @@ final readonly class PurchaseOrderProcessor implements ProcessorInterface
     {
         return Quantity::fromString($value, $this->decimals);
     }
-    private function money(PurchaseOrderLineInput $input): Money
+    private function money(PurchaseOrderLineInput|PurchaseOrderLineUpdateInput $input): Money
     {
         return Money::fromString($input->unitCost, Currency::fromCode($input->currency), $this->decimals);
     }

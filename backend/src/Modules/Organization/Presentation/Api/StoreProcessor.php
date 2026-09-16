@@ -24,6 +24,7 @@ use Zandu\Modules\Organization\Application\UpdateStore\UpdateStoreHandler;
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\StoreId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, StoreResource|StoreClosureResource> */
 final readonly class StoreProcessor implements ProcessorInterface
@@ -56,7 +57,7 @@ final readonly class StoreProcessor implements ProcessorInterface
         $id = StoreId::fromString($this->id($uriVariables), $this->uuidFactory);
         if ('store_update' === $name) {
             $input = $data instanceof StoreUpdateInput ? $data : throw new InvalidArgumentException('Store update input is required.');
-            $store = ($this->update)(new UpdateStore($id, $input->name, $input->address, $input->timeZone, $input->locale, $actor));
+            $store = ($this->update)(new UpdateStore($id, $input->name, $input->address, $input->timeZone, $input->locale, ExpectedVersion::fromInt($input->expectedVersion), $actor));
 
             return $this->resources->fromView($this->views->fromAggregate($store));
         }

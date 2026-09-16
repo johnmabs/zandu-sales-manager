@@ -53,9 +53,13 @@ final class CategoryManagementWorkflowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame($root['id'], $this->payload($client)['parentCategoryId']);
 
-        $client->jsonRequest('PATCH', '/api/categories/' . $child['id'], ['name' => 'Boissons fraîches'], $this->headers($token));
+        $client->jsonRequest('PATCH', '/api/categories/' . $child['id'], ['name' => 'Boissons fraîches', 'expectedVersion' => $child['version']], $this->headers($token));
         self::assertResponseIsSuccessful();
         self::assertSame('Boissons fraîches', $this->payload($client)['name']);
+
+        $client->jsonRequest('PATCH', '/api/categories/' . $child['id'], ['name' => 'Écrasement obsolète', 'expectedVersion' => $child['version']], $this->headers($token));
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('CONFLICT', $this->payload($client)['code']);
 
         $client->jsonRequest('POST', '/api/categories/' . $child['id'] . '/move', ['parentCategoryId' => null], $this->headers($token));
         self::assertResponseIsSuccessful();

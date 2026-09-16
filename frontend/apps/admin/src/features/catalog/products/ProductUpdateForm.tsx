@@ -41,7 +41,7 @@ export function ProductUpdateForm({
     form.clearErrors("root");
     setSubmissionError(undefined);
     try {
-      await onUpdate(toProductUpdateInput(values, product.status));
+      await onUpdate(toProductUpdateInput(values, product.status, product.version));
     } catch (error: unknown) {
       setSubmissionError(applyUpdateErrors(form, error));
       setOutcomeUnknown(hasUnknownCatalogMutationOutcome(error));

@@ -18,6 +18,7 @@ use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Idempotency\IdempotencyKey;
 use Zandu\SharedKernel\Identity\{ProductId, StockTransferId, StockTransferLineId, StoreId, UuidFactory};
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, StockTransferResource> */
 final readonly class StockTransferProcessor implements ProcessorInterface
@@ -52,7 +53,7 @@ final readonly class StockTransferProcessor implements ProcessorInterface
             return $this->mapper->map($this->views->create($this->draft->add(new AddStockTransferLine($transferId, ProductId::fromString($data->productId, $this->uuids), $this->quantity($data->requestedQuantity), $actor))));
         }
         if ('stock_transfer_line_update' === $name && $data instanceof StockTransferLineUpdateInput) {
-            return $this->mapper->map($this->views->create($this->draft->update(new UpdateStockTransferLine($transferId, $this->lineId($uriVariables['lineId'] ?? null), $this->quantity($data->requestedQuantity), $actor))));
+            return $this->mapper->map($this->views->create($this->draft->update(new UpdateStockTransferLine($transferId, $this->lineId($uriVariables['lineId'] ?? null), $this->quantity($data->requestedQuantity), ExpectedVersion::fromInt($data->expectedVersion), $actor))));
         }
         if ('stock_transfer_line_remove' === $name) {
             return $this->mapper->map($this->views->create($this->draft->remove(new RemoveStockTransferLine($transferId, $this->lineId($uriVariables['lineId'] ?? null), $actor))));

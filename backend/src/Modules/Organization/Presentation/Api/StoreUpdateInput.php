@@ -11,5 +11,8 @@ final readonly class StoreUpdateInput
         public ?string $address,
         public string $timeZone,
         public string $locale,
+        #[\ApiPlatform\Metadata\ApiProperty(required: true, description: 'Version read by the client before editing.')]
+        #[\Symfony\Component\Validator\Constraints\Positive]
+        public int $expectedVersion,
     ) {}
 }

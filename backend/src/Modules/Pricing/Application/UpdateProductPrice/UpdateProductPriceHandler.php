@@ -38,6 +38,7 @@ final readonly class UpdateProductPriceHandler
             $this->authorization->authorize($command->actorContext, PermissionCode::ProductPriceUpdate, ResourceScope::organization($organizationId));
             $this->operationalGuard->assertTenant($command->actorContext);
             $productPrice = $this->productPrices->get($organizationId, $command->productPriceId);
+            $command->expectedVersion->assertMatches($productPrice);
             $priceList = $this->priceLists->get($organizationId, $productPrice->priceListId());
             $now = $this->clock->now();
             $productPrice->update($priceList, $command->amount, $command->validFrom, $command->validTo, $command->actorContext->actorId(), $now);

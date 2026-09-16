@@ -453,11 +453,14 @@ final class StoreScopedAuthorizationWorkflowTest extends WebTestCase
 
     private function updateStore(KernelBrowser $client, string $token, string $storeId, string $name): void
     {
+        $version = $this->entityManager->getConnection()->fetchOne('SELECT version FROM organization.stores WHERE id = ?', [$storeId]);
+        self::assertIsInt($version);
         $client->jsonRequest('PATCH', '/api/stores/' . $storeId, [
             'name' => $name,
             'address' => null,
             'timeZone' => 'Africa/Brazzaville',
             'locale' => 'fr_CG',
+            'expectedVersion' => $version,
         ], [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
             'CONTENT_TYPE' => 'application/merge-patch+json',

@@ -11,6 +11,7 @@ use Zandu\SharedKernel\Identity\PurchaseOrderId;
 use Zandu\SharedKernel\Identity\PurchaseOrderLineId;
 use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdatePurchaseOrderLine
 {
@@ -21,6 +22,7 @@ final readonly class UpdatePurchaseOrderLine
         public ?ProductPackagingId $productPackagingId,
         public Quantity $enteredQuantity,
         public Money $unitCost,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

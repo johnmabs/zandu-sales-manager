@@ -40,12 +40,24 @@ La stratégie de verrouillage reste choisie par le workflow : optimistic locking
 pour les agrégats riches, mise à jour DBAL conditionnelle pour les chemins chauds
 explicitement couverts par l'ADR-0015.
 
+Les éditions interactives exposées en `PATCH` transmettent obligatoirement un
+entier positif `expectedVersion`, issu de la représentation lue par le client.
+Le handler Application compare cette précondition à la version de l'agrégat
+chargé avant toute mutation. Un décalage produit un conflit de ressource traduit
+en `409 CONFLICT`. Le contrat OpenAPI marque cette propriété comme requise afin
+que les clients générés ne puissent pas omettre silencieusement la précondition.
+
+Les transitions métier dédiées et les traitements automatisés ne reçoivent pas
+artificiellement cette précondition : ils conservent leur stratégie de
+concurrence, d'idempotence ou de verrouillage propre au workflow.
+
 ## Consequences
 
 La sémantique de version devient uniforme dans tous les bounded contexts sans
-modifier les schémas PostgreSQL ni les payloads API. Les repositories continuent
-à comparer les mêmes entiers, mais les transitions futures ne peuvent plus
-contourner silencieusement la validation et l'avancement communs.
+modifier les schémas PostgreSQL. Les payloads des éditions interactives portent
+désormais la précondition de version. Les repositories continuent à comparer les
+mêmes entiers, mais les transitions futures ne peuvent plus contourner
+silencieusement la validation et l'avancement communs.
 
 Une mutation métier composée doit décider explicitement si elle représente une
 ou plusieurs transitions de version ; cette décision reste dans l'agrégat et

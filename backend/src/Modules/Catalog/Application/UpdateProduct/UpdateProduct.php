@@ -9,6 +9,7 @@ use Zandu\SharedKernel\Identity\CategoryId;
 use Zandu\SharedKernel\Identity\ProductId;
 use Zandu\SharedKernel\Identity\TaxCategoryId;
 use Zandu\SharedKernel\Identity\UnitOfMeasureId;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateProduct
 {
@@ -22,6 +23,7 @@ final readonly class UpdateProduct
         public bool $inventoryTracked,
         public ?CategoryId $categoryId,
         public ?TaxCategoryId $taxCategoryId,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

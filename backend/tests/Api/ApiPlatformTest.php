@@ -22,6 +22,33 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertSame('0.1.0', $openApi->getInfo()->getVersion());
     }
 
+    public function testEveryInteractivePatchRequiresAnExpectedVersion(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $schemas = $openApi->getComponents()->getSchemas();
+        $patchCount = 0;
+
+        foreach ($openApi->getPaths()->getPaths() as $path => $pathItem) {
+            $patch = $pathItem->getPatch();
+            if (null === $patch) {
+                continue;
+            }
+            ++$patchCount;
+            $requestBody = $patch->getRequestBody();
+            self::assertNotNull($requestBody, $path);
+            $schema = $requestBody->getContent()['application/merge-patch+json']->getSchema();
+            $reference = $schema['$ref'] ?? null;
+            self::assertIsString($reference, $path);
+            $component = $schemas[basename($reference)] ?? null;
+            self::assertInstanceOf(\ArrayObject::class, $component, $path);
+            self::assertArrayHasKey('expectedVersion', $component['properties'], $path);
+            self::assertContains('expectedVersion', $component['required'] ?? [], $path);
+        }
+
+        self::assertSame(13, $patchCount);
+    }
+
     public function testOrganizationAdministrationOperationsAreDocumented(): void
     {
         self::bootKernel();

@@ -11,6 +11,7 @@ use Zandu\Modules\CashManagement\Application\CashRegister\{CashRegisterHandler,C
 use Zandu\Modules\CashManagement\Application\CashRegisterQueryService;
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\{CashRegisterId,StoreId,UuidFactory};
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed,CashRegisterResource> */
 final readonly class CashRegisterProcessor implements ProcessorInterface
@@ -28,9 +29,9 @@ final readonly class CashRegisterProcessor implements ProcessorInterface
             return new CashRegisterResource(...array_values($v));
         }$id = CashRegisterId::fromString((string) ($u['id'] ?? throw new InvalidArgumentException('Register identifier is required.')), $this->uuids);
         if ('cash_register_update' === $name) {
-            if (!$data instanceof CashRegisterInput) {
+            if (!$data instanceof CashRegisterUpdateInput) {
                 throw new InvalidArgumentException('Input required.');
-            }$this->handler->update(new UpdateCashRegister($id, $store, $data->code, $data->name, $a));
+            }$this->handler->update(new UpdateCashRegister($id, $store, $data->code, $data->name, ExpectedVersion::fromInt($data->expectedVersion), $a));
         } else {
             $this->handler->change(new ChangeCashRegisterStatus($id, $store, str_replace('cash_register_', '', $name), $a));
         }$v = $this->queries->get($a, $store, $id);

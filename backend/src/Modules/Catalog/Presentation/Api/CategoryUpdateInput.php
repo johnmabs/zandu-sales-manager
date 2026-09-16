@@ -6,5 +6,10 @@ namespace Zandu\Modules\Catalog\Presentation\Api;
 
 final readonly class CategoryUpdateInput
 {
-    public function __construct(public string $name) {}
+    public function __construct(
+        public string $name,
+        #[\ApiPlatform\Metadata\ApiProperty(required: true, description: 'Version read by the client before editing.')]
+        #[\Symfony\Component\Validator\Constraints\Positive]
+        public int $expectedVersion,
+    ) {}
 }

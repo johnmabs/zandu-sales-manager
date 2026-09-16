@@ -45,7 +45,7 @@ export function StoreUpdateForm({ onConflictReload, onUpdate, store }: StoreUpda
     setSubmissionError(undefined);
     setOutcomeUnknown(false);
     try {
-      await onUpdate(toUpdateStoreInput(values));
+      await onUpdate(toUpdateStoreInput(values, store.version));
     } catch (error: unknown) {
       setSubmissionError(applyUpdateStoreErrors(form, error));
       setOutcomeUnknown(hasUnknownStoreMutationOutcome(error));

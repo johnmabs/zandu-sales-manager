@@ -11,9 +11,13 @@ export const updateStoreSchema = z.object({
 
 export type UpdateStoreFormValues = z.infer<typeof updateStoreSchema>;
 
-export function toUpdateStoreInput(values: UpdateStoreFormValues): StoreUpdateInput {
+export function toUpdateStoreInput(
+  values: UpdateStoreFormValues,
+  expectedVersion: number,
+): StoreUpdateInput {
   return {
     address: values.address === "" ? null : values.address,
+    expectedVersion,
     locale: values.locale,
     name: values.name,
     timeZone: values.timeZone,

@@ -11,7 +11,7 @@ use ApiPlatform\Metadata\{ApiResource, Delete, Get, GetCollection, Patch, Post};
     new Post(name: 'purchase_order_create', uriTemplate: '/stores/{storeId}/purchase-orders', read: false, input: PurchaseOrderCreateInput::class, processor: PurchaseOrderProcessor::class),
     new Get(name: 'purchase_order_get', uriTemplate: '/purchase-orders/{id}', provider: PurchaseOrderProvider::class),
     new Post(name: 'purchase_order_line_add', uriTemplate: '/purchase-orders/{id}/lines', read: false, input: PurchaseOrderLineInput::class, processor: PurchaseOrderProcessor::class),
-    new Patch(name: 'purchase_order_line_update', uriTemplate: '/purchase-orders/{id}/lines/{lineId}', read: false, input: PurchaseOrderLineInput::class, processor: PurchaseOrderProcessor::class),
+    new Patch(name: 'purchase_order_line_update', uriTemplate: '/purchase-orders/{id}/lines/{lineId}', read: false, input: PurchaseOrderLineUpdateInput::class, processor: PurchaseOrderProcessor::class),
     new Delete(name: 'purchase_order_line_remove', uriTemplate: '/purchase-orders/{id}/lines/{lineId}', read: false, output: PurchaseOrderResource::class, processor: PurchaseOrderProcessor::class),
     new Post(name: 'purchase_order_confirm', uriTemplate: '/purchase-orders/{id}/confirm', read: false, input: false, processor: PurchaseOrderProcessor::class),
     new Post(name: 'purchase_order_cancel', uriTemplate: '/purchase-orders/{id}/cancel', read: false, input: false, processor: PurchaseOrderProcessor::class),

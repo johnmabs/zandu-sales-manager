@@ -55,6 +55,7 @@ final class AdministrationErrorContractTest extends WebTestCase
             'defaultCurrency' => 'XAF',
             'defaultTimeZone' => 'Africa/Brazzaville',
             'defaultLocale' => 'fr_CG',
+            'expectedVersion' => 1,
         ], ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
         $this->assertError($client, 400, 'VALIDATION_ERROR');
 
@@ -66,7 +67,7 @@ final class AdministrationErrorContractTest extends WebTestCase
         $this->assertError($client, 400, 'VALIDATION_ERROR');
 
         $this->replaceOwnerRoleWithAccountant($organizationId, $userId);
-        $client->jsonRequest('PATCH', '/api/organizations/' . $organizationId, $this->organizationPayload(), [
+        $client->jsonRequest('PATCH', '/api/organizations/' . $organizationId, $this->organizationPayload() + ['expectedVersion' => 1], [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
         ]);
         $this->assertError($client, 403, 'FORBIDDEN');

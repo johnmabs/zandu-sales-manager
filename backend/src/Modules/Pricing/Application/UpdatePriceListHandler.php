@@ -34,6 +34,7 @@ final readonly class UpdatePriceListHandler
             $this->authorization->authorize($command->actorContext, PermissionCode::PriceListUpdate, ResourceScope::organization($organizationId));
             $this->guard->assertTenant($command->actorContext);
             $priceList = $this->lists->get($organizationId, $command->priceListId);
+            $command->expectedVersion->assertMatches($priceList);
             $priceList->update(PriceListCode::fromString($command->code), PriceListName::fromString($command->name), $priceList->currency(), $command->validFrom, $command->validTo, PriceListPriority::fromInt($command->priority), $command->actorContext->actorId(), $this->clock->now());
             $this->lists->save($priceList);
 

@@ -47,8 +47,9 @@ describe("Store form payloads", () => {
       timeZone: "Africa/Brazzaville",
     });
 
-    expect(toUpdateStoreInput(values)).toEqual({
+    expect(toUpdateStoreInput(values, 3)).toEqual({
       address: null,
+      expectedVersion: 3,
       locale: "fr_CG",
       name: "Centre-ville rénové",
       timeZone: "Africa/Brazzaville",

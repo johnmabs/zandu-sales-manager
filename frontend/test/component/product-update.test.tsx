@@ -49,6 +49,7 @@ describe("Product update form", () => {
         expect.objectContaining({
           productCode: "MED-002",
           baseUnitId: "unit-2",
+          expectedVersion: 3,
           name: "Paracétamol",
         }),
       ),
@@ -76,7 +77,7 @@ describe("Product update form", () => {
     const payload = onUpdate.mock.calls[0]?.[0];
     expect(payload).not.toHaveProperty("productCode");
     expect(payload).not.toHaveProperty("baseUnitId");
-    expect(payload).toMatchObject({ name: "Paracétamol 500 mg" });
+    expect(payload).toMatchObject({ expectedVersion: 3, name: "Paracétamol 500 mg" });
   });
 
   it("offers a server reload after a concurrent update", async () => {

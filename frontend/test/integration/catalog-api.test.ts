@@ -201,13 +201,18 @@ describe("Catalog API contracts", () => {
       baseUnitId: "unit-1",
       inventoryTracked: true,
     });
-    await expect(api.updateProduct("product-1", { name: "Doliprane" })).resolves.toMatchObject({
+    await expect(
+      api.updateProduct("product-1", { expectedVersion: 1, name: "Doliprane" }),
+    ).resolves.toMatchObject({
       name: "Doliprane",
     });
     await expect(api.transitionProduct("product-1", "deactivate")).resolves.toMatchObject({
       status: "INACTIVE",
     });
-    expect(requests).toEqual([expect.stringContaining("MED-001"), 'PATCH:{"name":"Doliprane"}']);
+    expect(requests).toEqual([
+      expect.stringContaining("MED-001"),
+      'PATCH:{"expectedVersion":1,"name":"Doliprane"}',
+    ]);
   });
   it("preserves exact packaging decimals and sends only editable fields on update", async () => {
     server.use(

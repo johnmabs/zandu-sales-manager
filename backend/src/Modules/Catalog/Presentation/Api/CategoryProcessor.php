@@ -23,6 +23,7 @@ use Zandu\Modules\Catalog\Application\UpdateCategory\UpdateCategoryHandler;
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\CategoryId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, CategoryResource> */
 final readonly class CategoryProcessor implements ProcessorInterface
@@ -54,7 +55,7 @@ final readonly class CategoryProcessor implements ProcessorInterface
         $id = CategoryId::fromString($this->id($uriVariables), $this->uuidFactory);
         if ('category_update' === $name) {
             $input = $data instanceof CategoryUpdateInput ? $data : throw new InvalidArgumentException('Category update input is required.');
-            $category = ($this->update)(new UpdateCategory($id, $input->name, $actor));
+            $category = ($this->update)(new UpdateCategory($id, $input->name, ExpectedVersion::fromInt($input->expectedVersion), $actor));
 
             return $this->resources->fromView($this->views->fromAggregate($category));
         }

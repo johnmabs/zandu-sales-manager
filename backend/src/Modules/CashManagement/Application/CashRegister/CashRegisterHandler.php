@@ -34,6 +34,7 @@ final readonly class CashRegisterHandler
             $this->authorization->authorize($c->actorContext, PermissionCode::CashRegisterUpdate, ResourceScope::store($c->actorContext->organizationId(), $c->storeId));
             $this->operationalGuard->assertStore($c->actorContext, $c->storeId);
             $r = $this->registers->find($c->actorContext->organizationId(), $c->storeId, $c->id) ?? throw new LogicException('Cash register not found.');
+            $c->expectedVersion->assertMatches($r);
             $r->update($c->code, $c->name, $c->actorContext->actorId(), $this->clock->now());
             $this->registers->save($r);
             return $r;

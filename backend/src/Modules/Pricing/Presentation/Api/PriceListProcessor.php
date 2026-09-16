@@ -13,6 +13,7 @@ use Zandu\Modules\Pricing\Application\{ArchivePriceList,ArchivePriceListHandler,
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Identity\PriceListId;
 use Zandu\SharedKernel\Identity\UuidFactory;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 /** @implements ProcessorInterface<mixed, PriceListResource> */
 final readonly class PriceListProcessor implements ProcessorInterface
@@ -27,7 +28,7 @@ final readonly class PriceListProcessor implements ProcessorInterface
             $p = ($this->create)(new CreatePriceList($i->code, $i->name, $i->currency, $parse($i->validFrom), $parse($i->validTo), $i->priority, $actor));
         } elseif ('price_list_update' === $name) {
             $i = $data instanceof PriceListUpdateInput ? $data : throw new InvalidArgumentException('Price list input is required.');
-            $p = ($this->update)(new UpdatePriceList(PriceListId::fromString($this->id($uriVariables), $this->uuids), $i->code, $i->name, $parse($i->validFrom), $parse($i->validTo), $i->priority, $actor));
+            $p = ($this->update)(new UpdatePriceList(PriceListId::fromString($this->id($uriVariables), $this->uuids), $i->code, $i->name, $parse($i->validFrom), $parse($i->validTo), $i->priority, ExpectedVersion::fromInt($i->expectedVersion), $actor));
         } else {
             $id = PriceListId::fromString($this->id($uriVariables), $this->uuids);
             $p = match ($name) {

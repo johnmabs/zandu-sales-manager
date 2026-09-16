@@ -8,8 +8,9 @@ use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\{GoodsReceiptId, GoodsReceiptLineId, ProductId, ProductPackagingId, PurchaseOrderLineId};
 use Zandu\SharedKernel\Money\Money;
 use Zandu\SharedKernel\Quantity\Quantity;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateGoodsReceiptLine
 {
-    public function __construct(public GoodsReceiptId $receiptId, public GoodsReceiptLineId $lineId, public ?ProductId $productId, public ?ProductPackagingId $packagingId, public ?PurchaseOrderLineId $purchaseOrderLineId, public Quantity $quantity, public Money $unitCost, public ActorContext $actor) {}
+    public function __construct(public GoodsReceiptId $receiptId, public GoodsReceiptLineId $lineId, public ?ProductId $productId, public ?ProductPackagingId $packagingId, public ?PurchaseOrderLineId $purchaseOrderLineId, public Quantity $quantity, public Money $unitCost, public ExpectedVersion $expectedVersion, public ActorContext $actor) {}
 }

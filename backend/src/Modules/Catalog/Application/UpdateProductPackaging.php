@@ -6,6 +6,7 @@ namespace Zandu\Modules\Catalog\Application;
 
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Identity\ProductPackagingId;
+use Zandu\SharedKernel\Versioning\ExpectedVersion;
 
 final readonly class UpdateProductPackaging
 {
@@ -16,6 +17,7 @@ final readonly class UpdateProductPackaging
         public string $quantityIncrement,
         public bool $allowedForSale,
         public bool $allowedForPurchase,
+        public ExpectedVersion $expectedVersion,
         public ActorContext $actorContext,
     ) {}
 }

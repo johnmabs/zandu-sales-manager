@@ -131,7 +131,7 @@ final class PurchaseOrderUseCasesTest extends TestCase
         self::assertSame('10.000000000000', $order->lines()[0]->inventoryUnitCost()->amount()->toString());
         self::assertSame('600.000000', $order->expectedTotal()->amount()->toString());
 
-        $order = $this->updateHandler()(new UpdatePurchaseOrderLine($order->id(), $order->lines()[0]->id(), $this->productId(), $this->packagingId(), $this->quantity('3'), $this->money('120'), $this->context()));
+        $order = $this->updateHandler()(new UpdatePurchaseOrderLine($order->id(), $order->lines()[0]->id(), $this->productId(), $this->packagingId(), $this->quantity('3'), $this->money('120'), \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt($order->version()), $this->context()));
         self::assertSame('360.000000', $order->expectedTotal()->amount()->toString());
 
         $order = $this->removeHandler()(new RemovePurchaseOrderLine($order->id(), $order->lines()[0]->id(), $this->context()));

@@ -33,6 +33,7 @@ final readonly class UpdatePurchaseOrderLineHandler
             $order = $this->loader->get($command->purchaseOrderId, $command->actorContext);
             $this->authorization->authorize($command->actorContext, PermissionCode::PurchaseOrderUpdateDraft, ResourceScope::store($organizationId, $order->destinationStoreId()));
             $this->operationalGuard->assertStore($command->actorContext, $order->destinationStoreId());
+            $command->expectedVersion->assertMatches($order);
             $order->updateLine($this->lineFactory->create($order, $command->productId, $command->productPackagingId, $command->enteredQuantity, $command->unitCost, $command->lineId));
             $this->purchaseOrders->save($order);
 

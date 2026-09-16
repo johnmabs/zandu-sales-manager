@@ -98,7 +98,7 @@ final class PricingAuditHandlerTest extends TestCase
             $this->authorization($context, PermissionCode::ProductPriceUpdate),
             $this->guard($context),
             $this->audit($context, SecurityAction::ProductPriceUpdated, 'PRODUCT_PRICE', self::PRODUCT_PRICE_ID),
-        ))(new UpdateProductPrice($productPrice->id(), $amount, null, null, $context));
+        ))(new UpdateProductPrice($productPrice->id(), $amount, null, null, \Zandu\SharedKernel\Versioning\ExpectedVersion::fromInt($productPrice->version()), $context));
 
         self::assertTrue($amount->equals($updated->amount()));
         self::assertSame(2, $updated->version());

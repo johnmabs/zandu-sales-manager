@@ -345,6 +345,7 @@ describe("ApiClient at the mocked API boundary", () => {
       http.patch("https://api.zandu.test/api/stores/store-1", async ({ request }) => {
         expect(await request.json()).toEqual({
           address: "15 avenue du Port",
+          expectedVersion: 1,
           locale: "fr_CG",
           name: "Centre rénové",
           timeZone: "Africa/Brazzaville",
@@ -465,6 +466,7 @@ describe("ApiClient at the mocked API boundary", () => {
     await expect(
       api.updateStore("store-1", {
         address: "15 avenue du Port",
+        expectedVersion: 1,
         locale: "fr_CG",
         name: "Centre rénové",
         timeZone: "Africa/Brazzaville",
