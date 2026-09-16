@@ -7,6 +7,8 @@ namespace Zandu\Tests\Integration\Messaging;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Zandu\Platform\Identity\SymfonyUuidFactory;
+use Zandu\Platform\Messaging\ClaimedOutboxMessage;
+use Zandu\Platform\Messaging\OutboxClaimLost;
 use Zandu\Platform\Persistence\DbalOutboxQueue;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\Tests\Integration\PostgresTestCase;
@@ -102,6 +104,120 @@ final class DbalOutboxQueueConcurrencyTest extends PostgresTestCase
         self::assertSame('PROCESSING', $this->messageStatus(self::MESSAGE_B));
     }
 
+    public function testAttemptThresholdMovesTheClaimedMessageToFailed(): void
+    {
+        $queue = new DbalOutboxQueue($this->connection, $this->uuidFactory);
+        $now = new DateTimeImmutable('2026-09-16 12:00:00+00');
+        $this->beginTenantTransaction($this->connection);
+
+        $claimed = $queue->claimBatch(
+            $this->organizationId,
+            $this->uuidFactory->fromString(self::CLAIM_A),
+            $now,
+            $now->modify('+30 seconds'),
+            1,
+        );
+        self::assertCount(1, $claimed);
+
+        $queue->markFailed($claimed[0], $now->modify('+30 seconds'), 'transport unavailable', true);
+        $this->connection->commit();
+
+        self::assertSame('FAILED', $this->messageStatus(self::MESSAGE_A));
+    }
+
+    public function testCrashAfterClaimBeforePublicationIsRecoveredAfterLeaseExpiry(): void
+    {
+        $this->connection->executeStatement(
+            'DELETE FROM messaging.outbox_messages WHERE id = ?',
+            [self::MESSAGE_B],
+        );
+        $claimedAt = new DateTimeImmutable('2026-09-16 12:00:00+00');
+        $queue = new DbalOutboxQueue($this->connection, $this->uuidFactory);
+
+        $abandonedClaim = $this->claimAndCommit($this->connection, $queue, self::CLAIM_A, $claimedAt);
+        self::assertSame(self::MESSAGE_A, $abandonedClaim->message->id->toString());
+        self::assertSame('PROCESSING', $this->messageStatus(self::MESSAGE_A));
+
+        // The worker process disappears here: it neither publishes nor acknowledges.
+        $recoveryConnection = $this->secondConnection();
+
+        try {
+            $recoveryQueue = new DbalOutboxQueue($recoveryConnection, $this->uuidFactory);
+            $recoveredClaim = $this->claimAndCommit(
+                $recoveryConnection,
+                $recoveryQueue,
+                self::CLAIM_B,
+                $claimedAt->modify('+31 seconds'),
+            );
+            $publishedMessageIds = [$recoveredClaim->message->id->toString()];
+
+            $this->beginTenantTransaction($recoveryConnection);
+            $recoveryQueue->markPublished($recoveredClaim, $claimedAt->modify('+31 seconds'));
+            $recoveryConnection->commit();
+        } finally {
+            if ($recoveryConnection->isTransactionActive()) {
+                $recoveryConnection->rollBack();
+            }
+
+            $recoveryConnection->close();
+        }
+
+        self::assertSame([self::MESSAGE_A], $publishedMessageIds);
+        self::assertSame('PUBLISHED', $this->messageStatus(self::MESSAGE_A));
+    }
+
+    public function testCrashAfterPublicationBeforeAcknowledgementCausesSafeRedelivery(): void
+    {
+        $this->connection->executeStatement(
+            'DELETE FROM messaging.outbox_messages WHERE id = ?',
+            [self::MESSAGE_B],
+        );
+        $claimedAt = new DateTimeImmutable('2026-09-16 12:00:00+00');
+        $queue = new DbalOutboxQueue($this->connection, $this->uuidFactory);
+        $firstClaim = $this->claimAndCommit($this->connection, $queue, self::CLAIM_A, $claimedAt);
+        $publishedMessageIds = [$firstClaim->message->id->toString()];
+
+        // Publication succeeded, then the worker process disappears before acknowledgement.
+        $recoveryConnection = $this->secondConnection();
+
+        try {
+            $recoveryQueue = new DbalOutboxQueue($recoveryConnection, $this->uuidFactory);
+            $recoveredClaim = $this->claimAndCommit(
+                $recoveryConnection,
+                $recoveryQueue,
+                self::CLAIM_B,
+                $claimedAt->modify('+31 seconds'),
+            );
+            $publishedMessageIds[] = $recoveredClaim->message->id->toString();
+
+            $this->beginTenantTransaction($this->connection);
+
+            try {
+                $queue->markPublished($firstClaim, $claimedAt->modify('+31 seconds'));
+                self::fail('The expired claim must not acknowledge a claim owned by another worker.');
+            } catch (OutboxClaimLost) {
+                $this->connection->rollBack();
+            }
+
+            $this->beginTenantTransaction($recoveryConnection);
+            $recoveryQueue->markPublished($recoveredClaim, $claimedAt->modify('+31 seconds'));
+            $recoveryConnection->commit();
+        } finally {
+            if ($this->connection->isTransactionActive()) {
+                $this->connection->rollBack();
+            }
+
+            if ($recoveryConnection->isTransactionActive()) {
+                $recoveryConnection->rollBack();
+            }
+
+            $recoveryConnection->close();
+        }
+
+        self::assertSame([self::MESSAGE_A, self::MESSAGE_A], $publishedMessageIds);
+        self::assertSame('PUBLISHED', $this->messageStatus(self::MESSAGE_A));
+    }
+
     private function beginTenantTransaction(Connection $connection): void
     {
         $connection->beginTransaction();
@@ -110,6 +226,33 @@ final class DbalOutboxQueueConcurrencyTest extends PostgresTestCase
             "SELECT set_config('app.organization_id', ?, true)",
             [self::ORGANIZATION],
         );
+    }
+
+    private function claimAndCommit(
+        Connection $connection,
+        DbalOutboxQueue $queue,
+        string $claimId,
+        DateTimeImmutable $now,
+    ): ClaimedOutboxMessage {
+        $this->beginTenantTransaction($connection);
+
+        try {
+            $claimed = $queue->claimBatch(
+                $this->organizationId,
+                $this->uuidFactory->fromString($claimId),
+                $now,
+                $now->modify('+30 seconds'),
+                1,
+            );
+            self::assertCount(1, $claimed);
+            $connection->commit();
+
+            return $claimed[0];
+        } catch (\Throwable $exception) {
+            $connection->rollBack();
+
+            throw $exception;
+        }
     }
 
     private function insertMessage(string $id, string $occurredAt): void

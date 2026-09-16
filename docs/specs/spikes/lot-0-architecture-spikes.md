@@ -17,10 +17,13 @@ sont restaurés. Le scénario nominal commit les six effets ensemble.
 Le prototype confirme :
 
 - le claiming multi-worker par `FOR UPDATE SKIP LOCKED` ;
-- la remise à disposition après rollback simulant un crash ;
-- la livraison au moins une fois ;
+- la reprise après crash entre claim et publication, une fois le lease expiré ;
+- la republication après crash entre publication et acknowledgement, conformément
+  à la livraison au moins une fois ;
+- le fencing qui interdit à un claim expiré d'acquitter le message repris ;
 - l’idempotence du consumer par unicité `(consumer, message_id)` ;
-- les retries comptabilisés et le passage en dead letter au seuil configuré.
+- les retries bornés avec backoff exponentiel plafonné et le passage en
+  dead-letter `FAILED` au seuil configuré.
 
 La stratégie retenue est détaillée dans l’ADR-0016.
 

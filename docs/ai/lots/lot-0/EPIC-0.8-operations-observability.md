@@ -61,6 +61,9 @@ worker_retry_count
 dead_letter_count
 ```
 
+Ces métriques sont calculées depuis l'état persistant de l'outbox PostgreSQL,
+afin de rester cohérentes entre plusieurs workers et après redémarrage.
+
 ### Commit proposé
 
 ```text

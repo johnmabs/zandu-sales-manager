@@ -1097,6 +1097,9 @@ worker_retry_count
 dead_letter_count
 ```
 
+Les valeurs outbox/worker sont calculées depuis l'état persistant PostgreSQL,
+et non depuis la mémoire locale d'un processus.
+
 ### Commit proposé
 
 ```text

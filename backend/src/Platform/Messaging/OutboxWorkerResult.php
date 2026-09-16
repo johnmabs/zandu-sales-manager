@@ -10,6 +10,6 @@ final readonly class OutboxWorkerResult
         public int $claimed,
         public int $published,
         public int $scheduledForRetry,
-        public int $deadLettered,
+        public int $failed,
     ) {}
 }

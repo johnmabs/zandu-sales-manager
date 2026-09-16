@@ -15,7 +15,8 @@
   futurs workers ;
 - les traces HTTP OpenTelemetry sont exportables par OTLP, sans couplage à un
   fournisseur ;
-- les cinq métriques worker/outbox requises sont exposées ;
+- les cinq métriques worker/outbox requises sont calculées depuis PostgreSQL et
+  exposées ;
 - le scénario de staging local démarre l'image immuable contre PostgreSQL et
   valide le readiness check ;
 - le scénario de sauvegarde/restauration restaure un dump dans une base isolée

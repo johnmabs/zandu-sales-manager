@@ -25,6 +25,6 @@ interface OutboxQueue
         ClaimedOutboxMessage $claimed,
         DateTimeImmutable $availableAt,
         string $error,
-        bool $deadLetter,
+        bool $permanentlyFailed,
     ): void;
 }

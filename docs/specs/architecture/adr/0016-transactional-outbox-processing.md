@@ -15,9 +15,11 @@ retardataire ne peut donc plus modifier le claim du nouveau worker.
 
 La livraison est **at-least-once**. Chaque consumer persiste une clé unique
 `(consumer, message_id)` avant d’appliquer son effet. Les échecs incrémentent le
-nombre de tentatives, utilisent un délai avant retry et passent en dead letter
-au seuil configuré. Un claim abandonné redevient disponible après rollback ou
-expiration.
+nombre de tentatives et utilisent un backoff exponentiel plafonné avant retry.
+Le nombre de tentatives est borné ; au seuil configuré, le message passe à
+l'état terminal `FAILED`, qui constitue la dead-letter persistée. Les quatre
+états persistés sont `PENDING`, `PROCESSING`, `PUBLISHED` et `FAILED`. Un claim
+abandonné redevient disponible après rollback ou expiration.
 
 ## Consequences
 

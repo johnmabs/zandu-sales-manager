@@ -61,10 +61,10 @@ final class TransactionalOutboxTest extends PostgresTestCase
         }
     }
 
-    public function testRetriesEventuallyMoveAPoisonMessageToDeadLetter(): void
+    public function testRetriesEventuallyMoveAPoisonMessageToFailed(): void
     {
         for ($attempt = 1; $attempt <= 3; ++$attempt) {
-            $status = 3 === $attempt ? 'DEAD_LETTER' : 'PENDING';
+            $status = 3 === $attempt ? 'FAILED' : 'PENDING';
             $this->connection->executeStatement(
                 'UPDATE architecture_spike.outbox_message SET attempts = attempts + 1, status = ?, available_at = NOW() WHERE id = ?',
                 [$status, self::MESSAGE_A],
@@ -76,7 +76,7 @@ final class TransactionalOutboxTest extends PostgresTestCase
             [self::MESSAGE_A],
         );
         self::assertIsArray($row);
-        self::assertSame('DEAD_LETTER', $row['status']);
+        self::assertSame('FAILED', $row['status']);
         self::assertSame(3, (int) $row['attempts']);
     }
 

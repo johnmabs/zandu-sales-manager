@@ -55,8 +55,9 @@ at-least-once
 multi-worker safety
 retry
 crash recovery
+crash entre claim/publication et publication/acknowledgement
 consumer idempotence
-dead letter
+retry borné avec backoff, puis dead-letter `FAILED`
 ```
 
 ### Commits proposés

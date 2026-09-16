@@ -111,7 +111,7 @@ SQL, [
         ClaimedOutboxMessage $claimed,
         DateTimeImmutable $availableAt,
         string $error,
-        bool $deadLetter,
+        bool $permanentlyFailed,
     ): void {
         $affected = $this->connection->executeStatement(<<<'SQL'
 UPDATE messaging.outbox_messages
@@ -131,7 +131,7 @@ SQL, [
             'claim_id' => $claimed->claimId->toString(),
             'available_at' => $availableAt,
             'last_error' => $error,
-            'status' => $deadLetter ? 'DEAD_LETTER' : 'PENDING',
+            'status' => $permanentlyFailed ? 'FAILED' : 'PENDING',
         ], [
             'available_at' => Types::DATETIMETZ_IMMUTABLE,
         ]);

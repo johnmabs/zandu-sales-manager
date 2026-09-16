@@ -6,7 +6,6 @@ namespace Zandu\Platform\Messaging;
 
 use InvalidArgumentException;
 use Throwable;
-use Zandu\Platform\Operations\OperationalMetrics;
 use Zandu\SharedKernel\Identity\IdGenerator;
 use Zandu\SharedKernel\Identity\OrganizationId;
 use Zandu\SharedKernel\Tenancy\TenantTransaction;
@@ -19,13 +18,20 @@ final readonly class OutboxWorker
         private TenantTransaction $transaction,
         private IdGenerator $idGenerator,
         private Clock $clock,
-        private OperationalMetrics $metrics,
         private int $claimLeaseSeconds = 30,
-        private int $retryDelaySeconds = 30,
+        private int $initialRetryDelaySeconds = 30,
+        private int $maximumRetryDelaySeconds = 3600,
         private int $maxAttempts = 5,
     ) {
-        if ($claimLeaseSeconds < 1 || $retryDelaySeconds < 1 || $maxAttempts < 1) {
-            throw new InvalidArgumentException('Outbox worker durations and maximum attempts must be positive.');
+        if (
+            $claimLeaseSeconds < 1
+            || $initialRetryDelaySeconds < 1
+            || $maximumRetryDelaySeconds < $initialRetryDelaySeconds
+            || $maxAttempts < 1
+        ) {
+            throw new InvalidArgumentException(
+                'Outbox worker durations and maximum attempts must be positive, and the maximum retry delay must not be shorter than the initial delay.',
+            );
         }
     }
 
@@ -52,31 +58,30 @@ final readonly class OutboxWorker
 
         $published = 0;
         $scheduledForRetry = 0;
-        $deadLettered = 0;
+        $failed = 0;
 
         foreach ($claimed as $message) {
             try {
                 $publisher->publish($message->message);
             } catch (Throwable $exception) {
-                $deadLetter = $message->attempts + 1 >= $this->maxAttempts;
+                $permanentlyFailed = $message->attempts + 1 >= $this->maxAttempts;
                 $failedAt = $this->clock->now();
+                $availableAt = $permanentlyFailed
+                    ? $failedAt
+                    : $failedAt->modify(sprintf('+%d seconds', $this->retryDelaySeconds($message->attempts)));
                 $this->transaction->transactional(
                     $organizationId,
                     fn() => $this->queue->markFailed(
                         $message,
-                        $failedAt->modify(sprintf('+%d seconds', $this->retryDelaySeconds)),
+                        $availableAt,
                         mb_substr($exception->getMessage(), 0, 1000),
-                        $deadLetter,
+                        $permanentlyFailed,
                     ),
                 );
-                $this->metrics->increment('outbox_publish_failures');
-
-                if ($deadLetter) {
-                    ++$deadLettered;
-                    $this->metrics->increment('dead_letter_count');
+                if ($permanentlyFailed) {
+                    ++$failed;
                 } else {
                     ++$scheduledForRetry;
-                    $this->metrics->increment('worker_retry_count');
                 }
 
                 continue;
@@ -89,6 +94,25 @@ final readonly class OutboxWorker
             ++$published;
         }
 
-        return new OutboxWorkerResult(count($claimed), $published, $scheduledForRetry, $deadLettered);
+        return new OutboxWorkerResult(count($claimed), $published, $scheduledForRetry, $failed);
+    }
+
+    private function retryDelaySeconds(int $previousAttempts): int
+    {
+        $delay = $this->initialRetryDelaySeconds;
+
+        for ($attempt = 0; $attempt < $previousAttempts; ++$attempt) {
+            if ($delay >= $this->maximumRetryDelaySeconds) {
+                return $this->maximumRetryDelaySeconds;
+            }
+
+            if ($delay > intdiv($this->maximumRetryDelaySeconds, 2)) {
+                return $this->maximumRetryDelaySeconds;
+            }
+
+            $delay *= 2;
+        }
+
+        return $delay;
     }
 }
