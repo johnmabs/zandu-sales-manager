@@ -8,7 +8,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use InvalidArgumentException;
 use Zandu\Modules\InventoryCosting\Application\InitializeStockValuation\{InitializeStockValuation, InitializeStockValuationHandler};
-use Zandu\Modules\InventoryCosting\Application\{StockValuationView, StockValuationViewFactory};
+use Zandu\Modules\InventoryCosting\Application\StockValuationViewFactory;
 use Zandu\SharedKernel\Context\CurrentActorProvider;
 use Zandu\SharedKernel\Decimal\DecimalFactory;
 use Zandu\SharedKernel\Identity\{ProductId, StoreId, UuidFactory};
@@ -22,6 +22,7 @@ final readonly class InventoryValuationProcessor implements ProcessorInterface
         private DecimalFactory $decimals,
         private InitializeStockValuationHandler $initialize,
         private StockValuationViewFactory $views,
+        private InventoryValuationResourceFactory $resources,
     ) {}
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): InventoryValuationResource
@@ -40,7 +41,7 @@ final readonly class InventoryValuationProcessor implements ProcessorInterface
             $this->actors->resolve(),
         ));
 
-        return $this->resource($this->views->from($valuation));
+        return $this->resources->fromView($this->views->from($valuation));
     }
 
     /** @param class-string<StoreId|ProductId> $type */
@@ -55,19 +56,4 @@ final readonly class InventoryValuationProcessor implements ProcessorInterface
             : ProductId::fromString($value, $this->uuids);
     }
 
-    private function resource(StockValuationView $valuation): InventoryValuationResource
-    {
-        return new InventoryValuationResource(
-            $valuation->id,
-            $valuation->organizationId,
-            $valuation->storeId,
-            $valuation->productId,
-            $valuation->stockId,
-            $valuation->quantityOnHand,
-            $valuation->totalValue,
-            $valuation->currency,
-            $valuation->averageUnitCost,
-            $valuation->version,
-        );
-    }
 }

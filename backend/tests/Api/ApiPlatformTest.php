@@ -366,6 +366,25 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertArrayHasKey('application/json', $operation->getRequestBody()->getContent());
     }
 
+    public function testUnitOfMeasureReadOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/units-of-measure')->getGet());
+        self::assertNotNull($paths->getPath('/api/units-of-measure/{id}')->getGet());
+    }
+
+    public function testInventoryValuationReadOperationsAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/inventory-valuations')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/inventory-valuations/{productId}')->getGet());
+        self::assertNotNull($paths->getPath('/api/stores/{storeId}/inventory-valuations/{productId}/movements')->getGet());
+    }
+
     public function testInventoryMovementCostInputsAreDocumented(): void
     {
         self::bootKernel();

@@ -48,6 +48,7 @@ Gate Lot 2 TERMINÉ   Catalogue et tarification de base opérationnels
 Gate Lot 3 TERMINÉ   Inventory et Cash foundations opérationnels
 Gate Lot 4 TERMINÉ   M2 — première vente cash de bout en bout
 Gate Lot 5 TERMINÉ   Inventory Costing & Returns, première partie de M3
+API lecture TERMINÉ  UnitOfMeasure et Inventory Costing exposés
 ```
 
 Le Lot 6 est terminé :
