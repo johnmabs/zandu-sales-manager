@@ -64,6 +64,44 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNull($logout->getResponses()['204']->getContent());
     }
 
+    public function testMalformedLoginRouteIsAbsentFromOpenApi(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        self::assertNull($paths->getPath('api_auth_login'));
+        self::assertNotNull($paths->getPath('/api/auth/login')->getPost());
+    }
+
+    public function testOnboardingIsDocumentedWithItsActualWireContracts(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+        $registration = $paths->getPath('/api/auth/register')->getPost();
+        $invitation = $paths->getPath('/api/auth/invitations/{token}/register')->getPost();
+
+        self::assertNotNull($registration);
+        self::assertNotNull($invitation);
+        self::assertSame('auth_register', $registration->getOperationId());
+        self::assertSame('auth_invitation_register', $invitation->getOperationId());
+        self::assertSame([], $registration->getSecurity());
+        self::assertSame([], $invitation->getSecurity());
+        self::assertSame(
+            ['email', 'password', 'organizationName', 'countryCode', 'defaultCurrency', 'defaultTimeZone', 'defaultLocale'],
+            $registration->getRequestBody()->getContent()['application/json']->getSchema()['required'],
+        );
+        self::assertSame(['password'], $invitation->getRequestBody()->getContent()['application/json']->getSchema()['required']);
+        self::assertSame('token', $invitation->getParameters()[0]->getName());
+        self::assertTrue($invitation->getParameters()[0]->getRequired());
+        foreach ([$registration, $invitation] as $operation) {
+            self::assertArrayHasKey('201', $operation->getResponses());
+            self::assertArrayHasKey('409', $operation->getResponses());
+            self::assertArrayHasKey('422', $operation->getResponses());
+            self::assertArrayHasKey('userId', $operation->getResponses()['201']->getContent()['application/json']->getSchema()['properties']);
+            self::assertArrayHasKey('organizationId', $operation->getResponses()['201']->getContent()['application/json']->getSchema()['properties']);
+        }
+    }
+
     public function testStockTransferWorkflowIsDocumented(): void
     {
         self::bootKernel();

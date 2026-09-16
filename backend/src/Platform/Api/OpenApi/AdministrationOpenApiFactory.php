@@ -7,7 +7,9 @@ namespace Zandu\Platform\Api\OpenApi;
 use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
 use ApiPlatform\OpenApi\Model\MediaType;
 use ApiPlatform\OpenApi\Model\Operation;
+use ApiPlatform\OpenApi\Model\Parameter;
 use ApiPlatform\OpenApi\Model\PathItem;
+use ApiPlatform\OpenApi\Model\Paths;
 use ApiPlatform\OpenApi\Model\RequestBody;
 use ApiPlatform\OpenApi\Model\Response;
 use ApiPlatform\OpenApi\OpenApi;
@@ -27,7 +29,7 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
 
     public function __invoke(array $context = []): OpenApi
     {
-        $openApi = ($this->decorated)($context);
+        $openApi = $this->withoutInvalidLoginPath(($this->decorated)($context));
 
         foreach ($openApi->getPaths()->getPaths() as $path => $pathItem) {
             if (!$this->isAdministrationPath($path)) {
@@ -38,8 +40,21 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
         }
 
         $this->documentAuthentication($openApi);
+        $this->documentOnboarding($openApi);
 
         return $openApi;
+    }
+
+    private function withoutInvalidLoginPath(OpenApi $openApi): OpenApi
+    {
+        $paths = new Paths();
+        foreach ($openApi->getPaths()->getPaths() as $path => $pathItem) {
+            if ('api_auth_login' !== $path) {
+                $paths->addPath($path, $pathItem);
+            }
+        }
+
+        return $openApi->withPaths($paths);
     }
 
     private function documentAuthentication(OpenApi $openApi): void
@@ -91,6 +106,64 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
         )));
     }
 
+    private function documentOnboarding(OpenApi $openApi): void
+    {
+        $registration = [
+            'type' => 'object',
+            'required' => ['email', 'password', 'organizationName', 'countryCode', 'defaultCurrency', 'defaultTimeZone', 'defaultLocale'],
+            'properties' => [
+                'email' => ['type' => 'string', 'format' => 'email'],
+                'password' => ['type' => 'string', 'format' => 'password'],
+                'organizationName' => ['type' => 'string'],
+                'countryCode' => ['type' => 'string', 'minLength' => 2, 'maxLength' => 2],
+                'defaultCurrency' => ['type' => 'string', 'minLength' => 3, 'maxLength' => 3],
+                'defaultTimeZone' => ['type' => 'string'],
+                'defaultLocale' => ['type' => 'string'],
+            ],
+        ];
+        $invitationRegistration = [
+            'type' => 'object',
+            'required' => ['password'],
+            'properties' => ['password' => ['type' => 'string', 'format' => 'password']],
+        ];
+        $result = [
+            'type' => 'object',
+            'required' => ['userId', 'organizationId'],
+            'properties' => [
+                'userId' => ['type' => 'string', 'format' => 'uuid'],
+                'organizationId' => ['type' => 'string', 'format' => 'uuid'],
+            ],
+        ];
+
+        $openApi->getPaths()->addPath('/api/auth/register', new PathItem(post: new Operation(
+            operationId: 'auth_register',
+            tags: ['Onboarding'],
+            responses: [
+                '201' => new Response('User and first organization created.', $this->jsonContent($result)),
+                '409' => new Response('An account already exists.', $this->publicErrorContent('ACCOUNT_ALREADY_EXISTS')),
+                '422' => new Response('The registration payload is invalid.', $this->publicErrorContent('INVALID_REGISTRATION')),
+            ],
+            summary: 'Creates the first organization owner.',
+            description: 'Atomically creates a global user, an active organization, its active membership and the ORGANIZATION_OWNER assignment.',
+            requestBody: new RequestBody('Owner and organization registration data.', $this->jsonContent($registration), true),
+            security: [],
+        )));
+        $openApi->getPaths()->addPath('/api/auth/invitations/{token}/register', new PathItem(post: new Operation(
+            operationId: 'auth_invitation_register',
+            tags: ['Onboarding'],
+            responses: [
+                '201' => new Response('Invited user registered.', $this->jsonContent($result)),
+                '409' => new Response('The invitation registration conflicts with existing state.', $this->publicErrorContent('INVITATION_REGISTRATION_CONFLICT')),
+                '422' => new Response('The invitation is invalid or inactive.', $this->publicErrorContent('INVALID_INVITATION_REGISTRATION')),
+            ],
+            summary: 'Registers a user from an invitation.',
+            description: 'Creates the invited user and membership, assigns the intended roles and consumes the single-use invitation token atomically.',
+            parameters: [new Parameter('token', 'path', 'Opaque invitation token.', true, schema: ['type' => 'string'])],
+            requestBody: new RequestBody('Password for the invited account.', $this->jsonContent($invitationRegistration), true),
+            security: [],
+        )));
+    }
+
     /**
      * @param array<string, mixed> $schema
      *
@@ -99,6 +172,19 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
     private function jsonContent(array $schema): \ArrayObject
     {
         return new \ArrayObject(['application/json' => new MediaType(new \ArrayObject($schema))]);
+    }
+
+    /** @return \ArrayObject<string, MediaType> */
+    private function publicErrorContent(string $code): \ArrayObject
+    {
+        return $this->jsonContent([
+            'type' => 'object',
+            'required' => ['code', 'message'],
+            'properties' => [
+                'code' => ['type' => 'string', 'enum' => [$code]],
+                'message' => ['type' => 'string'],
+            ],
+        ]);
     }
 
     private function isAdministrationPath(string $path): bool

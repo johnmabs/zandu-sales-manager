@@ -491,6 +491,270 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/goods-receipt-corrections/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves a GoodsReceiptCorrectionResource resource.
+     * @description Retrieves a GoodsReceiptCorrectionResource resource.
+     */
+    get: operations["goods_receipt_correction_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipt-corrections/{id}/post": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a GoodsReceiptCorrectionResource resource.
+     * @description Creates a GoodsReceiptCorrectionResource resource.
+     */
+    post: operations["goods_receipt_correction_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipts/{id}/corrections": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a GoodsReceiptCorrectionResource resource.
+     * @description Creates a GoodsReceiptCorrectionResource resource.
+     */
+    post: operations["goods_receipt_correction_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves the collection of GoodsReceiptResource resources.
+     * @description Retrieves the collection of GoodsReceiptResource resources.
+     */
+    get: operations["goods_receipt_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipts/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves a GoodsReceiptResource resource.
+     * @description Retrieves a GoodsReceiptResource resource.
+     */
+    get: operations["goods_receipt_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipts/{id}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a GoodsReceiptResource resource.
+     * @description Creates a GoodsReceiptResource resource.
+     */
+    post: operations["goods_receipt_cancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipts/{id}/lines": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a GoodsReceiptResource resource.
+     * @description Creates a GoodsReceiptResource resource.
+     */
+    post: operations["goods_receipt_line_add"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/goods-receipts/{id}/lines/{lineId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Removes the GoodsReceiptResource resource.
+     * @description Removes the GoodsReceiptResource resource.
+     */
+    delete: operations["goods_receipt_line_remove"];
+    options?: never;
+    head?: never;
+    /**
+     * Updates the GoodsReceiptResource resource.
+     * @description Updates the GoodsReceiptResource resource.
+     */
+    patch: operations["goods_receipt_line_update"];
+    trace?: never;
+  };
+  "/api/goods-receipts/{id}/post": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a GoodsReceiptResource resource.
+     * @description Creates a GoodsReceiptResource resource.
+     */
+    post: operations["goods_receipt_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stores/{storeId}/goods-receipts": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a GoodsReceiptResource resource.
+     * @description Creates a GoodsReceiptResource resource.
+     */
+    post: operations["goods_receipt_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stores/{storeId}/inventory-valuations/{productId}/movements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves the collection of InventoryValuationMovementResource resources.
+     * @description Retrieves the collection of InventoryValuationMovementResource resources.
+     */
+    get: operations["inventory_valuation_movement_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stores/{storeId}/inventory-valuations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves the collection of InventoryValuationResource resources.
+     * @description Retrieves the collection of InventoryValuationResource resources.
+     */
+    get: operations["inventory_valuation_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/stores/{storeId}/inventory-valuations/{productId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves a InventoryValuationResource resource.
+     * @description Retrieves a InventoryValuationResource resource.
+     */
+    get: operations["inventory_valuation_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/stores/{storeId}/inventory-valuations/{productId}/initialize": {
     parameters: {
       query?: never;
@@ -565,26 +829,6 @@ export interface paths {
      * @description Creates a InvitationResource resource.
      */
     post: operations["member_invitation_cancel"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  api_auth_login: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Creates a user token.
-     * @description Creates a user token.
-     */
-    post: operations["login_check_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -725,6 +969,46 @@ export interface paths {
      * @description Creates a MembershipResource resource.
      */
     post: operations["member_suspend"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/invitations/{token}/register": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Registers a user from an invitation.
+     * @description Creates the invited user and membership, assigns the intended roles and consumes the single-use invitation token atomically.
+     */
+    post: operations["auth_invitation_register"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/register": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates the first organization owner.
+     * @description Atomically creates a global user, an active organization, its active membership and the ORGANIZATION_OWNER assignment.
+     */
+    post: operations["auth_register"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1301,6 +1585,170 @@ export interface paths {
      * @description Creates a ProductResource resource.
      */
     post: operations["product_reactivate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves the collection of PurchaseOrderResource resources.
+     * @description Retrieves the collection of PurchaseOrderResource resources.
+     */
+    get: operations["purchase_order_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves a PurchaseOrderResource resource.
+     * @description Retrieves a PurchaseOrderResource resource.
+     */
+    get: operations["purchase_order_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders/{id}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a PurchaseOrderResource resource.
+     * @description Creates a PurchaseOrderResource resource.
+     */
+    post: operations["purchase_order_cancel"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders/{id}/close": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a PurchaseOrderResource resource.
+     * @description Creates a PurchaseOrderResource resource.
+     */
+    post: operations["purchase_order_close"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders/{id}/confirm": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a PurchaseOrderResource resource.
+     * @description Creates a PurchaseOrderResource resource.
+     */
+    post: operations["purchase_order_confirm"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders/{id}/lines": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a PurchaseOrderResource resource.
+     * @description Creates a PurchaseOrderResource resource.
+     */
+    post: operations["purchase_order_line_add"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/purchase-orders/{id}/lines/{lineId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Removes the PurchaseOrderResource resource.
+     * @description Removes the PurchaseOrderResource resource.
+     */
+    delete: operations["purchase_order_line_remove"];
+    options?: never;
+    head?: never;
+    /**
+     * Updates the PurchaseOrderResource resource.
+     * @description Updates the PurchaseOrderResource resource.
+     */
+    patch: operations["purchase_order_line_update"];
+    trace?: never;
+  };
+  "/api/stores/{storeId}/purchase-orders": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a PurchaseOrderResource resource.
+     * @description Creates a PurchaseOrderResource resource.
+     */
+    post: operations["purchase_order_create"];
     delete?: never;
     options?: never;
     head?: never;
@@ -2231,6 +2679,154 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/suppliers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves the collection of SupplierResource resources.
+     * @description Retrieves the collection of SupplierResource resources.
+     */
+    get: operations["supplier_list"];
+    put?: never;
+    /**
+     * Creates a SupplierResource resource.
+     * @description Creates a SupplierResource resource.
+     */
+    post: operations["supplier_create"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/suppliers/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves a SupplierResource resource.
+     * @description Retrieves a SupplierResource resource.
+     */
+    get: operations["supplier_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * Updates the SupplierResource resource.
+     * @description Updates the SupplierResource resource.
+     */
+    patch: operations["supplier_update"];
+    trace?: never;
+  };
+  "/api/suppliers/{id}/activate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a SupplierResource resource.
+     * @description Creates a SupplierResource resource.
+     */
+    post: operations["supplier_activate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/suppliers/{id}/archive": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a SupplierResource resource.
+     * @description Creates a SupplierResource resource.
+     */
+    post: operations["supplier_archive"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/suppliers/{id}/deactivate": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Creates a SupplierResource resource.
+     * @description Creates a SupplierResource resource.
+     */
+    post: operations["supplier_deactivate"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/units-of-measure": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves the collection of UnitOfMeasureResource resources.
+     * @description Retrieves the collection of UnitOfMeasureResource resources.
+     */
+    get: operations["unit_of_measure_list"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/units-of-measure/{id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Retrieves a UnitOfMeasureResource resource.
+     * @description Retrieves a UnitOfMeasureResource resource.
+     */
+    get: operations["unit_of_measure_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2405,12 +3001,24 @@ export interface components {
       readonly instance?: string | null;
     };
     CurrentSessionResource: {
+      organizations?: {
+        /** Format: uuid */
+        id: string;
+        name: string;
+        /** @enum {string} */
+        status: "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED";
+        defaultCurrency: string;
+        defaultTimeZone: string;
+        defaultLocale: string;
+      }[];
       id?: string;
       userId?: string;
       organizationId?: string;
       authorizationVersion?: number;
       effectiveAccess?: components["schemas"]["EffectiveAccessResource"];
       email?: string | null;
+    };
+    "CurrentSessionResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       organizations?: {
         /** Format: uuid */
         id: string;
@@ -2421,24 +3029,12 @@ export interface components {
         defaultTimeZone: string;
         defaultLocale: string;
       }[];
-    };
-    "CurrentSessionResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
       userId?: string;
       organizationId?: string;
       authorizationVersion?: number;
       effectiveAccess?: components["schemas"]["EffectiveAccessResource.jsonld"];
       email?: string | null;
-      organizations?: {
-        /** Format: uuid */
-        id: string;
-        name: string;
-        /** @enum {string} */
-        status: "ACTIVE" | "SUSPENDED" | "CLOSURE_PENDING" | "CLOSED";
-        defaultCurrency: string;
-        defaultTimeZone: string;
-        defaultLocale: string;
-      }[];
     };
     EffectiveAccessResource: {
       organizationId?: string;
@@ -2509,6 +3105,87 @@ export interface components {
       readonly type?: string;
       readonly description?: string | null;
     };
+    GoodsReceiptCorrectionResource: {
+      id?: string;
+      goodsReceiptId?: string;
+      reason?: string;
+      status?: string;
+      lines?: (string | null)[];
+      createdAt?: string;
+      postedAt?: string | null;
+      version?: number;
+    };
+    "GoodsReceiptCorrectionResource.GoodsReceiptCorrectionCreateInput": {
+      reason?: string;
+      lines?: (string | null)[];
+    };
+    "GoodsReceiptCorrectionResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
+      id?: string;
+      goodsReceiptId?: string;
+      reason?: string;
+      status?: string;
+      lines?: (string | null)[];
+      createdAt?: string;
+      postedAt?: string | null;
+      version?: number;
+    };
+    GoodsReceiptResource: {
+      id?: string;
+      storeId?: string;
+      supplierId?: string;
+      purchaseOrderId?: string | null;
+      number?: string;
+      status?: string;
+      supplierDeliveryNote?: string | null;
+      notes?: string | null;
+      lines?: (string | null)[];
+      createdAt?: string;
+      postedAt?: string | null;
+      cancelledAt?: string | null;
+      version?: number;
+    };
+    "GoodsReceiptResource.GoodsReceiptCreateInput": {
+      supplierId?: string;
+      purchaseOrderId?: string | null;
+      number?: string;
+      supplierDeliveryNote?: string | null;
+      notes?: string | null;
+      lines?: (string | null)[];
+    };
+    "GoodsReceiptResource.GoodsReceiptLineInput": {
+      productId?: string | null;
+      productPackagingId?: string | null;
+      purchaseOrderLineId?: string | null;
+      enteredReceivedQuantity?: string;
+      unitCost?: string;
+      currency?: string;
+    };
+    "GoodsReceiptResource.GoodsReceiptLineInput.jsonMergePatch": {
+      productId?: string | null;
+      productPackagingId?: string | null;
+      purchaseOrderLineId?: string | null;
+      enteredReceivedQuantity?: string;
+      unitCost?: string;
+      currency?: string;
+    };
+    "GoodsReceiptResource.GoodsReceiptPostInput": {
+      overReceiptReason?: string | null;
+    };
+    "GoodsReceiptResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
+      id?: string;
+      storeId?: string;
+      supplierId?: string;
+      purchaseOrderId?: string | null;
+      number?: string;
+      status?: string;
+      supplierDeliveryNote?: string | null;
+      notes?: string | null;
+      lines?: (string | null)[];
+      createdAt?: string;
+      postedAt?: string | null;
+      cancelledAt?: string | null;
+      version?: number;
+    };
     HydraCollectionBaseSchema: components["schemas"]["HydraCollectionBaseSchemaNoPagination"] & {
       /**
        * @example {
@@ -2560,6 +3237,50 @@ export interface components {
           });
       "@id": string;
       "@type": string;
+    };
+    InventoryValuationMovementResource: {
+      id?: string;
+      stockValuationId?: string;
+      organizationId?: string;
+      storeId?: string;
+      productId?: string;
+      stockId?: string;
+      stockMovementId?: string | null;
+      type?: string;
+      quantity?: string;
+      unitCost?: string;
+      value?: string;
+      previousTotalValue?: string;
+      resultingTotalValue?: string;
+      previousAverageCost?: string;
+      resultingAverageCost?: string;
+      currency?: string;
+      sourceType?: string;
+      sourceReferenceId?: string | null;
+      occurredAt?: string;
+      correlationId?: string;
+    };
+    "InventoryValuationMovementResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
+      id?: string;
+      stockValuationId?: string;
+      organizationId?: string;
+      storeId?: string;
+      productId?: string;
+      stockId?: string;
+      stockMovementId?: string | null;
+      type?: string;
+      quantity?: string;
+      unitCost?: string;
+      value?: string;
+      previousTotalValue?: string;
+      resultingTotalValue?: string;
+      previousAverageCost?: string;
+      resultingAverageCost?: string;
+      currency?: string;
+      sourceType?: string;
+      sourceReferenceId?: string | null;
+      occurredAt?: string;
+      correlationId?: string;
     };
     InventoryValuationResource: {
       id?: string;
@@ -2956,6 +3677,60 @@ export interface components {
       updatedAt?: string | null;
       version?: number;
     };
+    PurchaseOrderResource: {
+      id?: string;
+      destinationStoreId?: string;
+      supplierId?: string;
+      number?: string;
+      status?: string;
+      currency?: string;
+      expectedTotal?: string;
+      lines?: (string | null)[];
+      createdAt?: string;
+      confirmedAt?: string | null;
+      closedAt?: string | null;
+      closedReason?: string | null;
+      cancelledAt?: string | null;
+      version?: number;
+    };
+    "PurchaseOrderResource.PurchaseOrderCloseInput": {
+      reason?: string | null;
+    };
+    "PurchaseOrderResource.PurchaseOrderCreateInput": {
+      supplierId?: string;
+      number?: string;
+      currency?: string;
+    };
+    "PurchaseOrderResource.PurchaseOrderLineInput": {
+      productId?: string;
+      productPackagingId?: string | null;
+      enteredQuantity?: string;
+      unitCost?: string;
+      currency?: string;
+    };
+    "PurchaseOrderResource.PurchaseOrderLineInput.jsonMergePatch": {
+      productId?: string;
+      productPackagingId?: string | null;
+      enteredQuantity?: string;
+      unitCost?: string;
+      currency?: string;
+    };
+    "PurchaseOrderResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
+      id?: string;
+      destinationStoreId?: string;
+      supplierId?: string;
+      number?: string;
+      status?: string;
+      currency?: string;
+      expectedTotal?: string;
+      lines?: (string | null)[];
+      createdAt?: string;
+      confirmedAt?: string | null;
+      closedAt?: string | null;
+      closedReason?: string | null;
+      cancelledAt?: string | null;
+      version?: number;
+    };
     PurchaseReturnResource: {
       id?: string;
       sourceStoreId?: string;
@@ -3192,9 +3967,11 @@ export interface components {
     "StockResource.AdjustStockInput": {
       delta?: string;
       reason?: string;
+      unitCost?: string | null;
     };
     "StockResource.InitializeStockInput": {
       quantity?: string;
+      unitCost?: string;
     };
     "StockResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
       id?: string;
@@ -3312,6 +4089,66 @@ export interface components {
       currency?: string;
       locale?: string;
       updatedAt?: string;
+      version?: number;
+    };
+    SupplierResource: {
+      id?: string;
+      name?: string;
+      phone?: string | null;
+      email?: string | null;
+      address?: string | null;
+      notes?: string | null;
+      status?: string;
+      createdAt?: string;
+      updatedAt?: string | null;
+      version?: number;
+    };
+    "SupplierResource.SupplierInput": {
+      name?: string;
+      phone?: string | null;
+      email?: string | null;
+      address?: string | null;
+      notes?: string | null;
+    };
+    "SupplierResource.SupplierInput.jsonMergePatch": {
+      name?: string;
+      phone?: string | null;
+      email?: string | null;
+      address?: string | null;
+      notes?: string | null;
+    };
+    "SupplierResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
+      id?: string;
+      name?: string;
+      phone?: string | null;
+      email?: string | null;
+      address?: string | null;
+      notes?: string | null;
+      status?: string;
+      createdAt?: string;
+      updatedAt?: string | null;
+      version?: number;
+    };
+    UnitOfMeasureResource: {
+      id?: string;
+      organizationId?: string;
+      code?: string;
+      name?: string;
+      dimension?: string;
+      precision?: number;
+      roundingMode?: string;
+      status?: string;
+      version?: number;
+    };
+    "UnitOfMeasureResource.jsonld": components["schemas"]["HydraItemBaseSchema"] & {
+      id?: string;
+      organizationId?: string;
+      code?: string;
+      name?: string;
+      dimension?: string;
+      precision?: number;
+      roundingMode?: string;
+      status?: string;
       version?: number;
     };
   };
@@ -7405,6 +8242,1093 @@ export interface operations {
       };
     };
   };
+  goods_receipt_correction_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptCorrectionResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GoodsReceiptCorrectionResource resource */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptCorrectionResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptCorrectionResource"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  goods_receipt_correction_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptCorrectionResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GoodsReceiptCorrectionResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptCorrectionResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptCorrectionResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  goods_receipt_correction_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptCorrectionResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new GoodsReceiptCorrectionResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["GoodsReceiptCorrectionResource.GoodsReceiptCorrectionCreateInput"];
+        "application/json": components["schemas"]["GoodsReceiptCorrectionResource.GoodsReceiptCorrectionCreateInput"];
+      };
+    };
+    responses: {
+      /** @description GoodsReceiptCorrectionResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptCorrectionResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptCorrectionResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  goods_receipt_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GoodsReceiptResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["GoodsReceiptResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["GoodsReceiptResource"][];
+        };
+      };
+    };
+  };
+  goods_receipt_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GoodsReceiptResource resource */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptResource"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  goods_receipt_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GoodsReceiptResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  goods_receipt_line_add: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new GoodsReceiptResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineInput"];
+        "application/json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineInput"];
+      };
+    };
+    responses: {
+      /** @description GoodsReceiptResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  goods_receipt_line_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+        /** @description GoodsReceiptResource identifier */
+        lineId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description GoodsReceiptResource resource deleted */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  goods_receipt_line_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+        /** @description GoodsReceiptResource identifier */
+        lineId: string;
+      };
+      cookie?: never;
+    };
+    /** @description The updated GoodsReceiptResource resource */
+    requestBody: {
+      content: {
+        "application/merge-patch+json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineInput.jsonMergePatch"];
+        "application/json": components["schemas"]["GoodsReceiptResource.GoodsReceiptLineInput.jsonMergePatch"];
+      };
+    };
+    responses: {
+      /** @description GoodsReceiptResource resource updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  goods_receipt_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new GoodsReceiptResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["GoodsReceiptResource.GoodsReceiptPostInput"];
+        "application/json": components["schemas"]["GoodsReceiptResource.GoodsReceiptPostInput"];
+      };
+    };
+    responses: {
+      /** @description GoodsReceiptResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  goods_receipt_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description GoodsReceiptResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new GoodsReceiptResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["GoodsReceiptResource.GoodsReceiptCreateInput"];
+        "application/json": components["schemas"]["GoodsReceiptResource.GoodsReceiptCreateInput"];
+      };
+    };
+    responses: {
+      /** @description GoodsReceiptResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["GoodsReceiptResource.jsonld"];
+          "application/json": components["schemas"]["GoodsReceiptResource"];
+        };
+      };
+      /** @description The request payload is invalid. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "VALIDATION_ERROR",
+           *       "message": "The request payload is invalid.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "VALIDATION_ERROR";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "UNAUTHENTICATED",
+           *       "message": "Authentication is required.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "UNAUTHENTICATED";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The authenticated actor is not authorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "FORBIDDEN",
+           *       "message": "The authenticated actor is not authorized.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "FORBIDDEN";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The resource was not found, including cross-tenant resources. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "NOT_FOUND",
+           *       "message": "The resource was not found, including cross-tenant resources.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "NOT_FOUND";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The request conflicts with the current resource state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "CONFLICT",
+           *       "message": "The request conflicts with the current resource state.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "CONFLICT";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The operation violates a domain rule. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "DOMAIN_RULE_VIOLATION",
+           *       "message": "The operation violates a domain rule.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "DOMAIN_RULE_VIOLATION";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
+  inventory_valuation_movement_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+      };
+      header?: never;
+      path: {
+        /** @description InventoryValuationResource identifier */
+        storeId: string;
+        /** @description InventoryValuationResource identifier */
+        productId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description InventoryValuationMovementResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["InventoryValuationMovementResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["InventoryValuationMovementResource"][];
+        };
+      };
+      /** @description The request payload is invalid. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "VALIDATION_ERROR",
+           *       "message": "The request payload is invalid.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "VALIDATION_ERROR";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "UNAUTHENTICATED",
+           *       "message": "Authentication is required.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "UNAUTHENTICATED";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The authenticated actor is not authorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "FORBIDDEN",
+           *       "message": "The authenticated actor is not authorized.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "FORBIDDEN";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The resource was not found, including cross-tenant resources. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "NOT_FOUND",
+           *       "message": "The resource was not found, including cross-tenant resources.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "NOT_FOUND";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The request conflicts with the current resource state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "CONFLICT",
+           *       "message": "The request conflicts with the current resource state.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "CONFLICT";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The operation violates a domain rule. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "DOMAIN_RULE_VIOLATION",
+           *       "message": "The operation violates a domain rule.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "DOMAIN_RULE_VIOLATION";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
+  inventory_valuation_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+      };
+      header?: never;
+      path: {
+        /** @description InventoryValuationResource identifier */
+        storeId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description InventoryValuationResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["InventoryValuationResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["InventoryValuationResource"][];
+        };
+      };
+      /** @description The request payload is invalid. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "VALIDATION_ERROR",
+           *       "message": "The request payload is invalid.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "VALIDATION_ERROR";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "UNAUTHENTICATED",
+           *       "message": "Authentication is required.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "UNAUTHENTICATED";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The authenticated actor is not authorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "FORBIDDEN",
+           *       "message": "The authenticated actor is not authorized.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "FORBIDDEN";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The resource was not found, including cross-tenant resources. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "NOT_FOUND",
+           *       "message": "The resource was not found, including cross-tenant resources.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "NOT_FOUND";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The request conflicts with the current resource state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "CONFLICT",
+           *       "message": "The request conflicts with the current resource state.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "CONFLICT";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The operation violates a domain rule. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "DOMAIN_RULE_VIOLATION",
+           *       "message": "The operation violates a domain rule.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "DOMAIN_RULE_VIOLATION";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
+  inventory_valuation_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description InventoryValuationResource identifier */
+        storeId: string;
+        /** @description InventoryValuationResource identifier */
+        productId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description InventoryValuationResource resource */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["InventoryValuationResource.jsonld"];
+          "application/json": components["schemas"]["InventoryValuationResource"];
+        };
+      };
+      /** @description The request payload is invalid. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "VALIDATION_ERROR",
+           *       "message": "The request payload is invalid.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "VALIDATION_ERROR";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "UNAUTHENTICATED",
+           *       "message": "Authentication is required.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "UNAUTHENTICATED";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The authenticated actor is not authorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "FORBIDDEN",
+           *       "message": "The authenticated actor is not authorized.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "FORBIDDEN";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The resource was not found, including cross-tenant resources. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "NOT_FOUND",
+           *       "message": "The resource was not found, including cross-tenant resources.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "NOT_FOUND";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The request conflicts with the current resource state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "CONFLICT",
+           *       "message": "The request conflicts with the current resource state.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "CONFLICT";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The operation violates a domain rule. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "DOMAIN_RULE_VIOLATION",
+           *       "message": "The operation violates a domain rule.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "DOMAIN_RULE_VIOLATION";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
   inventory_valuation_initialize: {
     parameters: {
       query?: never;
@@ -8035,36 +9959,6 @@ export interface operations {
             message: string;
             /** Format: uuid */
             correlationId: string | null;
-          };
-        };
-      };
-    };
-  };
-  login_check_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** @description The login data */
-    requestBody: {
-      content: {
-        "application/json": {
-          email: string;
-          password: string;
-        };
-      };
-    };
-    responses: {
-      /** @description User token created */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            readonly token: string;
           };
         };
       };
@@ -9164,6 +11058,134 @@ export interface operations {
             message: string;
             /** Format: uuid */
             correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
+  auth_invitation_register: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Opaque invitation token. */
+        token: string;
+      };
+      cookie?: never;
+    };
+    /** @description Password for the invited account. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** Format: password */
+          password: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Invited user registered. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            organizationId: string;
+          };
+        };
+      };
+      /** @description The invitation registration conflicts with existing state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            code: "INVITATION_REGISTRATION_CONFLICT";
+            message: string;
+          };
+        };
+      };
+      /** @description The invitation is invalid or inactive. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            code: "INVALID_INVITATION_REGISTRATION";
+            message: string;
+          };
+        };
+      };
+    };
+  };
+  auth_register: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Owner and organization registration data. */
+    requestBody: {
+      content: {
+        "application/json": {
+          /** Format: email */
+          email: string;
+          /** Format: password */
+          password: string;
+          organizationName: string;
+          countryCode: string;
+          defaultCurrency: string;
+          defaultTimeZone: string;
+          defaultLocale: string;
+        };
+      };
+    };
+    responses: {
+      /** @description User and first organization created. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** Format: uuid */
+            userId: string;
+            /** Format: uuid */
+            organizationId: string;
+          };
+        };
+      };
+      /** @description An account already exists. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            code: "ACCOUNT_ALREADY_EXISTS";
+            message: string;
+          };
+        };
+      };
+      /** @description The registration payload is invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            code: "INVALID_REGISTRATION";
+            message: string;
           };
         };
       };
@@ -14618,6 +16640,524 @@ export interface operations {
         content: {
           "application/ld+json": components["schemas"]["ProductResource.jsonld"];
           "application/json": components["schemas"]["ProductResource"];
+        };
+      };
+      /** @description The request payload is invalid. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "VALIDATION_ERROR",
+           *       "message": "The request payload is invalid.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "VALIDATION_ERROR";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "UNAUTHENTICATED",
+           *       "message": "Authentication is required.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "UNAUTHENTICATED";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The authenticated actor is not authorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "FORBIDDEN",
+           *       "message": "The authenticated actor is not authorized.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "FORBIDDEN";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The resource was not found, including cross-tenant resources. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "NOT_FOUND",
+           *       "message": "The resource was not found, including cross-tenant resources.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "NOT_FOUND";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The request conflicts with the current resource state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "CONFLICT",
+           *       "message": "The request conflicts with the current resource state.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "CONFLICT";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The operation violates a domain rule. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "DOMAIN_RULE_VIOLATION",
+           *       "message": "The operation violates a domain rule.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "DOMAIN_RULE_VIOLATION";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
+  purchase_order_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PurchaseOrderResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["PurchaseOrderResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["PurchaseOrderResource"][];
+        };
+      };
+    };
+  };
+  purchase_order_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PurchaseOrderResource resource */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  purchase_order_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PurchaseOrderResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  purchase_order_close: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new PurchaseOrderResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["PurchaseOrderResource.PurchaseOrderCloseInput"];
+        "application/json": components["schemas"]["PurchaseOrderResource.PurchaseOrderCloseInput"];
+      };
+    };
+    responses: {
+      /** @description PurchaseOrderResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  purchase_order_confirm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PurchaseOrderResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  purchase_order_line_add: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new PurchaseOrderResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineInput"];
+        "application/json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineInput"];
+      };
+    };
+    responses: {
+      /** @description PurchaseOrderResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  purchase_order_line_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+        /** @description PurchaseOrderResource identifier */
+        lineId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description PurchaseOrderResource resource deleted */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  purchase_order_line_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+        /** @description PurchaseOrderResource identifier */
+        lineId: string;
+      };
+      cookie?: never;
+    };
+    /** @description The updated PurchaseOrderResource resource */
+    requestBody: {
+      content: {
+        "application/merge-patch+json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineInput.jsonMergePatch"];
+        "application/json": components["schemas"]["PurchaseOrderResource.PurchaseOrderLineInput.jsonMergePatch"];
+      };
+    };
+    responses: {
+      /** @description PurchaseOrderResource resource updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  purchase_order_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description PurchaseOrderResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The new PurchaseOrderResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["PurchaseOrderResource.PurchaseOrderCreateInput"];
+        "application/json": components["schemas"]["PurchaseOrderResource.PurchaseOrderCreateInput"];
+      };
+    };
+    responses: {
+      /** @description PurchaseOrderResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["PurchaseOrderResource.jsonld"];
+          "application/json": components["schemas"]["PurchaseOrderResource"];
         };
       };
       /** @description The request payload is invalid. */
@@ -20934,6 +23474,378 @@ export interface operations {
             /** Format: uuid */
             correlationId: string | null;
           };
+        };
+      };
+    };
+  };
+  supplier_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description SupplierResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["SupplierResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["SupplierResource"][];
+        };
+      };
+    };
+  };
+  supplier_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description The new SupplierResource resource */
+    requestBody: {
+      content: {
+        "application/ld+json": components["schemas"]["SupplierResource.SupplierInput"];
+        "application/json": components["schemas"]["SupplierResource.SupplierInput"];
+      };
+    };
+    responses: {
+      /** @description SupplierResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["SupplierResource.jsonld"];
+          "application/json": components["schemas"]["SupplierResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  supplier_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description SupplierResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description SupplierResource resource */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["SupplierResource.jsonld"];
+          "application/json": components["schemas"]["SupplierResource"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+    };
+  };
+  supplier_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description SupplierResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    /** @description The updated SupplierResource resource */
+    requestBody: {
+      content: {
+        "application/merge-patch+json": components["schemas"]["SupplierResource.SupplierInput.jsonMergePatch"];
+        "application/json": components["schemas"]["SupplierResource.SupplierInput.jsonMergePatch"];
+      };
+    };
+    responses: {
+      /** @description SupplierResource resource updated */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["SupplierResource.jsonld"];
+          "application/json": components["schemas"]["SupplierResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  supplier_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description SupplierResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description SupplierResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["SupplierResource.jsonld"];
+          "application/json": components["schemas"]["SupplierResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  supplier_archive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description SupplierResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description SupplierResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["SupplierResource.jsonld"];
+          "application/json": components["schemas"]["SupplierResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  supplier_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description SupplierResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description SupplierResource resource created */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["SupplierResource.jsonld"];
+          "application/json": components["schemas"]["SupplierResource"];
+        };
+      };
+      /** @description Invalid input */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
+        };
+      };
+      /** @description An error occurred */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["ConstraintViolation.jsonld"];
+          "application/problem+json": components["schemas"]["ConstraintViolation"];
+          "application/json": components["schemas"]["ConstraintViolation"];
+        };
+      };
+    };
+  };
+  unit_of_measure_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description UnitOfMeasureResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["UnitOfMeasureResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["UnitOfMeasureResource"][];
+        };
+      };
+    };
+  };
+  unit_of_measure_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description UnitOfMeasureResource identifier */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description UnitOfMeasureResource resource */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["UnitOfMeasureResource.jsonld"];
+          "application/json": components["schemas"]["UnitOfMeasureResource"];
+        };
+      };
+      /** @description Not found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["Error.jsonld"];
+          "application/problem+json": components["schemas"]["Error"];
+          "application/json": components["schemas"]["Error"];
         };
       };
     };
