@@ -71,6 +71,9 @@ jobs:
       - name: Apply controlled migrations
         run: make database-migrate
 
+      - name: Validate migration-owned database schema
+        run: make database-validate
+
       - name: Validate code and configuration
         run: make lint
 

@@ -43,6 +43,7 @@ Un ADR accepté n’est pas réécrit pour masquer l’historique d’une nouvel
 | [ADR-0023](0023-purchasing-receipt-policy.md) | Politique de réception fournisseur du MVP | ACCEPTED |
 | [ADR-0024](0024-pnpm-frontend-workspace.md) | pnpm et lockfile unique pour le workspace frontend | ACCEPTED |
 | [ADR-0025](0025-shared-aggregate-versioning.md) | Versionnement commun des agrégats mutables | ACCEPTED |
+| [ADR-0026](0026-migration-owned-database-schema.md) | Schéma PostgreSQL gouverné par les migrations | ACCEPTED |
 
 ## Décisions encore ouvertes ou proposées
 

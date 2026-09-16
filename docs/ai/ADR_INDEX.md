@@ -29,6 +29,7 @@ Read **only** the ADR that governs the decision touched by the current task. All
 | `docs/architecture/adr/0023-purchasing-receipt-policy.md` | ADR-0023 — Politique de réception fournisseur du MVP |
 | `docs/specs/architecture/adr/0024-pnpm-frontend-workspace.md` | ADR-0024 — pnpm et lockfile unique pour le workspace frontend |
 | `docs/specs/architecture/adr/0025-shared-aggregate-versioning.md` | ADR-0025 — Versionnement commun des agrégats mutables |
+| `docs/specs/architecture/adr/0026-migration-owned-database-schema.md` | ADR-0026 — Schéma PostgreSQL gouverné par les migrations |
 
 ## Open/proposed decisions in supplied register
 

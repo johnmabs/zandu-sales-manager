@@ -1,6 +1,9 @@
 doctrine:
     dbal:
         url: "%env(resolve:DATABASE_URL)%"
+        mapping_types:
+            _uuid: string
+        schema_filter: '~^(?:public\.)?doctrine_migration_versions$~'
         types:
             datetimetz_immutable: Zandu\Platform\Persistence\PostgreSqlDateTimeTzImmutableType
 
@@ -15,6 +18,28 @@ doctrine:
         identity_generation_preferences:
             Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
         auto_mapping: true
+        schema_ignore_classes:
+            - Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\CashMovementRecord
+            - Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\CashRegisterRecord
+            - Zandu\Modules\CashManagement\Infrastructure\Persistence\Orm\CashSessionRecord
+            - Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\CategoryRecord
+            - Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\ProductBarcodeRecord
+            - Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\ProductPackagingRecord
+            - Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\ProductRecord
+            - Zandu\Modules\Catalog\Infrastructure\Persistence\Orm\UnitOfMeasureRecord
+            - Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\OrganizationInvitationRecord
+            - Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\OrganizationMembershipRecord
+            - Zandu\Modules\IdentityAccess\Infrastructure\Persistence\Orm\UserRecord
+            - Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\StockMovementRecord
+            - Zandu\Modules\Inventory\Infrastructure\Persistence\Orm\StockRecord
+            - Zandu\Modules\InventoryCosting\Infrastructure\Persistence\Orm\StockValuationMovementRecord
+            - Zandu\Modules\InventoryCosting\Infrastructure\Persistence\Orm\StockValuationRecord
+            - Zandu\Modules\Organization\Infrastructure\Persistence\Orm\OrganizationRecord
+            - Zandu\Modules\Organization\Infrastructure\Persistence\Orm\StoreClosureRecord
+            - Zandu\Modules\Organization\Infrastructure\Persistence\Orm\StoreRecord
+            - Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\PriceListRecord
+            - Zandu\Modules\Pricing\Infrastructure\Persistence\Orm\ProductPriceRecord
+            - Zandu\Modules\Purchasing\Infrastructure\Persistence\Orm\SupplierRecord
         mappings:
             Organization:
                 type: attribute

@@ -1,4 +1,4 @@
-.PHONY: install start stop restart test lint quality security architecture auth-keys staging-test staging-image-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-sql frontend-openapi frontend-openapi-check
+.PHONY: install start stop restart test lint quality security architecture auth-keys staging-test staging-image-test backup-restore-test shell logs ps database-create database-migrate database-rollback database-status database-validate database-sql frontend-openapi frontend-openapi-check
 
 install:
 	docker compose build
@@ -79,6 +79,10 @@ database-rollback:
 
 database-status:
 	docker compose exec backend php bin/console doctrine:migrations:status
+
+database-validate:
+	docker compose exec backend php bin/console doctrine:schema:validate
+	docker compose exec backend php bin/console doctrine:migrations:up-to-date --no-interaction
 
 database-sql:
 	docker compose exec backend php bin/console dbal:run-sql "$(SQL)"
