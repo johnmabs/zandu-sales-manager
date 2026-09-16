@@ -12,6 +12,12 @@ test("the isolated generated contract contains the first authenticated journey",
   assert.match(schema, /"\/api\/auth\/login"/);
   assert.match(schema, /"\/api\/auth\/refresh"/);
   assert.match(schema, /"\/api\/auth\/logout"/);
+  assert.match(schema, /"\/api\/auth\/register"/);
+  assert.match(schema, /"\/api\/auth\/invitations\/\{token\}\/register"/);
+  assert.match(schema, /auth_register/);
+  assert.match(schema, /auth_invitation_register/);
+  assert.doesNotMatch(schema, /api_auth_login/);
+  assert.doesNotMatch(schema, /login_check_post/);
   assert.match(schema, /CurrentSessionResource/);
   assert.match(schema, /defaultCurrency: string/);
   assert.match(schema, /type: "ORGANIZATION" \| "SELECTED_STORES"/);
