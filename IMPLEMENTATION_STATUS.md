@@ -145,7 +145,7 @@ ouvert :
 Gate F1     TERMINÉ   Administration complète des Stores
 Gate F2     TERMINÉ   Administration Users & Access
 F3.1–F3.41 TERMINÉ   Administration Catalog & Pricing et tests automatisés hors E2E
-F3.42       À FAIRE   Parcours E2E Catalog
+F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en CI
 F3.43       À FAIRE   Parcours E2E Pricing
 Gate F3     EN ATTENTE Validation des deux parcours E2E navigateur
 ```
@@ -197,7 +197,7 @@ Composer audit        aucune vulnérabilité connue
 ESLint / Prettier     OK
 TypeScript            OK
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
-E2E F3                non implémentés ; Gate F3 non validé
+E2E F3                Catalog implémenté, Pricing à faire ; Gate F3 non validé
 ```
 
 ## Definition of Done globale
@@ -240,7 +240,8 @@ E2E F3                non implémentés ; Gate F3 non validé
 [x] Gate F1 Admin Stores validé
 [x] Gate F2 Admin Users & Access validé
 [x] F3.1 à F3.41 livrés et testés
-[ ] F3.42 parcours E2E Catalog
+[x] F3.42 scénario E2E Catalog implémenté
+[ ] F3.42 exécution Chromium verte en CI
 [ ] F3.43 parcours E2E Pricing
 [ ] Gate F3 Admin Catalog & Pricing
 ```
@@ -11299,13 +11300,13 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
-**Statut : EN COURS — F3.1 à F3.41 terminés ; F3.42/F3.43 à faire**
+**Statut : EN COURS — F3.1 à F3.42 implémentés ; validation CI F3.42 et F3.43 à faire**
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
-- F3.1 à F3.41 sont livrés. F3.42 et F3.43 restent à implémenter. Foundation et Gates F1/F2 sont validés.
+- F3.1 à F3.41 sont livrés. Le scénario F3.42 est implémenté et attend sa validation Chromium en CI ; F3.43 reste à implémenter. Foundation et Gates F1/F2 sont validés.
 - Les routes protégées utilisent le préfixe `/admin/...`. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
-- Gate F3 : en attente des parcours E2E Catalog et Pricing ; tests hors E2E, lint, formatage, typecheck et builds sont verts.
+- Gate F3 : en attente de l’exécution Chromium du parcours Catalog et du parcours E2E Pricing ; tests hors E2E, lint, formatage, typecheck et builds sont verts.
 
 Validation documentaire : numérotation des 67 sections, unicité des 43 Epics, correspondance index/fichiers, liens locaux et 47 critères Gate contrôlés ; `git diff --check`.
 
@@ -11491,5 +11492,27 @@ Commits :
   dix dépendances non classées par vue.
 - Composer et conteneur Symfony valides ; Composer Audit sans vulnérabilité connue.
 - `git diff --check` : OK.
-- Les parcours E2E navigateur F3.42/F3.43 ne sont pas encore implémentés ; ils
-  restent requis pour valider le Gate F3.
+- Le parcours E2E navigateur F3.42 est implémenté et attend son exécution
+  Chromium en CI ; F3.43 reste à implémenter. Les deux validations restent
+  requises pour le Gate F3.
+
+## Epic F3.42 — E2E Catalog flow
+
+**Statut : IMPLÉMENTÉ — validation Chromium attendue en CI**
+
+- un scénario Playwright couvre le parcours administrateur complet : connexion,
+  création d’une catégorie, d’un produit et d’un conditionnement, ajout d’un
+  code-barres, activation du produit puis recherche serveur du produit actif ;
+- les frontières HTTP sont simulées selon le pattern E2E existant et les payloads
+  envoyés sont vérifiés, notamment les décimaux exacts et les zéros initiaux du
+  code-barres ;
+- la découverte Playwright ciblée trouve exactement un scénario ; ESLint et
+  Prettier ciblés passent ;
+- la suite frontend complète reste verte : 20 tests Foundation, 10 unitaires,
+  73 composants et 32 intégration ; TypeScript, ESLint, Prettier, builds Admin/POS
+  et Deptrac couches/modules passent également ;
+- l’exécution navigateur locale reste impossible avec Playwright 1.57.0, qui ne
+  fournit pas Chromium pour `ubuntu26.04-x64`. Le job CI existant installe
+  Chromium et doit fournir la preuve d’exécution avant validation du critère 43.
+
+Commit prévu : `test(admin): verify catalog administration flow`.

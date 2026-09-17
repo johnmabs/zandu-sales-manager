@@ -1,6 +1,6 @@
 # Epic F3.42 — E2E Catalog flow
 
-**Statut :** Backlog d’implémentation
+**Statut :** Implémenté — validation Chromium attendue en CI
 
 Admin login → Catalog → Create category → Create product → Create packaging → Add barcode → Activate product → Product appears in search.
 

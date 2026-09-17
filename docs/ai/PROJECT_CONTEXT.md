@@ -69,6 +69,6 @@ If two sources conflict, do not silently choose. Identify the conflict and prefe
 - Frontend Lot F3 — Admin Catalog & Pricing
 
 The backend Lots 0–7, Frontend Foundation, F1 and F2 are complete. F3 is
-implemented through F3.41; its Catalog and Pricing browser E2E scenarios
-(F3.42/F3.43) and exit gate remain open. Use `IMPLEMENTATION_STATUS.md` for
-the dated validation snapshot.
+implemented through F3.42; the Catalog browser scenario awaits CI execution,
+while the Pricing browser E2E (F3.43) and exit gate remain open. Use
+`IMPLEMENTATION_STATUS.md` for the dated validation snapshot.
