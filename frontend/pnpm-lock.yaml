@@ -74,6 +74,9 @@ importers:
       '@zandu/design-tokens':
         specifier: workspace:*
         version: link:../../packages/design-tokens
+      '@zandu/domain-formatting':
+        specifier: workspace:*
+        version: link:../../packages/domain-formatting
       '@zandu/error-contract':
         specifier: workspace:*
         version: link:../../packages/error-contract

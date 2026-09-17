@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.2   TERMINÉ   Foundation, navigation et contexte magasin Inventory
-F4.3        À FAIRE   Stock positions workspace
+F4.1–F4.3   TERMINÉ   Foundation, navigation et workspace des positions Stock
+F4.4        À FAIRE   Stock position details
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -190,7 +190,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
-Tests frontend        20 Foundation, 10 unitaires, 78 composants, 37 intégration
+Tests frontend        20 Foundation, 10 unitaires, 83 composants, 37 intégration
 Builds frontend       Admin (39 routes) et POS OK
 PHPStan               OK
 PHP-CS-Fixer          OK
@@ -251,7 +251,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] Planning Frontend Lot F4 Admin Inventory
 [x] F4.1 Inventory feature foundation
 [x] F4.2 Inventory navigation and store context
-[ ] F4.3 Stock positions workspace
+[x] F4.3 Stock positions workspace
+[ ] F4.4 Stock position details
 ```
 
 ## Références
@@ -11552,7 +11553,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.2 terminés ; F4.3 prochain**
+**Statut : EN COURS — F4.1–F4.3 terminés ; F4.4 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11620,3 +11621,32 @@ TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
 Commit prévu : `feat(admin): add inventory navigation and store context`.
+
+## Epic F4.3 — Stock positions workspace
+
+**Statut : TERMINÉ — liste Stock enrichie et filtres Catalog serveur**
+
+- `/admin/inventory/positions` charge la page Stock du magasin actif et
+  l’enrichit avec les métadonnées Product obtenues par le contrat public
+  `FoundationApi`, sans import interne depuis la feature Catalog ;
+- recherche, statut et type Produit sont normalisés puis transmis au serveur
+  Catalog ; l’intersection conserve strictement l’ordre de la page Stock et ne
+  crée ni tri ni pagination client ;
+- code, nom, quantité disponible et état d’initialisation sont affichés avec un
+  lien vers le futur détail F4.4 ; les quantités exactes sont formatées sans
+  conversion flottante selon la locale du magasin ;
+- sans `PRODUCT_READ`, les positions restent lisibles par identifiant Produit et
+  les filtres de métadonnées sont explicitement désactivés ; aucun appel Catalog
+  n’est effectué ;
+- les clés de cache incluent organisation, magasin, filtres et version
+  d’autorisation ; aucun appel Stock ou Catalog ne part pour un magasin hors
+  scope ;
+- 5 tests composants couvrent enrichissement, ordre serveur, décimal exact,
+  filtres HTTP, mode sans métadonnées, erreur corrélée/retry et isolation Store.
+
+Validations : test composant ciblé 5/5 et frontière Inventory 1/1 ; suite
+frontend 20 Foundation, 10 unitaires, 83 composants et 37 intégration ; ESLint,
+Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
+verts ; `git diff --check`.
+
+Commit prévu : `feat(admin): add stock positions workspace`.
