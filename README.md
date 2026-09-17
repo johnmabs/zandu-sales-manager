@@ -37,7 +37,7 @@ Le projet suit une architecture en **monolithe modulaire inspirée du Domain-Dri
 | F1  | Admin Stores                      | Terminé — Gate F1 validé            |
 | F2  | Admin Users & Access              | Terminé — Gate F2 validé            |
 | F3  | Admin Catalog & Pricing           | En cours — F3.1 à F3.43 implémentés |
-| F4  | Admin Inventory                   | En cours — F4.1 à F4.3 terminés     |
+| F4  | Admin Inventory                   | En cours — F4.1 à F4.4 terminés     |
 
 Les Lots backend 0 à 7, le Frontend Foundation et les Lots Admin F1/F2 sont
 clos. L'Admin expose sous `/admin` les parcours Stores, Users & Access, Catalog
@@ -45,7 +45,7 @@ et Pricing. F3 couvre le code fonctionnel, les tests unitaires, composants et
 intégration ainsi que les scénarios navigateur Catalog/Pricing F3.42/F3.43. Ces
 deux scénarios attendent leur validation Chromium en CI avant le Gate F3. Le POS
 conserve son shell de fondation. Le Lot F4 Admin Inventory est planifié ; sa
-fondation, sa navigation contextualisée et son workspace de positions F4.1–F4.3
+fondation, sa navigation contextualisée et ses écrans de positions F4.1–F4.4
 sont terminés.
 
 L'état détaillé de l'implémentation, les Epics terminés, les validations et les preuves de tests sont maintenus dans :

@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.3   TERMINÉ   Foundation, navigation et workspace des positions Stock
-F4.4        À FAIRE   Stock position details
+F4.1–F4.4   TERMINÉ   Foundation, navigation, liste et détail des positions Stock
+F4.5        À FAIRE   Initialize stock
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -190,7 +190,7 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
-Tests frontend        20 Foundation, 10 unitaires, 83 composants, 37 intégration
+Tests frontend        20 Foundation, 10 unitaires, 89 composants, 37 intégration
 Builds frontend       Admin (39 routes) et POS OK
 PHPStan               OK
 PHP-CS-Fixer          OK
@@ -252,7 +252,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F4.1 Inventory feature foundation
 [x] F4.2 Inventory navigation and store context
 [x] F4.3 Stock positions workspace
-[ ] F4.4 Stock position details
+[x] F4.4 Stock position details
+[ ] F4.5 Initialize stock
 ```
 
 ## Références
@@ -11553,7 +11554,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.3 terminés ; F4.4 prochain**
+**Statut : EN COURS — F4.1–F4.4 terminés ; F4.5 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11650,3 +11651,28 @@ Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
 verts ; `git diff --check`.
 
 Commit prévu : `feat(admin): add stock positions workspace`.
+
+## Epic F4.4 — Stock position details
+
+**Statut : TERMINÉ — détail exact et projection tenant/store défensive**
+
+- la route dynamique `/admin/inventory/positions/{productId}` charge la position
+  du magasin actif avec une clé de cache organisation/store/produit/version
+  d’autorisation ;
+- quantité disponible, état d’initialisation, version et identifiants Stock et
+  Produit sont affichés sans conversion flottante, selon la locale du magasin ;
+- les métadonnées Product sont obtenues par le contrat public lorsque
+  `PRODUCT_READ` est disponible, avec repli explicite sur l’identifiant sinon ;
+- toute réponse hors organisation, magasin, produit ou scope accessible est
+  projetée comme une position introuvable et ne déclenche aucune lecture Product ;
+- les liens vers mouvements et valorisation portent le produit courant ; le lien
+  mouvements respecte `STOCK_MOVEMENT_READ` et la valorisation suit le contrat
+  serveur actuel `INVENTORY_READ` ;
+- les erreurs conservent leur corrélation et proposent un retry sûr de lecture.
+
+Validations : test composant ciblé 6/6 ; suite frontend 20 Foundation, 10
+unitaires, 89 composants et 37 intégration ; ESLint, Prettier, TypeScript,
+builds Admin (39 routes)/POS et Deptrac couches/modules verts ;
+`git diff --check`.
+
+Commit prévu : `feat(admin): add stock position details`.
