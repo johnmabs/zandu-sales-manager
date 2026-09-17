@@ -156,6 +156,76 @@ final class DoctrineStoreRepositoryTest extends KernelTestCase
         ));
     }
 
+    public function testStoreListPredicatesRemainBackedByPostgreSqlIndexes(): void
+    {
+        $this->insertStoresForExplain(self::ORGANIZATION_A, '10000000', 512);
+        $this->insertStoresForExplain(self::ORGANIZATION_B, '20000000', 4096);
+        $this->entityManager->getConnection()->executeStatement('ANALYZE organization.stores');
+
+        [$tenantPlan, $selectedStoresPlan] = $this->transactions->transactional(
+            $this->organizationId(self::ORGANIZATION_A),
+            function (): array {
+                $connection = $this->entityManager->getConnection();
+
+                $tenantPlan = $connection->fetchFirstColumn(<<<'SQL'
+EXPLAIN (FORMAT TEXT, COSTS OFF)
+SELECT id, organization_id, name
+FROM organization.stores
+WHERE organization_id = ?
+ORDER BY name ASC, id ASC
+SQL, [self::ORGANIZATION_A]);
+                $selectedStoresPlan = $connection->fetchFirstColumn(<<<'SQL'
+EXPLAIN (FORMAT TEXT, COSTS OFF)
+SELECT id, organization_id, name
+FROM organization.stores
+WHERE organization_id = ? AND id IN (?, ?)
+ORDER BY name ASC, id ASC
+SQL, [self::ORGANIZATION_A, self::STORE_A, self::STORE_A_DUPLICATE]);
+
+                return [implode("\n", $tenantPlan), implode("\n", $selectedStoresPlan)];
+            },
+        );
+
+        self::assertMatchesRegularExpression(
+            '/store_tenant_(?:idx|id_unique)/',
+            $tenantPlan,
+            $tenantPlan,
+        );
+        self::assertMatchesRegularExpression(
+            '/(?:stores_pkey|store_tenant_id_unique)/',
+            $selectedStoresPlan,
+            $selectedStoresPlan,
+        );
+        self::assertStringNotContainsString('Seq Scan', $tenantPlan);
+        self::assertStringNotContainsString('Seq Scan', $selectedStoresPlan);
+    }
+
+    private function insertStoresForExplain(string $organizationId, string $uuidPrefix, int $count): void
+    {
+        $this->entityManager->getConnection()->executeStatement(<<<'SQL'
+INSERT INTO organization.stores (
+    id, organization_id, code, name, status, address, time_zone, currency, locale,
+    created_by, created_at, updated_by, updated_at, version
+)
+SELECT
+    (? || '-0000-7000-8000-' || lpad(series::text, 12, '0'))::uuid,
+    ?,
+    'EXPLAIN-' || series,
+    'Explain store ' || lpad(series::text, 4, '0'),
+    'ACTIVE',
+    NULL,
+    'Africa/Brazzaville',
+    'XAF',
+    'fr_CG',
+    ?,
+    NOW(),
+    ?,
+    NOW(),
+    1
+FROM generate_series(1, ?) AS series
+SQL, [$uuidPrefix, $organizationId, self::ACTOR_ID, self::ACTOR_ID, $count]);
+    }
+
     public function testStoreClosureRoundTripsAndIsHiddenFromAnotherTenant(): void
     {
         $store = $this->store(self::STORE_A, self::ORGANIZATION_A, 'CENTRE');
