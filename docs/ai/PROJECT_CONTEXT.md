@@ -67,8 +67,13 @@ If two sources conflict, do not silently choose. Identify the conflict and prefe
 - Frontend Lot F1 — Admin Stores
 - Frontend Lot F2 — Admin Users & Access
 - Frontend Lot F3 — Admin Catalog & Pricing
+- Frontend Lot F4 — Admin Inventory
 
 The backend Lots 0–7, Frontend Foundation, F1 and F2 are complete. F3 is
 implemented through F3.43; both Catalog and Pricing browser scenarios await CI
 execution, so the exit gate remains open. Use `IMPLEMENTATION_STATUS.md` for the
 dated validation snapshot.
+
+F4 Admin Inventory is now planned under
+`docs/ai/lots/frontend-admin-inventory/`; implementation starts with F4.1 while
+the F3 browser gate remains explicitly pending.

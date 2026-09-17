@@ -148,6 +148,8 @@ F3.1–F3.41 TERMINÉ   Administration Catalog & Pricing et tests automatisés h
 F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en CI
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
+F4 planning PRÊT      Admin Inventory découpé en 23 Epics
+F4.1        À FAIRE   Inventory feature foundation
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -245,6 +247,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F3.43 scénario E2E Pricing implémenté
 [ ] F3.43 exécution Chromium verte en CI
 [ ] Gate F3 Admin Catalog & Pricing
+[x] Planning Frontend Lot F4 Admin Inventory
+[ ] F4.1 Inventory feature foundation
 ```
 
 ## Références
@@ -11539,3 +11543,23 @@ Commit prévu : `test(admin): verify catalog administration flow`.
   fournir la preuve d’exécution des scénarios F3.42/F3.43 avant le Gate F3.
 
 Commit prévu : `test(admin): verify pricing administration flow`.
+
+## Frontend Lot F4 — Admin Inventory
+
+**Statut : PLANIFIÉ — 23 Epics ; F4.1 prochain**
+
+- spécification source :
+  `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
+- routage compact : `docs/ai/lots/frontend-admin-inventory/INDEX.md`, contexte,
+  23 Epics et cinq supports ciblés ;
+- périmètre : positions et mouvements, initialisation/ajustements, valorisation
+  confidentielle, transferts inter-store et inventaires physiques ;
+- dépendances explicites sur les contrats backend existants, Catalog/Stores et
+  les fondations frontend, sans dépendance implicite aux numéros de Lots ;
+- Gate F3 toujours ouvert tant que les scénarios Chromium F3.42/F3.43 n’ont pas
+  fourni leur preuve CI ; ce point n’est pas masqué par le démarrage de F4.
+
+Validation documentaire : source, index, contexte, 23 fichiers Epic et cinq
+supports présents ; liens locaux et `git diff --check` à contrôler avant commit.
+
+Commit prévu : `docs(planning): add frontend inventory lot F4`.
