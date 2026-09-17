@@ -22,6 +22,48 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertSame('0.1.0', $openApi->getInfo()->getVersion());
     }
 
+    public function testCollectionsExposeThePaginationContractMatchingTheirVolume(): void
+    {
+        self::bootKernel();
+        $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
+        $pageCollections = 0;
+        $cursorCollections = 0;
+
+        foreach ($openApi->getPaths()->getPaths() as $path => $pathItem) {
+            $operation = $pathItem->getGet();
+            if (null === $operation) {
+                continue;
+            }
+
+            $parameters = [];
+            foreach ($operation->getParameters() ?? [] as $parameter) {
+                $parameters[$parameter->getName()] = $parameter;
+            }
+
+            if (!isset($parameters['page']) && !isset($parameters['cursor'])) {
+                continue;
+            }
+
+            self::assertArrayHasKey('limit', $parameters, $path);
+            self::assertArrayNotHasKey('itemsPerPage', $parameters, $path);
+            self::assertSame(30, $parameters['limit']->getSchema()['default'], $path);
+            self::assertSame(100, $parameters['limit']->getSchema()['maximum'], $path);
+
+            if (isset($parameters['cursor'])) {
+                ++$cursorCollections;
+                self::assertArrayNotHasKey('page', $parameters, $path);
+                $responses = $operation->getResponses();
+                self::assertArrayHasKey('X-Next-Cursor', $responses['200']->getHeaders() ?? [], $path);
+            } else {
+                ++$pageCollections;
+                self::assertArrayHasKey('page', $parameters, $path);
+            }
+        }
+
+        self::assertSame(12, $pageCollections);
+        self::assertSame(10, $cursorCollections);
+    }
+
     public function testEveryInteractivePatchRequiresAnExpectedVersion(): void
     {
         self::bootKernel();

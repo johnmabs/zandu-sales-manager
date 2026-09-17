@@ -49,6 +49,10 @@ final class CategoryManagementWorkflowTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertEqualsCanonicalizing([$root['id'], $child['id']], array_column($this->payload($client), 'id'));
 
+        $client->request('GET', '/api/categories?page=2&limit=1', server: $this->headers($token));
+        self::assertResponseIsSuccessful();
+        self::assertSame([$child['id']], array_column($this->payload($client), 'id'));
+
         $client->request('GET', '/api/categories/' . $child['id'], server: $this->headers($token));
         self::assertResponseIsSuccessful();
         self::assertSame($root['id'], $this->payload($client)['parentCategoryId']);

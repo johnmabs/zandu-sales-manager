@@ -15,6 +15,7 @@ use ApiPlatform\Metadata\{ApiResource, GetCollection, Link};
             'productId' => new Link(fromClass: InventoryValuationResource::class, identifiers: ['id']),
         ],
         provider: InventoryValuationMovementProvider::class,
+        extraProperties: ['zandu_cursor_pagination' => true, 'zandu_cursor_direction' => 'asc'],
     ),
 ])]
 final readonly class InventoryValuationMovementResource

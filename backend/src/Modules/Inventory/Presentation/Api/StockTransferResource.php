@@ -7,7 +7,7 @@ namespace Zandu\Modules\Inventory\Presentation\Api;
 use ApiPlatform\Metadata\{ApiResource, Delete, Get, GetCollection, Link, Patch, Post};
 
 #[ApiResource(operations: [
-    new GetCollection(name: 'stock_transfer_list', uriTemplate: '/stock-transfers', provider: StockTransferProvider::class),
+    new GetCollection(name: 'stock_transfer_list', uriTemplate: '/stock-transfers', provider: StockTransferProvider::class, extraProperties: ['zandu_cursor_pagination' => true, 'zandu_cursor_direction' => 'desc']),
     new Post(name: 'stock_transfer_create', uriTemplate: '/stock-transfers', read: false, input: StockTransferCreateInput::class, processor: StockTransferProcessor::class),
     new Get(name: 'stock_transfer_get', uriTemplate: '/stock-transfers/{id}', provider: StockTransferProvider::class),
     new Post(name: 'stock_transfer_line_add', uriTemplate: '/stock-transfers/{id}/lines', read: false, input: StockTransferLineInput::class, processor: StockTransferProcessor::class),

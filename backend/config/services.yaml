@@ -84,6 +84,12 @@ services:
         arguments:
             $decorated: '@Zandu\Platform\Api\OpenApi\AdministrationOpenApiFactory.inner'
 
+    Zandu\Platform\Api\State\PaginatedCollectionProvider:
+        decorates: 'api_platform.state_provider.locator'
+        decoration_priority: -10
+        arguments:
+            $decorated: '@Zandu\Platform\Api\State\PaginatedCollectionProvider.inner'
+
     Zandu\Modules\Organization\Domain\OrganizationRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository
 

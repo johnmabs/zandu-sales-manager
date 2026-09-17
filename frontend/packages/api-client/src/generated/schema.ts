@@ -4758,8 +4758,10 @@ export interface operations {
   cash_movement_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path: {
@@ -4775,6 +4777,8 @@ export interface operations {
       /** @description CashMovementResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -5087,6 +5091,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path: {
@@ -6692,6 +6698,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -8399,8 +8407,10 @@ export interface operations {
   goods_receipt_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path?: never;
@@ -8411,6 +8421,8 @@ export interface operations {
       /** @description GoodsReceiptResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -8871,8 +8883,10 @@ export interface operations {
   inventory_valuation_movement_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path: {
@@ -8888,6 +8902,8 @@ export interface operations {
       /** @description InventoryValuationMovementResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -9036,6 +9052,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path: {
@@ -9990,6 +10008,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -12055,6 +12075,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -13479,6 +13501,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path: {
@@ -14438,8 +14462,10 @@ export interface operations {
   product_price_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path?: never;
@@ -14450,6 +14476,8 @@ export interface operations {
       /** @description ProductPriceResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -15541,8 +15569,10 @@ export interface operations {
   product_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path?: never;
@@ -15553,6 +15583,8 @@ export interface operations {
       /** @description ProductResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -16800,8 +16832,10 @@ export interface operations {
   purchase_order_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path?: never;
@@ -16812,6 +16846,8 @@ export interface operations {
       /** @description PurchaseOrderResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -17840,6 +17876,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path: {
@@ -17921,6 +17959,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -18552,8 +18592,10 @@ export interface operations {
   stock_count_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path?: never;
@@ -18564,6 +18606,8 @@ export interface operations {
       /** @description StockCountResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -19826,8 +19870,10 @@ export interface operations {
   stock_movement_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path: {
@@ -19841,6 +19887,8 @@ export interface operations {
       /** @description StockMovementResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -19987,8 +20035,10 @@ export interface operations {
   stock_product_movement_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path: {
@@ -20004,6 +20054,8 @@ export interface operations {
       /** @description StockMovementResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -20152,6 +20204,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path: {
@@ -20797,8 +20851,10 @@ export interface operations {
   stock_transfer_list: {
     parameters: {
       query?: {
-        /** @description The collection page number */
-        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+        /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
+        cursor?: string;
       };
       header?: never;
       path?: never;
@@ -20809,6 +20865,8 @@ export interface operations {
       /** @description StockTransferResource collection */
       200: {
         headers: {
+          /** @description Opaque cursor for the next page; absent on the last page. */
+          "X-Next-Cursor"?: string;
           [name: string]: unknown;
         };
         content: {
@@ -22239,6 +22297,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -23504,6 +23564,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;
@@ -23815,6 +23877,8 @@ export interface operations {
       query?: {
         /** @description The collection page number */
         page?: number;
+        /** @description The number of items per page */
+        limit?: number;
       };
       header?: never;
       path?: never;

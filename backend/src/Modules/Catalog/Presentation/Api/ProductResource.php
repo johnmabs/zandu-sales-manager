@@ -11,7 +11,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 
 #[ApiResource(operations: [
-    new GetCollection(name: 'product_list', uriTemplate: '/products', provider: ProductProvider::class),
+    new GetCollection(name: 'product_list', uriTemplate: '/products', provider: ProductProvider::class, extraProperties: ['zandu_cursor_pagination' => true, 'zandu_cursor_direction' => 'asc']),
     new Post(name: 'product_create', uriTemplate: '/products', input: ProductCreateInput::class, processor: ProductProcessor::class),
     new Get(name: 'product_get', uriTemplate: '/products/{id}', provider: ProductProvider::class),
     new Patch(name: 'product_update', uriTemplate: '/products/{id}', read: false, input: ProductUpdateInput::class, processor: ProductProcessor::class),

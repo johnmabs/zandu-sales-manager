@@ -23,7 +23,15 @@ api_platform:
             mime_types:
                 - 'application/merge-patch+json'
                 - 'application/json'
+    collection:
+        pagination:
+            page_parameter_name: page
+            items_per_page_parameter_name: limit
     defaults:
         stateless: true
+        pagination_enabled: true
+        pagination_items_per_page: 30
+        pagination_client_items_per_page: true
+        pagination_maximum_items_per_page: 100
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']

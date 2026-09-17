@@ -7,7 +7,7 @@ namespace Zandu\Modules\Purchasing\Presentation\Api;
 use ApiPlatform\Metadata\{ApiResource, Delete, Get, GetCollection, Patch, Post};
 
 #[ApiResource(operations: [
-    new GetCollection(name: 'purchase_order_list', uriTemplate: '/purchase-orders', provider: PurchaseOrderProvider::class),
+    new GetCollection(name: 'purchase_order_list', uriTemplate: '/purchase-orders', provider: PurchaseOrderProvider::class, extraProperties: ['zandu_cursor_pagination' => true, 'zandu_cursor_direction' => 'desc']),
     new Post(name: 'purchase_order_create', uriTemplate: '/stores/{storeId}/purchase-orders', read: false, input: PurchaseOrderCreateInput::class, processor: PurchaseOrderProcessor::class),
     new Get(name: 'purchase_order_get', uriTemplate: '/purchase-orders/{id}', provider: PurchaseOrderProvider::class),
     new Post(name: 'purchase_order_line_add', uriTemplate: '/purchase-orders/{id}/lines', read: false, input: PurchaseOrderLineInput::class, processor: PurchaseOrderProcessor::class),

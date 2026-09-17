@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Zandu\Platform\Api\OpenApi;
 
 use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
+use ApiPlatform\OpenApi\Model\Header;
 use ApiPlatform\OpenApi\Model\MediaType;
 use ApiPlatform\OpenApi\Model\Operation;
 use ApiPlatform\OpenApi\Model\Parameter;
@@ -16,6 +17,19 @@ use ApiPlatform\OpenApi\OpenApi;
 
 final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInterface
 {
+    private const array CURSOR_COLLECTION_OPERATIONS = [
+        'cash_movement_list',
+        'goods_receipt_list',
+        'inventory_valuation_movement_list',
+        'product_list',
+        'product_price_list',
+        'purchase_order_list',
+        'stock_count_list',
+        'stock_movement_list',
+        'stock_product_movement_list',
+        'stock_transfer_list',
+    ];
+
     private const array ERRORS = [
         400 => ['VALIDATION_ERROR', 'The request payload is invalid.'],
         401 => ['UNAUTHENTICATED', 'Authentication is required.'],
@@ -42,8 +56,46 @@ final readonly class AdministrationOpenApiFactory implements OpenApiFactoryInter
         $this->documentAuthentication($openApi);
         $this->documentOnboarding($openApi);
         $this->requireExpectedVersionOnPatches($openApi);
+        $this->documentCursorPagination($openApi);
 
         return $openApi;
+    }
+
+    private function documentCursorPagination(OpenApi $openApi): void
+    {
+        foreach ($openApi->getPaths()->getPaths() as $path => $pathItem) {
+            $operation = $pathItem->getGet();
+            if (null === $operation || !in_array($operation->getOperationId(), self::CURSOR_COLLECTION_OPERATIONS, true)) {
+                continue;
+            }
+
+            $parameters = array_values(array_filter(
+                $operation->getParameters() ?? [],
+                static fn(Parameter $parameter): bool => 'page' !== $parameter->getName(),
+            ));
+            $parameters[] = new Parameter(
+                'cursor',
+                'query',
+                'Opaque cursor returned by the preceding response in X-Next-Cursor.',
+                schema: ['type' => 'string'],
+            );
+            $operation = $operation->withParameters($parameters);
+
+            foreach ($operation->getResponses() as $status => $response) {
+                if (!str_starts_with((string) $status, '2')) {
+                    continue;
+                }
+
+                $headers = $response->getHeaders() ?? new \ArrayObject();
+                $headers['X-Next-Cursor'] = new Header(
+                    description: 'Opaque cursor for the next page; absent on the last page.',
+                    schema: ['type' => 'string'],
+                );
+                $operation = $operation->withResponse($status, $response->withHeaders($headers));
+            }
+
+            $openApi->getPaths()->addPath($path, $pathItem->withGet($operation));
+        }
     }
 
     private function requireExpectedVersionOnPatches(OpenApi $openApi): void
