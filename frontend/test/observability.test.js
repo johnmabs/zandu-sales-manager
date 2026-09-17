@@ -70,7 +70,11 @@ test("API failures keep correlation and operational metadata but exclude credent
       body: { password: "never-exported" },
       method: "POST",
       path: "stores",
-      telemetry: { feature: "stores", operation: "create", route: "/admin/stores/new?email=secret" },
+      telemetry: {
+        feature: "stores",
+        operation: "create",
+        route: "/admin/stores/new?email=secret",
+      },
     }),
   );
 

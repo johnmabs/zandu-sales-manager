@@ -20,7 +20,9 @@ type StoreListProperties = Readonly<{
 
 const columns: readonly AdminTableColumn<StoreResource>[] = [
   {
-    cell: (store) => <Link href={`/admin/stores/${encodeURIComponent(store.id)}`}>{store.name}</Link>,
+    cell: (store) => (
+      <Link href={`/admin/stores/${encodeURIComponent(store.id)}`}>{store.name}</Link>
+    ),
     header: "Nom",
     id: "name",
   },
