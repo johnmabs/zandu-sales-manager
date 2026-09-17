@@ -16,8 +16,9 @@
 /admin/pricing/product-prices/{productPriceId}
 ```
 
-Le préfixe /admin est une proposition du backlog ; l’Admin existant utilise /app.
-F3.3 retient le shell/routage établi : remplacer /admin par /app dans ces routes. Les entrées Catalogue et Tarification possèdent leurs sous-navigations ; seuls les écrans livrés dans IMPLEMENTATION_STATUS.md exposent leurs capacités métier.
+Le shell protégé Admin utilise le préfixe `/admin`. Les entrées Catalogue et
+Tarification possèdent leurs sous-navigations ; seuls les écrans livrés dans
+`IMPLEMENTATION_STATUS.md` exposent leurs capacités métier.
 
 ## Navigation et vues
 

@@ -1,6 +1,6 @@
 # Epic F3.17 — Barcode validation UX
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Préserver les zéros initiaux, appliquer le trim selon contrat, éviter tout parsing numérique. L’unicité réelle reste serveur ; mapper l’erreur de doublon depuis le contrat API.
 

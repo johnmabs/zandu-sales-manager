@@ -32,7 +32,7 @@ sur une `CashSession OPEN`.
 Un refund ne modifie jamais automatiquement Inventory.
 
 L’ownership et le workflow sont fixés par
-[l’ADR-0022](../architecture/adr/0022-cash-refund-ownership-and-workflow.md).
+[l’ADR-0022](../../../specs/architecture/adr/0022-cash-refund-ownership-and-workflow.md).
 
 Commits :
 

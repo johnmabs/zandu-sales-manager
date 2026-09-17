@@ -1,6 +1,6 @@
 # Epic F3.31 — No price state
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 L’absence de prix est un état métier explicite : le backend utilise `ProductPriceNotFound`, pas un prix zéro.
 

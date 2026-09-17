@@ -1,6 +1,6 @@
 # Epic F3.39 — Responsive Admin
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Priorité desktop, laptop, tablette utilisable. Product Details peut utiliser tabs/panels General, Packaging, Pricing sur petits écrans.
 

@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 2 : Catalog & basic Pricing
 
 **Version :** 1.0
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé — Gate Lot 2 validé le 26 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

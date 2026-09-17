@@ -1,6 +1,6 @@
 # Epic F3.23 — Product Price list
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer `/admin/pricing/product-prices`. Afficher selon contrat Product, Packaging, Price List, Amount, Currency, Status et Validity.
 

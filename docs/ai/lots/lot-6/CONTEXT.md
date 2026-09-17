@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 6 : Purchasing & Goods Receipts
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation  
+**Statut :** Terminé — Gate Lot 6 validé le 31 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

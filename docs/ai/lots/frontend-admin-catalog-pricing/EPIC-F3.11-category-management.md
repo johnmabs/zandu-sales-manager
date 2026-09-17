@@ -1,6 +1,6 @@
 # Epic F3.11 — Category management
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Supporter Create, Update, Move, Activate, Deactivate, Archive selon les endpoints backend existants.
 

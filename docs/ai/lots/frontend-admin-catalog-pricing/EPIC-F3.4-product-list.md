@@ -1,6 +1,6 @@
 # Epic F3.4 — Product list
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer `/admin/catalog/products`. Utiliser les filtres serveur `status`, `type`, `categoryId`, `productCode`, `search`. La recherche porte sur code et nom ; le tri serveur est déterministe par code. Ne pas charger tous les produits pour filtrer localement.
 

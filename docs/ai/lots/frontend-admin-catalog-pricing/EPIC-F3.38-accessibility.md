@@ -1,6 +1,6 @@
 # Epic F3.38 — Accessibility
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Couvrir tables clavier, navigation catégorie/arbre accessible, formulaires produit, dialogues lifecycle accessibles, money inputs avec labels, barcode inputs, restauration du focus et association des erreurs.
 

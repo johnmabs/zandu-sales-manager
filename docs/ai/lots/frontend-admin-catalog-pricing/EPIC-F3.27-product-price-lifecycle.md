@@ -1,6 +1,6 @@
 # Epic F3.27 — Product Price lifecycle
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Supporter Activate, Deactivate, Archive. Les prix archivés restent historiquement pertinents.
 

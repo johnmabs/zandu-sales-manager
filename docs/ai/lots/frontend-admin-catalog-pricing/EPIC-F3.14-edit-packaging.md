@@ -1,6 +1,6 @@
 # Epic F3.14 — Edit Packaging
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Éditer les propriétés commerciales autorisées. Ne pas présenter conversionFactor comme modifiable lorsque le backend l’interdit.
 

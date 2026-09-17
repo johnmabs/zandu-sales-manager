@@ -9,6 +9,11 @@ La roadmap ne justifie pas de charger les Lots précédents en entier.
 
 ## Gate F3
 
+**État au 17 septembre 2026 :** en attente. Les critères 1–42 et 45–47 sont
+couverts par l’implémentation et les validations automatisées actuelles. Les
+critères 43–44 restent ouverts avec F3.42/F3.43, faute de scénarios E2E Catalog
+et Pricing dans `frontend/test/e2e/`.
+
 1. Catalog navigation works
 2. Product list loads
 3. Search works server-side

@@ -1,6 +1,6 @@
 # Epic F3.26 — Money input
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Réutiliser les primitives Money du Foundation. `parseFloat(...)` est interdit comme représentation métier durable ; les montants backend utilisent une représentation décimale exacte.
 

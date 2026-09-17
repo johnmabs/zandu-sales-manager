@@ -1,6 +1,6 @@
 # Epic F3.18 — Price List list
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer `/admin/pricing/price-lists`. Afficher code, name, currency, status, scope, priority et validity.
 

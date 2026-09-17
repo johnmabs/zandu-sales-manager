@@ -1,6 +1,6 @@
 # Epic F3.5 — Product filters
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Permettre au minimum Search, Status, Type et Category. Proposition : `[Search product...]` ; Status = All / Draft / Active / Inactive / Archived ; Type = All / Physical / Service.
 

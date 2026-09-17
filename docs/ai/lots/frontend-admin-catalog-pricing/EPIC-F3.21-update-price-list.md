@@ -1,6 +1,6 @@
 # Epic F3.21 — Update Price List
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Réutiliser le contrat réel de mise à jour. Après mutation : invalider PriceList, sa collection et les queries effective-price affectées.
 

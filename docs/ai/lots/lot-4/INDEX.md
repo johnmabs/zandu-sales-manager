@@ -1,6 +1,6 @@
 # lot-4 — Scoped Codex Index
 
-Original source: `docs/planning/zandu-lot-4-sales-complete-sale-cash.md`. Files below are **lossless top-level splits** of that source; use them to avoid loading the whole Lot.
+Original source: `docs/specs/planning/zandu-lot-4-sales-complete-sale-cash.md`. Files below are **lossless top-level splits** of that source; use them to avoid loading the whole Lot.
 
 ## Default read set
 

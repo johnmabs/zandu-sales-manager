@@ -1,6 +1,6 @@
 # Epic F3.20 — Create Price List
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Formulaire : code, name, currency, scope, priority, validFrom?, validTo?. Le backend valide les périodes et devises.
 

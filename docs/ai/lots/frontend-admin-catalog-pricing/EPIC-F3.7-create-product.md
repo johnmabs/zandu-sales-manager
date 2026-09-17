@@ -1,6 +1,6 @@
 # Epic F3.7 — Create Product
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Flux Products → New Product → formulaire → POST → Product Details. Les champs exacts viennent du contrat OpenAPI. Le frontend ne duplique pas les invariants serveur.
 

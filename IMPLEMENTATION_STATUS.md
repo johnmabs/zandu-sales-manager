@@ -6,6 +6,10 @@ Ce document suit l’avancement réel de l’implémentation de **Zandu Sales Ma
 Il ne remplace ni la spécification DDD, ni les ADR, ni le backlog du Lot 0.  
 Son rôle est de conserver une trace simple de ce qui a effectivement été réalisé dans le repository.
 
+La vue d’ensemble ci-dessous est la synthèse courante. Les sections suivantes
+conservent l’historique incrémental ; en cas d’écart de chiffres ou de chemins,
+la synthèse datée et le code actuel prévalent.
+
 ---
 
 # Vue d’ensemble
@@ -101,7 +105,7 @@ API Transfer TERMINÉ  Workflow StockTransfer complet, tenant/scopes et OpenAPI
 Gate Lot 7  TERMINÉ   M3 — gestion complète du stock
 ```
 
-Le Frontend Foundation est démarré :
+Le Frontend Foundation est terminé :
 
 ```text
 Epic F0.1   TERMINÉ   Workspace pnpm, lockfile unique et résolution interne
@@ -134,6 +138,20 @@ Epic F0.26  TERMINÉ   Observabilité frontend structurée
 Epic F0.27  TERMINÉ   Pipeline CI frontend complet
 ```
 
+Les Lots Admin F1 et F2 sont terminés. F3 est fonctionnel mais son Gate reste
+ouvert :
+
+```text
+Gate F1     TERMINÉ   Administration complète des Stores
+Gate F2     TERMINÉ   Administration Users & Access
+F3.1–F3.41 TERMINÉ   Administration Catalog & Pricing et tests automatisés hors E2E
+F3.42       À FAIRE   Parcours E2E Catalog
+F3.43       À FAIRE   Parcours E2E Pricing
+Gate F3     EN ATTENTE Validation des deux parcours E2E navigateur
+```
+
+Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
+
 Le détail du Lot 5 clôturé :
 
 ```text
@@ -163,19 +181,23 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 3 septembre 2026 :
+État consolidé au 17 septembre 2026 :
 
 ```text
 Branche              main
-Migrations           Version20260831170000 appliquée en dernier
-Tests                 746 tests, 3 767 assertions
+Migrations           Version20260916233000 appliquée en dernier (test)
+Tests backend         831 tests, 4 394 assertions
+Tests frontend        20 Foundation, 10 unitaires, 73 composants, 32 intégration
+Builds frontend       Admin (29 routes) et POS OK
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
 Deptrac modules       0 violation, 10 dépendances non classées
 Composer audit        aucune vulnérabilité connue
+ESLint / Prettier     OK
+TypeScript            OK
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
-Worktree              changements API StockCount non commités
+E2E F3                non implémentés ; Gate F3 non validé
 ```
 
 ## Definition of Done globale
@@ -208,18 +230,37 @@ Worktree              changements API StockCount non commités
 [x] Gate Lot 3 validé
 [x] première vente cash M2 validée
 [x] Gate Lot 4 validé
+[x] Inventory Costing et Returns validés
+[x] Gate Lot 5 validé
+[x] Purchasing et Goods Receipts validés
+[x] Gate Lot 6 validé
+[x] StockTransfer et StockCount validés
+[x] Gate Lot 7 / M3 validé
+[x] Frontend Foundation validé
+[x] Gate F1 Admin Stores validé
+[x] Gate F2 Admin Users & Access validé
+[x] F3.1 à F3.41 livrés et testés
+[ ] F3.42 parcours E2E Catalog
+[ ] F3.43 parcours E2E Pricing
+[ ] Gate F3 Admin Catalog & Pricing
 ```
 
 ## Références
 
 - Spécification d’architecture DDD v1.1
-- ADR techniques 0001–0022
+- ADR techniques 0001–0026
 - `zandu-lot-0-architecture-executable.md`
 - `zandu-lot-1-administration-operationnelle.md`
 - `zandu-lot-2-catalog-basic-pricing.md`
 - `zandu-lot-3-inventory-cash-foundations.md`
 - `zandu-lot-4-sales-complete-sale-cash.md`
 - `zandu-lot-5-inventory-costing-returns.md`
+- `zandu-lot-6-purchasing-goods-receipts.md`
+- `zandu-lot-7-stock-transfer-stock-count.md`
+- `zandu-frontend-foundation.md`
+- `zandu-frontend-lot-f1-admin-stores.md`
+- `zandu-frontend-lot-f2-admin-users-access.md`
+- `zandu-frontend-lot-f3-admin-catalog-pricing.md`
 
 ---
 
@@ -1282,7 +1323,7 @@ build(architecture): forbid framework dependencies in domain
 La documentation suivante a été ajoutée :
 
 ```text
-docs/architecture/fitness-tests.md
+docs/specs/architecture/fitness-tests.md
 ```
 
 Elle documente :
@@ -4028,12 +4069,12 @@ Epic 2.1   TERMINÉ   Catalog foundation
 Epic 2.2   TERMINÉ   Unit of measure
 Epic 2.3   TERMINÉ   Categories
 Epic 2.4   TERMINÉ   Product lifecycle
-Epic 2.5   EN COURS  Product packaging & barcode
-Epic 2.6   À FAIRE   Basic Pricing
-Epic 2.7   À FAIRE   Authorization, audit & integration
-Epic 2.8   À FAIRE   Catalog & Pricing API
-Epic 2.9   À FAIRE   Integration, PostgreSQL & tenant isolation tests
-Gate Lot 2 À FAIRE   Catalog & basic Pricing complet
+Epic 2.5   TERMINÉ   Product packaging & barcode
+Epic 2.6   TERMINÉ   Basic Pricing
+Epic 2.7   TERMINÉ   Authorization, audit & integration
+Epic 2.8   TERMINÉ   Catalog & Pricing API
+Epic 2.9   TERMINÉ   Integration, PostgreSQL & tenant isolation tests
+Gate Lot 2 TERMINÉ   Catalog & basic Pricing complet
 ```
 
 ## Étape 2.1.1 — Créer le module Catalog
@@ -4103,7 +4144,7 @@ feat(database): add catalog schema
 - Catalog ne peut accéder qu'à son propre contrat public et n'obtient aucun
   accès direct à Organization, IdentityAccess, Inventory, Sales ou
   CashManagement ;
-- règles synchronisées dans `docs/architecture/fitness-tests.md`.
+- règles synchronisées dans `docs/specs/architecture/fitness-tests.md`.
 
 ### Validations
 
@@ -6019,7 +6060,7 @@ test(lot-2): validate consolidated business flow
 
 ### Lot 3 — Inventory & Cash foundations
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.1.1 — Structure Inventory
 
@@ -6404,7 +6445,7 @@ feat(inventory): enforce stock operation idempotence
 
 ### Epic 3.6 — Cash Management foundation
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.6.1 — Structure Cash Management
 
@@ -6454,7 +6495,7 @@ feat(database): add cash management tables
 
 ### Epic 3.7 — CashRegister
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.7.1 — Aggregate CashRegister
 
@@ -6528,7 +6569,7 @@ feat(cash): add cash register management
 
 ### Epic 3.8 — CashSession lifecycle
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.8.1 — Aggregate CashSession
 
@@ -6662,7 +6703,7 @@ CashSessionTest : OK (2 tests, 3 assertions)
 
 ### Epic 3.9 — CashMovement ledger
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.9.1 — Aggregate CashMovement
 
@@ -6689,7 +6730,7 @@ feat(cash): add immutable cash movement ledger
 
 ### Étape 3.9.2 — RecordCashIn
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 La commande et le handler `RecordCashIn` sont en place avec les contrôles de
 session ouverte, de raison obligatoire et de transaction tenant-scoped. Le
@@ -6753,7 +6794,7 @@ feat(cash): add manual cash out
 
 ### Étape 3.9.6 — Idempotence CashMovement
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 Les commandes de mouvements acceptent désormais une référence de source
 optionnelle, alignée avec l’index unique PostgreSQL. Le branchement complet de
@@ -6890,7 +6931,7 @@ feat(cash): enforce suspended store guard
 
 ## Epic 3.10 — StoreClosure integration
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.10.1 — Inventory blocker provider
 
@@ -6916,7 +6957,7 @@ feat(inventory): provide store closure stock blocker
 
 ### Étape 3.10.2 — Cash blocker provider
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
 
 ---
 
@@ -6949,7 +6990,7 @@ feat(audit): record cash operations
 
 ### Epic 3.12 — Application Contracts pour Lot 4
 
-**Statut : À FAIRE**
+**Statut : TERMINÉ**
 
 ---
 
@@ -7026,7 +7067,7 @@ feat(access): grant inventory and cash permissions
 
 ### Étape 3.11.4 — Audit sensible
 
-**Statut : À FAIRE**
+**Statut : TERMINÉE**
 
 ---
 
@@ -7066,7 +7107,7 @@ feat(inventory): expose sale stock consumption contract
 
 ### Epic 3.13 — Inventory & Cash API
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.13.1 — API Stock
 
@@ -7240,7 +7281,7 @@ docs(api): document inventory and cash endpoints
 
 ### Epic 3.14 — Integration, PostgreSQL & RLS tests
 
-**Statut : EN COURS**
+**Statut : TERMINÉ**
 
 ### Étape 3.14.1 — Tests Domain Stock
 
@@ -7287,7 +7328,7 @@ test(inventory): verify stock movement ledger
 
 ### Étape 3.14.3 — Atomicité Stock
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 Le socle PostgreSQL d’atomicité mutation/audit/outbox est couvert par le test
 transactionnel existant. Les scénarios d’injection spécifiques à l’écriture
@@ -7384,7 +7425,7 @@ test(cash): verify cash movements
 
 ### Étape 3.14.8 — Atomicité Cash
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 Le socle transactionnel partagé couvre les scénarios de rollback mutation,
 audit et outbox utilisés par les opérations Cash. Les injections ciblées entre
@@ -7406,7 +7447,7 @@ ledger et vérifie l’absence d’effet partiel.
 
 ### Étape 3.14.9 — Isolation tenant
 
-**Statut : EN COURS**
+**Statut : TERMINÉE**
 
 Le socle RLS vérifie l’absence de contexte, l’isolation entre deux
 connexions, le rejet des écritures cross-tenant et l’absence de fuite après
@@ -7970,7 +8011,7 @@ b82fab8 refactor(sales): keep presentation behind application views
 
 ## Lot 5 — Inventory Costing & Returns
 
-**État courant : EN COURS — retours restockés au coût original.**
+**État courant : TERMINÉ — Gate Lot 5 validé.**
 
 ### Phase 0 — Décisions et alignement documentaire
 
@@ -9296,7 +9337,7 @@ Deptrac layers/modules : 0 violation, 10 uncovered
 
 ### Epic 6.13 — Fondation GoodsReceiptCorrection
 
-**Statut : EN COURS — domaine, création et persistence terminés**
+**Statut : TERMINÉ — workflow et preuves PostgreSQL livrés**
 
 - `GoodsReceiptCorrection` impose une raison, un cycle `DRAFT → POSTED`, des
   lignes produit uniques et l’immutabilité après publication ;
@@ -10112,8 +10153,8 @@ Commit recommandé : `feat(admin): add server-paginated table foundation`.
 
 **Statut : TERMINÉ — routes Admin par capacités UX**
 
-- les routes Next.js `/login` et `/app` sont matérialisées ;
-- `/app` expose séparément les capacités `organization`, `stores`, `members`,
+- les routes Next.js `/login` et `/admin` sont matérialisées ;
+- `/admin` expose séparément les capacités `organization`, `stores`, `members`,
   `catalog`, `pricing`, `inventory`, `purchasing`, `cash` et `sales` ;
 - chaque route reste une page placeholder indépendante, sans introduire le shell
   ou la navigation de l’Epic F0.19.
@@ -10314,7 +10355,7 @@ Commit recommandé : `ci(frontend): add full validation pipeline`.
 
 **Statut : TERMINÉ — frontière Admin Stores prête à accueillir les slices métier**
 
-- la page Next.js `/app/stores` reste une adaptation mince et délègue à la
+- la page Next.js `/admin/stores` reste une adaptation mince et délègue à la
   composition de route détenue par `features/stores/routes` ;
 - la feature rassemble son composant temporaire, ses routes et ses points
   d’extension versionnés pour les adaptateurs API, hooks et schémas ; aucun
@@ -10356,7 +10397,7 @@ Commit recommandé : `feat(stores): add tenant-scoped store list`.
 
 **Statut : TERMINÉ — détail Store tenant-scoped et projection des actions**
 
-- la route dynamique `/app/stores/{storeId}` charge exclusivement
+- la route dynamique `/admin/stores/{storeId}` charge exclusivement
   `GET /api/stores/{id}` et affiche les champs publiés d’identité et de profil
   (nom, code, adresse, devise, langue et fuseau), ainsi que le statut
   opérationnel ;
@@ -10382,7 +10423,7 @@ Commit recommandé : `feat(stores): add tenant-scoped store details`.
 
 **Statut : TERMINÉ — création Store tenant-scoped avec retour cohérent vers la collection**
 
-- la route `/app/stores/new` expose le formulaire de création uniquement aux
+- la route `/admin/stores/new` expose le formulaire de création uniquement aux
   utilisateurs ayant `STORE_CREATE` dans l’organisation active ; ses valeurs
   initiales reprennent la devise, la langue et le fuseau horaire publiés par
   cette organisation ;
@@ -10407,7 +10448,7 @@ Commit recommandé : `feat(stores): add store creation workflow`.
 
 **Statut : TERMINÉ — édition Store contractuelle et résolution explicite des conflits**
 
-- la route `/app/stores/{storeId}/edit` charge la projection serveur tenant- et
+- la route `/admin/stores/{storeId}/edit` charge la projection serveur tenant- et
   scope-aware puis initialise le formulaire avec ses valeurs publiées ; le lien
   Modifier depuis le détail y mène uniquement lorsque `STORE_UPDATE` est
   accordée ;
@@ -10784,7 +10825,7 @@ Commit recommandé : `feat(stores): add safe feature observability`.
 - les sous-domaines `members`, `invitations` et `roles` restent regroupés dans
   cette feature comme le demande F2.1 ; aucun package partagé ou faux bounded
   context frontend n’est créé prématurément ;
-- la page Next.js `/app/members` reste l’adaptateur mince établi par le routeur
+- la page Next.js `/admin/members` reste l’adaptateur mince établi par le routeur
   Admin et importe maintenant le point d’entrée public `features/access` ; la
   composition appartient à `routes/MembersRoute` puis au composant de page de
   la feature ;
@@ -10809,10 +10850,10 @@ Commit recommandé : `feat(admin): add access management foundation`.
 - la navigation principale regroupe désormais l’administration des accès sous
   `Accès`, visible lorsqu’au moins une des capacités `MEMBER_READ`,
   `MEMBER_INVITE` ou `ROLE_READ` est présente ;
-- `/app/access` présente les sous-routes Membres, Invitations et Rôles ; chacune
+- `/admin/access` présente les sous-routes Membres, Invitations et Rôles ; chacune
   est visible dans la navigation locale seulement lorsque sa capacité effective
   le permet, sans transformer ce guard UX en frontière de sécurité ;
-- l’ancien lien direct `/app/members` redirige vers le nouveau chemin pour
+- le lien direct `/admin/members` redirige vers `/admin/access/members` pour
   préserver les favoris existants ; le fil d’Ariane et l’état actif de la
   sidebar reconnaissent les sous-routes Accès ;
 - les écrans restent des points de composition sans lecture API ni règles
@@ -10855,7 +10896,7 @@ Commit recommandé : `feat(access): add member list`.
 
 **Statut : TERMINÉ — détail membership tenant-scoped en lecture seule**
 
-- la liste Membres mène vers `/app/access/members/{memberId}` ; le détail
+- la liste Membres mène vers `/admin/access/members/{memberId}` ; le détail
   consomme `GET /api/members/{id}` par le client typé et le cache React Query
   reste isolé par organisation, membership et `authorizationVersion` ;
 - une réponse dont l’organisation ne correspond pas au contexte actif est
@@ -10924,7 +10965,7 @@ Commit recommandé : `feat(access): add permission visualization`.
 
 **Statut : TERMINÉ — invitation minimale validée et soumise selon le contrat**
 
-- la route `/app/access/invite` est accessible depuis Invitations et applique
+- la route `/admin/access/invite` est accessible depuis Invitations et applique
   la projection UX `MEMBER_INVITE` ;
 - le formulaire valide l’email, une assignment de rôle obligatoire et une
   expiration facultative, puis soumet exactement le payload OpenAPI ; la
@@ -11258,13 +11299,13 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
-**Statut : EN COURS — F3.1 à F3.15 terminés**
+**Statut : EN COURS — F3.1 à F3.41 terminés ; F3.42/F3.43 à faire**
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
-- F3.1 à F3.15 sont traités ci-dessous ; F3.16 à F3.43 restent à implémenter. Foundation et Gates F1/F2 sont validés.
-- Les routes utilisent le préfixe `/app/...` existant, conformément à la décision F3.3. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
-- Gate F3 : en attente ; tests Catalog/Pricing, E2E, lint, typecheck et build Admin seront exigés lors de la livraison.
+- F3.1 à F3.41 sont livrés. F3.42 et F3.43 restent à implémenter. Foundation et Gates F1/F2 sont validés.
+- Les routes protégées utilisent le préfixe `/admin/...`. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
+- Gate F3 : en attente des parcours E2E Catalog et Pricing ; tests hors E2E, lint, formatage, typecheck et builds sont verts.
 
 Validation documentaire : numérotation des 67 sections, unicité des 43 Epics, correspondance index/fichiers, liens locaux et 47 critères Gate contrôlés ; `git diff --check`.
 
@@ -11300,7 +11341,7 @@ Commit : `7127813 feat(admin): add pricing feature foundation`.
 
 **Statut : TERMINÉ — navigation Catalog/Pricing dans le shell Admin**
 
-- Routes `/app/catalog/products`, `/app/catalog/categories`, `/app/pricing/price-lists`, `/app/pricing/product-prices` avec sous-navigation et aria-current ; `/admin` reste le préfixe initialement proposé, remplacé par le pattern `/app` existant.
+- Routes `/admin/catalog/products`, `/admin/catalog/categories`, `/admin/pricing/price-lists`, `/admin/pricing/product-prices` avec sous-navigation et `aria-current`.
 - Permissions réelles PRODUCT_READ, CATALOG_READ, PRICE_LIST_READ et PRODUCT_PRICE_READ ; accès directs refusés sans permission ou sur organisation incohérente. Les capacités des Epics ultérieurs restent explicitement à venir.
 - Alignement React de @zandu/authorization sur 19.2.4 déjà utilisé par Admin ; supprime le conflit de hooks révélé par les tests des providers réels.
 - Validation : 5 tests composants navigation/permissions/tenant, lint ciblé et typecheck Admin.
@@ -11311,7 +11352,7 @@ Commit : `2e6ac3a feat(admin): add catalog and pricing navigation`.
 
 **Statut : TERMINÉ — liste Produits serveur accessible**
 
-- `/app/catalog/products` utilise AdminTable et le hook TanStack Query ; ordre serveur préservé, sans pagination fictive ni filtre local.
+- `/admin/catalog/products` utilise AdminTable et le hook TanStack Query ; ordre serveur préservé, sans pagination fictive ni filtre local.
 - Colonnes code, nom, statut, type et catégorie ; chargement, résultat vide, erreur corrélée et réessai. Aucun lien vers un détail non encore livré.
 - Requêtes conditionnées par PRODUCT_READ et organisation active ; clés séparées par tenant, filtres et authorizationVersion.
 - Validation : 5 tests composants/query couvrent ordre, vide, réessai, permissions et isolation du cache ; typecheck Admin et lint ciblé.
@@ -11343,14 +11384,14 @@ Commit : `fea8806 feat(admin): add server-side product filters`.
 
 **Statut : TERMINÉ — détail Produit tenant-safe**
 
-- Route `/app/catalog/products/{productId}` et liens depuis la liste ; sections Général, Conditionnements, Codes-barres, Résumé tarifaire et Cycle de vie.
+- Route `/admin/catalog/products/{productId}` et liens depuis la liste ; sections Général, Conditionnements, Codes-barres, Résumé tarifaire et Cycle de vie.
 - Lecture typée, contrôle PRODUCT_READ et projection défensive sur l’organisation active.
 
 ## Epic F3.7 — Create Product
 
 **Statut : TERMINÉ — création Produit consolidée selon OpenAPI et Foundation**
 
-- Route `/app/catalog/products/new`, page dédiée, payload strict du contrat et redirection vers le détail créé.
+- Route `/admin/catalog/products/new`, page dédiée, payload strict du contrat et redirection vers le détail créé.
 - Schéma runtime limité aux contraintes structurelles ; normalisation des champs optionnels sans dupliquer les invariants serveur.
 - Accès conditionné par PRODUCT_CREATE ; identifiants d’unité et catégorie conservés sans API inventée.
 - Mutation single-flight et tenant-scoped ; invalidation de la liste tenant/authorizationVersion, notification de succès et protection contre le rejeu aveugle lorsque le résultat POST est inconnu.
@@ -11425,7 +11466,7 @@ Commits :
 - F3.12–F3.15 : `01210f5 feat(catalog): deliver product and packaging workflows` ;
 - contrats OpenAPI et tests F3.6–F3.15 : `a743100 feat(catalog): add product management contracts`.
 
-## Epics F3.16–F3.43 — Barcode and Pricing administration
+## Epics F3.16–F3.41 — Barcode and Pricing administration
 
 **Statut : TERMINÉ — parcours Admin Catalog/Pricing implémentés**
 
@@ -11437,12 +11478,18 @@ Commits :
 - Les providers item PriceList/ProductPrice renvoient désormais une ressource et non une collection mono-élément.
 - Contrat OpenAPI et client TypeScript régénérés après ajout de la collection de codes-barres.
 
-### Validation consolidée F3.16–F3.43 — 2026-09-17
+### Validation consolidée F3.16–F3.41 — 2026-09-17
 
-- Frontend : typecheck, ESLint, 32 tests d’intégration, 73 tests composants et 15 tests Foundation Admin : OK.
-- Build Admin Next.js : OK, 25 routes générées.
-- Backend ciblé API/Catalog : OK (36 tests, 435 assertions).
-- Suite backend complète lancée hors conteneur : non concluante, car le hostname Docker `postgres` n’est pas résolu depuis l’hôte (96 erreurs de connexion et 5 échecs HTTP consécutifs).
-- PHPStan ciblé et global : OK ; Deptrac couches/modules : zéro violation.
+- Frontend : 20 tests Foundation, 10 unitaires, 73 composants et 32
+  intégration : OK. Un premier passage fortement parallélisé a dépassé le délai
+  d’un chargement de catégories ; le test ciblé puis la suite complète rejouée
+  seule sont verts.
+- TypeScript, ESLint et Prettier : OK.
+- Builds Admin Next.js (29 routes listées, `_not-found` incluse) et POS Vite : OK.
+- Backend complet dans Docker : OK (831 tests, 4 394 assertions).
+- PHP-CS-Fixer et PHPStan : OK ; Deptrac couches/modules : zéro violation et
+  dix dépendances non classées par vue.
+- Composer et conteneur Symfony valides ; Composer Audit sans vulnérabilité connue.
 - `git diff --check` : OK.
-- Les parcours E2E navigateur F3.42/F3.43 n’ont pas été exécutés dans cette session.
+- Les parcours E2E navigateur F3.42/F3.43 ne sont pas encore implémentés ; ils
+  restent requis pour valider le Gate F3.

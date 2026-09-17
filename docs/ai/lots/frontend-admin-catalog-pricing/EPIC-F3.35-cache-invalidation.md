@@ -1,6 +1,6 @@
 # Epic F3.35 — Cache invalidation
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Catalog : Product update/activation, Packaging creation/archival, Barcode mutation peuvent affecter plusieurs écrans. Pricing : PriceList activation, ProductPrice update/activation nécessitent l’invalidation des queries dépendantes.
 

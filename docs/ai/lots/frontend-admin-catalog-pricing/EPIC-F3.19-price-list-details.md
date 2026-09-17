@@ -1,6 +1,6 @@
 # Epic F3.19 — Price List details
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer `/admin/pricing/price-lists/{priceListId}` avec General, Validity, Priority, Status et Prices.
 

@@ -23,27 +23,26 @@ Le projet suit une architecture en **monolithe modulaire inspirée du Domain-Dri
 
 ## État du projet
 
-| Lot | Périmètre                         | État                     |
-| --- | --------------------------------- | ------------------------ |
-| 0   | Architecture exécutable           | Terminé                  |
-| 1   | Administration opérationnelle     | Terminé                  |
-| 2   | Catalogue et tarification de base | Terminé                  |
-| 3   | Fondations Inventory et Cash      | Terminé                  |
-| 4   | Sales et `CompleteSale` cash      | Terminé — Gate M2 validé |
-| 5   | Inventory Costing et Returns      | Terminé — Gate CI validé |
-| 6   | Purchasing et Goods Receipts      | Terminé — Gate CI validé |
-| 7   | StockTransfer et StockCount       | Terminé — Gate M3 validé |
-| F0  | Frontend Foundation               | En cours                 |
+| Lot | Périmètre                         | État                              |
+| --- | --------------------------------- | --------------------------------- |
+| 0   | Architecture exécutable           | Terminé                           |
+| 1   | Administration opérationnelle     | Terminé                           |
+| 2   | Catalogue et tarification de base | Terminé                           |
+| 3   | Fondations Inventory et Cash      | Terminé                           |
+| 4   | Sales et `CompleteSale` cash      | Terminé — Gate M2 validé          |
+| 5   | Inventory Costing et Returns      | Terminé — Gate CI validé          |
+| 6   | Purchasing et Goods Receipts      | Terminé — Gate CI validé          |
+| 7   | StockTransfer et StockCount       | Terminé — Gate M3 validé          |
+| F0  | Frontend Foundation               | Terminé                           |
+| F1  | Admin Stores                      | Terminé — Gate F1 validé          |
+| F2  | Admin Users & Access              | Terminé — Gate F2 validé          |
+| F3  | Admin Catalog & Pricing           | En cours — F3.1 à F3.41 terminés  |
 
-Les Lots backend 0 à 7 sont clos. Le Frontend Foundation dispose des shells
-Admin et POS, des conventions TypeScript et qualité, des tokens et primitives UI,
-du formatting métier, du contrat d'erreur, du cycle de session en mémoire, du
-StoreContext, des guards d'autorisation et du cache serveur TanStack Query.
-
-Les Epics F0.1 à F0.15 sont déclarés terminés. Le premier parcours frontend
-intègre désormais l'authentification Symfony, la projection serveur de l'acteur
-et de ses permissions effectives, l'organisation et le magasin actifs, le cache
-tenant-aware et le shell Admin. Les parcours CRUD métier restent à construire.
+Les Lots backend 0 à 7, le Frontend Foundation et les Lots Admin F1/F2 sont
+clos. L'Admin expose sous `/admin` les parcours Stores, Users & Access, Catalog
+et Pricing. F3 couvre le code fonctionnel et les tests unitaires, composants et
+intégration ; les scénarios navigateur Catalog/Pricing F3.42/F3.43 restent à
+livrer avant de valider le Gate F3. Le POS conserve son shell de fondation.
 
 L'état détaillé de l'implémentation, les Epics terminés, les validations et les preuves de tests sont maintenus dans :
 
@@ -259,9 +258,9 @@ sur `http://127.0.0.1:1420`. Pour lancer le POS desktop avec ses prérequis inst
 pnpm --filter @zandu/pos tauri dev
 ```
 
-L'Admin expose désormais le premier parcours intégré : connexion, résolution de
-session et des permissions effectives, contexte organisation/magasin, shell et
-déconnexion. Le POS conserve son shell de fondation.
+L'Admin expose la connexion, la session et les permissions effectives, les
+contextes organisation/magasin, ainsi que les parcours Stores, Users & Access,
+Catalog et Pricing sous `/admin`. Le POS conserve son shell de fondation.
 
 ---
 

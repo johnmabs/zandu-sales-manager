@@ -1,6 +1,6 @@
 # Epic F3.25 — Product / Packaging selector
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer la primitive feature `ProductPackagingSelector` : Select Product → Load Product Packagings → Select Packaging. Ne pas permettre un couple Product A + Packaging de Product B.
 

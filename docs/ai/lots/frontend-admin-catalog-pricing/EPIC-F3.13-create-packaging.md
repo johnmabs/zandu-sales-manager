@@ -1,6 +1,6 @@
 # Epic F3.13 — Create Packaging
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Le formulaire couvre selon contrat : code, name, unit, conversionFactor, precision, minimumQuantity, quantityIncrement, allowedForSale, allowedForPurchase. Préserver les valeurs décimales exactes.
 

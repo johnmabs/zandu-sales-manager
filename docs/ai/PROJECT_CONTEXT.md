@@ -53,7 +53,7 @@ Use this precedence when implementing:
 
 If two sources conflict, do not silently choose. Identify the conflict and prefer an explicitly accepted/newer decision when the documentation itself establishes that precedence.
 
-## Current planning material in supplied package
+## Current implementation roadmap
 
 - Lot 0 — Architecture exécutable
 - Lot 1 — Administration opérationnelle
@@ -63,4 +63,12 @@ If two sources conflict, do not silently choose. Identify the conflict and prefe
 - Lot 5 — Inventory Costing & Returns
 - Lot 6 — Purchasing & Goods Receipts
 - Lot 7 — StockTransfer & StockCount
-- Frontend foundation
+- Frontend Foundation
+- Frontend Lot F1 — Admin Stores
+- Frontend Lot F2 — Admin Users & Access
+- Frontend Lot F3 — Admin Catalog & Pricing
+
+The backend Lots 0–7, Frontend Foundation, F1 and F2 are complete. F3 is
+implemented through F3.41; its Catalog and Pricing browser E2E scenarios
+(F3.42/F3.43) and exit gate remain open. Use `IMPLEMENTATION_STATUS.md` for
+the dated validation snapshot.

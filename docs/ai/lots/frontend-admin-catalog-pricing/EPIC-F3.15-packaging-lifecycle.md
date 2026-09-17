@@ -1,6 +1,6 @@
 # Epic F3.15 — Packaging lifecycle
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Supporter Deactivate et Archive selon les endpoints disponibles. Un packaging archivé reste visible dans les historiques appropriés.
 

@@ -1,6 +1,6 @@
 # Epic F3.33 — Permission-aware Pricing
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Utiliser `PRICE_LIST_READ`, `PRODUCT_PRICE_READ` et les permissions de mutation dédiées du backend. Le frontend adapte l’UX, le serveur reste autorité.
 

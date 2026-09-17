@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 5 : Inventory Costing & Returns
 
 **Version :** 1.0
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé — Gate Lot 5 validé le 28 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---
@@ -230,7 +230,7 @@ DELETE business ledger row
 Le Lot 5 arrive après les premiers mouvements Inventory et les premières ventes.
 
 La politique est fixée par
-[l’ADR-0021](../architecture/adr/0021-inventory-costing-activation-policy.md).
+[l’ADR-0021](../../../specs/architecture/adr/0021-inventory-costing-activation-policy.md).
 Une position historique positive exige un coût d’ouverture explicite ; une
 position nulle peut être activée avec une valeur totale nulle.
 

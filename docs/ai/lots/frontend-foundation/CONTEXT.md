@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Frontend Foundation
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation / baseline frontend préparatoire  
+**Statut :** Terminé — Gate Frontend Foundation validé le 9 septembre 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

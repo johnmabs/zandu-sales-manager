@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 1 : Administration opérationnelle
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation  
+**Statut :** Terminé — Gate Lot 1 validé le 25 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

@@ -1,6 +1,6 @@
 # Epic F3.3 — Catalog navigation
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Navigation proposée : Catalogue → Produits, Catégories ; Tarification → Listes de prix, Prix produits. Packaging et Barcode restent accessibles depuis Product Details.
 

@@ -1,6 +1,6 @@
 # Epic F3.37 — Tables and large collections
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Products et ProductPrices peuvent être volumineux. Utiliser server filters, server pagination when available et deterministic sorting. Éviter load all products → filter in browser.
 

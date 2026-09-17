@@ -1,6 +1,6 @@
 # Epic F3.1 — Catalog feature foundation
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer `features/catalog` avec Categories, Products, ProductPackaging et Barcodes. Réutiliser les contrats API typés ; préserver les frontières feature sans embarquer les domaines Pricing ou Inventory.
 

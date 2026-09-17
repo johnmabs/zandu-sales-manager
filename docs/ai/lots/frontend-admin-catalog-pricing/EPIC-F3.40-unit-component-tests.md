@@ -1,6 +1,6 @@
 # Epic F3.40 — Unit/component tests
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Couvrir ProductStatusBadge, ProductTypeBadge, Product filters, Product form, immutable activated fields, Category tree, Packaging form, conversionFactor read-only behavior, Barcode input preservation, PriceList form, ProductPrice form, ProductPackagingSelector, EffectivePrice state, NoPrice state.
 

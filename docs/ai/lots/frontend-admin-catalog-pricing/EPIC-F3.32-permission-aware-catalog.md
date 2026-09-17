@@ -1,6 +1,6 @@
 # Epic F3.32 — Permission-aware Catalog
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Utiliser les permissions Foundation : `PRODUCT_READ` est exigé par l’API produit. Même principe pour les mutations Category, Packaging et Barcode selon le catalogue backend réel. L’UX ne remplace jamais l’autorisation serveur.
 

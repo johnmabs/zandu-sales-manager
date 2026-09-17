@@ -1,6 +1,6 @@
 # Epic F3.12 — Packaging list
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Dans Product Details, afficher Packaging : Unit, Box of 10, Carton of 100, avec conversionFactor, allowedForSale, allowedForPurchase et status.
 

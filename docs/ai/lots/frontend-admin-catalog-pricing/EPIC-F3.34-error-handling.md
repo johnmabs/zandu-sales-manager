@@ -1,6 +1,6 @@
 # Epic F3.34 — Error handling
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Appliquer le contrat standardisé 400, 401, 403, 404, 409, 422. Cas : duplicate product code, duplicate barcode, invalid hierarchy, invalid lifecycle transition, invalid packaging, price not found, price conflict, permission denied, cross-tenant not found. Préserver correlationId.
 

@@ -1,6 +1,6 @@
 # Epic F3.41 — Integration tests
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Scénarios : product list loads ; product search/filtering works ; product creation/activation/update succeeds ; category create/move works ; packaging creation succeeds ; barcode preserves leading zeros ; duplicate barcode fails safely ; price list creation/activation succeeds ; product price creation succeeds ; effective price resolves ; no-price case displayed correctly ; permission denied handled.
 

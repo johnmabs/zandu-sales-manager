@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 7 : StockTransfer & StockCount
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation  
+**Statut :** Terminé — Gate Lot 7 / M3 validé le 1er septembre 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

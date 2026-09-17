@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 3 : Inventory & Cash foundations
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation  
+**Statut :** Terminé — Gate Lot 3 validé le 26 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

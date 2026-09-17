@@ -2,7 +2,8 @@
 
 ## Statut et objectif
 
-Version 1.0 ; backlog d’implémentation. Surface Zandu Admin ; français et identifiants de code anglais.
+Version 1.0. F3.1 à F3.41 terminés ; F3.42/F3.43 et Gate F3 en attente.
+Surface Zandu Admin ; français et identifiants de code anglais.
 Administrer l’offre commerciale de base : catégories, produits, conditionnements, codes-barres, listes de prix, prix par packaging et prix effectif.
 
 ## Frontières et capacités
@@ -35,7 +36,7 @@ Lire uniquement les décisions qui gouvernent l’Epic courant via docs/ai/ADR_I
 - Autorisation, unicité, hiérarchie et lifecycle restent serveur ; le frontend reflète les capacités du contrat.
 - Utiliser les filtres serveur et la pagination si disponible ; invalider les caches dépendants après mutation.
 - Les ressources archivées restent consultables historiquement.
-- F3.3 retient le préfixe /app du shell existant pour les routes Catalog/Pricing ; /admin reste la proposition initiale de la source (voir SUPPORT-routing-and-screens.md).
+- Les routes protégées Admin utilisent le préfixe `/admin`, y compris Catalog et Pricing (voir SUPPORT-routing-and-screens.md).
 
 ## Source of truth
 

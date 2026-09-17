@@ -1,5 +1,7 @@
 # Frontend Lot F2 — Admin Users & Access — Context
 
+**Statut :** Terminé — Gate F2 validé le 14 septembre 2026
+
 ## Goal
 
 Livrer dans Zandu Admin l’administration complète des accès d’une organisation : invitations, membres, lifecycle des memberships, catalogue des rôles, attributions et scopes organisation/magasins.

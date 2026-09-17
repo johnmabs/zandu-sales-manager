@@ -1,6 +1,6 @@
 # lot-7 — Scoped Codex Index
 
-Original source: `docs/planning/zandu-lot-7-stock-transfer-stock-count.md`. Files below are **lossless top-level splits** of that source; use them to avoid loading the whole Lot.
+Original source: `docs/specs/planning/zandu-lot-7-stock-transfer-stock-count.md`. Files below are **lossless top-level splits** of that source; use them to avoid loading the whole Lot.
 
 ## Default read set
 

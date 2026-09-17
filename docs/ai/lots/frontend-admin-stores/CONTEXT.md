@@ -1,5 +1,7 @@
 # Frontend Lot F1 — Admin Stores — Context
 
+**Statut :** Terminé — Gate F1 validé le 13 septembre 2026
+
 ## Goal
 
 Livrer dans Zandu Admin le premier vertical slice métier réellement utilisable : administration des magasins, depuis le login et le contexte d’organisation jusqu’à la création, l’édition, les transitions opérationnelles et la demande de fermeture.

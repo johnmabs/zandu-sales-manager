@@ -1,6 +1,6 @@
 # Epic F3.29 — Effective price at date
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Si l’UX l’exige, proposer Price at date via `?at=`. Ne pas implémenter la priorité des PriceList côté frontend.
 

@@ -1,6 +1,6 @@
 # Epic F3.22 — Price List lifecycle
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Supporter Activate, Deactivate, Archive avec confirmations lorsque nécessaire.
 

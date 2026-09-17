@@ -1,6 +1,6 @@
 # Epic F3.36 — Loading / empty states
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 États spécifiques : no products, no categories, no packaging, no barcodes, no price lists, no product prices, no effective price. Chaque empty state indique la prochaine action possible.
 

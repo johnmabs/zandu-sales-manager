@@ -1,6 +1,6 @@
 # Epic F3.6 — Product details
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer `/admin/catalog/products/{productId}`. Organiser General, Packaging, Barcodes, Pricing summary et Lifecycle.
 

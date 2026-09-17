@@ -1,7 +1,7 @@
 # Zandu Sales Manager — Lot 0 : Architecture exécutable
 
 **Version :** 1.0  
-**Statut :** Backlog d’implémentation  
+**Statut :** Terminé — Gate Lot 0 validé le 21 août 2026
 **Langue :** Français — identifiants de code en anglais
 
 ---

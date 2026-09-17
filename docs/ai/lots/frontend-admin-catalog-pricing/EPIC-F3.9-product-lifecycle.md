@@ -1,6 +1,6 @@
 # Epic F3.9 — Product lifecycle
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Supporter les transitions réellement exposées : Activate, Deactivate, Reactivate, Archive. Le backend expose ces huit opérations produit avec collection/item/create/update. Deactivate et Archive nécessitent une confirmation explicite.
 

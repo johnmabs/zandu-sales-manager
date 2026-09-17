@@ -1,6 +1,6 @@
 # Epic F3.30 — Product pricing summary
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 PROPOSÉ : dans Product Details → Pricing, afficher pour chaque packaging vendable Packaging, Effective price et Status. Préparer le futur POS sans mélanger POS et Admin.
 

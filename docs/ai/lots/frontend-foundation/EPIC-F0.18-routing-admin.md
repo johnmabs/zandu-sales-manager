@@ -5,7 +5,7 @@ Structure conceptuelle :
 ```text
 /login
 
-/app
+/admin
   /organization
   /stores
   /members

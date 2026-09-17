@@ -1,6 +1,6 @@
 # Zandu — Architecture Rules for Implementation Agents
 
-Source of truth: `docs/architecture/fitness-tests.md` and accepted ADRs. This file is a compact routing summary, not a replacement for them.
+Source of truth: `docs/specs/architecture/fitness-tests.md` and accepted ADRs. This file is a compact routing summary, not a replacement for them.
 
 ## Technical layers
 

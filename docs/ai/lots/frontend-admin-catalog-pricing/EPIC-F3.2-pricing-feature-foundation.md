@@ -1,6 +1,6 @@
 # Epic F3.2 — Pricing feature foundation
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Créer séparément `features/pricing` avec PriceLists, ProductPrices et EffectivePrice.
 

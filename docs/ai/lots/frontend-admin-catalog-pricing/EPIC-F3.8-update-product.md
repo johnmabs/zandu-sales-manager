@@ -1,6 +1,6 @@
 # Epic F3.8 — Update Product
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Adapter le formulaire au lifecycle : DRAFT → ProductCode éditable selon l’API ; ACTIVE → ProductCode et baseUnitId immuables. Distinguer clairement les champs éditables des champs métier en lecture seule.
 

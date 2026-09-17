@@ -1,6 +1,6 @@
 # Epic F3.24 — Create Product Price
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Flux recommandé : Price List → Add price → Product → Packaging → Amount → Validity → Create. Un prix cible obligatoirement un packaging, pas seulement un Product.
 

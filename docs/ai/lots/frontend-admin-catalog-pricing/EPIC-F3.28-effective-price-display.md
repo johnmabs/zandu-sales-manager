@@ -1,6 +1,6 @@
 # Epic F3.28 — Effective Price display
 
-**Statut :** Backlog d’implémentation
+**Statut :** Terminé
 
 Depuis Product Details ou l’administration Product Price, appeler directement `/api/products/{productId}/packagings/{packagingId}/effective-price`.
 
