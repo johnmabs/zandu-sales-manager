@@ -450,6 +450,37 @@ export type ProductPriceResource = Readonly<
 export type EffectiveProductPriceResource = Readonly<
   Required<GeneratedComponents["schemas"]["EffectiveProductPriceResource"]>
 >;
+export type StockResource = Readonly<Required<GeneratedComponents["schemas"]["StockResource"]>>;
+export type StockMovementType =
+  | "ADJUSTMENT_IN"
+  | "ADJUSTMENT_OUT"
+  | "GOODS_RECEIPT_CORRECTION_IN"
+  | "GOODS_RECEIPT_CORRECTION_OUT"
+  | "INITIAL_STOCK"
+  | "PURCHASE_RECEIPT"
+  | "PURCHASE_RETURN"
+  | "SALE"
+  | "SALE_RETURN"
+  | "STOCK_COUNT_CORRECTION_IN"
+  | "STOCK_COUNT_CORRECTION_OUT"
+  | "TRANSFER_IN"
+  | "TRANSFER_OUT";
+export type StockMovementSource =
+  | "GOODS_RECEIPT"
+  | "GOODS_RECEIPT_CORRECTION"
+  | "INITIALIZATION"
+  | "MANUAL_ADJUSTMENT"
+  | "PURCHASE_RETURN"
+  | "RETURN"
+  | "SALE"
+  | "STOCK_COUNT"
+  | "TRANSFER";
+export type StockMovementResource = Readonly<
+  Omit<Required<GeneratedComponents["schemas"]["StockMovementResource"]>, "source" | "type"> & {
+    source: StockMovementSource;
+    type: StockMovementType;
+  }
+>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
 >;
@@ -740,6 +771,76 @@ export class FoundationApi {
       },
     });
     return decodeEffectiveProductPrice(response.data);
+  }
+
+  async listStocks(
+    storeId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly StockResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `stores/${encodeURIComponent(storeId)}/stocks`,
+      telemetry: {
+        feature: "inventory",
+        operation: "list_stocks",
+        route: "/admin/inventory/positions",
+      },
+    });
+    return decodeInventoryCollection(response.data, decodeStock).filter(
+      (stock) =>
+        stock.organizationId === access.organizationId &&
+        stock.storeId === storeId &&
+        access.accessibleStoreIds.includes(stock.storeId),
+    );
+  }
+
+  async getStock(
+    storeId: string,
+    productId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockResource | undefined> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(productId)}`,
+      telemetry: {
+        feature: "inventory",
+        operation: "get_stock",
+        route: "/admin/inventory/positions/:productId",
+      },
+    });
+    const stock = decodeStock(response.data);
+    return stock.organizationId === access.organizationId &&
+      stock.storeId === storeId &&
+      stock.productId === productId &&
+      access.accessibleStoreIds.includes(stock.storeId)
+      ? stock
+      : undefined;
+  }
+
+  async listStockMovements(
+    storeId: string,
+    access: CurrentSession["effectiveAccess"],
+    productId?: string,
+  ): Promise<readonly StockMovementResource[]> {
+    const path =
+      productId === undefined
+        ? `stores/${encodeURIComponent(storeId)}/stock-movements`
+        : `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(productId)}/movements`;
+    const response = await this.client.request({
+      method: "GET",
+      path,
+      telemetry: {
+        feature: "inventory",
+        operation: "list_stock_movements",
+        route: "/admin/inventory/movements",
+      },
+    });
+    return decodeInventoryCollection(response.data, decodeStockMovement).filter(
+      (movement) =>
+        movement.storeId === storeId &&
+        access.accessibleStoreIds.includes(movement.storeId) &&
+        (productId === undefined || movement.productId === productId),
+    );
   }
 
   async listProducts(
@@ -1136,6 +1237,56 @@ function decodeEffectiveProductPrice(value: unknown): EffectiveProductPriceResou
     currency: requiredString(value, "currency", message),
 
     sourceVersion: requiredNumber(value, "sourceVersion", message),
+  };
+}
+
+function decodeInventoryCollection<Resource>(
+  value: unknown,
+  decode: (value: unknown) => Resource,
+): readonly Resource[] {
+  const items = Array.isArray(value)
+    ? value
+    : isRecord(value) && Array.isArray(value.member)
+      ? value.member
+      : undefined;
+  if (items === undefined)
+    throw new ApiContractError("The inventory collection response is invalid.");
+  return items.map(decode);
+}
+
+function decodeStock(value: unknown): StockResource {
+  const message = "The stock response is invalid.";
+  if (!isRecord(value) || typeof value.initialized !== "boolean") {
+    throw new ApiContractError(message);
+  }
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    storeId: requiredString(value, "storeId", message),
+    productId: requiredString(value, "productId", message),
+    quantityOnHand: requiredString(value, "quantityOnHand", message),
+    initialized: value.initialized,
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeStockMovement(value: unknown): StockMovementResource {
+  const message = "The stock movement response is invalid.";
+  if (!isRecord(value) || (value.reason !== null && typeof value.reason !== "string")) {
+    throw new ApiContractError(message);
+  }
+  return {
+    id: requiredString(value, "id", message),
+    storeId: requiredString(value, "storeId", message),
+    productId: requiredString(value, "productId", message),
+    stockId: requiredString(value, "stockId", message),
+    type: requiredStockMovementType(value, "type", message),
+    quantity: requiredString(value, "quantity", message),
+    previousQuantity: requiredString(value, "previousQuantity", message),
+    resultingQuantity: requiredString(value, "resultingQuantity", message),
+    source: requiredStockMovementSource(value, "source", message),
+    reason: value.reason,
+    occurredAt: requiredString(value, "occurredAt", message),
   };
 }
 
@@ -1603,6 +1754,52 @@ function requiredProductPriceStatus(
 ): ProductPriceStatus {
   const propertyValue = value[property];
   if (propertyValue === "ACTIVE" || propertyValue === "ARCHIVED" || propertyValue === "INACTIVE")
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredStockMovementType(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): StockMovementType {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "ADJUSTMENT_IN" ||
+    propertyValue === "ADJUSTMENT_OUT" ||
+    propertyValue === "GOODS_RECEIPT_CORRECTION_IN" ||
+    propertyValue === "GOODS_RECEIPT_CORRECTION_OUT" ||
+    propertyValue === "INITIAL_STOCK" ||
+    propertyValue === "PURCHASE_RECEIPT" ||
+    propertyValue === "PURCHASE_RETURN" ||
+    propertyValue === "SALE" ||
+    propertyValue === "SALE_RETURN" ||
+    propertyValue === "STOCK_COUNT_CORRECTION_IN" ||
+    propertyValue === "STOCK_COUNT_CORRECTION_OUT" ||
+    propertyValue === "TRANSFER_IN" ||
+    propertyValue === "TRANSFER_OUT"
+  )
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredStockMovementSource(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): StockMovementSource {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "GOODS_RECEIPT" ||
+    propertyValue === "GOODS_RECEIPT_CORRECTION" ||
+    propertyValue === "INITIALIZATION" ||
+    propertyValue === "MANUAL_ADJUSTMENT" ||
+    propertyValue === "PURCHASE_RETURN" ||
+    propertyValue === "RETURN" ||
+    propertyValue === "SALE" ||
+    propertyValue === "STOCK_COUNT" ||
+    propertyValue === "TRANSFER"
+  )
     return propertyValue;
   throw new ApiContractError(message);
 }

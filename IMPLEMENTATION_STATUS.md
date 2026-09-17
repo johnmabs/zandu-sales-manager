@@ -149,7 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1        À FAIRE   Inventory feature foundation
+F4.1        TERMINÉ   Inventory feature foundation
+F4.2        À FAIRE   Inventory navigation and store context
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -248,7 +249,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [ ] F3.43 exécution Chromium verte en CI
 [ ] Gate F3 Admin Catalog & Pricing
 [x] Planning Frontend Lot F4 Admin Inventory
-[ ] F4.1 Inventory feature foundation
+[x] F4.1 Inventory feature foundation
+[ ] F4.2 Inventory navigation and store context
 ```
 
 ## Références
@@ -11546,7 +11548,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : PLANIFIÉ — 23 Epics ; F4.1 prochain**
+**Statut : EN COURS — F4.1 terminé ; F4.2 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11560,6 +11562,28 @@ Commit prévu : `test(admin): verify pricing administration flow`.
   fourni leur preuve CI ; ce point n’est pas masqué par le démarrage de F4.
 
 Validation documentaire : source, index, contexte, 23 fichiers Epic et cinq
-supports présents ; liens locaux et `git diff --check` à contrôler avant commit.
+supports présents ; liens locaux contrôlés.
 
-Commit prévu : `docs(planning): add frontend inventory lot F4`.
+Commit planning : `b9c0c3d docs(planning): add frontend inventory lot F4`.
+
+## Epic F4.1 — Inventory feature foundation
+
+**Statut : TERMINÉ — contrats Stock et StockMovement établis**
+
+- `FoundationApi` expose liste/détail Stock et historiques StockMovement par
+  store ou produit, avec télémétrie Inventory stable ;
+- les ressources OpenAPI sont décodées strictement : quantités sous forme de
+  chaînes, booléen/version requis et unions fermées pour types/sources de
+  mouvement ;
+- les collections conservent l’ordre serveur et filtrent défensivement tenant,
+  store, produit et stores accessibles ;
+- la feature Admin expose uniquement ses contrats publics et interdit les
+  imports internes Catalog/Pricing/Costing ainsi que les conversions flottantes ;
+- 5 tests d’intégration couvrent exactitude, ordre, projections, endpoint
+  produit, classifications inconnues et erreurs corrélées.
+
+Validations : test d’intégration ciblé 5/5 ; tests Admin 16/16 ; suite frontend
+20 Foundation, 10 unitaires, 73 composants et 37 intégration ; ESLint, Prettier,
+TypeScript, builds Admin/POS et Deptrac couches/modules verts ; `git diff --check`.
+
+Commit prévu : `feat(admin): add inventory feature foundation`.

@@ -2,8 +2,8 @@
 
 ## Statut et objectif
 
-Version 1.0. Planning créé ; F4.1 est le premier Epic à implémenter. Gate F3
-encore en attente des preuves Chromium CI.
+Version 1.0. F4.1 terminé ; F4.2 est le prochain Epic. Gate F3 encore en
+attente des preuves Chromium CI.
 
 Administrer les positions et mouvements de stock, la valorisation, les
 transferts inter-store et les inventaires physiques depuis Zandu Admin.
@@ -38,4 +38,3 @@ transferts inter-store et les inventaires physiques depuis Zandu Admin.
 
 Ouvrir la source uniquement si les fichiers compacts ne répondent pas à une
 question métier requise.
-

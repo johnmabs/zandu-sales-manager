@@ -74,6 +74,6 @@ implemented through F3.43; both Catalog and Pricing browser scenarios await CI
 execution, so the exit gate remains open. Use `IMPLEMENTATION_STATUS.md` for the
 dated validation snapshot.
 
-F4 Admin Inventory is now planned under
-`docs/ai/lots/frontend-admin-inventory/`; implementation starts with F4.1 while
-the F3 browser gate remains explicitly pending.
+F4 Admin Inventory is planned under
+`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.1. F4.2 is
+next while the F3 browser gate remains explicitly pending.
