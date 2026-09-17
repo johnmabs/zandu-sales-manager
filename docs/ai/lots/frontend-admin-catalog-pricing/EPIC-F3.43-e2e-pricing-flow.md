@@ -1,6 +1,6 @@
 # Epic F3.43 — E2E Pricing flow
 
-**Statut :** Backlog d’implémentation
+**Statut :** Implémenté — validation Chromium attendue en CI
 
 Admin → Create Price List → Activate Price List → Select Product → Select Packaging → Create Product Price → Activate Product Price → Effective Price resolves.
 

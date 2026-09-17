@@ -2,8 +2,8 @@
 
 ## Statut et objectif
 
-Version 1.0. F3.1 à F3.41 terminés ; scénario F3.42 implémenté avec validation
-Chromium attendue en CI ; F3.43 et Gate F3 en attente.
+Version 1.0. F3.1 à F3.43 implémentés ; scénarios F3.42/F3.43 avec validation
+Chromium attendue en CI ; Gate F3 en attente.
 Surface Zandu Admin ; français et identifiants de code anglais.
 Administrer l’offre commerciale de base : catégories, produits, conditionnements, codes-barres, listes de prix, prix par packaging et prix effectif.
 

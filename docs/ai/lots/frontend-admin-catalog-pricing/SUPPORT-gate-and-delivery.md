@@ -10,9 +10,9 @@ La roadmap ne justifie pas de charger les Lots précédents en entier.
 ## Gate F3
 
 **État au 17 septembre 2026 :** en attente. Les critères 1–42 et 45–47 sont
-couverts par l’implémentation et les validations automatisées actuelles. Le
-scénario Catalog du critère 43 est implémenté mais attend son exécution Chromium
-en CI ; le critère 44 reste ouvert avec F3.43, faute de scénario E2E Pricing.
+couverts par l’implémentation et les validations automatisées actuelles. Les
+scénarios Catalog et Pricing des critères 43–44 sont implémentés mais attendent
+leur exécution Chromium en CI.
 
 1. Catalog navigation works
 2. Product list loads
