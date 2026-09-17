@@ -13,10 +13,17 @@ use Zandu\SharedKernel\Context\CurrentActorProvider;
 /** @implements ProviderInterface<ProductPriceResource> */
 final readonly class ProductPriceProvider implements ProviderInterface
 {
-    public function __construct(private CurrentActorProvider $actors, private ProductPriceQueryService $queries) {} /** @return list<ProductPriceResource> */ public function provide(Operation $op, array $vars = [], array $context = []): array
+    public function __construct(private CurrentActorProvider $actors, private ProductPriceQueryService $queries) {} /** @return ProductPriceResource|list<ProductPriceResource> */ public function provide(Operation $op, array $vars = [], array $context = []): ProductPriceResource|array
     {
         $a = $this->actors->resolve();
-        $views = 'product_price_list' === $op->getName() ? $this->queries->list($a) : [$this->queries->get(is_string($vars['id'] ?? null) ? $vars['id'] : throw new InvalidArgumentException('Product price identifier is required.'), $a)];
-        return array_map(static fn($v) => new ProductPriceResource($v->id, $v->organizationId, $v->priceListId, $v->productId, $v->packagingId, $v->amount, $v->currency, $v->status, $v->validFrom, $v->validTo, $v->createdAt, $v->version), $views);
+        if ('product_price_list' === $op->getName()) {
+            return array_map(self::resource(...), $this->queries->list($a));
+        }
+        return self::resource($this->queries->get(is_string($vars['id'] ?? null) ? $vars['id'] : throw new InvalidArgumentException('Product price identifier is required.'), $a));
+    }
+
+    private static function resource(\Zandu\Modules\Pricing\Application\ProductPriceView $view): ProductPriceResource
+    {
+        return new ProductPriceResource($view->id, $view->organizationId, $view->priceListId, $view->productId, $view->packagingId, $view->amount, $view->currency, $view->status, $view->validFrom, $view->validTo, $view->createdAt, $view->version);
     }
 }

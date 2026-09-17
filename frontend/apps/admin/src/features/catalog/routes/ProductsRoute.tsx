@@ -5,7 +5,7 @@ export function ProductsRoute() {
   return (
     <CatalogSection title="Produits" permission="PRODUCT_READ">
       <p>
-        <a href="/app/catalog/products/new">Nouveau produit</a>
+        <a href="/admin/catalog/products/new">Nouveau produit</a>
       </p>
       <ProductListPage />
     </CatalogSection>

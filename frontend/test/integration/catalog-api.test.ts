@@ -230,7 +230,11 @@ describe("Catalog API contracts", () => {
       http.patch(
         "https://api.zandu.test/api/products/product-1/packagings/packaging-1",
         async ({ request }) => {
-          expect(await request.json()).toEqual({ name: "Carton", minimumQuantity: "0.125" });
+          expect(await request.json()).toEqual({
+            expectedVersion: 1,
+            name: "Carton",
+            minimumQuantity: "0.125",
+          });
           return HttpResponse.json({ ...packaging, name: "Carton", minimumQuantity: "0.125" });
         },
       ),
@@ -254,12 +258,47 @@ describe("Catalog API contracts", () => {
       }),
     ).resolves.toMatchObject({ conversionFactor: "10.000", minimumQuantity: "0.125" });
     await api.updateProductPackaging("product-1", "packaging-1", {
+      expectedVersion: 1,
       name: "Carton",
       minimumQuantity: "0.125",
     });
     await expect(
       api.transitionProductPackaging("product-1", "packaging-1", "archive"),
     ).resolves.toMatchObject({ status: "ARCHIVED" });
+  });
+  it("lists, adds and removes barcodes without losing leading zeros", async () => {
+    const barcode = {
+      id: "barcode-1",
+      productId: "product-1",
+      packagingId: "packaging-1",
+      barcode: "0012345678905",
+      status: "ACTIVE",
+      version: 1,
+    };
+    server.use(
+      http.get(
+        "https://api.zandu.test/api/products/product-1/packagings/packaging-1/barcodes",
+        () => HttpResponse.json([barcode]),
+      ),
+      http.post(
+        "https://api.zandu.test/api/products/product-1/packagings/packaging-1/barcodes",
+        async ({ request }) => {
+          expect(await request.json()).toEqual({ barcode: "0012345678905" });
+          return HttpResponse.json(barcode);
+        },
+      ),
+      http.delete(
+        "https://api.zandu.test/api/products/product-1/packagings/packaging-1/barcodes/barcode-1",
+        () => HttpResponse.json({ ...barcode, status: "REMOVED", version: 2 }),
+      ),
+    );
+    await expect(api.listProductBarcodes("product-1", "packaging-1")).resolves.toEqual([barcode]);
+    await expect(
+      api.addProductBarcode("product-1", "packaging-1", { barcode: "0012345678905" }),
+    ).resolves.toMatchObject({ barcode: "0012345678905" });
+    await expect(
+      api.removeProductBarcode("product-1", "packaging-1", "barcode-1"),
+    ).resolves.toMatchObject({ status: "REMOVED" });
   });
   it("supports category create, update, move and lifecycle endpoints", async () => {
     const category = {

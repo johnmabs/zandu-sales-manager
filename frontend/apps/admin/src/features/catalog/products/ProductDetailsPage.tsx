@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { ApiRequestError } from "@zandu/api-client";
 import { can, useEffectiveAccess } from "@zandu/authorization";
 import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
@@ -139,6 +140,7 @@ export function ProductDetailsPage({ productId }: Readonly<{ productId: string }
                     onTransition={(action) => transitionPackaging.mutate({ id: p.id, action })}
                   />
                 ) : null}
+                <BarcodeManager productId={productId} packaging={p} mayUpdate={mayUpdate} />
               </li>
             ))}
           </ul>
@@ -159,11 +161,25 @@ export function ProductDetailsPage({ productId }: Readonly<{ productId: string }
       </section>
       <section>
         <h2>Codes-barres</h2>
-        <p>Les codes-barres seront gérés dans la prochaine unité de travail.</p>
+        <p>
+          Les codes-barres sont gérés sous chaque conditionnement et restent des chaînes exactes.
+        </p>
       </section>
       <section>
         <h2>Résumé tarifaire</h2>
-        <p>La tarification reste gérée par la feature Tarification.</p>
+        {can(access, "PRODUCT_PRICE_READ", { organizationId: activeOrganizationId! }) ? (
+          packagings.data
+            ?.filter((packaging) => packaging.allowedForSale && packaging.status === "ACTIVE")
+            .map((packaging) => (
+              <PackagingEffectivePrice
+                key={packaging.id}
+                productId={productId}
+                packaging={packaging}
+              />
+            ))
+        ) : (
+          <p>Vous n’avez pas accès aux prix produits.</p>
+        )}
       </section>
       <section>
         <h2>Cycle de vie</h2>
@@ -185,6 +201,132 @@ export function ProductDetailsPage({ productId }: Readonly<{ productId: string }
         ) : null}
       </section>
     </main>
+  );
+}
+
+function BarcodeManager({
+  productId,
+  packaging,
+  mayUpdate,
+}: Readonly<{
+  productId: string;
+  packaging: ProductPackagingResource;
+  mayUpdate: boolean;
+}>) {
+  const { activeOrganizationId } = useOrganizationContext();
+  const { api, queryClient } = useAdminRuntime();
+  const notifications = useNotifications();
+  const queryKey = queryKeys.productBarcodes.list(
+    activeOrganizationId ?? "unresolved",
+    productId,
+    packaging.id,
+  );
+  const barcodes = useQuery({
+    enabled: api !== undefined,
+    queryKey,
+    queryFn: () => api!.listProductBarcodes(productId, packaging.id),
+  });
+  const add = useMutation({
+    mutationFn: (barcode: string) => api!.addProductBarcode(productId, packaging.id, { barcode }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  const remove = useMutation({
+    mutationFn: (barcodeId: string) =>
+      api!.removeProductBarcode(productId, packaging.id, barcodeId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+  });
+  return (
+    <div>
+      <h3>Codes-barres</h3>
+      {barcodes.isLoading ? <Spinner label="Chargement des codes-barres" /> : null}
+      {barcodes.error ? (
+        <ErrorState
+          title="Codes-barres indisponibles"
+          description="Les codes-barres n’ont pas pu être chargés."
+        />
+      ) : null}
+      <ul>
+        {barcodes.data
+          ?.filter((barcode) => barcode.status === "ACTIVE")
+          .map((barcode) => (
+            <li key={barcode.id}>
+              <code>{barcode.barcode}</code>
+              {mayUpdate ? (
+                <Button
+                  onClick={() => {
+                    if (!window.confirm(`Retirer le code-barres ${barcode.barcode} ?`)) return;
+                    void remove
+                      .mutateAsync(barcode.id)
+                      .then(() =>
+                        notifications.notify({ message: "Code-barres retiré.", tone: "success" }),
+                      );
+                  }}
+                >
+                  Retirer
+                </Button>
+              ) : null}
+            </li>
+          ))}
+      </ul>
+      {mayUpdate ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const data = new FormData(form);
+            const barcode = String(data.get("barcode") ?? "").trim();
+            if (barcode === "") return;
+            void add.mutateAsync(barcode).then(() => {
+              form.reset();
+              notifications.notify({ message: "Code-barres ajouté.", tone: "success" });
+            });
+          }}
+        >
+          <label>
+            Nouveau code-barres <Input name="barcode" inputMode="text" required />
+          </label>
+          <Button type="submit">Ajouter</Button>
+        </form>
+      ) : null}
+      {add.error ? <p role="alert">Ce code-barres existe déjà ou n’est pas valide.</p> : null}
+    </div>
+  );
+}
+
+function PackagingEffectivePrice({
+  productId,
+  packaging,
+}: Readonly<{
+  productId: string;
+  packaging: ProductPackagingResource;
+}>) {
+  const { activeOrganizationId } = useOrganizationContext();
+  const { api } = useAdminRuntime();
+  const price = useQuery({
+    enabled: api !== undefined,
+    queryKey: queryKeys.productPrices.effective(
+      activeOrganizationId ?? "unresolved",
+      productId,
+      packaging.id,
+    ),
+    queryFn: () => api!.getEffectiveProductPrice(productId, packaging.id),
+    retry: false,
+  });
+  const noPrice =
+    price.error instanceof ApiRequestError &&
+    price.error.apiError.kind === "response" &&
+    price.error.apiError.status === 404;
+  return (
+    <p>
+      <strong>{packaging.name}</strong> —{" "}
+      {price.isLoading
+        ? "chargement…"
+        : price.data
+          ? `${price.data.amount} ${price.data.currency}`
+          : noPrice
+            ? "aucun prix applicable"
+            : "prix indisponible"}
+    </p>
   );
 }
 

@@ -130,4 +130,13 @@ final class InMemoryProductBarcodeRepository implements ProductBarcodeRepository
 
         throw new RuntimeException('Barcode not found.');
     }
+
+    public function findAllByPackaging(OrganizationId $organizationId, ProductPackagingId $packagingId): array
+    {
+        return array_values(array_filter(
+            $this->barcodes,
+            static fn(ProductBarcode $barcode): bool => $barcode->organizationId()->equals($organizationId)
+                && $barcode->packagingId()->equals($packagingId),
+        ));
+    }
 }

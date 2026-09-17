@@ -156,4 +156,79 @@ describe("Pricing API foundation", () => {
     );
     await expect(api.listProductPrices(access)).rejects.toBeInstanceOf(ApiContractError);
   });
+  it("supports pricing writes, details and lifecycle endpoints with expected versions", async () => {
+    const list = {
+      id: "list",
+      organizationId: "org-1",
+      code: "RETAIL",
+      name: "Détail",
+      currency: "XAF",
+      status: "DRAFT",
+      scope: "ORGANIZATION",
+      validFrom: null,
+      validTo: null,
+      priority: 1,
+      createdAt: "2026-09-14",
+      version: 1,
+    };
+    const price = {
+      id: "price",
+      organizationId: "org-1",
+      priceListId: "list",
+      productId: "p1",
+      packagingId: "pack1",
+      amount: "001.250",
+      currency: "XAF",
+      status: "INACTIVE",
+      validFrom: null,
+      validTo: null,
+      createdAt: "2026-09-14",
+      version: 1,
+    };
+    server.use(
+      http.get("https://api.zandu.test/api/price-lists/list", () => HttpResponse.json(list)),
+      http.post("https://api.zandu.test/api/price-lists", () => HttpResponse.json(list)),
+      http.patch("https://api.zandu.test/api/price-lists/list", async ({ request }) => {
+        expect(await request.json()).toMatchObject({ expectedVersion: 1, name: "Public" });
+        return HttpResponse.json({ ...list, name: "Public", version: 2 });
+      }),
+      http.post("https://api.zandu.test/api/price-lists/list/activate", () =>
+        HttpResponse.json({ ...list, status: "ACTIVE", version: 2 }),
+      ),
+      http.get("https://api.zandu.test/api/product-prices/price", () => HttpResponse.json(price)),
+      http.post("https://api.zandu.test/api/product-prices", async ({ request }) => {
+        expect(await request.json()).toMatchObject({ amount: "001.250" });
+        return HttpResponse.json(price);
+      }),
+      http.patch("https://api.zandu.test/api/product-prices/price", async ({ request }) => {
+        expect(await request.json()).toMatchObject({ expectedVersion: 1, amount: "2.500" });
+        return HttpResponse.json({ ...price, amount: "2.500", version: 2 });
+      }),
+      http.post("https://api.zandu.test/api/product-prices/price/activate", () =>
+        HttpResponse.json({ ...price, status: "ACTIVE", version: 2 }),
+      ),
+    );
+    await expect(api.getPriceList("list", access)).resolves.toEqual(list);
+    await api.createPriceList({ code: "RETAIL", name: "Détail", currency: "XAF", priority: 1 });
+    await expect(
+      api.updatePriceList("list", { expectedVersion: 1, name: "Public" }),
+    ).resolves.toMatchObject({ version: 2 });
+    await expect(api.transitionPriceList("list", "activate")).resolves.toMatchObject({
+      status: "ACTIVE",
+    });
+    await expect(api.getProductPrice("price", access)).resolves.toEqual(price);
+    await api.createProductPrice({
+      priceListId: "list",
+      productId: "p1",
+      packagingId: "pack1",
+      amount: "001.250",
+      currency: "XAF",
+    });
+    await expect(
+      api.updateProductPrice("price", { expectedVersion: 1, amount: "2.500" }),
+    ).resolves.toMatchObject({ version: 2 });
+    await expect(api.transitionProductPrice("price", "activate")).resolves.toMatchObject({
+      status: "ACTIVE",
+    });
+  });
 });

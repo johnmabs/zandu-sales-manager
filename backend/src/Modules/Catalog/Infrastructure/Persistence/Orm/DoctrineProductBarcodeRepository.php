@@ -48,6 +48,14 @@ final readonly class DoctrineProductBarcodeRepository implements ProductBarcodeR
         }
         return $this->toAggregate($r);
     }
+    public function findAllByPackaging(OrganizationId $organizationId, ProductPackagingId $packagingId): array
+    {
+        $records = $this->em->getRepository(ProductBarcodeRecord::class)->findBy(
+            ['organizationId' => $organizationId->toString(), 'packagingId' => $packagingId->toString()],
+            ['createdAt' => 'ASC'],
+        );
+        return array_map($this->toAggregate(...), $records);
+    }
     private function toAggregate(ProductBarcodeRecord $r): ProductBarcode
     {
         return ProductBarcode::reconstitute(ProductBarcodeId::fromString($r->id(), $this->uuids), OrganizationId::fromString($r->organizationId(), $this->uuids), ProductId::fromString($r->productId(), $this->uuids), ProductPackagingId::fromString($r->packagingId(), $this->uuids), Barcode::fromString($r->rawBarcode()), ProductBarcodeStatus::from($r->status()), $r->createdAt(), ActorId::fromString($r->createdBy(), $this->uuids), $r->removedAt(), null !== $r->removedBy() ? ActorId::fromString($r->removedBy(), $this->uuids) : null, $r->version());

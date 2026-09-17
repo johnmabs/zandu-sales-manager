@@ -13,7 +13,7 @@ const columns: readonly AdminTableColumn<ProductResource>[] = [
   {
     id: "name",
     header: "Nom",
-    cell: (p) => <a href={`/app/catalog/products/${p.id}`}>{p.name}</a>,
+    cell: (p) => <a href={`/admin/catalog/products/${p.id}`}>{p.name}</a>,
   },
   { id: "status", header: "Statut", cell: (p) => p.status },
   { id: "type", header: "Type", cell: (p) => p.type },

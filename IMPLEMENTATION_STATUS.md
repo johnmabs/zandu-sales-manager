@@ -11424,3 +11424,25 @@ Commits :
 - F3.10–F3.11 : `a3ed574 feat(catalog): manage category hierarchy` ;
 - F3.12–F3.15 : `01210f5 feat(catalog): deliver product and packaging workflows` ;
 - contrats OpenAPI et tests F3.6–F3.15 : `a743100 feat(catalog): add product management contracts`.
+
+## Epics F3.16–F3.43 — Barcode and Pricing administration
+
+**Statut : TERMINÉ — parcours Admin Catalog/Pricing implémentés**
+
+- Codes-barres persistés : lecture par conditionnement, ajout/retrait, zéros initiaux conservés et conflits serveur visibles.
+- Listes de prix : lecture, création, édition avec `expectedVersion`, activation, désactivation et archivage selon les permissions dédiées.
+- Prix produit : lecture, création via la relation Produit → Conditionnement, édition exacte sans flottants et cycle de vie complet.
+- Résolution du prix effectif par le serveur avec date métier facultative ; l’absence de prix reste distincte d’un montant nul.
+- Résumé des prix effectifs des conditionnements vendables dans le détail Produit et invalidation des caches Pricing tenant-scoped.
+- Les providers item PriceList/ProductPrice renvoient désormais une ressource et non une collection mono-élément.
+- Contrat OpenAPI et client TypeScript régénérés après ajout de la collection de codes-barres.
+
+### Validation consolidée F3.16–F3.43 — 2026-09-17
+
+- Frontend : typecheck, ESLint, 32 tests d’intégration, 73 tests composants et 15 tests Foundation Admin : OK.
+- Build Admin Next.js : OK, 25 routes générées.
+- Backend ciblé API/Catalog : OK (36 tests, 435 assertions).
+- Suite backend complète lancée hors conteneur : non concluante, car le hostname Docker `postgres` n’est pas résolu depuis l’hôte (96 erreurs de connexion et 5 échecs HTTP consécutifs).
+- PHPStan ciblé et global : OK ; Deptrac couches/modules : zéro violation.
+- `git diff --check` : OK.
+- Les parcours E2E navigateur F3.42/F3.43 n’ont pas été exécutés dans cette session.

@@ -21,7 +21,10 @@ const organizationScopedResources = new Set([
   "stores",
   "products",
   "productPackagings",
+  "productBarcodes",
   "categories",
+  "priceLists",
+  "productPrices",
   "stock",
   "suppliers",
   "purchaseOrders",
@@ -41,6 +44,24 @@ export const queryKeys = {
       filters === undefined
         ? (["categories", organizationId] as const)
         : (["categories", organizationId, filters] as const),
+  },
+  priceLists: {
+    detail: (organizationId: string, priceListId: string) =>
+      ["priceLists", organizationId, priceListId] as const,
+    list: (organizationId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["priceLists", organizationId] as const)
+        : (["priceLists", organizationId, filters] as const),
+  },
+  productPrices: {
+    detail: (organizationId: string, productPriceId: string) =>
+      ["productPrices", organizationId, productPriceId] as const,
+    effective: (organizationId: string, productId: string, packagingId: string, at?: string) =>
+      ["productPrices", organizationId, "effective", productId, packagingId, at ?? "now"] as const,
+    list: (organizationId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["productPrices", organizationId] as const)
+        : (["productPrices", organizationId, filters] as const),
   },
   roles: {
     list: (organizationId: string, filters?: QueryParameters) =>
@@ -73,6 +94,10 @@ export const queryKeys = {
   productPackagings: {
     list: (organizationId: string, productId: string) =>
       ["productPackagings", organizationId, productId] as const,
+  },
+  productBarcodes: {
+    list: (organizationId: string, productId: string, packagingId: string) =>
+      ["productBarcodes", organizationId, productId, packagingId] as const,
   },
   purchaseOrders: {
     detail: (organizationId: string, purchaseOrderId: string) =>

@@ -429,6 +429,9 @@ export type ProductBarcodeResource = Readonly<
     status: ProductBarcodeStatus;
   }
 >;
+export type ProductBarcodeCreateInput = Readonly<
+  GeneratedComponents["schemas"]["ProductBarcodeResource.ProductBarcodeCreateInput"]
+>;
 
 export type PriceListStatus = "ACTIVE" | "ARCHIVED" | "DRAFT" | "INACTIVE";
 export type PriceListScope = "ORGANIZATION";
@@ -616,6 +619,50 @@ export class FoundationApi {
     );
   }
 
+  async getPriceList(
+    priceListId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<PriceListResource | undefined> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `price-lists/${encodeURIComponent(priceListId)}`,
+    });
+    const priceList = decodePriceList(response.data);
+    return priceList.organizationId === access.organizationId ? priceList : undefined;
+  }
+
+  async createPriceList(input: PriceListCreateInput): Promise<PriceListResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: "price-lists",
+    });
+    return decodePriceList(response.data);
+  }
+
+  async updatePriceList(
+    priceListId: string,
+    input: PriceListUpdateInput,
+  ): Promise<PriceListResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `price-lists/${encodeURIComponent(priceListId)}`,
+    });
+    return decodePriceList(response.data);
+  }
+
+  async transitionPriceList(
+    priceListId: string,
+    transition: "activate" | "archive" | "deactivate",
+  ): Promise<PriceListResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `price-lists/${encodeURIComponent(priceListId)}/${transition}`,
+    });
+    return decodePriceList(response.data);
+  }
+
   async listProductPrices(
     access: CurrentSession["effectiveAccess"],
   ): Promise<readonly ProductPriceResource[]> {
@@ -631,6 +678,50 @@ export class FoundationApi {
     return decodeCatalogCollection(response.data, decodeProductPrice).filter(
       (item) => item.organizationId === access.organizationId,
     );
+  }
+
+  async getProductPrice(
+    productPriceId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<ProductPriceResource | undefined> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `product-prices/${encodeURIComponent(productPriceId)}`,
+    });
+    const productPrice = decodeProductPrice(response.data);
+    return productPrice.organizationId === access.organizationId ? productPrice : undefined;
+  }
+
+  async createProductPrice(input: ProductPriceCreateInput): Promise<ProductPriceResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: "product-prices",
+    });
+    return decodeProductPrice(response.data);
+  }
+
+  async updateProductPrice(
+    productPriceId: string,
+    input: ProductPriceUpdateInput,
+  ): Promise<ProductPriceResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `product-prices/${encodeURIComponent(productPriceId)}`,
+    });
+    return decodeProductPrice(response.data);
+  }
+
+  async transitionProductPrice(
+    productPriceId: string,
+    transition: "activate" | "archive" | "deactivate",
+  ): Promise<ProductPriceResource> {
+    const response = await this.client.request({
+      method: "POST",
+      path: `product-prices/${encodeURIComponent(productPriceId)}/${transition}`,
+    });
+    return decodeProductPrice(response.data);
   }
 
   async getEffectiveProductPrice(
@@ -776,6 +867,44 @@ export class FoundationApi {
       path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}/${transition}`,
     });
     return decodeProductPackaging(response.data);
+  }
+
+  async addProductBarcode(
+    productId: string,
+    packagingId: string,
+    input: ProductBarcodeCreateInput,
+  ): Promise<ProductBarcodeResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}/barcodes`,
+    });
+    return decodeProductBarcode(response.data);
+  }
+
+  async listProductBarcodes(
+    productId: string,
+    packagingId: string,
+  ): Promise<readonly ProductBarcodeResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}/barcodes`,
+    });
+    return decodeCatalogCollection(response.data, decodeProductBarcode).filter(
+      (barcode) => barcode.productId === productId && barcode.packagingId === packagingId,
+    );
+  }
+
+  async removeProductBarcode(
+    productId: string,
+    packagingId: string,
+    barcodeId: string,
+  ): Promise<ProductBarcodeResource> {
+    const response = await this.client.request({
+      method: "DELETE",
+      path: `products/${encodeURIComponent(productId)}/packagings/${encodeURIComponent(packagingId)}/barcodes/${encodeURIComponent(barcodeId)}`,
+    });
+    return decodeProductBarcode(response.data);
   }
 
   async createCategory(input: CategoryCreateInput): Promise<CategoryResource> {
@@ -1074,6 +1203,21 @@ function decodeProductPackaging(value: unknown): ProductPackagingResource {
     status: requiredCategoryStatus(value, "status", message),
     createdAt: requiredString(value, "createdAt", message),
     updatedAt: catalogNullableString(value, "updatedAt"),
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeProductBarcode(value: unknown): ProductBarcodeResource {
+  const message = "The product barcode response is invalid.";
+  if (!isRecord(value)) throw new ApiContractError(message);
+  const status = value.status;
+  if (status !== "ACTIVE" && status !== "REMOVED") throw new ApiContractError(message);
+  return {
+    id: requiredString(value, "id", message),
+    productId: requiredString(value, "productId", message),
+    packagingId: requiredString(value, "packagingId", message),
+    barcode: requiredString(value, "barcode", message),
+    status,
     version: requiredNumber(value, "version", message),
   };
 }

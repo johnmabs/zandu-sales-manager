@@ -60,7 +60,7 @@ final class ApiPlatformTest extends KernelTestCase
             }
         }
 
-        self::assertSame(12, $pageCollections);
+        self::assertSame(13, $pageCollections);
         self::assertSame(10, $cursorCollections);
     }
 
@@ -337,6 +337,7 @@ final class ApiPlatformTest extends KernelTestCase
     {
         self::bootKernel();
         $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+        self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{packagingId}/barcodes')->getGet());
         self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{packagingId}/barcodes')->getPost());
         self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{packagingId}/barcodes/{id}')->getDelete());
         self::assertNotNull($paths->getPath('/api/catalog/barcodes/{barcode}')->getGet());
