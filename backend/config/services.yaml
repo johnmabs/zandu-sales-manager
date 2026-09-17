@@ -6,7 +6,8 @@
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
-# parameters:
+parameters:
+    app.api.pagination_maximum_items_per_page: 100
 
 services:
     # default configuration for services in *this* file
@@ -92,6 +93,7 @@ services:
         decoration_priority: -10
         arguments:
             $decorated: '@Zandu\Platform\Api\State\PaginatedCollectionProvider.inner'
+            $maximumItemsPerPage: '%app.api.pagination_maximum_items_per_page%'
 
     Zandu\Modules\Organization\Domain\OrganizationRepository:
         alias: Zandu\Modules\Organization\Infrastructure\Persistence\Orm\DoctrineOrganizationRepository

@@ -20,6 +20,7 @@ final readonly class PaginatedCollectionProvider implements ProviderInterface
         /** @var ProviderInterface<object> */
         private ProviderInterface $decorated,
         private Pagination $pagination,
+        private int $maximumItemsPerPage,
     ) {}
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
@@ -30,7 +31,9 @@ final readonly class PaginatedCollectionProvider implements ProviderInterface
             return $data;
         }
 
-        [, $offset, $limit] = $this->pagination->getPagination($operation, $context);
+        [$page, , $limit] = $this->pagination->getPagination($operation, $context);
+        $limit = min($limit, $this->maximumItemsPerPage);
+        $offset = ($page - 1) * $limit;
 
         if (true === ($operation->getExtraProperties()[self::CURSOR_PAGINATION] ?? false)) {
             return $this->cursorPage(array_values($data), $operation, $context, $limit);

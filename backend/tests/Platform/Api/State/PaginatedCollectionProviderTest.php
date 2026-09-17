@@ -28,6 +28,7 @@ final class PaginatedCollectionProviderTest extends TestCase
                 'items_per_page_parameter_name' => 'limit',
                 'maximum_items_per_page' => 100,
             ]),
+            100,
         );
 
         $result = $provider->provide(
@@ -44,22 +45,24 @@ final class PaginatedCollectionProviderTest extends TestCase
 
     public function testItCapsTheClientLimit(): void
     {
-        $items = array_fill(0, 150, new \stdClass());
+        $items = array_map(static fn(int $index): object => (object) ['index' => $index], range(1, 250));
         $provider = new PaginatedCollectionProvider(
             $this->providerReturning($items),
             new Pagination([
                 'items_per_page' => 30,
                 'client_items_per_page' => true,
                 'items_per_page_parameter_name' => 'limit',
-                'maximum_items_per_page' => 100,
+                'maximum_items_per_page' => 1000,
             ]),
+            100,
         );
 
-        $result = $provider->provide(new GetCollection(), context: ['filters' => ['limit' => '1000']]);
+        $result = $provider->provide(new GetCollection(), context: ['filters' => ['page' => '2', 'limit' => '1000']]);
 
         self::assertInstanceOf(ArrayPaginator::class, $result);
         self::assertSame(100.0, $result->getItemsPerPage());
         self::assertCount(100, iterator_to_array($result));
+        self::assertSame($items[100], array_values(iterator_to_array($result))[0]);
     }
 
     public function testItUsesAnOpaqueCursorWithoutDuplicates(): void
@@ -77,6 +80,7 @@ final class PaginatedCollectionProviderTest extends TestCase
                 'items_per_page_parameter_name' => 'limit',
                 'maximum_items_per_page' => 100,
             ]),
+            100,
         );
         $operation = new GetCollection(extraProperties: [
             PaginatedCollectionProvider::CURSOR_PAGINATION => true,
@@ -117,6 +121,7 @@ final class PaginatedCollectionProviderTest extends TestCase
         $provider = new PaginatedCollectionProvider(
             $this->providerReturning($items),
             new Pagination(['items_per_page' => 1]),
+            100,
         );
 
         $result = $provider->provide(new GetCollection(extraProperties: [
@@ -128,12 +133,45 @@ final class PaginatedCollectionProviderTest extends TestCase
         self::assertSame([$items[1]], array_values(iterator_to_array($result)));
     }
 
+    public function testItCapsTheClientLimitForCursorPagination(): void
+    {
+        $items = [];
+        for ($index = 1; $index <= 150; ++$index) {
+            $items[] = (object) ['id' => sprintf('0198c728-%04d-7000-8000-%012d', $index, $index)];
+        }
+        $request = new Request();
+        $provider = new PaginatedCollectionProvider(
+            $this->providerReturning($items),
+            new Pagination([
+                'items_per_page' => 30,
+                'client_items_per_page' => true,
+                'items_per_page_parameter_name' => 'limit',
+                'maximum_items_per_page' => 1000,
+            ]),
+            100,
+        );
+
+        $result = $provider->provide(new GetCollection(extraProperties: [
+            PaginatedCollectionProvider::CURSOR_PAGINATION => true,
+        ]), context: [
+            'filters' => ['limit' => '1000'],
+            'request' => $request,
+        ]);
+
+        self::assertInstanceOf(CursorPaginator::class, $result);
+        self::assertSame(100.0, $result->getItemsPerPage());
+        self::assertCount(100, iterator_to_array($result));
+        self::assertTrue($result->hasNextPage());
+        self::assertIsString($request->attributes->get(PaginatedCollectionProvider::NEXT_CURSOR_ATTRIBUTE));
+    }
+
     public function testItLeavesItemOperationsUntouched(): void
     {
         $item = new \stdClass();
         $provider = new PaginatedCollectionProvider(
             $this->providerReturning($item),
             new Pagination(),
+            100,
         );
 
         self::assertSame($item, $provider->provide(new Get()));
