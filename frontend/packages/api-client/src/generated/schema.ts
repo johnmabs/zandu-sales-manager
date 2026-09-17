@@ -8115,7 +8115,10 @@ export interface operations {
   };
   effective_product_price: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Pricing instant in RFC 3339 format; defaults to the current time. */
+        at?: string;
+      };
       header?: never;
       path: {
         /** @description EffectiveProductPriceResource identifier */
@@ -15571,6 +15574,16 @@ export interface operations {
       query?: {
         /** @description The number of items per page */
         limit?: number;
+        /** @description Filters products by lifecycle status. */
+        status?: "DRAFT" | "ACTIVE" | "INACTIVE" | "ARCHIVED";
+        /** @description Filters products by product type. */
+        type?: "PHYSICAL" | "SERVICE";
+        /** @description Filters products assigned to the category. */
+        categoryId?: string;
+        /** @description Filters products by their exact code. */
+        productCode?: string;
+        /** @description Case-insensitive search in product name and code. */
+        search?: string;
         /** @description Opaque cursor returned by the preceding response in X-Next-Cursor. */
         cursor?: string;
       };

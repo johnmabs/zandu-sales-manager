@@ -369,6 +369,27 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/products/{productId}/packagings/{packagingId}/effective-price')->getGet());
     }
 
+    public function testImplementedQueryFiltersAreDocumented(): void
+    {
+        self::bootKernel();
+        $paths = self::getContainer()->get(OpenApiFactoryInterface::class)([])->getPaths();
+
+        $products = $this->parametersByName($paths->getPath('/api/products')->getGet()?->getParameters());
+        self::assertSame(
+            ['categoryId', 'cursor', 'limit', 'productCode', 'search', 'status', 'type'],
+            array_keys($products),
+        );
+        self::assertSame(['DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED'], $products['status']->getSchema()['enum']);
+        self::assertSame(['PHYSICAL', 'SERVICE'], $products['type']->getSchema()['enum']);
+        self::assertSame('uuid', $products['categoryId']->getSchema()['format']);
+
+        $effectivePrice = $this->parametersByName(
+            $paths->getPath('/api/products/{productId}/packagings/{packagingId}/effective-price')->getGet()?->getParameters(),
+        );
+        self::assertArrayHasKey('at', $effectivePrice);
+        self::assertSame('date-time', $effectivePrice['at']->getSchema()['format']);
+    }
+
     public function testOrganizationInvitationOperationsAreDocumentedWithoutTokenHash(): void
     {
         self::bootKernel();
@@ -526,5 +547,21 @@ final class ApiPlatformTest extends KernelTestCase
         self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/lines')->getPost());
         self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/ship')->getPost());
         self::assertNotNull($paths->getPath('/api/purchase-returns/{id}/cancel')->getPost());
+    }
+
+    /**
+     * @param list<\ApiPlatform\OpenApi\Model\Parameter>|null $parameters
+     *
+     * @return array<string, \ApiPlatform\OpenApi\Model\Parameter>
+     */
+    private function parametersByName(?array $parameters): array
+    {
+        $byName = [];
+        foreach ($parameters ?? [] as $parameter) {
+            $byName[$parameter->getName()] = $parameter;
+        }
+        ksort($byName);
+
+        return $byName;
     }
 }

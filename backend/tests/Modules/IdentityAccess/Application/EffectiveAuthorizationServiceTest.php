@@ -89,6 +89,24 @@ final class EffectiveAuthorizationServiceTest extends TestCase
         $service->authorize($this->context(), PermissionCode::StoreUpdate, ResourceScope::store($this->organizationId, $this->storeB));
     }
 
+    public function testItReturnsSelectedStoreIdsForSqlFiltering(): void
+    {
+        $scope = AccessScope::selectedStores($this->organizationId, [new ScopedStore($this->storeA, $this->organizationId)]);
+
+        $storeIds = $this->service($this->assignment(1, $scope))->visibleStoreIds($this->context());
+
+        self::assertNotNull($storeIds);
+        self::assertSame([$this->storeA->toString()], array_map(static fn(StoreId $id): string => $id->toString(), $storeIds));
+    }
+
+    public function testOrganizationScopeLeavesTheSqlStoreFilterUnrestricted(): void
+    {
+        $storeIds = $this->service($this->assignment(0, AccessScope::organization($this->organizationId)))
+            ->visibleStoreIds($this->context());
+
+        self::assertNull($storeIds);
+    }
+
     public function testExpiredAssignmentIsDenied(): void
     {
         $service = $this->service($this->assignment(

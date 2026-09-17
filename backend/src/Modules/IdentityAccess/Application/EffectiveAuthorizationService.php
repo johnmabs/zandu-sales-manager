@@ -6,6 +6,8 @@ namespace Zandu\Modules\IdentityAccess\Application;
 
 use LogicException;
 use Zandu\Modules\IdentityAccess\Application\Contract\AuthorizationService;
+use Zandu\Modules\IdentityAccess\Application\Contract\StoreReadScopeProvider;
+use Zandu\Modules\IdentityAccess\Domain\Access\AccessScopeType;
 use Zandu\Modules\IdentityAccess\Domain\Access\SystemRoleCatalog;
 use Zandu\Modules\IdentityAccess\Domain\Membership\MembershipStatus;
 use Zandu\Modules\IdentityAccess\Domain\Membership\OrganizationMembershipRepository;
@@ -15,7 +17,7 @@ use Zandu\SharedKernel\Access\ResourceScope;
 use Zandu\SharedKernel\Context\ActorContext;
 use Zandu\SharedKernel\Time\Clock;
 
-final readonly class EffectiveAuthorizationService implements AuthorizationService
+final readonly class EffectiveAuthorizationService implements AuthorizationService, StoreReadScopeProvider
 {
     public function __construct(
         private OrganizationMembershipRepository $memberships,
@@ -52,5 +54,42 @@ final readonly class EffectiveAuthorizationService implements AuthorizationServi
         }
 
         throw AuthorizationDenied::forPermission($actorContext, $permission, $resourceScope);
+    }
+
+    public function visibleStoreIds(ActorContext $actorContext): ?array
+    {
+        $userId = $actorContext->userId();
+        $claimedVersion = $actorContext->authorizationVersion();
+        if (null === $userId || null === $claimedVersion) {
+            return [];
+        }
+
+        $membership = $this->memberships->findByUser($actorContext->organizationId(), $userId);
+        if (null === $membership || MembershipStatus::Active !== $membership->status()
+            || $membership->authorizationVersion() !== $claimedVersion) {
+            return [];
+        }
+
+        $storeIds = [];
+        $now = $this->clock->now();
+        foreach ($membership->roleAssignments() as $assignment) {
+            try {
+                $role = $this->systemRoles->getById($assignment->roleId());
+            } catch (LogicException) {
+                continue;
+            }
+
+            if (!$assignment->grants($role, PermissionCode::StoreRead, $now)) {
+                continue;
+            }
+            if (AccessScopeType::Organization === $assignment->scope()->type()) {
+                return null;
+            }
+            foreach ($assignment->scope()->storeIds() as $storeId) {
+                $storeIds[$storeId->toString()] = $storeId;
+            }
+        }
+
+        return array_values($storeIds);
     }
 }

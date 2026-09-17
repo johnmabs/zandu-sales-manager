@@ -135,6 +135,27 @@ final class DoctrineStoreRepositoryTest extends KernelTestCase
         self::assertNull($result);
     }
 
+    public function testFindAllFiltersVisibleStoresInTheDatabaseQuery(): void
+    {
+        $storeA = $this->store(self::STORE_A, self::ORGANIZATION_A, 'CENTRE');
+        $storeB = $this->store(self::STORE_A_DUPLICATE, self::ORGANIZATION_A, 'NORD');
+        $this->transactions->transactional($storeA->organizationId(), function () use ($storeA, $storeB): void {
+            $this->repository->save($storeA);
+            $this->repository->save($storeB);
+        });
+        $this->entityManager->clear();
+
+        $stores = $this->transactions->transactional(
+            $storeA->organizationId(),
+            fn(): array => $this->repository->findAll($storeA->organizationId(), [$storeB->id()]),
+        );
+
+        self::assertSame([self::STORE_A_DUPLICATE], array_map(
+            static fn(Store $store): string => $store->id()->toString(),
+            $stores,
+        ));
+    }
+
     public function testStoreClosureRoundTripsAndIsHiddenFromAnotherTenant(): void
     {
         $store = $this->store(self::STORE_A, self::ORGANIZATION_A, 'CENTRE');

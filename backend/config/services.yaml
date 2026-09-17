@@ -47,6 +47,9 @@ services:
     Zandu\SharedKernel\Context\CurrentActorProvider:
         alias: Zandu\Platform\Auth\Context\ActorContextResolver
 
+    Zandu\Modules\IdentityAccess\Application\Contract\StoreReadScopeProvider:
+        alias: Zandu\Modules\IdentityAccess\Application\EffectiveAuthorizationService
+
     Zandu\SharedKernel\Tenancy\TenantTransaction:
         alias: Zandu\Platform\Persistence\DoctrineTenantTransaction
 

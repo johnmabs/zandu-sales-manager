@@ -6,8 +6,19 @@ namespace Zandu\Modules\Pricing\Presentation\Api;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\QueryParameter;
 
-#[ApiResource(operations: [new Get(name: 'effective_product_price', uriTemplate: '/products/{productId}/packagings/{packagingId}/effective-price', provider: EffectiveProductPriceProvider::class)])]
+#[ApiResource(operations: [new Get(
+    name: 'effective_product_price',
+    uriTemplate: '/products/{productId}/packagings/{packagingId}/effective-price',
+    parameters: [
+        'at' => new QueryParameter(
+            schema: ['type' => 'string', 'format' => 'date-time'],
+            description: 'Pricing instant in RFC 3339 format; defaults to the current time.',
+        ),
+    ],
+    provider: EffectiveProductPriceProvider::class,
+)])]
 final readonly class EffectiveProductPriceResource
 {
     public function __construct(public string $priceListId, public string $productPriceId, public string $amount, public string $currency, public int $sourceVersion) {}

@@ -9,9 +9,37 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\QueryParameter;
 
 #[ApiResource(operations: [
-    new GetCollection(name: 'product_list', uriTemplate: '/products', provider: ProductProvider::class, extraProperties: ['zandu_cursor_pagination' => true, 'zandu_cursor_direction' => 'asc']),
+    new GetCollection(
+        name: 'product_list',
+        uriTemplate: '/products',
+        parameters: [
+            'status' => new QueryParameter(
+                schema: ['type' => 'string', 'enum' => ['DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED']],
+                description: 'Filters products by lifecycle status.',
+            ),
+            'type' => new QueryParameter(
+                schema: ['type' => 'string', 'enum' => ['PHYSICAL', 'SERVICE']],
+                description: 'Filters products by product type.',
+            ),
+            'categoryId' => new QueryParameter(
+                schema: ['type' => 'string', 'format' => 'uuid'],
+                description: 'Filters products assigned to the category.',
+            ),
+            'productCode' => new QueryParameter(
+                schema: ['type' => 'string'],
+                description: 'Filters products by their exact code.',
+            ),
+            'search' => new QueryParameter(
+                schema: ['type' => 'string'],
+                description: 'Case-insensitive search in product name and code.',
+            ),
+        ],
+        provider: ProductProvider::class,
+        extraProperties: ['zandu_cursor_pagination' => true, 'zandu_cursor_direction' => 'asc'],
+    ),
     new Post(name: 'product_create', uriTemplate: '/products', input: ProductCreateInput::class, processor: ProductProcessor::class),
     new Get(name: 'product_get', uriTemplate: '/products/{id}', provider: ProductProvider::class),
     new Patch(name: 'product_update', uriTemplate: '/products/{id}', read: false, input: ProductUpdateInput::class, processor: ProductProcessor::class),

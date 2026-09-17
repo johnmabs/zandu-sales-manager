@@ -213,7 +213,7 @@ final class StoreUseCaseRepository implements StoreRepository
         return $store instanceof Store && $store->organizationId()->equals($organizationId) ? $store : null;
     }
 
-    public function findAll(OrganizationId $organizationId): array
+    public function findAll(OrganizationId $organizationId, ?array $storeIds = null): array
     {
         return array_values(array_filter(
             $this->stores,
