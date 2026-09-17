@@ -99,8 +99,9 @@ POST /api/stores/{storeId}/inventory-valuations/{productId}/initialize
 ```
 
 L’initialisation d’une position historique est explicite et justifiée. Quantité
-nulle implique valeur totale nulle. Coût moyen et valeur totale ne sont visibles
-qu’avec les permissions de coûts/valeurs correspondantes.
+nulle implique valeur totale nulle. Dans le contrat serveur actuel, coût moyen
+et valeur totale sont lisibles avec `INVENTORY_READ`. Une séparation plus fine
+de leur visibilité exige d’abord une évolution explicite du contrat backend.
 
 ## 10. Contrats StockTransfer
 
@@ -126,10 +127,11 @@ purge/refetch leurs caches lors d’un changement.
 ## 13. Permissions
 
 F4 reflète les permissions réelles `INVENTORY_*`, `STOCK_MOVEMENT_READ`,
-`STOCK_TRANSFER_*`, `STOCK_COUNT_*`, `INVENTORY_COST_VIEW`,
-`INVENTORY_VALUE_VIEW`, `INVENTORY_COSTING_INITIALIZE` et
-`INVENTORY_COST_ASSIGN`. Les guards UI sont ergonomiques ; le serveur reste
-l’autorité.
+`STOCK_TRANSFER_*`, `STOCK_COUNT_*`, `INVENTORY_COSTING_INITIALIZE` et
+`INVENTORY_COST_ASSIGN`. Le contrat actuel utilise `INVENTORY_READ` pour la
+lecture des valorisations et ne définit ni `INVENTORY_COST_VIEW` ni
+`INVENTORY_VALUE_VIEW` ; le frontend ne les invente pas. Les guards UI sont
+ergonomiques ; le serveur reste l’autorité.
 
 ## 14. Erreurs et concurrence
 
@@ -206,8 +208,10 @@ Contrats et vues de valorisation/ledger, montants exacts et état non initialis�
 
 ## 27. Epic F4.9 — Cost confidentiality
 
-Masquer coûts, valeurs et attributions sans permission spécifique, y compris
-dans export, erreurs, skeletons et mode BLIND.
+Protéger coûts, valeurs et attributions selon les permissions contractuelles, y
+compris dans export, erreurs, skeletons et mode BLIND. La lecture repose
+actuellement sur `INVENTORY_READ` ; toute permission de visibilité plus fine
+nécessite d’abord une évolution backend.
 
 ## 28. Epic F4.10 — Stock transfer list and details
 
@@ -294,4 +298,3 @@ lint, format, typecheck et build Admin verts.
 Commencer par F4.1 : types/décodeurs/méthodes de lecture Stock et StockMovement,
 tests d’intégration et frontière publique Inventory. Ne pas construire la
 navigation ni les mutations avant que ces contrats soient stables.
-

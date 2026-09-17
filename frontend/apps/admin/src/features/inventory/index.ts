@@ -1,5 +1,8 @@
 export { InventoryRoute } from "./InventoryRoute";
 export { getStock, listStockMovements, listStocks } from "./api/readInventory";
+export { InventorySection } from "./components/InventorySection";
+export { inventoryNavigation, visibleInventoryNavigation } from "./inventory-navigation";
+export { InventoryAreaRoute } from "./routes/InventoryAreaRoute";
 export type {
   StockMovementResource,
   StockMovementSource,

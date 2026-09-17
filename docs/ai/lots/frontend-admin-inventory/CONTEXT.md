@@ -2,7 +2,7 @@
 
 ## Statut et objectif
 
-Version 1.0. F4.1 terminé ; F4.2 est le prochain Epic. Gate F3 encore en
+Version 1.0. F4.1–F4.2 terminés ; F4.3 est le prochain Epic. Gate F3 encore en
 attente des preuves Chromium CI.
 
 Administrer les positions et mouvements de stock, la valorisation, les
@@ -27,7 +27,9 @@ transferts inter-store et les inventaires physiques depuis Zandu Admin.
 - quantités, coûts et valeurs sont des chaînes décimales exactes ;
 - ledgers append-only ; aucune correction historique en place ;
 - projections tenant/store défensives ;
-- coûts et valeurs protégés par permissions dédiées ;
+- lecture des coûts et valeurs protégée par `INVENTORY_READ` selon le contrat
+  serveur actuel ; initialisation et attribution gardées par leurs permissions
+  d’opération dédiées ;
 - mode BLIND sans fuite de quantité attendue ou variance ;
 - ordre, filtres et pagination restent serveur ;
 - changement d’organisation/store sépare et purge les caches.

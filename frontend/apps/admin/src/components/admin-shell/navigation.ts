@@ -39,7 +39,12 @@ export const adminNavigation: readonly AdminNavigationItem[] = [
     label: "Tarification",
   },
   {
-    capabilities: [{ permission: "INVENTORY_READ" }],
+    capabilities: [
+      { permission: "INVENTORY_READ" },
+      { permission: "STOCK_MOVEMENT_READ" },
+      { permission: "STOCK_TRANSFER_READ" },
+      { permission: "STOCK_COUNT_READ" },
+    ],
     href: "/admin/inventory",
     label: "Stock",
   },

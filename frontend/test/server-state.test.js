@@ -5,6 +5,7 @@ import {
   createServerStateClient,
   queryKeys,
   transitionOrganizationCache,
+  transitionStoreCache,
 } from "../packages/server-state/src/index.ts";
 
 const organizationA = "0198c728-8f2d-7f43-92d8-3f0c75b80187";
@@ -25,12 +26,40 @@ test("query keys centrally include organization and store scopes", () => {
     "store-1",
     { search: "rice" },
   ]);
+  assert.deepEqual(queryKeys.stockMovements.list(organizationA, "store-1"), [
+    "stockMovements",
+    organizationA,
+    "store-1",
+  ]);
+  assert.deepEqual(queryKeys.inventoryValuations.list(organizationA, "store-1"), [
+    "inventoryValuations",
+    organizationA,
+    "store-1",
+  ]);
   assert.deepEqual(queryKeys.sales.detail(organizationA, "store-1", "sale-1"), [
     "sales",
     organizationA,
     "store-1",
     "sale-1",
   ]);
+});
+
+test("a store transition removes other-store data and invalidates retained data", async () => {
+  const client = createServerStateClient();
+  const activeStock = queryKeys.stock.list(organizationA, "store-1");
+  const previousMovements = queryKeys.stockMovements.list(organizationA, "store-2");
+  const otherOrganization = queryKeys.stockCounts.list(organizationB, "store-2");
+
+  client.setQueryData(activeStock, [{ id: "stock-1" }]);
+  client.setQueryData(previousMovements, [{ id: "movement-2" }]);
+  client.setQueryData(otherOrganization, [{ id: "count-b" }]);
+
+  await transitionStoreCache(client, organizationA, "store-1");
+
+  assert.deepEqual(client.getQueryData(activeStock), [{ id: "stock-1" }]);
+  assert.equal(client.getQueryState(activeStock)?.isInvalidated, true);
+  assert.equal(client.getQueryData(previousMovements), undefined);
+  assert.deepEqual(client.getQueryData(otherOrganization), [{ id: "count-b" }]);
 });
 
 test("the server-state client retries reads but never retries mutations automatically", () => {

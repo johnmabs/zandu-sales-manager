@@ -26,10 +26,23 @@ const organizationScopedResources = new Set([
   "priceLists",
   "productPrices",
   "stock",
+  "stockMovements",
+  "inventoryValuations",
+  "stockTransfers",
+  "stockCounts",
   "suppliers",
   "purchaseOrders",
   "roles",
   "sales",
+]);
+
+const storeScopedResources = new Set([
+  "inventoryValuations",
+  "sales",
+  "stock",
+  "stockCounts",
+  "stockMovements",
+  "stockTransfers",
 ]);
 
 /**
@@ -116,10 +129,38 @@ export const queryKeys = {
         : (["sales", organizationId, storeId, filters] as const),
   },
   stock: {
+    detail: (organizationId: string, storeId: string, productId: string) =>
+      ["stock", organizationId, storeId, productId] as const,
     list: (organizationId: string, storeId: string, filters?: QueryParameters) =>
       filters === undefined
         ? (["stock", organizationId, storeId] as const)
         : (["stock", organizationId, storeId, filters] as const),
+  },
+  stockMovements: {
+    list: (organizationId: string, storeId: string, filters?: QueryParameters) =>
+      filters === undefined
+        ? (["stockMovements", organizationId, storeId] as const)
+        : (["stockMovements", organizationId, storeId, filters] as const),
+  },
+  inventoryValuations: {
+    detail: (organizationId: string, storeId: string, productId: string) =>
+      ["inventoryValuations", organizationId, storeId, productId] as const,
+    list: (organizationId: string, storeId: string) =>
+      ["inventoryValuations", organizationId, storeId] as const,
+    movements: (organizationId: string, storeId: string, productId: string) =>
+      ["inventoryValuations", organizationId, storeId, productId, "movements"] as const,
+  },
+  stockTransfers: {
+    detail: (organizationId: string, transferId: string) =>
+      ["stockTransfers", organizationId, "detail", transferId] as const,
+    list: (organizationId: string, storeId: string) =>
+      ["stockTransfers", organizationId, storeId] as const,
+  },
+  stockCounts: {
+    detail: (organizationId: string, countId: string) =>
+      ["stockCounts", organizationId, "detail", countId] as const,
+    list: (organizationId: string, storeId: string) =>
+      ["stockCounts", organizationId, storeId] as const,
   },
   stores: {
     detail: (organizationId: string, storeId: string, filters?: QueryParameters) =>
@@ -179,8 +220,34 @@ export async function transitionOrganizationCache(
   });
 }
 
+/** Removes data for previously selected stores and refreshes the active store. */
+export async function transitionStoreCache(
+  client: QueryClient,
+  organizationId: string,
+  storeId: string,
+): Promise<void> {
+  client.removeQueries({
+    predicate: (query) =>
+      isStoreScopedQuery(query.queryKey) &&
+      query.queryKey[1] === organizationId &&
+      query.queryKey[2] !== storeId,
+  });
+
+  await client.invalidateQueries({
+    predicate: (query) =>
+      isStoreScopedQuery(query.queryKey) &&
+      query.queryKey[1] === organizationId &&
+      query.queryKey[2] === storeId,
+  });
+}
+
 function isOrganizationScopedQuery(queryKey: QueryKey): boolean {
   const resource = queryKey[0];
 
   return typeof resource === "string" && organizationScopedResources.has(resource);
+}
+
+function isStoreScopedQuery(queryKey: QueryKey): boolean {
+  const resource = queryKey[0];
+  return typeof resource === "string" && storeScopedResources.has(resource);
 }

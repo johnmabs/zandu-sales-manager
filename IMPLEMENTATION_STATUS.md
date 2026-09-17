@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1        TERMINÉ   Inventory feature foundation
-F4.2        À FAIRE   Inventory navigation and store context
+F4.1–F4.2   TERMINÉ   Foundation, navigation et contexte magasin Inventory
+F4.3        À FAIRE   Stock positions workspace
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -190,8 +190,8 @@ Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
-Tests frontend        20 Foundation, 10 unitaires, 73 composants, 32 intégration
-Builds frontend       Admin (29 routes) et POS OK
+Tests frontend        20 Foundation, 10 unitaires, 78 composants, 37 intégration
+Builds frontend       Admin (39 routes) et POS OK
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -250,7 +250,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [ ] Gate F3 Admin Catalog & Pricing
 [x] Planning Frontend Lot F4 Admin Inventory
 [x] F4.1 Inventory feature foundation
-[ ] F4.2 Inventory navigation and store context
+[x] F4.2 Inventory navigation and store context
+[ ] F4.3 Stock positions workspace
 ```
 
 ## Références
@@ -5713,7 +5714,7 @@ PHP-CS-Fixer : 0 fichier à corriger
 
 ### Commit
 
-```text
+````text
 feat(api): complete price list management
 
 ## Prochaine étape
@@ -5736,11 +5737,11 @@ PHPUnit OpenAPI : OK (15 tests, 95 assertions)
 PHPStan niveau 6 : 0 erreur
 Deptrac layers/modules : 0 violation
 PHP-CS-Fixer : 0 fichier à corriger
-```
+````
 
 ### Commit
 
-```text
+````text
 feat(api): complete product price management
 
 ## Prochaine étape
@@ -5758,14 +5759,15 @@ priorité des PriceList actives.
 ```text
 PHPUnit OpenAPI : OK (15 tests, 96 assertions)
 PHP-CS-Fixer : 0 fichier à corriger
-```
+````
 
 ### Commit
 
 ```text
 feat(api): expose effective product price resolution
 ```
-```
+
+````
 
 ## Prochaine étape
 
@@ -5783,14 +5785,15 @@ documentés (`400`, `401`, `403`, `404`, `409`, `422`).
 ```text
 PHPUnit OpenAPI : OK (16 tests, 122 assertions)
 PHP-CS-Fixer : 0 fichier à corriger
-```
+````
 
 ### Commit
 
 ```text
 test(api): cover catalog pricing error contract
 ```
-```
+
+````
 
 ---
 
@@ -5809,7 +5812,7 @@ complet et archivage terminal.
 
 ```text
 ProductTest : OK
-```
+````
 
 ### Commit
 
@@ -9789,6 +9792,7 @@ l'audit ne relève aucune vulnérabilité.
 Validations : installation pnpm avec lockfile gelé OK ; 2 tests workspace, 2
 réussis ; résolution récursive des cinq projets OK ; syntaxe YAML du workflow
 Frontend CI valide ; `git diff --check` OK.
+
 ## Epic F0.2 — Admin bootstrap
 
 **Statut : TERMINÉ — application Next.js initialisée**
@@ -11433,7 +11437,7 @@ Commit : `fea8806 feat(admin): add server-side product filters`.
 
 **Statut : TERMINÉ — gestion complète des Catégories**
 
-- Create, Update, Move, Activate, Deactivate et Archive utilisent les opérations backend réelles et les permissions CATEGORY_*.
+- Create, Update, Move, Activate, Deactivate et Archive utilisent les opérations backend réelles et les permissions CATEGORY\_\*.
 
 ## Epic F3.12 — Packaging list
 
@@ -11548,7 +11552,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1 terminé ; F4.2 prochain**
+**Statut : EN COURS — F4.1–F4.2 terminés ; F4.3 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11587,3 +11591,32 @@ Validations : test d’intégration ciblé 5/5 ; tests Admin 16/16 ; suite front
 TypeScript, builds Admin/POS et Deptrac couches/modules verts ; `git diff --check`.
 
 Commit prévu : `feat(admin): add inventory feature foundation`.
+
+## Epic F4.2 — Inventory navigation and store context
+
+**Statut : TERMINÉ — routes protégées, navigation et cache store-scoped**
+
+- les routes `/admin/inventory` couvrent désormais positions, détail produit,
+  mouvements, valorisations, transferts et inventaires physiques, y compris
+  leurs écrans de création/détail prévus pour les Epics suivants ;
+- la sous-navigation Stock est filtrée par les permissions de lecture réelles et
+  le scope organisation/store ; l’accès direct à chaque route applique le même
+  guard ergonomique ;
+- tout écran Inventory exige un magasin actif, opérationnel, appartenant à
+  l’organisation courante et présent dans les magasins accessibles de l’acteur ;
+- le changement de magasin purge les données Inventory de l’ancien magasin et
+  invalide les données conservées du magasin actif via des clés centralisées ;
+- la documentation corrige la référence aux permissions inexistantes
+  `INVENTORY_COST_VIEW` et `INVENTORY_VALUE_VIEW` : la lecture des valorisations
+  suit le contrat serveur `INVENTORY_READ`, tandis que les mutations conservent
+  leurs permissions dédiées ;
+- 5 tests composants couvrent navigation filtrée, route directe, sélection
+  obligatoire et store inaccessible ; le test server-state couvre la séparation
+  et l’invalidation des caches lors du changement de magasin.
+
+Validations : tests ciblés 5/5 composants et 1/1 server-state ; suite frontend
+20 Foundation, 10 unitaires, 78 composants et 37 intégration ; ESLint, Prettier,
+TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules verts ;
+`git diff --check`.
+
+Commit prévu : `feat(admin): add inventory navigation and store context`.

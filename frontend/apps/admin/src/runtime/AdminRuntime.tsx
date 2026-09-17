@@ -8,6 +8,7 @@ import {
   createServerStateClient,
   queryKeys,
   transitionOrganizationCache,
+  transitionStoreCache,
 } from "@zandu/server-state";
 import { StoreContextManager } from "@zandu/store-context";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -207,7 +208,15 @@ export function AdminRuntimeProvider({ children }: Readonly<{ children: ReactNod
     },
     selectStore(storeId) {
       if (storeManager !== undefined) {
-        setStoreState(storeManager.selectStore(storeId));
+        const state = storeManager.selectStore(storeId);
+        setStoreState(state);
+        if (state.activeStore !== undefined) {
+          void transitionStoreCache(
+            services?.queryClient ?? fallbackQueryClient,
+            state.organizationId,
+            state.activeStore.id,
+          );
+        }
       }
     },
     ...(storeState === undefined ? {} : { storeState }),

@@ -30,6 +30,12 @@ test("Admin shell navigation is projected from effective capabilities", () => {
     visibleAdminNavigation(access).map((item) => item.href),
     ["/admin/catalog", "/admin/sales"],
   );
+  assert.deepEqual(
+    visibleAdminNavigation({ ...access, permissions: ["STOCK_MOVEMENT_READ"] }).map(
+      (item) => item.href,
+    ),
+    ["/admin/inventory"],
+  );
   assert.deepEqual(breadcrumbsForPath("/admin/catalog", adminNavigation), [
     { href: "/admin", label: "Accueil" },
     { href: "/admin/catalog", label: "Catalogue" },
@@ -70,6 +76,7 @@ test("Admin runtime composes Symfony auth, tenant cache, contexts, and the prote
   assert.match(runtime, /OrganizationContextManager/);
   assert.match(runtime, /StoreContextManager/);
   assert.match(runtime, /transitionOrganizationCache/);
+  assert.match(runtime, /transitionStoreCache/);
   assert.match(applicationShell, /EffectiveAccessProvider/);
   assert.match(applicationShell, /ServerStateProvider/);
   assert.match(applicationShell, /<AdminShell/);
