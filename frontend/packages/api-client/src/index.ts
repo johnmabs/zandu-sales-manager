@@ -454,6 +454,10 @@ export type StockResource = Readonly<Required<GeneratedComponents["schemas"]["St
 export type StockInitializeInput = Readonly<
   Required<GeneratedComponents["schemas"]["StockResource.InitializeStockInput"]>
 >;
+export type StockAdjustInput = Readonly<
+  Required<Omit<GeneratedComponents["schemas"]["StockResource.AdjustStockInput"], "unitCost">> &
+    Pick<GeneratedComponents["schemas"]["StockResource.AdjustStockInput"], "unitCost">
+>;
 export type StockMovementType =
   | "ADJUSTMENT_IN"
   | "ADJUSTMENT_OUT"
@@ -856,6 +860,34 @@ export class FoundationApi {
       !access.accessibleStoreIds.includes(stock.storeId)
     ) {
       throw new ApiContractError("The initialized stock response is outside the active scope.");
+    }
+    return stock;
+  }
+
+  async adjustStock(
+    storeId: string,
+    productId: string,
+    input: StockAdjustInput,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(productId)}/adjust`,
+      telemetry: {
+        feature: "inventory",
+        operation: "adjust_stock",
+        route: "/admin/inventory/positions/:productId",
+      },
+    });
+    const stock = decodeStock(response.data);
+    if (
+      stock.organizationId !== access.organizationId ||
+      stock.storeId !== storeId ||
+      stock.productId !== productId ||
+      !access.accessibleStoreIds.includes(stock.storeId)
+    ) {
+      throw new ApiContractError("The adjusted stock response is outside the active scope.");
     }
     return stock;
   }

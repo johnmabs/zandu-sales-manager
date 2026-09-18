@@ -1,4 +1,4 @@
-import type { FoundationApi, StockInitializeInput } from "@zandu/api-client";
+import type { FoundationApi, StockAdjustInput, StockInitializeInput } from "@zandu/api-client";
 
 type EffectiveAccess = Parameters<FoundationApi["listStocks"]>[1];
 
@@ -23,6 +23,16 @@ export function initializeStock(
   access: EffectiveAccess,
 ) {
   return api.initializeStock(storeId, productId, input, access);
+}
+
+export function adjustStock(
+  api: FoundationApi,
+  storeId: string,
+  productId: string,
+  input: StockAdjustInput,
+  access: EffectiveAccess,
+) {
+  return api.adjustStock(storeId, productId, input, access);
 }
 
 export function listStockMovements(

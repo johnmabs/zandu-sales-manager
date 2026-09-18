@@ -206,6 +206,38 @@ describe("Stock position details", () => {
     expect(client.getQueryState(valuationListKey)?.isInvalidated).toBe(true);
   });
 
+  it("adjusts an initialized position and refreshes its exact quantity", async () => {
+    let adjusted = false;
+    const { notifications } = setup({
+      actor: { ...access, permissions: [...access.permissions, "INVENTORY_ADJUST"] },
+      respond: (url, init) => {
+        if (url.pathname === "/api/products/product-1") return Response.json(product);
+        if (url.pathname.endsWith("/adjust")) {
+          expect(init.method).toBe("POST");
+          expect(JSON.parse(String(init.body))).toEqual({
+            delta: "-034.500000",
+            reason: "Casse constatée",
+          });
+          adjusted = true;
+          return Response.json(
+            { ...stock, quantityOnHand: "1200.000000", version: 8 },
+            { status: 201 },
+          );
+        }
+        return Response.json(
+          adjusted ? { ...stock, quantityOnHand: "1200.000000", version: 8 } : stock,
+        );
+      },
+    });
+    const user = userEvent.setup();
+    await screen.findByRole("form", { name: "Ajuster la position de stock" });
+    await user.type(screen.getByLabelText("Delta de quantité"), "-034.500000");
+    await user.type(screen.getByLabelText("Raison de l’ajustement"), "Casse constatée");
+    await user.click(screen.getByRole("button", { name: "Ajuster le stock" }));
+    expect(await screen.findByText(/1.200,000000/)).toBeTruthy();
+    expect(notifications.getState().at(-1)?.message).toBe("Stock ajusté.");
+  });
+
   it("does not fetch outside the effective Store scope", async () => {
     const { requests } = setup({ actor: { ...access, accessibleStoreIds: ["store-2"] } });
     expect(screen.getByRole("heading", { name: "Accès refusé" })).toBeTruthy();

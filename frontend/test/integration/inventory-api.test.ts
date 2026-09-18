@@ -118,6 +118,45 @@ describe("Inventory API contracts", () => {
     ).rejects.toBeInstanceOf(ApiContractError);
   });
 
+  it("adjusts stock with exact incoming and outgoing payloads", async () => {
+    let expectedBody: unknown = {
+      delta: "001.250",
+      reason: "Réassort manuel",
+      unitCost: "000800.125000",
+    };
+    server.use(
+      http.post(
+        "https://api.zandu.test/api/stores/store-1/stocks/product-1/adjust",
+        async ({ request }) => {
+          await expect(request.json()).resolves.toEqual(expectedBody);
+          return HttpResponse.json({ ...stock, quantityOnHand: "9007199254740994.375" });
+        },
+      ),
+    );
+    await expect(
+      api.adjustStock(
+        "store-1",
+        "product-1",
+        {
+          delta: "001.250",
+          reason: "Réassort manuel",
+          unitCost: "000800.125000",
+        },
+        access,
+      ),
+    ).resolves.toMatchObject({ quantityOnHand: "9007199254740994.375" });
+
+    expectedBody = { delta: "-000.125", reason: "Casse constatée" };
+    await expect(
+      api.adjustStock(
+        "store-1",
+        "product-1",
+        { delta: "-000.125", reason: "Casse constatée" },
+        access,
+      ),
+    ).resolves.toMatchObject({ quantityOnHand: "9007199254740994.375" });
+  });
+
   it("reads store and product movement ledgers without changing exact decimals", async () => {
     server.use(
       http.get("https://api.zandu.test/api/stores/store-1/stock-movements", () =>

@@ -11,13 +11,14 @@ import { queryKeys } from "@zandu/server-state";
 import { Button, ErrorState, Spinner } from "@zandu/ui";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
-import { getStock, initializeStock } from "../api/readInventory";
+import { adjustStock, getStock, initializeStock } from "../api/readInventory";
 import { hasUnknownInventoryMutationOutcome } from "../mutationSafety";
 
+import { AdjustStockForm } from "./AdjustStockForm";
 import { InitializeStockForm } from "./InitializeStockForm";
 
 import type { QueryClient } from "@tanstack/react-query";
-import type { FoundationApi, StockInitializeInput } from "@zandu/api-client";
+import type { FoundationApi, StockAdjustInput, StockInitializeInput } from "@zandu/api-client";
 import type { EffectiveAccess } from "@zandu/authorization";
 
 export function StockPositionDetailsPage({ productId }: Readonly<{ productId: string }>) {
@@ -74,6 +75,10 @@ export function StockPositionDetailsWorkspace({
     organizationId !== undefined &&
     storeId !== undefined &&
     can(access, "INVENTORY_INITIALIZE", { organizationId, storeId });
+  const adjustAllowed =
+    organizationId !== undefined &&
+    storeId !== undefined &&
+    can(access, "INVENTORY_ADJUST", { organizationId, storeId });
   const stockQueryKey = [
     ...queryKeys.stock.detail(
       organizationId ?? "unresolved-organization",
@@ -121,6 +126,23 @@ export function StockPositionDetailsWorkspace({
       queryClient.setQueryData(stockQueryKey, created);
       await invalidateStockProjections(queryClient, organizationId, storeId, productId, false);
       notifications.notify({ message: "Stock initialisé.", tone: "success" });
+    },
+  });
+  const adjust = useMutation({
+    mutationFn: (input: StockAdjustInput) => {
+      if (api === undefined || access === undefined || storeId === undefined || !adjustAllowed) {
+        throw new Error("Le contexte d’ajustement Stock est indisponible.");
+      }
+      return adjustStock(api, storeId, productId, input, access);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error)) return;
+      await invalidateStockProjections(queryClient, organizationId, storeId, productId, true);
+    },
+    onSuccess: async (updated) => {
+      queryClient.setQueryData(stockQueryKey, updated);
+      await invalidateStockProjections(queryClient, organizationId, storeId, productId, false);
+      notifications.notify({ message: "Stock ajusté.", tone: "success" });
     },
   });
 
@@ -203,6 +225,17 @@ export function StockPositionDetailsWorkspace({
           <dd>{item.productId}</dd>
         </dl>
       </section>
+      {adjustAllowed && item.initialized ? (
+        <section aria-labelledby="stock-position-adjustment">
+          <h3 id="stock-position-adjustment">Ajuster la position</h3>
+          <AdjustStockForm
+            currency={currency}
+            onAdjust={async (input) => {
+              await adjust.mutateAsync(input);
+            }}
+          />
+        </section>
+      ) : null}
       <nav aria-label="Ressources liées à la position">
         {can(access, "STOCK_MOVEMENT_READ", { organizationId: organizationId!, storeId }) ? (
           <a href={`/admin/inventory/movements?productId=${encodedProductId}`}>
