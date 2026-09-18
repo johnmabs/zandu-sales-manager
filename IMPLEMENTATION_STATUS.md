@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.6   TERMINÉ   Foundation, positions, initialisation et ajustement Stock
-F4.7        À FAIRE   Stock movement history
+F4.1–F4.7   TERMINÉ   Positions, mutations et historique Stock
+F4.8        À FAIRE   Inventory valuation views
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -255,7 +255,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F4.4 Stock position details
 [x] F4.5 Initialize stock
 [x] F4.6 Adjust stock
-[ ] F4.7 Stock movement history
+[x] F4.7 Stock movement history
+[ ] F4.8 Inventory valuation views
 ```
 
 ## Références
@@ -11556,7 +11557,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.6 terminés ; F4.7 prochain**
+**Statut : EN COURS — F4.1–F4.7 terminés ; F4.8 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11734,3 +11735,30 @@ Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
 Commit prévu : `feat(admin): adjust stock positions`.
+
+## Epic F4.7 — Stock movement history
+
+**Statut : TERMINÉ — ledger Stock append-only, filtré et paginé côté serveur**
+
+- `/admin/inventory/movements` remplace le placeholder par un historique en
+  lecture seule, protégé par `STOCK_MOVEMENT_READ` et le scope du magasin actif ;
+- le filtre Produit sélectionne l’endpoint serveur dédié et reprend le
+  `productId` fourni par le lien depuis le détail d’une position ;
+- le client expose `limit`, le curseur opaque encodé et `X-Next-Cursor` sans
+  inventer de tri, de total ou de pagination locale ; les clés de cache incluent
+  filtre, curseur et version d’autorisation ;
+- l’ordre serveur est conservé et chaque ligne affiche date dans le fuseau du
+  magasin, produit, type, sens, quantité, quantités avant/après, source et raison ;
+- le sens entrée/sortie est dérivé de l’union fermée des types de mouvement ; les
+  quantités restent des chaînes exactes jusque dans le formatage ;
+- aucune action de modification ou suppression n’est exposée sur le ledger ;
+  erreurs retryables et identifiants de corrélation restent visibles ;
+- 4 tests composants couvrent ordre, précision, sens, filtre, curseur, erreurs et
+  scope ; le test d’intégration vérifie l’encodage du curseur et sa réponse HTTP.
+
+Validations : test composant ciblé 4/4, intégration Inventory 8/8 et Foundation
+20/20 ; suite frontend 20 Foundation, 10 unitaires, 105 composants et 40
+intégration ; ESLint, Prettier, TypeScript, builds Admin/POS et Deptrac
+couches/modules verts ; `git diff --check`.
+
+Commit prévu : `feat(admin): add stock movement history`.

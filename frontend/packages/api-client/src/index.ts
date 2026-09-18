@@ -40,6 +40,7 @@ export type ApiRequest = Readonly<{
 export type ApiResponse = Readonly<{
   correlationId?: string;
   data: unknown;
+  nextCursor?: string;
   status: number;
 }>;
 
@@ -160,6 +161,7 @@ export class ApiClient {
       });
 
       const responseCorrelationId = response.headers.get(CORRELATION_ID_HEADER) ?? undefined;
+      const nextCursor = response.headers.get("X-Next-Cursor") ?? undefined;
       if (!response.ok) {
         throw new ApiRequestError(await responseError(response, responseCorrelationId), false);
       }
@@ -167,6 +169,7 @@ export class ApiClient {
       return {
         ...(responseCorrelationId === undefined ? {} : { correlationId: responseCorrelationId }),
         data: response.status === 204 ? undefined : await response.json(),
+        ...(nextCursor === undefined ? {} : { nextCursor }),
         status: response.status,
       };
     } catch (error: unknown) {
@@ -488,6 +491,15 @@ export type StockMovementResource = Readonly<
     type: StockMovementType;
   }
 >;
+export type StockMovementPage = Readonly<{
+  items: readonly StockMovementResource[];
+  nextCursor?: string;
+}>;
+export type StockMovementFilters = Readonly<{
+  cursor?: string;
+  limit?: number;
+  productId?: string;
+}>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
 >;
@@ -916,6 +928,40 @@ export class FoundationApi {
         access.accessibleStoreIds.includes(movement.storeId) &&
         (productId === undefined || movement.productId === productId),
     );
+  }
+
+  async listStockMovementPage(
+    storeId: string,
+    access: CurrentSession["effectiveAccess"],
+    filters: StockMovementFilters = {},
+  ): Promise<StockMovementPage> {
+    const basePath =
+      filters.productId === undefined
+        ? `stores/${encodeURIComponent(storeId)}/stock-movements`
+        : `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(filters.productId)}/movements`;
+    const query = new URLSearchParams();
+    if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+    if (filters.cursor !== undefined && filters.cursor !== "") query.set("cursor", filters.cursor);
+    const path = query.size === 0 ? basePath : `${basePath}?${query.toString()}`;
+    const response = await this.client.request({
+      method: "GET",
+      path,
+      telemetry: {
+        feature: "inventory",
+        operation: "list_stock_movements",
+        route: "/admin/inventory/movements",
+      },
+    });
+    const items = decodeInventoryCollection(response.data, decodeStockMovement).filter(
+      (movement) =>
+        movement.storeId === storeId &&
+        access.accessibleStoreIds.includes(movement.storeId) &&
+        (filters.productId === undefined || movement.productId === filters.productId),
+    );
+    return {
+      items,
+      ...(response.nextCursor === undefined ? {} : { nextCursor: response.nextCursor }),
+    };
   }
 
   async listProducts(

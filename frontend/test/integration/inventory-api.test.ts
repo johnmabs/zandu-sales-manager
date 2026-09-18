@@ -174,6 +174,25 @@ describe("Inventory API contracts", () => {
     ]);
   });
 
+  it("reads an opaque cursor page without inventing client-side pagination", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/stores/store-1/stock-movements", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("limit")).toBe("25");
+        expect(url.searchParams.get("cursor")).toBe("opaque+/cursor");
+        return HttpResponse.json([movement, { ...movement, id: "foreign", storeId: "store-2" }], {
+          headers: { "X-Next-Cursor": "next-page" },
+        });
+      }),
+    );
+    await expect(
+      api.listStockMovementPage("store-1", access, {
+        cursor: "opaque+/cursor",
+        limit: 25,
+      }),
+    ).resolves.toEqual({ items: [movement], nextCursor: "next-page" });
+  });
+
   it("rejects numeric quantities and unknown movement classifications", async () => {
     server.use(
       http.get("https://api.zandu.test/api/stores/store-1/stocks", () =>

@@ -2,7 +2,7 @@
 
 ## Statut et objectif
 
-Version 1.0. F4.1–F4.6 terminés ; F4.7 est le prochain Epic. Gate F3 encore en
+Version 1.0. F4.1–F4.7 terminés ; F4.8 est le prochain Epic. Gate F3 encore en
 attente des preuves Chromium CI.
 
 Administrer les positions et mouvements de stock, la valorisation, les
