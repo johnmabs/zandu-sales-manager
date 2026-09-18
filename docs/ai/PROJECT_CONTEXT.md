@@ -75,5 +75,5 @@ execution, so the exit gate remains open. Use `IMPLEMENTATION_STATUS.md` for the
 dated validation snapshot.
 
 F4 Admin Inventory is planned under
-`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.4. F4.5 is
+`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.5. F4.6 is
 next while the F3 browser gate remains explicitly pending.

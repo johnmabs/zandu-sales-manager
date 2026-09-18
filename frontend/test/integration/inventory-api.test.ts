@@ -76,10 +76,46 @@ describe("Inventory API contracts", () => {
       http.get("https://api.zandu.test/api/stores/store-1/stocks/product-2", () =>
         HttpResponse.json({ ...stock, productId: "product-1" }),
       ),
+      http.get("https://api.zandu.test/api/stores/store-1/stocks/product-3", () =>
+        HttpResponse.json({ code: "NOT_FOUND" }, { status: 404 }),
+      ),
     );
     await expect(api.listStocks("store-1", access)).resolves.toEqual([stock]);
     await expect(api.getStock("store-1", "product-1", access)).resolves.toEqual(stock);
     await expect(api.getStock("store-1", "product-2", access)).resolves.toBeUndefined();
+    await expect(api.getStock("store-1", "product-3", access)).resolves.toBeUndefined();
+  });
+
+  it("initializes stock with exact decimal strings and validates the returned scope", async () => {
+    server.use(
+      http.post(
+        "https://api.zandu.test/api/stores/store-1/stocks/product-1/initialize",
+        async ({ request }) => {
+          await expect(request.json()).resolves.toEqual({
+            quantity: "001.250",
+            unitCost: "000800.125000",
+          });
+          return HttpResponse.json({ ...stock, quantityOnHand: "001.250" }, { status: 201 });
+        },
+      ),
+    );
+    await expect(
+      api.initializeStock(
+        "store-1",
+        "product-1",
+        { quantity: "001.250", unitCost: "000800.125000" },
+        access,
+      ),
+    ).resolves.toEqual({ ...stock, quantityOnHand: "001.250" });
+
+    server.use(
+      http.post("https://api.zandu.test/api/stores/store-1/stocks/product-1/initialize", () =>
+        HttpResponse.json({ ...stock, organizationId: "org-2" }, { status: 201 }),
+      ),
+    );
+    await expect(
+      api.initializeStock("store-1", "product-1", { quantity: "1", unitCost: "800" }, access),
+    ).rejects.toBeInstanceOf(ApiContractError);
   });
 
   it("reads store and product movement ledgers without changing exact decimals", async () => {

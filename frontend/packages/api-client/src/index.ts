@@ -451,6 +451,9 @@ export type EffectiveProductPriceResource = Readonly<
   Required<GeneratedComponents["schemas"]["EffectiveProductPriceResource"]>
 >;
 export type StockResource = Readonly<Required<GeneratedComponents["schemas"]["StockResource"]>>;
+export type StockInitializeInput = Readonly<
+  Required<GeneratedComponents["schemas"]["StockResource.InitializeStockInput"]>
+>;
 export type StockMovementType =
   | "ADJUSTMENT_IN"
   | "ADJUSTMENT_OUT"
@@ -799,15 +802,27 @@ export class FoundationApi {
     productId: string,
     access: CurrentSession["effectiveAccess"],
   ): Promise<StockResource | undefined> {
-    const response = await this.client.request({
-      method: "GET",
-      path: `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(productId)}`,
-      telemetry: {
-        feature: "inventory",
-        operation: "get_stock",
-        route: "/admin/inventory/positions/:productId",
-      },
-    });
+    let response: ApiResponse;
+    try {
+      response = await this.client.request({
+        method: "GET",
+        path: `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(productId)}`,
+        telemetry: {
+          feature: "inventory",
+          operation: "get_stock",
+          route: "/admin/inventory/positions/:productId",
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof ApiRequestError &&
+        error.apiError.kind === "response" &&
+        error.apiError.status === 404
+      ) {
+        return undefined;
+      }
+      throw error;
+    }
     const stock = decodeStock(response.data);
     return stock.organizationId === access.organizationId &&
       stock.storeId === storeId &&
@@ -815,6 +830,34 @@ export class FoundationApi {
       access.accessibleStoreIds.includes(stock.storeId)
       ? stock
       : undefined;
+  }
+
+  async initializeStock(
+    storeId: string,
+    productId: string,
+    input: StockInitializeInput,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `stores/${encodeURIComponent(storeId)}/stocks/${encodeURIComponent(productId)}/initialize`,
+      telemetry: {
+        feature: "inventory",
+        operation: "initialize_stock",
+        route: "/admin/inventory/positions/:productId",
+      },
+    });
+    const stock = decodeStock(response.data);
+    if (
+      stock.organizationId !== access.organizationId ||
+      stock.storeId !== storeId ||
+      stock.productId !== productId ||
+      !access.accessibleStoreIds.includes(stock.storeId)
+    ) {
+      throw new ApiContractError("The initialized stock response is outside the active scope.");
+    }
+    return stock;
   }
 
   async listStockMovements(

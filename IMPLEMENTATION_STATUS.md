@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.4   TERMINÉ   Foundation, navigation, liste et détail des positions Stock
-F4.5        À FAIRE   Initialize stock
+F4.1–F4.5   TERMINÉ   Foundation, navigation, positions et initialisation Stock
+F4.6        À FAIRE   Adjust stock
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -253,7 +253,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F4.2 Inventory navigation and store context
 [x] F4.3 Stock positions workspace
 [x] F4.4 Stock position details
-[ ] F4.5 Initialize stock
+[x] F4.5 Initialize stock
+[ ] F4.6 Adjust stock
 ```
 
 ## Références
@@ -11554,7 +11555,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.4 terminés ; F4.5 prochain**
+**Statut : EN COURS — F4.1–F4.5 terminés ; F4.6 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11676,3 +11677,31 @@ builds Admin (39 routes)/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
 Commit prévu : `feat(admin): add stock position details`.
+
+## Epic F4.5 — Initialize stock
+
+**Statut : TERMINÉ — création physique et valorisation initiale coordonnées**
+
+- une position absente (`404`) ouvre le formulaire d’initialisation uniquement
+  avec `INVENTORY_INITIALIZE`, tout en chargeant les métadonnées Product via le
+  contrat public lorsque `PRODUCT_READ` est disponible ;
+- quantité et coût unitaire sont validés puis transmis comme chaînes décimales
+  exactes, sans conversion flottante ; une confirmation rappelle les valeurs et
+  le caractère unique de l’opération avant le `POST /initialize` ;
+- la réponse est projetée défensivement sur l’organisation, le magasin, le
+  produit et les stores accessibles avant d’alimenter le cache du détail ;
+- conflits, violations métier, erreurs de champs et identifiants de corrélation
+  sont restitués ; après timeout ou erreur réseau ambiguë, le formulaire bloque
+  tout rejeu aveugle et force la vérification de la position ;
+- une réussite invalide les listes Stock, mouvements et toutes les projections
+  de valorisation concernées ; un résultat inconnu invalide aussi le détail ;
+- 4 tests du formulaire couvrent syntaxe exacte, confirmation, erreurs serveur
+  et résultat inconnu ; le scénario détail couvre l’appel réel et les caches,
+  tandis que le contrat API couvre corps exact et réponse hors scope.
+
+Validations : tests ciblés composants 11/11 et intégration Inventory 6/6 ; suite
+frontend 20 Foundation, 10 unitaires, 94 composants et 38 intégration ; ESLint,
+Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
+`git diff --check`.
+
+Commit prévu : `feat(admin): initialize stock positions`.

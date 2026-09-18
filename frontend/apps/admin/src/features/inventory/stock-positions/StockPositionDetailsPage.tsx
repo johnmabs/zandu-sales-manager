@@ -1,24 +1,30 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiRequestError } from "@zandu/api-client";
 import { can, useEffectiveAccess } from "@zandu/authorization";
 import { formatQuantity } from "@zandu/domain-formatting";
 import { ErrorMapper } from "@zandu/error-contract";
+import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
 import { queryKeys } from "@zandu/server-state";
 import { Button, ErrorState, Spinner } from "@zandu/ui";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
-import { getStock } from "../api/readInventory";
+import { getStock, initializeStock } from "../api/readInventory";
+import { hasUnknownInventoryMutationOutcome } from "../mutationSafety";
 
-import type { FoundationApi } from "@zandu/api-client";
+import { InitializeStockForm } from "./InitializeStockForm";
+
+import type { QueryClient } from "@tanstack/react-query";
+import type { FoundationApi, StockInitializeInput } from "@zandu/api-client";
 import type { EffectiveAccess } from "@zandu/authorization";
 
 export function StockPositionDetailsPage({ productId }: Readonly<{ productId: string }>) {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
-  const { api, storeState } = useAdminRuntime();
+  const { api, queryClient, storeState } = useAdminRuntime();
+  const notifications = useNotifications();
   const store = storeState?.status === "ACTIVE" ? storeState.activeStore : undefined;
 
   return (
@@ -26,9 +32,12 @@ export function StockPositionDetailsPage({ productId }: Readonly<{ productId: st
       key={`${activeOrganizationId}:${store?.id}:${productId}:${access?.authorizationVersion}`}
       access={access}
       api={api}
+      currency={store?.currency ?? "XAF"}
       locale={store?.locale ?? "fr-FR"}
+      notifications={notifications}
       organizationId={activeOrganizationId}
       productId={productId}
+      queryClient={queryClient}
       storeId={store?.id}
     />
   );
@@ -37,16 +46,22 @@ export function StockPositionDetailsPage({ productId }: Readonly<{ productId: st
 export function StockPositionDetailsWorkspace({
   access,
   api,
+  currency,
   locale,
+  notifications,
   organizationId,
   productId,
+  queryClient,
   storeId,
 }: Readonly<{
   access: EffectiveAccess | undefined;
   api: FoundationApi | undefined;
+  currency: string;
   locale: string;
+  notifications: ReturnType<typeof useNotifications>;
   organizationId: string | undefined;
   productId: string;
+  queryClient: QueryClient;
   storeId: string | undefined;
 }>) {
   const allowed =
@@ -55,16 +70,21 @@ export function StockPositionDetailsWorkspace({
     can(access, "INVENTORY_READ", { organizationId, storeId });
   const metadataAllowed =
     organizationId !== undefined && can(access, "PRODUCT_READ", { organizationId });
+  const initializeAllowed =
+    organizationId !== undefined &&
+    storeId !== undefined &&
+    can(access, "INVENTORY_INITIALIZE", { organizationId, storeId });
+  const stockQueryKey = [
+    ...queryKeys.stock.detail(
+      organizationId ?? "unresolved-organization",
+      storeId ?? "unresolved-store",
+      productId,
+    ),
+    { authorizationVersion: access?.authorizationVersion ?? 0 },
+  ] as const;
   const stock = useQuery({
     enabled: api !== undefined && access !== undefined && allowed,
-    queryKey: [
-      ...queryKeys.stock.detail(
-        organizationId ?? "unresolved-organization",
-        storeId ?? "unresolved-store",
-        productId,
-      ),
-      { authorizationVersion: access?.authorizationVersion ?? 0 },
-    ],
+    queryKey: stockQueryKey,
     queryFn: async () => (await getStock(api!, storeId!, productId, access!)) ?? null,
   });
   const product = useQuery({
@@ -73,13 +93,35 @@ export function StockPositionDetailsWorkspace({
       access !== undefined &&
       allowed &&
       metadataAllowed &&
-      stock.data !== undefined &&
-      stock.data !== null,
+      stock.isSuccess &&
+      (stock.data !== null || initializeAllowed),
     queryKey: [
       ...queryKeys.products.detail(organizationId ?? "unresolved-organization", productId),
       { authorizationVersion: access?.authorizationVersion ?? 0 },
     ],
     queryFn: async () => (await api!.getProduct(productId, access!)) ?? null,
+  });
+  const initialize = useMutation({
+    mutationFn: (input: StockInitializeInput) => {
+      if (
+        api === undefined ||
+        access === undefined ||
+        storeId === undefined ||
+        !initializeAllowed
+      ) {
+        throw new Error("Le contexte d’initialisation Stock est indisponible.");
+      }
+      return initializeStock(api, storeId, productId, input, access);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error)) return;
+      await invalidateStockProjections(queryClient, organizationId, storeId, productId, true);
+    },
+    onSuccess: async (created) => {
+      queryClient.setQueryData(stockQueryKey, created);
+      await invalidateStockProjections(queryClient, organizationId, storeId, productId, false);
+      notifications.notify({ message: "Stock initialisé.", tone: "success" });
+    },
   });
 
   if (!allowed) {
@@ -90,10 +132,7 @@ export function StockPositionDetailsWorkspace({
       />
     );
   }
-  if (
-    stock.isLoading ||
-    (metadataAllowed && stock.data !== undefined && stock.data !== null && product.isLoading)
-  ) {
+  if (stock.isLoading || (metadataAllowed && stock.isSuccess && product.isLoading)) {
     return <Spinner label="Chargement de la position de stock" />;
   }
   const error = stock.error ?? (metadataAllowed ? product.error : undefined);
@@ -103,7 +142,7 @@ export function StockPositionDetailsWorkspace({
         error={error}
         onRetry={() => {
           void stock.refetch();
-          if (metadataAllowed && stock.data !== undefined && stock.data !== null) {
+          if (metadataAllowed && stock.isSuccess) {
             void product.refetch();
           }
         }}
@@ -111,6 +150,25 @@ export function StockPositionDetailsWorkspace({
     );
   }
   if (stock.data === undefined || stock.data === null) {
+    if (initializeAllowed) {
+      const productLabel = product.data?.name ?? `Produit ${productId}`;
+      return (
+        <div className="zandu-page-stack">
+          <header>
+            <p className="zandu-eyebrow">Nouvelle position de stock</p>
+            <h2>{productLabel}</h2>
+            <p>{product.data?.productCode ?? productId}</p>
+          </header>
+          <InitializeStockForm
+            currency={currency}
+            productLabel={productLabel}
+            onInitialize={async (input) => {
+              await initialize.mutateAsync(input);
+            }}
+          />
+        </div>
+      );
+    }
     return (
       <ErrorState
         title="Position introuvable"
@@ -157,6 +215,38 @@ export function StockPositionDetailsWorkspace({
       </nav>
     </div>
   );
+}
+
+async function invalidateStockProjections(
+  queryClient: QueryClient,
+  organizationId: string | undefined,
+  storeId: string | undefined,
+  productId: string,
+  includeDetail: boolean,
+) {
+  if (organizationId === undefined || storeId === undefined) return;
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queryKeys.stock.list(organizationId, storeId) }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.stockMovements.list(organizationId, storeId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.inventoryValuations.list(organizationId, storeId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.inventoryValuations.detail(organizationId, storeId, productId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.inventoryValuations.movements(organizationId, storeId, productId),
+    }),
+    ...(includeDetail
+      ? [
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.stock.detail(organizationId, storeId, productId),
+          }),
+        ]
+      : []),
+  ]);
 }
 
 function StockPositionLoadError({

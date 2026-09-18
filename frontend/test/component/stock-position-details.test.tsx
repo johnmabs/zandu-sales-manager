@@ -1,12 +1,14 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StockPositionDetailsWorkspace } from "../../apps/admin/src/features/inventory/stock-positions/StockPositionDetailsPage";
 import { ApiClient, FoundationApi } from "../../packages/api-client/src/index";
+import { NotificationCenter } from "../../packages/notifications/src/index";
 import {
   createServerStateClient,
+  queryKeys,
   ServerStateProvider,
 } from "../../packages/server-state/src/index";
 
@@ -49,25 +51,29 @@ const access: EffectiveAccess = {
   scope: { storeIds: ["store-1"], type: "SELECTED_STORES" },
 };
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 function setup({
   actor = access,
   respond,
 }: {
   actor?: EffectiveAccess;
-  respond?: (url: URL) => Response;
+  respond?: (url: URL, init: RequestInit) => Response;
 } = {}) {
   const requests: URL[] = [];
   const client = createServerStateClient();
+  const notifications = new NotificationCenter();
   client.setDefaultOptions({ queries: { retry: false } });
   const api = new FoundationApi(
     new ApiClient({
       config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
-      fetchImplementation: async (url) => {
+      fetchImplementation: async (url, init) => {
         const parsed = new URL(url);
         requests.push(parsed);
-        if (respond !== undefined) return respond(parsed);
+        if (respond !== undefined) return respond(parsed, init);
         return parsed.pathname === "/api/products/product-1"
           ? Response.json(product)
           : Response.json(stock);
@@ -80,15 +86,18 @@ function setup({
       <StockPositionDetailsWorkspace
         access={actor}
         api={api}
+        currency="XAF"
         locale="fr-FR"
+        notifications={notifications}
         organizationId="org-1"
         productId="product-1"
+        queryClient={client}
         storeId="store-1"
       />
     </ServerStateProvider>,
   );
 
-  return { requests };
+  return { client, notifications, requests };
 }
 
 describe("Stock position details", () => {
@@ -149,6 +158,52 @@ describe("Stock position details", () => {
     failed = false;
     await userEvent.setup().click(screen.getByRole("button", { name: "Réessayer" }));
     expect(await screen.findByRole("heading", { name: "Paracétamol" })).toBeTruthy();
+  });
+
+  it("initializes an absent position and refreshes every dependent projection", async () => {
+    let initialized = false;
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { client, notifications } = setup({
+      actor: { ...access, permissions: [...access.permissions, "INVENTORY_INITIALIZE"] },
+      respond: (url, init) => {
+        if (url.pathname === "/api/products/product-1") return Response.json(product);
+        if (url.pathname.endsWith("/initialize")) {
+          expect(init.method).toBe("POST");
+          expect(JSON.parse(String(init.body))).toEqual({
+            quantity: "001.250",
+            unitCost: "000800.125000",
+          });
+          initialized = true;
+          return Response.json(
+            { ...stock, quantityOnHand: "001.250", version: 1 },
+            { status: 201 },
+          );
+        }
+        return Response.json(
+          initialized
+            ? { ...stock, quantityOnHand: "001.250", version: 1 }
+            : { code: "NOT_FOUND", correlationId: "missing-stock" },
+          initialized ? undefined : { status: 404 },
+        );
+      },
+    });
+    const stockListKey = queryKeys.stock.list("org-1", "store-1");
+    const movementListKey = queryKeys.stockMovements.list("org-1", "store-1");
+    const valuationListKey = queryKeys.inventoryValuations.list("org-1", "store-1");
+    client.setQueryData(stockListKey, []);
+    client.setQueryData(movementListKey, []);
+    client.setQueryData(valuationListKey, []);
+    const user = userEvent.setup();
+    await screen.findByRole("form", { name: "Initialiser la position de stock" });
+    await user.type(screen.getByLabelText("Quantité initiale"), "001.250");
+    await user.type(screen.getByLabelText("Coût unitaire d’ouverture (XAF)"), "000800.125000");
+    await user.click(screen.getByRole("button", { name: "Initialiser le stock" }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("001.250"));
+    expect(await screen.findByText("1,250")).toBeTruthy();
+    expect(notifications.getState().at(-1)?.message).toBe("Stock initialisé.");
+    expect(client.getQueryState(stockListKey)?.isInvalidated).toBe(true);
+    expect(client.getQueryState(movementListKey)?.isInvalidated).toBe(true);
+    expect(client.getQueryState(valuationListKey)?.isInvalidated).toBe(true);
   });
 
   it("does not fetch outside the effective Store scope", async () => {
