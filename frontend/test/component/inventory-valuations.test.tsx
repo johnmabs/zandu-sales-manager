@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { InventoryValuationList } from "../../apps/admin/src/features/inventory/valuations/InventoryValuationList";
 import { InventoryValuationsWorkspace } from "../../apps/admin/src/features/inventory/valuations/InventoryValuationsPage";
 import { ApiClient, FoundationApi } from "../../packages/api-client/src/index";
 import {
@@ -102,10 +103,10 @@ function setup({
       },
     }),
   );
-  render(
+  const workspace = (currentActor: EffectiveAccess) => (
     <ServerStateProvider client={client}>
       <InventoryValuationsWorkspace
-        access={actor}
+        access={currentActor}
         api={api}
         currency="XAF"
         locale="fr-FR"
@@ -114,9 +115,15 @@ function setup({
         storeId="store-1"
         timeZone="Africa/Lagos"
       />
-    </ServerStateProvider>,
+    </ServerStateProvider>
   );
-  return { requests };
+  const rendered = render(workspace(actor));
+  return {
+    requests,
+    rerenderActor(currentActor: EffectiveAccess) {
+      rendered.rerender(workspace(currentActor));
+    },
+  };
 }
 
 describe("Inventory valuation views", () => {
@@ -212,5 +219,69 @@ describe("Inventory valuation views", () => {
     const { requests } = setup({ actor: { ...access, accessibleStoreIds: ["store-2"] } });
     expect(screen.getByRole("heading", { name: "Accès refusé" })).toBeTruthy();
     await waitFor(() => expect(requests).toHaveLength(0));
+  });
+
+  it("does not accept invented or operation-only permissions for cost visibility", async () => {
+    for (const permission of [
+      "INVENTORY_COST_VIEW",
+      "INVENTORY_VALUE_VIEW",
+      "INVENTORY_COSTING_INITIALIZE",
+      "INVENTORY_COST_ASSIGN",
+    ]) {
+      cleanup();
+      const { requests } = setup({ actor: { ...access, permissions: [permission] } });
+      expect(screen.getByRole("heading", { name: "Accès refusé" })).toBeTruthy();
+      expect(screen.queryByText(/36.028.797.018.963.972.500/)).toBeNull();
+      await waitFor(() => expect(requests).toHaveLength(0));
+    }
+  });
+
+  it("never renders supplied monetary rows while the confidential view is loading", () => {
+    render(
+      <InventoryValuationList
+        currency="XAF"
+        isLoading
+        locale="fr-FR"
+        onRetry={() => undefined}
+        rows={[{ stock, valuation }]}
+      />,
+    );
+
+    expect(screen.getByRole("status", { name: "Chargement des valorisations" })).toBeTruthy();
+    expect(screen.queryByText(/36.028.797.018.963.972.500/)).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Coût moyen" })).toBeNull();
+  });
+
+  it("removes already rendered values immediately when read access is revoked", async () => {
+    const { requests, rerenderActor } = setup();
+    expect(await screen.findByText(/36.028.797.018.963.972.500/)).toBeTruthy();
+    expect(requests).toHaveLength(2);
+
+    rerenderActor({ ...access, authorizationVersion: 2, permissions: [] });
+
+    expect(screen.getByRole("heading", { name: "Accès refusé" })).toBeTruthy();
+    expect(screen.queryByText(/36.028.797.018.963.972.500/)).toBeNull();
+    await waitFor(() => expect(requests).toHaveLength(2));
+  });
+
+  it("does not expose server-provided cost details in forbidden errors", async () => {
+    setup({
+      respond: (url) =>
+        url.pathname.endsWith("/stocks")
+          ? Response.json([stock])
+          : Response.json(
+              {
+                code: "FORBIDDEN",
+                correlationId: "cost-forbidden-ref",
+                message: "Confidential totalValue=36028797018963972500.125000",
+              },
+              { status: 403 },
+            ),
+    });
+
+    expect(await screen.findByRole("heading", { name: "Action non autorisée" })).toBeTruthy();
+    expect(screen.getByText("Référence de diagnostic : cost-forbidden-ref")).toBeTruthy();
+    expect(screen.queryByText(/36028797018963972500/)).toBeNull();
+    expect(screen.queryByText(/Confidential totalValue/)).toBeNull();
   });
 });

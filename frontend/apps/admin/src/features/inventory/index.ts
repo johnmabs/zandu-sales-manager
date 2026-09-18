@@ -11,6 +11,8 @@ export {
   listStocks,
 } from "./api/readInventory";
 export { InventorySection } from "./components/InventorySection";
+export { canAccessInventoryCost, inventoryCostReadPermission } from "./costAccess";
+export type { InventoryCostCapability } from "./costAccess";
 export { inventoryNavigation, visibleInventoryNavigation } from "./inventory-navigation";
 export { InventoryAreaRoute } from "./routes/InventoryAreaRoute";
 export { StockMovementHistoryPage } from "./stock-movements/StockMovementHistoryPage";

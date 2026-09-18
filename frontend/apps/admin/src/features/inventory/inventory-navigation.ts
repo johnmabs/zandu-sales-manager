@@ -1,5 +1,7 @@
 import { can } from "@zandu/authorization";
 
+import { inventoryCostReadPermission } from "./costAccess";
+
 import type { EffectiveAccess } from "@zandu/authorization";
 
 export const inventoryNavigation = [
@@ -16,7 +18,7 @@ export const inventoryNavigation = [
   {
     href: "/admin/inventory/valuations",
     label: "Valorisation",
-    permission: "INVENTORY_READ",
+    permission: inventoryCostReadPermission,
   },
   {
     href: "/admin/inventory/transfers",

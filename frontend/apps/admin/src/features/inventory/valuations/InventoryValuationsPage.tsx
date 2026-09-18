@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ApiContractError } from "@zandu/api-client";
-import { can, useEffectiveAccess } from "@zandu/authorization";
+import { useEffectiveAccess } from "@zandu/authorization";
 import { formatMoney, formatQuantity } from "@zandu/domain-formatting";
 import { useOrganizationContext } from "@zandu/organization-context";
 import { queryKeys } from "@zandu/server-state";
@@ -17,6 +17,7 @@ import {
   listInventoryValuations,
   listStocks,
 } from "../api/readInventory";
+import { canAccessInventoryCost } from "../costAccess";
 
 import { InventoryValuationList, ValuationLoadError } from "./InventoryValuationList";
 import { InventoryValuationMovementList } from "./InventoryValuationMovementList";
@@ -66,10 +67,7 @@ export function InventoryValuationsWorkspace({
   storeId: string | undefined;
   timeZone: string;
 }>) {
-  const allowed =
-    organizationId !== undefined &&
-    storeId !== undefined &&
-    can(access, "INVENTORY_READ", { organizationId, storeId });
+  const allowed = canAccessInventoryCost(access, "read", organizationId, storeId);
 
   if (!allowed) {
     return (

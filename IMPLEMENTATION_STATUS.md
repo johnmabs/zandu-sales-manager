@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.8   TERMINÉ   Positions, mouvements et vues de valorisation Inventory
-F4.9        À FAIRE   Cost confidentiality
+F4.1–F4.9   TERMINÉ   Positions, mouvements, valorisation et confidentialité
+F4.10       À FAIRE   Stock transfer list and details
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -257,7 +257,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F4.6 Adjust stock
 [x] F4.7 Stock movement history
 [x] F4.8 Inventory valuation views
-[ ] F4.9 Cost confidentiality
+[x] F4.9 Cost confidentiality
+[ ] F4.10 Stock transfer list and details
 ```
 
 ## Références
@@ -11558,7 +11559,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.8 terminés ; F4.9 prochain**
+**Statut : EN COURS — F4.1–F4.9 terminés ; F4.10 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11794,3 +11795,36 @@ Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
 Commit prévu : `feat(admin): add inventory valuation views`.
+
+## Epic F4.9 — Cost confidentiality
+
+**Statut : TERMINÉ — visibilité économique alignée sur le contrat serveur**
+
+- une politique de coût centrale et fail-closed associe la consultation à
+  `INVENTORY_READ`, l’initialisation historique à
+  `INVENTORY_COSTING_INITIALIZE` et l’attribution à `INVENTORY_COST_ASSIGN`,
+  toujours dans le scope organisation/magasin effectif ;
+- les permissions inexistantes `INVENTORY_COST_VIEW` et
+  `INVENTORY_VALUE_VIEW`, comme les seules permissions d’opération, ne donnent
+  jamais accès aux vues de coût ;
+- navigation et workspace de valorisation consomment la même permission de
+  lecture publiée par le backend, sans divergence entre lien et route directe ;
+- un accès refusé n’émet aucun appel Stock/Costing et une révocation avec
+  nouvelle `authorizationVersion` retire immédiatement les montants déjà
+  rendus sans relancer de requête ;
+- les états de chargement ont priorité sur toute ligne fournie et n’affichent
+  donc ni coût ni valeur ; les erreurs `403` ignorent les messages serveur
+  potentiellement sensibles tout en conservant le `correlationId` ;
+- aucune action d’export de coûts n’est exposée ; les futurs écrans de comptage
+  BLIND devront continuer à appliquer cette politique sans reconstruire de
+  donnée économique ;
+- 3 tests unitaires couvrent le mapping exact des capacités et les scopes ; 4
+  tests composants supplémentaires couvrent permissions fictives/opérationnelles,
+  chargement, révocation et erreur interdite sans fuite.
+
+Validations : tests ciblés unitaires 3/3 et valorisations 9/9 ; suite frontend
+20 Foundation, 13 unitaires, 114 composants et 41 intégration ; ESLint,
+Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
+verts ; `git diff --check`.
+
+Commit prévu : `feat(admin): enforce inventory cost confidentiality`.
