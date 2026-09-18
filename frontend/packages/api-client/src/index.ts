@@ -500,6 +500,48 @@ export type StockMovementFilters = Readonly<{
   limit?: number;
   productId?: string;
 }>;
+export type InventoryValuationResource = Readonly<
+  Required<GeneratedComponents["schemas"]["InventoryValuationResource"]>
+>;
+export type InventoryValuationMovementType =
+  | "ADJUSTMENT_IN"
+  | "ADJUSTMENT_OUT"
+  | "GOODS_RECEIPT_CORRECTION_IN"
+  | "GOODS_RECEIPT_CORRECTION_OUT"
+  | "INITIAL_STOCK"
+  | "OPENING"
+  | "PURCHASE_RECEIPT"
+  | "PURCHASE_RETURN"
+  | "SALE"
+  | "SALE_RETURN"
+  | "STOCK_COUNT_CORRECTION_IN"
+  | "STOCK_COUNT_CORRECTION_OUT"
+  | "TRANSFER_IN"
+  | "TRANSFER_OUT";
+export type InventoryValuationMovementSource =
+  | "BOOTSTRAP"
+  | "GOODS_RECEIPT"
+  | "GOODS_RECEIPT_CORRECTION"
+  | "INITIALIZATION"
+  | "MANUAL_ADJUSTMENT"
+  | "PURCHASE_RETURN"
+  | "RETURN"
+  | "SALE"
+  | "STOCK_COUNT"
+  | "TRANSFER";
+export type InventoryValuationMovementResource = Readonly<
+  Omit<
+    Required<GeneratedComponents["schemas"]["InventoryValuationMovementResource"]>,
+    "sourceType" | "type"
+  > & {
+    sourceType: InventoryValuationMovementSource;
+    type: InventoryValuationMovementType;
+  }
+>;
+export type InventoryValuationMovementPage = Readonly<{
+  items: readonly InventoryValuationMovementResource[];
+  nextCursor?: string;
+}>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
 >;
@@ -964,6 +1006,105 @@ export class FoundationApi {
     };
   }
 
+  async listInventoryValuations(
+    storeId: string,
+    currency: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly InventoryValuationResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: `stores/${encodeURIComponent(storeId)}/inventory-valuations`,
+      telemetry: {
+        feature: "inventory",
+        operation: "list_inventory_valuations",
+        route: "/admin/inventory/valuations",
+      },
+    });
+    const valuations = decodeInventoryCollection(response.data, decodeInventoryValuation).filter(
+      (valuation) =>
+        valuation.organizationId === access.organizationId &&
+        valuation.storeId === storeId &&
+        access.accessibleStoreIds.includes(valuation.storeId),
+    );
+    assertValuationCurrency(valuations, currency);
+    return valuations;
+  }
+
+  async getInventoryValuation(
+    storeId: string,
+    productId: string,
+    currency: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<InventoryValuationResource | undefined> {
+    let response: ApiResponse;
+    try {
+      response = await this.client.request({
+        method: "GET",
+        path: `stores/${encodeURIComponent(storeId)}/inventory-valuations/${encodeURIComponent(productId)}`,
+        telemetry: {
+          feature: "inventory",
+          operation: "get_inventory_valuation",
+          route: "/admin/inventory/valuations",
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof ApiRequestError &&
+        error.apiError.kind === "response" &&
+        (error.apiError.status === 404 || error.apiError.code === "VALUATION_NOT_INITIALIZED")
+      ) {
+        return undefined;
+      }
+      throw error;
+    }
+    const valuation = decodeInventoryValuation(response.data);
+    if (
+      valuation.organizationId !== access.organizationId ||
+      valuation.storeId !== storeId ||
+      valuation.productId !== productId ||
+      !access.accessibleStoreIds.includes(valuation.storeId)
+    ) {
+      return undefined;
+    }
+    assertValuationCurrency([valuation], currency);
+    return valuation;
+  }
+
+  async listInventoryValuationMovements(
+    storeId: string,
+    productId: string,
+    currency: string,
+    access: CurrentSession["effectiveAccess"],
+    filters: Readonly<{ cursor?: string; limit?: number }> = {},
+  ): Promise<InventoryValuationMovementPage> {
+    const query = new URLSearchParams();
+    if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+    if (filters.cursor !== undefined && filters.cursor !== "") query.set("cursor", filters.cursor);
+    const basePath = `stores/${encodeURIComponent(storeId)}/inventory-valuations/${encodeURIComponent(productId)}/movements`;
+    const path = query.size === 0 ? basePath : `${basePath}?${query.toString()}`;
+    const response = await this.client.request({
+      method: "GET",
+      path,
+      telemetry: {
+        feature: "inventory",
+        operation: "list_inventory_valuation_movements",
+        route: "/admin/inventory/valuations",
+      },
+    });
+    const items = decodeInventoryCollection(response.data, decodeInventoryValuationMovement).filter(
+      (movement) =>
+        movement.organizationId === access.organizationId &&
+        movement.storeId === storeId &&
+        movement.productId === productId &&
+        access.accessibleStoreIds.includes(movement.storeId),
+    );
+    assertValuationCurrency(items, currency);
+    return {
+      items,
+      ...(response.nextCursor === undefined ? {} : { nextCursor: response.nextCursor }),
+    };
+  }
+
   async listProducts(
     access: CurrentSession["effectiveAccess"],
     filters: ProductFilters = {},
@@ -1409,6 +1550,65 @@ function decodeStockMovement(value: unknown): StockMovementResource {
     reason: value.reason,
     occurredAt: requiredString(value, "occurredAt", message),
   };
+}
+
+function decodeInventoryValuation(value: unknown): InventoryValuationResource {
+  const message = "The inventory valuation response is invalid.";
+  if (!isRecord(value)) throw new ApiContractError(message);
+  return {
+    id: requiredString(value, "id", message),
+    organizationId: requiredString(value, "organizationId", message),
+    storeId: requiredString(value, "storeId", message),
+    productId: requiredString(value, "productId", message),
+    stockId: requiredString(value, "stockId", message),
+    quantityOnHand: requiredString(value, "quantityOnHand", message),
+    totalValue: requiredString(value, "totalValue", message),
+    currency: requiredString(value, "currency", message),
+    averageUnitCost: requiredString(value, "averageUnitCost", message),
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeInventoryValuationMovement(value: unknown): InventoryValuationMovementResource {
+  const message = "The inventory valuation movement response is invalid.";
+  if (
+    !isRecord(value) ||
+    (value.stockMovementId !== null && typeof value.stockMovementId !== "string") ||
+    (value.sourceReferenceId !== null && typeof value.sourceReferenceId !== "string")
+  ) {
+    throw new ApiContractError(message);
+  }
+  return {
+    id: requiredString(value, "id", message),
+    stockValuationId: requiredString(value, "stockValuationId", message),
+    organizationId: requiredString(value, "organizationId", message),
+    storeId: requiredString(value, "storeId", message),
+    productId: requiredString(value, "productId", message),
+    stockId: requiredString(value, "stockId", message),
+    stockMovementId: value.stockMovementId,
+    type: requiredInventoryValuationMovementType(value, "type", message),
+    quantity: requiredString(value, "quantity", message),
+    unitCost: requiredString(value, "unitCost", message),
+    value: requiredString(value, "value", message),
+    previousTotalValue: requiredString(value, "previousTotalValue", message),
+    resultingTotalValue: requiredString(value, "resultingTotalValue", message),
+    previousAverageCost: requiredString(value, "previousAverageCost", message),
+    resultingAverageCost: requiredString(value, "resultingAverageCost", message),
+    currency: requiredString(value, "currency", message),
+    sourceType: requiredInventoryValuationMovementSource(value, "sourceType", message),
+    sourceReferenceId: value.sourceReferenceId,
+    occurredAt: requiredString(value, "occurredAt", message),
+    correlationId: requiredString(value, "correlationId", message),
+  };
+}
+
+function assertValuationCurrency(
+  resources: readonly Readonly<{ currency: string }>[],
+  currency: string,
+): void {
+  if (resources.some((resource) => resource.currency !== currency)) {
+    throw new ApiContractError("The inventory valuation currency differs from the active Store.");
+  }
 }
 
 function decodeProduct(value: unknown): ProductResource {
@@ -1911,6 +2111,54 @@ function requiredStockMovementSource(
 ): StockMovementSource {
   const propertyValue = value[property];
   if (
+    propertyValue === "GOODS_RECEIPT" ||
+    propertyValue === "GOODS_RECEIPT_CORRECTION" ||
+    propertyValue === "INITIALIZATION" ||
+    propertyValue === "MANUAL_ADJUSTMENT" ||
+    propertyValue === "PURCHASE_RETURN" ||
+    propertyValue === "RETURN" ||
+    propertyValue === "SALE" ||
+    propertyValue === "STOCK_COUNT" ||
+    propertyValue === "TRANSFER"
+  )
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredInventoryValuationMovementType(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): InventoryValuationMovementType {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "ADJUSTMENT_IN" ||
+    propertyValue === "ADJUSTMENT_OUT" ||
+    propertyValue === "GOODS_RECEIPT_CORRECTION_IN" ||
+    propertyValue === "GOODS_RECEIPT_CORRECTION_OUT" ||
+    propertyValue === "INITIAL_STOCK" ||
+    propertyValue === "OPENING" ||
+    propertyValue === "PURCHASE_RECEIPT" ||
+    propertyValue === "PURCHASE_RETURN" ||
+    propertyValue === "SALE" ||
+    propertyValue === "SALE_RETURN" ||
+    propertyValue === "STOCK_COUNT_CORRECTION_IN" ||
+    propertyValue === "STOCK_COUNT_CORRECTION_OUT" ||
+    propertyValue === "TRANSFER_IN" ||
+    propertyValue === "TRANSFER_OUT"
+  )
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredInventoryValuationMovementSource(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): InventoryValuationMovementSource {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "BOOTSTRAP" ||
     propertyValue === "GOODS_RECEIPT" ||
     propertyValue === "GOODS_RECEIPT_CORRECTION" ||
     propertyValue === "INITIALIZATION" ||

@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.7   TERMINÉ   Positions, mutations et historique Stock
-F4.8        À FAIRE   Inventory valuation views
+F4.1–F4.8   TERMINÉ   Positions, mouvements et vues de valorisation Inventory
+F4.9        À FAIRE   Cost confidentiality
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -256,7 +256,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F4.5 Initialize stock
 [x] F4.6 Adjust stock
 [x] F4.7 Stock movement history
-[ ] F4.8 Inventory valuation views
+[x] F4.8 Inventory valuation views
+[ ] F4.9 Cost confidentiality
 ```
 
 ## Références
@@ -11557,7 +11558,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.7 terminés ; F4.8 prochain**
+**Statut : EN COURS — F4.1–F4.8 terminés ; F4.9 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11762,3 +11763,34 @@ intégration ; ESLint, Prettier, TypeScript, builds Admin/POS et Deptrac
 couches/modules verts ; `git diff --check`.
 
 Commit prévu : `feat(admin): add stock movement history`.
+
+## Epic F4.8 — Inventory valuation views
+
+**Statut : TERMINÉ — valorisations et ledger économique consultables**
+
+- `/admin/inventory/valuations` compose les contrats publics Stock et Costing
+  sans déplacer d’autorité métier : Stock fournit les positions physiques et
+  Costing les seules valorisations réellement initialisées ;
+- chaque position affiche quantité exacte, état `Initialisée` ou
+  `Non initialisée`, coût moyen, valeur totale, devise du magasin et version,
+  sans déduire ni reconstruire un coût absent ;
+- le lien issu du détail Stock ouvre la valorisation du produit ; une absence
+  `VALUATION_NOT_INITIALIZED` devient un état explicite et n’appelle pas le
+  ledger économique ;
+- le détail valorisé expose quantité, coût moyen et valeur totale exacts, puis
+  le ledger append-only avec type, sens, quantité, coût unitaire, valeur,
+  totaux et coûts moyens avant/après, source et date dans le fuseau du magasin ;
+- le ledger suit le curseur opaque serveur ; aucune pagination, aucun total et
+  aucun calcul économique ne sont inventés côté client ;
+- les réponses sont projetées tenant/store/produit et la devise de chaque
+  ressource est vérifiée contre celle du Store actif sous `INVENTORY_READ` ;
+- 5 tests composants couvrent liste, état non initialisé, détail, ledger,
+  curseur, diagnostics et scope ; l’intégration couvre contrats exacts,
+  projections défensives, encodage du curseur et rejet d’une devise incohérente.
+
+Validations : test composant ciblé 5/5 et intégration Inventory 9/9 ; suite
+frontend 20 Foundation, 10 unitaires, 110 composants et 41 intégration ; ESLint,
+Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
+`git diff --check`.
+
+Commit prévu : `feat(admin): add inventory valuation views`.

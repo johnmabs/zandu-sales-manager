@@ -1,11 +1,16 @@
-import { InventoryAreaRoute } from "../../../../src/features/inventory";
+import { InventorySection, InventoryValuationsPage } from "../../../../src/features/inventory";
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: Readonly<{ searchParams: Promise<{ productId?: string | string[] }> }>) {
+  const query = await searchParams;
+  const productId = typeof query.productId === "string" ? query.productId.trim() : undefined;
+
   return (
-    <InventoryAreaRoute
-      title="Valorisation du stock"
-      permission="INVENTORY_READ"
-      description="Les vues de valorisation seront livrées par F4.8."
-    />
+    <InventorySection title="Valorisation du stock" permission="INVENTORY_READ">
+      <InventoryValuationsPage
+        {...(productId === undefined || productId === "" ? {} : { productId })}
+      />
+    </InventorySection>
   );
 }

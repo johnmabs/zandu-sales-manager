@@ -57,3 +57,33 @@ export function listStockMovementPage(
 ) {
   return api.listStockMovementPage(storeId, access, filters);
 }
+
+export function listInventoryValuations(
+  api: FoundationApi,
+  storeId: string,
+  currency: string,
+  access: EffectiveAccess,
+) {
+  return api.listInventoryValuations(storeId, currency, access);
+}
+
+export function getInventoryValuation(
+  api: FoundationApi,
+  storeId: string,
+  productId: string,
+  currency: string,
+  access: EffectiveAccess,
+) {
+  return api.getInventoryValuation(storeId, productId, currency, access);
+}
+
+export function listInventoryValuationMovements(
+  api: FoundationApi,
+  storeId: string,
+  productId: string,
+  currency: string,
+  access: EffectiveAccess,
+  filters: Readonly<{ cursor?: string; limit?: number }>,
+) {
+  return api.listInventoryValuationMovements(storeId, productId, currency, access, filters);
+}

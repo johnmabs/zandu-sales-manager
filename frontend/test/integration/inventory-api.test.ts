@@ -26,6 +26,40 @@ const movement = {
   reason: "Correction de comptage",
   occurredAt: "2026-09-18T08:00:00+01:00",
 };
+const valuation = {
+  id: "valuation-1",
+  organizationId: "org-1",
+  storeId: "store-1",
+  productId: "product-1",
+  stockId: "stock-1",
+  quantityOnHand: "9007199254740993.125",
+  totalValue: "36028797018963972500.125000",
+  currency: "XAF",
+  averageUnitCost: "4000.125000000000",
+  version: 2,
+};
+const valuationMovement = {
+  id: "valuation-movement-1",
+  stockValuationId: "valuation-1",
+  organizationId: "org-1",
+  storeId: "store-1",
+  productId: "product-1",
+  stockId: "stock-1",
+  stockMovementId: "movement-1",
+  type: "INITIAL_STOCK",
+  quantity: "9007199254740993.125",
+  unitCost: "4000.125000000000",
+  value: "36028797018963972500.125000",
+  previousTotalValue: "0.000000",
+  resultingTotalValue: "36028797018963972500.125000",
+  previousAverageCost: "0.000000000000",
+  resultingAverageCost: "4000.125000000000",
+  currency: "XAF",
+  sourceType: "INITIALIZATION",
+  sourceReferenceId: null,
+  occurredAt: "2026-09-18T08:00:00+01:00",
+  correlationId: "valuation-correlation",
+};
 const access = {
   organizationId: "org-1",
   authorizationVersion: 1,
@@ -191,6 +225,50 @@ describe("Inventory API contracts", () => {
         limit: 25,
       }),
     ).resolves.toEqual({ items: [movement], nextCursor: "next-page" });
+  });
+
+  it("reads scoped valuation summaries, detail and cursor ledger with exact amounts", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/stores/store-1/inventory-valuations", () =>
+        HttpResponse.json([valuation, { ...valuation, id: "foreign", organizationId: "org-2" }]),
+      ),
+      http.get("https://api.zandu.test/api/stores/store-1/inventory-valuations/product-1", () =>
+        HttpResponse.json(valuation),
+      ),
+      http.get(
+        "https://api.zandu.test/api/stores/store-1/inventory-valuations/product-1/movements",
+        ({ request }) => {
+          const url = new URL(request.url);
+          expect(url.searchParams.get("limit")).toBe("25");
+          expect(url.searchParams.get("cursor")).toBe("valuation/cursor+");
+          return HttpResponse.json(
+            [valuationMovement, { ...valuationMovement, id: "foreign", productId: "product-2" }],
+            { headers: { "X-Next-Cursor": "next-valuation-page" } },
+          );
+        },
+      ),
+    );
+    await expect(api.listInventoryValuations("store-1", "XAF", access)).resolves.toEqual([
+      valuation,
+    ]);
+    await expect(api.getInventoryValuation("store-1", "product-1", "XAF", access)).resolves.toEqual(
+      valuation,
+    );
+    await expect(
+      api.listInventoryValuationMovements("store-1", "product-1", "XAF", access, {
+        cursor: "valuation/cursor+",
+        limit: 25,
+      }),
+    ).resolves.toEqual({ items: [valuationMovement], nextCursor: "next-valuation-page" });
+
+    server.use(
+      http.get("https://api.zandu.test/api/stores/store-1/inventory-valuations", () =>
+        HttpResponse.json([{ ...valuation, currency: "EUR" }]),
+      ),
+    );
+    await expect(api.listInventoryValuations("store-1", "XAF", access)).rejects.toBeInstanceOf(
+      ApiContractError,
+    );
   });
 
   it("rejects numeric quantities and unknown movement classifications", async () => {
