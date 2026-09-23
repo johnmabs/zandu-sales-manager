@@ -138,16 +138,15 @@ Epic F0.26  TERMINÉ   Observabilité frontend structurée
 Epic F0.27  TERMINÉ   Pipeline CI frontend complet
 ```
 
-Les Lots Admin F1 et F2 sont terminés. F3 est fonctionnel mais son Gate reste
-ouvert :
+Les Lots Admin F1, F2 et F3 sont terminés. F4 est en cours :
 
 ```text
 Gate F1     TERMINÉ   Administration complète des Stores
 Gate F2     TERMINÉ   Administration Users & Access
 F3.1–F3.41 TERMINÉ   Administration Catalog & Pricing et tests automatisés hors E2E
-F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en CI
-F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
-Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
+F3.42       TERMINÉ   Parcours E2E Catalog validé sous Chromium en CI
+F3.43       TERMINÉ   Parcours E2E Pricing validé sous Chromium en CI
+Gate F3     TERMINÉ   Admin Catalog & Pricing validé par la CI frontend
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
 F4.1–F4.10  TERMINÉ   Stock, valorisation et lecture des transferts Inventory
 F4.11       À FAIRE   Create and edit draft transfer
@@ -184,14 +183,16 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 17 septembre 2026 :
+État consolidé au 23 septembre 2026 sur le commit `e81620c` :
 
 ```text
 Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
-Tests frontend        20 Foundation, 10 unitaires, 89 composants, 37 intégration
+Tests frontend        Admin 41, POS 3, Foundation 66, unitaires 13,
+                      composants 118, intégration 43, E2E Chromium 7
 Builds frontend       Admin (39 routes) et POS OK
+Compilation Tauri     OK (`cargo check --locked`)
 PHPStan               OK
 PHP-CS-Fixer          OK
 Deptrac layers        0 violation, 10 dépendances non classées
@@ -200,7 +201,10 @@ Composer audit        aucune vulnérabilité connue
 ESLint / Prettier     OK
 TypeScript            OK
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
-E2E F3                Catalog/Pricing implémentés ; validation Chromium CI attendue
+CI frontend           Verte : qualité/builds, Tauri et E2E Chromium
+CI backend            Verte : validation complète, image et backup/restore inclus
+Gate F3               Validé ; Catalog/Pricing E2E verts sous Chromium
+Frontend F4           F4.1–F4.10 terminés ; F4.11 prochain
 ```
 
 ## Definition of Done globale
@@ -244,10 +248,10 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] Gate F2 Admin Users & Access validé
 [x] F3.1 à F3.41 livrés et testés
 [x] F3.42 scénario E2E Catalog implémenté
-[ ] F3.42 exécution Chromium verte en CI
+[x] F3.42 exécution Chromium verte en CI
 [x] F3.43 scénario E2E Pricing implémenté
-[ ] F3.43 exécution Chromium verte en CI
-[ ] Gate F3 Admin Catalog & Pricing
+[x] F3.43 exécution Chromium verte en CI
+[x] Gate F3 Admin Catalog & Pricing
 [x] Planning Frontend Lot F4 Admin Inventory
 [x] F4.1 Inventory feature foundation
 [x] F4.2 Inventory navigation and store context
@@ -278,6 +282,7 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 - `zandu-frontend-lot-f1-admin-stores.md`
 - `zandu-frontend-lot-f2-admin-users-access.md`
 - `zandu-frontend-lot-f3-admin-catalog-pricing.md`
+- `zandu-frontend-lot-f4-admin-inventory.md`
 
 ---
 
@@ -11319,13 +11324,13 @@ Validations : `pnpm test` OK (20 Foundation, 10 unitaires, 51 composants, 14 int
 
 ## Frontend Lot F3 — Admin Catalog & Pricing
 
-**Statut : EN COURS — F3.1 à F3.43 implémentés ; validations Chromium F3.42/F3.43 à faire**
+**Statut : TERMINÉ — F3.1 à F3.43 livrés ; Gate F3 validé en CI**
 
 - Spécification v1.0 : `docs/specs/planning/zandu-frontend-lot-f3-admin-catalog-pricing.md` (67 sections, 43 Epics et 47 critères Gate F3).
 - Routage compact : `docs/ai/lots/frontend-admin-catalog-pricing/INDEX.md`, contexte, 43 fichiers Epic et cinq supports ciblés.
-- F3.1 à F3.41 sont livrés. Les scénarios F3.42 et F3.43 sont implémentés et attendent leur validation Chromium en CI. Foundation et Gates F1/F2 sont validés.
+- F3.1 à F3.41 sont livrés. Les scénarios F3.42 et F3.43 sont validés sous Chromium en CI. Foundation et Gates F1/F2 sont validés.
 - Les routes protégées utilisent le préfixe `/admin/...`. Catalog et Pricing restent séparés, sans Inventory Costing ni gestion physique du stock.
-- Gate F3 : en attente de l’exécution Chromium des parcours Catalog et Pricing ; tests hors E2E, lint, formatage, typecheck et builds sont verts.
+- Gate F3 : validé le 23 septembre 2026 par la CI frontend verte sur `e81620c`, avec les sept scénarios Playwright réussis.
 
 Validation documentaire : numérotation des 67 sections, unicité des 43 Epics, correspondance index/fichiers, liens locaux et 47 critères Gate contrôlés ; `git diff --check`.
 
@@ -11511,13 +11516,12 @@ Commits :
   dix dépendances non classées par vue.
 - Composer et conteneur Symfony valides ; Composer Audit sans vulnérabilité connue.
 - `git diff --check` : OK.
-- Les parcours E2E navigateur F3.42/F3.43 sont implémentés et attendent leur
-  exécution Chromium en CI. Les deux validations restent requises pour le
-  Gate F3.
+- Les parcours E2E navigateur F3.42/F3.43 ont ensuite été validés sous Chromium
+  par la CI frontend du 23 septembre 2026 ; le Gate F3 est clos.
 
 ## Epic F3.42 — E2E Catalog flow
 
-**Statut : IMPLÉMENTÉ — validation Chromium attendue en CI**
+**Statut : TERMINÉ — parcours Catalog validé sous Chromium en CI**
 
 - un scénario Playwright couvre le parcours administrateur complet : connexion,
   création d’une catégorie, d’un produit et d’un conditionnement, ajout d’un
@@ -11530,15 +11534,16 @@ Commits :
 - la suite frontend complète reste verte : 20 tests Foundation, 10 unitaires,
   73 composants et 32 intégration ; TypeScript, ESLint, Prettier, builds Admin/POS
   et Deptrac couches/modules passent également ;
-- l’exécution navigateur locale reste impossible avec Playwright 1.57.0, qui ne
-  fournit pas Chromium pour `ubuntu26.04-x64`. Le job CI existant installe
-  Chromium et doit fournir la preuve d’exécution avant validation du critère 43.
+- l’image locale Ubuntu 26.04 reste incompatible avec le Chromium fourni par
+  Playwright 1.57.0, mais la CI Ubuntu 24.04 a exécuté avec succès la suite
+  Chromium complète : sept scénarios sur sept.
 
-Commit prévu : `test(admin): verify catalog administration flow`.
+Commits : `1338d84 test(admin): verify catalog administration flow` et
+`e81620c test(e2e): stabilize catalog and pricing flows`.
 
 ## Epic F3.43 — E2E Pricing flow
 
-**Statut : IMPLÉMENTÉ — validation Chromium attendue en CI**
+**Statut : TERMINÉ — parcours Pricing validé sous Chromium en CI**
 
 - un scénario Playwright couvre le parcours administrateur complet : connexion,
   création et activation d’une liste de prix, sélection du produit puis de son
@@ -11552,11 +11557,24 @@ Commit prévu : `test(admin): verify catalog administration flow`.
 - la suite frontend complète reste verte : 20 tests Foundation, 10 unitaires,
   73 composants et 32 intégration ; TypeScript, ESLint, Prettier, builds Admin/POS
   et Deptrac couches/modules passent également ;
-- l’exécution navigateur locale démarre l’Admin mais s’arrête avant le scénario,
-  faute d’exécutable Chromium pour `ubuntu26.04-x64`. Le job CI existant doit
-  fournir la preuve d’exécution des scénarios F3.42/F3.43 avant le Gate F3.
+- l’image locale Ubuntu 26.04 ne fournit pas l’exécutable Chromium compatible,
+  mais la CI Ubuntu 24.04 a exécuté avec succès la suite Chromium complète :
+  sept scénarios sur sept.
 
-Commit prévu : `test(admin): verify pricing administration flow`.
+Commits : `290a077 test(admin): verify pricing administration flow` et
+`e81620c test(e2e): stabilize catalog and pricing flows`.
+
+## Gate F3 — Admin Catalog & Pricing
+
+**Statut : VALIDÉ — administration Catalog & Pricing livrée**
+
+Validation CI du 23 septembre 2026 sur `e81620c` : qualité frontend, formatage,
+ESLint, TypeScript, 66 tests Foundation, 13 unitaires, 118 composants, 43
+intégration, builds Admin (39 routes) et POS, compilation Tauri et sept scénarios
+Playwright Chromium sur sept. Le workflow backend associé est également vert :
+831 tests, 4 394 assertions, architecture, sécurité, image de production et
+backup/restore validés. Preuves GitHub Actions : Frontend CI `35907477647` et
+Backend CI `35907477778`.
 
 ## Frontend Lot F4 — Admin Inventory
 
@@ -11570,8 +11588,8 @@ Commit prévu : `test(admin): verify pricing administration flow`.
   confidentielle, transferts inter-store et inventaires physiques ;
 - dépendances explicites sur les contrats backend existants, Catalog/Stores et
   les fondations frontend, sans dépendance implicite aux numéros de Lots ;
-- Gate F3 toujours ouvert tant que les scénarios Chromium F3.42/F3.43 n’ont pas
-  fourni leur preuve CI ; ce point n’est pas masqué par le démarrage de F4.
+- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.11 est désormais
+  le prochain Epic ouvert.
 
 Validation documentaire : source, index, contexte, 23 fichiers Epic et cinq
 supports présents ; liens locaux contrôlés.
@@ -11598,7 +11616,7 @@ Validations : test d’intégration ciblé 5/5 ; tests Admin 16/16 ; suite front
 20 Foundation, 10 unitaires, 73 composants et 37 intégration ; ESLint, Prettier,
 TypeScript, builds Admin/POS et Deptrac couches/modules verts ; `git diff --check`.
 
-Commit prévu : `feat(admin): add inventory feature foundation`.
+Commit : `0edc278 feat(admin): add inventory feature foundation`.
 
 ## Epic F4.2 — Inventory navigation and store context
 
@@ -11627,7 +11645,7 @@ Validations : tests ciblés 5/5 composants et 1/1 server-state ; suite frontend
 TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
-Commit prévu : `feat(admin): add inventory navigation and store context`.
+Commit : `f369389 feat(admin): add inventory navigation and store context`.
 
 ## Epic F4.3 — Stock positions workspace
 
@@ -11656,7 +11674,7 @@ frontend 20 Foundation, 10 unitaires, 83 composants et 37 intégration ; ESLint,
 Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
 verts ; `git diff --check`.
 
-Commit prévu : `feat(admin): add stock positions workspace`.
+Commit : `893a747 feat(admin): add stock positions workspace`.
 
 ## Epic F4.4 — Stock position details
 
@@ -11681,7 +11699,7 @@ unitaires, 89 composants et 37 intégration ; ESLint, Prettier, TypeScript,
 builds Admin (39 routes)/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
-Commit prévu : `feat(admin): add stock position details`.
+Commit : `762c3d6 feat(admin): add stock position details`.
 
 ## Epic F4.5 — Initialize stock
 
@@ -11709,7 +11727,7 @@ frontend 20 Foundation, 10 unitaires, 94 composants et 38 intégration ; ESLint,
 Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
-Commit prévu : `feat(admin): initialize stock positions`.
+Commit : `9947684 feat(admin): initialize stock positions`.
 
 ## Epic F4.6 — Adjust stock
 
@@ -11737,7 +11755,7 @@ frontend 20 Foundation, 10 unitaires, 101 composants et 39 intégration ; ESLint
 Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
-Commit prévu : `feat(admin): adjust stock positions`.
+Commit : `7f66838 feat(admin): adjust stock positions`.
 
 ## Epic F4.7 — Stock movement history
 
@@ -11764,7 +11782,7 @@ Validations : test composant ciblé 4/4, intégration Inventory 8/8 et Foundatio
 intégration ; ESLint, Prettier, TypeScript, builds Admin/POS et Deptrac
 couches/modules verts ; `git diff --check`.
 
-Commit prévu : `feat(admin): add stock movement history`.
+Commit : `951bb92 feat(admin): add stock movement history`.
 
 ## Epic F4.8 — Inventory valuation views
 
@@ -11795,7 +11813,7 @@ frontend 20 Foundation, 10 unitaires, 110 composants et 41 intégration ; ESLint
 Prettier, TypeScript, builds Admin/POS et Deptrac couches/modules verts ;
 `git diff --check`.
 
-Commit prévu : `feat(admin): add inventory valuation views`.
+Commit : `7f3c2c7 feat(admin): add inventory valuation views`.
 
 ## Epic F4.9 — Cost confidentiality
 
@@ -11828,7 +11846,7 @@ Validations : tests ciblés unitaires 3/3 et valorisations 9/9 ; suite frontend
 Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
 verts ; `git diff --check`.
 
-Commit prévu : `feat(admin): enforce inventory cost confidentiality`.
+Commit : `9acd3b7 feat(admin): enforce inventory cost confidentiality`.
 
 ## Epic F4.10 — Stock transfer list and details
 
@@ -11864,4 +11882,4 @@ frontend 20 Foundation, 13 unitaires, 118 composants et 43 intégration ; ESLint
 Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
 verts ; `git diff --check`.
 
-Commit prévu : `feat(admin): add stock transfer views`.
+Commit : `6f8af94 feat(admin): add stock transfer views`.
