@@ -3,6 +3,7 @@ import type {
   StockAdjustInput,
   StockInitializeInput,
   StockMovementFilters,
+  StockTransferFilters,
 } from "@zandu/api-client";
 
 type EffectiveAccess = Parameters<FoundationApi["listStocks"]>[1];
@@ -86,4 +87,16 @@ export function listInventoryValuationMovements(
   filters: Readonly<{ cursor?: string; limit?: number }>,
 ) {
   return api.listInventoryValuationMovements(storeId, productId, currency, access, filters);
+}
+
+export function listStockTransfers(
+  api: FoundationApi,
+  access: EffectiveAccess,
+  filters: StockTransferFilters,
+) {
+  return api.listStockTransfers(access, filters);
+}
+
+export function getStockTransfer(api: FoundationApi, transferId: string, access: EffectiveAccess) {
+  return api.getStockTransfer(transferId, access);
 }

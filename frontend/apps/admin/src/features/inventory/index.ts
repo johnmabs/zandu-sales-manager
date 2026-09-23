@@ -3,12 +3,14 @@ export {
   adjustStock,
   getInventoryValuation,
   getStock,
+  getStockTransfer,
   initializeStock,
   listInventoryValuationMovements,
   listInventoryValuations,
   listStockMovementPage,
   listStockMovements,
   listStocks,
+  listStockTransfers,
 } from "./api/readInventory";
 export { InventorySection } from "./components/InventorySection";
 export { canAccessInventoryCost, inventoryCostReadPermission } from "./costAccess";
@@ -18,6 +20,8 @@ export { InventoryAreaRoute } from "./routes/InventoryAreaRoute";
 export { StockMovementHistoryPage } from "./stock-movements/StockMovementHistoryPage";
 export { StockPositionDetailsPage } from "./stock-positions/StockPositionDetailsPage";
 export { StockPositionsPage } from "./stock-positions/StockPositionsPage";
+export { StockTransferDetailsPage } from "./transfers/StockTransferDetailsPage";
+export { StockTransfersPage } from "./transfers/StockTransfersPage";
 export { InventoryValuationsPage } from "./valuations/InventoryValuationsPage";
 export type {
   InventoryValuationMovementPage,
@@ -33,4 +37,9 @@ export type {
   StockMovementSource,
   StockMovementType,
   StockResource,
+  StockTransferFilters,
+  StockTransferLineResource,
+  StockTransferPage,
+  StockTransferResource,
+  StockTransferStatus,
 } from "@zandu/api-client";

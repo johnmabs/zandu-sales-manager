@@ -60,12 +60,35 @@ const valuationMovement = {
   occurredAt: "2026-09-18T08:00:00+01:00",
   correlationId: "valuation-correlation",
 };
+const transfer = {
+  id: "transfer-1",
+  sourceStoreId: "store-1",
+  destinationStoreId: "store-2",
+  status: "RECEIVED",
+  lines: [
+    {
+      id: "transfer-line-1",
+      productId: "product-1",
+      requestedQuantity: "9007199254740993.125000",
+      shippedQuantity: "3.000000",
+      receivedQuantity: "2.000000",
+      transitDiscrepancy: "1.000000000000",
+    },
+  ],
+  hasTransitDiscrepancy: true,
+  createdAt: "2026-09-20T08:00:00+01:00",
+  shippedAt: "2026-09-20T09:00:00+01:00",
+  receivedAt: "2026-09-20T10:00:00+01:00",
+  cancellationReason: null,
+  cancelledAt: null,
+  version: 4,
+};
 const access = {
   organizationId: "org-1",
   authorizationVersion: 1,
-  permissions: ["INVENTORY_READ", "STOCK_MOVEMENT_READ"],
+  permissions: ["INVENTORY_READ", "STOCK_MOVEMENT_READ", "STOCK_TRANSFER_READ"],
   accessibleStoreIds: ["store-1"],
-  scope: { type: "SELECTED_STORES" } as const,
+  scope: { storeIds: ["store-1"], type: "SELECTED_STORES" } as const,
 };
 const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -269,6 +292,74 @@ describe("Inventory API contracts", () => {
     await expect(api.listInventoryValuations("store-1", "XAF", access)).rejects.toBeInstanceOf(
       ApiContractError,
     );
+  });
+
+  it("reads scoped transfer pages and details with exact line quantities", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/stock-transfers", ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get("limit")).toBe("25");
+        expect(url.searchParams.get("cursor")).toBe("transfer/cursor+");
+        return HttpResponse.json(
+          [
+            transfer,
+            {
+              ...transfer,
+              id: "foreign-transfer",
+              sourceStoreId: "store-3",
+              destinationStoreId: "store-4",
+            },
+          ],
+          { headers: { "X-Next-Cursor": "next-transfer-page" } },
+        );
+      }),
+      http.get("https://api.zandu.test/api/stock-transfers/transfer-1", () =>
+        HttpResponse.json(transfer),
+      ),
+      http.get("https://api.zandu.test/api/stock-transfers/foreign-transfer", () =>
+        HttpResponse.json({
+          ...transfer,
+          id: "foreign-transfer",
+          sourceStoreId: "store-3",
+          destinationStoreId: "store-4",
+        }),
+      ),
+      http.get("https://api.zandu.test/api/stock-transfers/missing-transfer", () =>
+        HttpResponse.json({ code: "NOT_FOUND" }, { status: 404 }),
+      ),
+      http.get("https://api.zandu.test/api/stock-transfers/mismatched-transfer", () =>
+        HttpResponse.json(transfer),
+      ),
+    );
+
+    await expect(
+      api.listStockTransfers(access, { cursor: "transfer/cursor+", limit: 25 }),
+    ).resolves.toEqual({ items: [transfer], nextCursor: "next-transfer-page" });
+    await expect(api.getStockTransfer("transfer-1", access)).resolves.toEqual(transfer);
+    await expect(api.getStockTransfer("foreign-transfer", access)).resolves.toBeUndefined();
+    await expect(api.getStockTransfer("missing-transfer", access)).resolves.toBeUndefined();
+    await expect(api.getStockTransfer("mismatched-transfer", access)).resolves.toBeUndefined();
+  });
+
+  it("rejects malformed transfer quantities and unknown statuses", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/stock-transfers", () =>
+        HttpResponse.json([
+          {
+            ...transfer,
+            lines: [{ ...transfer.lines[0], requestedQuantity: 12.5 }],
+          },
+        ]),
+      ),
+    );
+    await expect(api.listStockTransfers(access)).rejects.toBeInstanceOf(ApiContractError);
+
+    server.use(
+      http.get("https://api.zandu.test/api/stock-transfers", () =>
+        HttpResponse.json([{ ...transfer, status: "IN_TRANSIT" }]),
+      ),
+    );
+    await expect(api.listStockTransfers(access)).rejects.toBeInstanceOf(ApiContractError);
   });
 
   it("rejects numeric quantities and unknown movement classifications", async () => {

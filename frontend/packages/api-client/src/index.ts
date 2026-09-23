@@ -542,6 +542,37 @@ export type InventoryValuationMovementPage = Readonly<{
   items: readonly InventoryValuationMovementResource[];
   nextCursor?: string;
 }>;
+export type StockTransferStatus = "CANCELLED" | "DRAFT" | "RECEIVED" | "SHIPPED";
+export type StockTransferLineResource = Readonly<{
+  id: string;
+  productId: string;
+  receivedQuantity: string | null;
+  requestedQuantity: string;
+  shippedQuantity: string | null;
+  transitDiscrepancy: string | null;
+}>;
+export type StockTransferResource = Readonly<{
+  cancellationReason: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+  destinationStoreId: string;
+  hasTransitDiscrepancy: boolean;
+  id: string;
+  lines: readonly StockTransferLineResource[];
+  receivedAt: string | null;
+  shippedAt: string | null;
+  sourceStoreId: string;
+  status: StockTransferStatus;
+  version: number;
+}>;
+export type StockTransferPage = Readonly<{
+  items: readonly StockTransferResource[];
+  nextCursor?: string;
+}>;
+export type StockTransferFilters = Readonly<{
+  cursor?: string;
+  limit?: number;
+}>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
 >;
@@ -1105,6 +1136,62 @@ export class FoundationApi {
     };
   }
 
+  async listStockTransfers(
+    access: CurrentSession["effectiveAccess"],
+    filters: StockTransferFilters = {},
+  ): Promise<StockTransferPage> {
+    const query = new URLSearchParams();
+    if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+    if (filters.cursor !== undefined && filters.cursor !== "") query.set("cursor", filters.cursor);
+    const response = await this.client.request({
+      method: "GET",
+      path: `stock-transfers${query.size === 0 ? "" : `?${query.toString()}`}`,
+      telemetry: {
+        feature: "inventory",
+        operation: "list_stock_transfers",
+        route: "/admin/inventory/transfers",
+      },
+    });
+    const items = decodeInventoryCollection(response.data, decodeStockTransfer).filter((transfer) =>
+      transferInAccessibleScope(transfer, access),
+    );
+    return {
+      items,
+      ...(response.nextCursor === undefined ? {} : { nextCursor: response.nextCursor }),
+    };
+  }
+
+  async getStockTransfer(
+    transferId: string,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockTransferResource | undefined> {
+    let response: ApiResponse;
+    try {
+      response = await this.client.request({
+        method: "GET",
+        path: `stock-transfers/${encodeURIComponent(transferId)}`,
+        telemetry: {
+          feature: "inventory",
+          operation: "get_stock_transfer",
+          route: "/admin/inventory/transfers/:transferId",
+        },
+      });
+    } catch (error: unknown) {
+      if (
+        error instanceof ApiRequestError &&
+        error.apiError.kind === "response" &&
+        error.apiError.status === 404
+      ) {
+        return undefined;
+      }
+      throw error;
+    }
+    const transfer = decodeStockTransfer(response.data);
+    return transfer.id === transferId && transferInAccessibleScope(transfer, access)
+      ? transfer
+      : undefined;
+  }
+
   async listProducts(
     access: CurrentSession["effectiveAccess"],
     filters: ProductFilters = {},
@@ -1602,6 +1689,53 @@ function decodeInventoryValuationMovement(value: unknown): InventoryValuationMov
   };
 }
 
+function decodeStockTransfer(value: unknown): StockTransferResource {
+  const message = "The stock transfer response is invalid.";
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.lines) ||
+    typeof value.hasTransitDiscrepancy !== "boolean"
+  ) {
+    throw new ApiContractError(message);
+  }
+  return {
+    id: requiredString(value, "id", message),
+    sourceStoreId: requiredString(value, "sourceStoreId", message),
+    destinationStoreId: requiredString(value, "destinationStoreId", message),
+    status: requiredStockTransferStatus(value, "status", message),
+    lines: value.lines.map((line) => decodeStockTransferLine(line, message)),
+    hasTransitDiscrepancy: value.hasTransitDiscrepancy,
+    createdAt: requiredString(value, "createdAt", message),
+    shippedAt: nullableString(value, "shippedAt", message),
+    receivedAt: nullableString(value, "receivedAt", message),
+    cancellationReason: nullableString(value, "cancellationReason", message),
+    cancelledAt: nullableString(value, "cancelledAt", message),
+    version: requiredNumber(value, "version", message),
+  };
+}
+
+function decodeStockTransferLine(value: unknown, message: string): StockTransferLineResource {
+  if (!isRecord(value)) throw new ApiContractError(message);
+  return {
+    id: requiredString(value, "id", message),
+    productId: requiredString(value, "productId", message),
+    requestedQuantity: requiredString(value, "requestedQuantity", message),
+    shippedQuantity: nullableString(value, "shippedQuantity", message),
+    receivedQuantity: nullableString(value, "receivedQuantity", message),
+    transitDiscrepancy: nullableString(value, "transitDiscrepancy", message),
+  };
+}
+
+function transferInAccessibleScope(
+  transfer: StockTransferResource,
+  access: CurrentSession["effectiveAccess"],
+): boolean {
+  const storeIsInScope = (storeId: string) =>
+    access.accessibleStoreIds.includes(storeId) &&
+    (access.scope.type === "ORGANIZATION" || access.scope.storeIds.includes(storeId));
+  return storeIsInScope(transfer.sourceStoreId) || storeIsInScope(transfer.destinationStoreId);
+}
+
 function assertValuationCurrency(
   resources: readonly Readonly<{ currency: string }>[],
   currency: string,
@@ -2006,6 +2140,16 @@ function requiredString(value: Record<string, unknown>, property: string, messag
   return propertyValue;
 }
 
+function nullableString(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): string | null {
+  const propertyValue = value[property];
+  if (propertyValue === null || typeof propertyValue === "string") return propertyValue;
+  throw new ApiContractError(message);
+}
+
 function requiredProductStatus(
   value: Record<string, unknown>,
   property: string,
@@ -2099,6 +2243,22 @@ function requiredStockMovementType(
     propertyValue === "STOCK_COUNT_CORRECTION_OUT" ||
     propertyValue === "TRANSFER_IN" ||
     propertyValue === "TRANSFER_OUT"
+  )
+    return propertyValue;
+  throw new ApiContractError(message);
+}
+
+function requiredStockTransferStatus(
+  value: Record<string, unknown>,
+  property: string,
+  message: string,
+): StockTransferStatus {
+  const propertyValue = value[property];
+  if (
+    propertyValue === "CANCELLED" ||
+    propertyValue === "DRAFT" ||
+    propertyValue === "RECEIVED" ||
+    propertyValue === "SHIPPED"
   )
     return propertyValue;
   throw new ApiContractError(message);

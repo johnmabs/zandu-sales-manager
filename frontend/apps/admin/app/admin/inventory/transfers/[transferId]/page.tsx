@@ -1,11 +1,12 @@
-import { InventoryAreaRoute } from "../../../../../src/features/inventory";
+import { InventorySection, StockTransferDetailsPage } from "../../../../../src/features/inventory";
 
-export default function Page() {
+export default async function Page({
+  params,
+}: Readonly<{ params: Promise<{ transferId: string }> }>) {
+  const { transferId } = await params;
   return (
-    <InventoryAreaRoute
-      title="Transfert de stock"
-      permission="STOCK_TRANSFER_READ"
-      description="Le détail du transfert sera livré par F4.10."
-    />
+    <InventorySection title="Transfert de stock" permission="STOCK_TRANSFER_READ">
+      <StockTransferDetailsPage transferId={transferId} />
+    </InventorySection>
   );
 }

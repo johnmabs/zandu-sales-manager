@@ -149,8 +149,8 @@ F3.42       IMPLÉMENTÉ Parcours E2E Catalog ; validation Chromium attendue en 
 F3.43       IMPLÉMENTÉ Parcours E2E Pricing ; validation Chromium attendue en CI
 Gate F3     EN ATTENTE Exécution Chromium des deux parcours E2E
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.9   TERMINÉ   Positions, mouvements, valorisation et confidentialité
-F4.10       À FAIRE   Stock transfer list and details
+F4.1–F4.10  TERMINÉ   Stock, valorisation et lecture des transferts Inventory
+F4.11       À FAIRE   Create and edit draft transfer
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -258,7 +258,8 @@ E2E F3                Catalog/Pricing implémentés ; validation Chromium CI att
 [x] F4.7 Stock movement history
 [x] F4.8 Inventory valuation views
 [x] F4.9 Cost confidentiality
-[ ] F4.10 Stock transfer list and details
+[x] F4.10 Stock transfer list and details
+[ ] F4.11 Create and edit draft transfer
 ```
 
 ## Références
@@ -11559,7 +11560,7 @@ Commit prévu : `test(admin): verify pricing administration flow`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.9 terminés ; F4.10 prochain**
+**Statut : EN COURS — F4.1–F4.10 terminés ; F4.11 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11828,3 +11829,39 @@ Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
 verts ; `git diff --check`.
 
 Commit prévu : `feat(admin): enforce inventory cost confidentiality`.
+
+## Epic F4.10 — Stock transfer list and details
+
+**Statut : TERMINÉ — transferts paginés et quantités de ligne distinctes**
+
+- `FoundationApi` décode strictement le contrat `StockTransfer` réel : cycle
+  fermé `DRAFT` / `SHIPPED` / `RECEIVED` / `CANCELLED`, dates et motif
+  nullables, version, lignes et indicateur d’écart ;
+- la collection transmet `limit` et le curseur opaque, conserve l’ordre serveur
+  descendant et expose exclusivement `X-Next-Cursor`, sans tri, total ni filtre
+  de magasin inventé côté client ;
+- liste et détail remplacent les placeholders sous `STOCK_TRANSFER_READ` et
+  affichent les magasins source/destination, statut, dates, nombre de lignes,
+  version et écart de transit ;
+- le détail conserve séparément `requestedQuantity`, `shippedQuantity`,
+  `receivedQuantity` et `transitDiscrepancy` sous forme de chaînes exactes ; un
+  zéro reçu reste affiché tandis qu’une phase non exécutée reste `—` ;
+- les magasins connus sont nommés depuis le StoreContext public, avec repli sur
+  l’identifiant pour un côté non visible ; aucun coût de transfert interne
+  n’est exposé ;
+- une ressource est retenue uniquement si sa source ou sa destination appartient
+  au scope Store effectif ; un détail hors scope ou `404` devient introuvable,
+  et aucun appel ne part sans permission sur le magasin actif ;
+- les erreurs retryables conservent leur `correlationId`, et les clés de cache
+  séparent organisation, magasin actif, transfert, curseur et version
+  d’autorisation ;
+- 4 tests composants couvrent liste, curseur, labels Store, détail exact, zéro,
+  erreur/retry et scope ; les 2 tests d’intégration ajoutés couvrent décodage,
+  pagination, projection, `404`, quantité numérique interdite et statut inconnu.
+
+Validations : tests ciblés composants 4/4 et intégration Inventory 11/11 ; suite
+frontend 20 Foundation, 13 unitaires, 118 composants et 43 intégration ; ESLint,
+Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
+verts ; `git diff --check`.
+
+Commit prévu : `feat(admin): add stock transfer views`.
