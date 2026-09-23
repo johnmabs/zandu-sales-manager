@@ -69,11 +69,10 @@ If two sources conflict, do not silently choose. Identify the conflict and prefe
 - Frontend Lot F3 — Admin Catalog & Pricing
 - Frontend Lot F4 — Admin Inventory
 
-The backend Lots 0–7, Frontend Foundation, F1 and F2 are complete. F3 is
-implemented through F3.43; both Catalog and Pricing browser scenarios await CI
-execution, so the exit gate remains open. Use `IMPLEMENTATION_STATUS.md` for the
-dated validation snapshot.
+The backend Lots 0–7, Frontend Foundation, F1, F2 and F3 are complete. The
+Catalog and Pricing browser scenarios are green in Chromium CI. Use
+`IMPLEMENTATION_STATUS.md` for the dated validation snapshot.
 
 F4 Admin Inventory is planned under
-`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.10. F4.11
-is next while the F3 browser gate remains explicitly pending.
+`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.11. F4.12
+is next.

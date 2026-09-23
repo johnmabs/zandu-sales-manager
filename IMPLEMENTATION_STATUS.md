@@ -148,8 +148,8 @@ F3.42       TERMINÉ   Parcours E2E Catalog validé sous Chromium en CI
 F3.43       TERMINÉ   Parcours E2E Pricing validé sous Chromium en CI
 Gate F3     TERMINÉ   Admin Catalog & Pricing validé par la CI frontend
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.10  TERMINÉ   Stock, valorisation et lecture des transferts Inventory
-F4.11       À FAIRE   Create and edit draft transfer
+F4.1–F4.11  TERMINÉ   Stock, valorisation et brouillons de transfert Inventory
+F4.12       À FAIRE   Ship transfer
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -183,14 +183,14 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 23 septembre 2026 sur le commit `e81620c` :
+État consolidé au 23 septembre 2026 :
 
 ```text
 Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
-Tests frontend        Admin 41, POS 3, Foundation 66, unitaires 13,
-                      composants 118, intégration 43, E2E Chromium 7
+Tests frontend        Admin 41, POS 3, Foundation 20, unitaires 13,
+                      composants 120, intégration 45, E2E Chromium 7
 Builds frontend       Admin (39 routes) et POS OK
 Compilation Tauri     OK (`cargo check --locked`)
 PHPStan               OK
@@ -201,10 +201,11 @@ Composer audit        aucune vulnérabilité connue
 ESLint / Prettier     OK
 TypeScript            OK
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
-CI frontend           Verte : qualité/builds, Tauri et E2E Chromium
-CI backend            Verte : validation complète, image et backup/restore inclus
+CI frontend           Dernière CI distante verte sur `e81620c`
+CI backend            Dernière CI distante verte sur `e81620c`
+Validation locale     F4.11 verte : qualité, tests et build Admin
 Gate F3               Validé ; Catalog/Pricing E2E verts sous Chromium
-Frontend F4           F4.1–F4.10 terminés ; F4.11 prochain
+Frontend F4           F4.1–F4.11 terminés ; F4.12 prochain
 ```
 
 ## Definition of Done globale
@@ -263,7 +264,8 @@ Frontend F4           F4.1–F4.10 terminés ; F4.11 prochain
 [x] F4.8 Inventory valuation views
 [x] F4.9 Cost confidentiality
 [x] F4.10 Stock transfer list and details
-[ ] F4.11 Create and edit draft transfer
+[x] F4.11 Create and edit draft transfer
+[ ] F4.12 Ship transfer
 ```
 
 ## Références
@@ -11578,7 +11580,7 @@ Backend CI `35907477778`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.10 terminés ; F4.11 prochain**
+**Statut : EN COURS — F4.1–F4.11 terminés ; F4.12 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11588,7 +11590,7 @@ Backend CI `35907477778`.
   confidentielle, transferts inter-store et inventaires physiques ;
 - dépendances explicites sur les contrats backend existants, Catalog/Stores et
   les fondations frontend, sans dépendance implicite aux numéros de Lots ;
-- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.11 est désormais
+- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.12 est désormais
   le prochain Epic ouvert.
 
 Validation documentaire : source, index, contexte, 23 fichiers Epic et cinq
@@ -11883,3 +11885,35 @@ Prettier, TypeScript, builds Admin (39 routes)/POS et Deptrac couches/modules
 verts ; `git diff --check`.
 
 Commit : `6f8af94 feat(admin): add stock transfer views`.
+
+## Epic F4.11 — Create and edit draft transfer
+
+**Statut : TERMINÉ — création multi-store et édition DRAFT versionnée**
+
+- le client API typé expose création de transfert, ajout, modification et
+  retrait de ligne selon les opérations OpenAPI existantes ; les réponses sont
+  décodées strictement et projetées dans le scope accessible ;
+- la route `/admin/inventory/transfers/new` remplace son placeholder par un
+  formulaire sous `STOCK_TRANSFER_CREATE`, prérempli avec le magasin actif et
+  limité aux magasins opérationnels autorisés ; source et destination doivent
+  être distinctes ;
+- la liste expose l’action « Nouveau transfert » uniquement lorsque la capacité
+  de création existe sur le magasin actif ;
+- le détail DRAFT expose l’ajout de produit, la modification de quantité et le
+  retrait confirmé sous `STOCK_TRANSFER_UPDATE` sur le magasin source ; les
+  transferts non DRAFT restent en lecture seule ;
+- les quantités restent des chaînes décimales exactes strictement positives ;
+  le `PATCH` transmet la version courante dans `expectedVersion` et représente
+  les conflits concurrents sans écraser silencieusement le serveur ;
+- les erreurs serveur conservent les erreurs de champs et le `correlationId` ;
+  un timeout à résultat inconnu bloque le rejeu aveugle et déclenche une
+  revalidation ;
+- les succès mettent à jour le détail, invalident les listes des magasins source
+  et destination et publient une notification accessible.
+
+Validations : intégration Inventory ciblée 13/13 et composants transferts 6/6 ;
+suite frontend complète 20 Foundation, 13 unitaires, 120 composants et 45
+intégration ; ESLint, Prettier, TypeScript, build Admin (39 routes) et
+`git diff --check` verts.
+
+Commit prévu : `feat(admin): manage draft stock transfers`.

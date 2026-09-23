@@ -96,23 +96,28 @@ export function StockTransfersWorkspace({
   }
 
   return (
-    <StockTransferList
-      {...(transfers.data === undefined ? {} : { page: transfers.data })}
-      {...(transfers.error === null ? {} : { error: transfers.error })}
-      isLoading={transfers.isLoading}
-      locale={locale}
-      onPageChange={(nextPage) => {
-        if (nextPage < pageNumber) {
-          setCursorHistory((history) => history.slice(0, Math.max(0, nextPage - 1)));
-        } else if (nextPage === pageNumber + 1 && transfers.data?.nextCursor !== undefined) {
-          setCursorHistory((history) => [...history, transfers.data!.nextCursor!]);
-        }
-      }}
-      onRetry={() => void transfers.refetch()}
-      pageNumber={pageNumber}
-      pageSize={PAGE_SIZE}
-      stores={stores}
-      timeZone={timeZone}
-    />
+    <>
+      {can(access, "STOCK_TRANSFER_CREATE", { organizationId, storeId }) ? (
+        <a href="/admin/inventory/transfers/new">Nouveau transfert</a>
+      ) : null}
+      <StockTransferList
+        {...(transfers.data === undefined ? {} : { page: transfers.data })}
+        {...(transfers.error === null ? {} : { error: transfers.error })}
+        isLoading={transfers.isLoading}
+        locale={locale}
+        onPageChange={(nextPage) => {
+          if (nextPage < pageNumber) {
+            setCursorHistory((history) => history.slice(0, Math.max(0, nextPage - 1)));
+          } else if (nextPage === pageNumber + 1 && transfers.data?.nextCursor !== undefined) {
+            setCursorHistory((history) => [...history, transfers.data!.nextCursor!]);
+          }
+        }}
+        onRetry={() => void transfers.refetch()}
+        pageNumber={pageNumber}
+        pageSize={PAGE_SIZE}
+        stores={stores}
+        timeZone={timeZone}
+      />
+    </>
   );
 }

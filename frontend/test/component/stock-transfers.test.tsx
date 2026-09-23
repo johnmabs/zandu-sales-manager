@@ -1,17 +1,19 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CreateStockTransferWorkspace } from "../../apps/admin/src/features/inventory/transfers/CreateStockTransferPage";
 import { StockTransferDetailsWorkspace } from "../../apps/admin/src/features/inventory/transfers/StockTransferDetailsPage";
 import { StockTransfersWorkspace } from "../../apps/admin/src/features/inventory/transfers/StockTransfersPage";
 import { ApiClient, FoundationApi } from "../../packages/api-client/src/index";
+import { NotificationProvider } from "../../packages/notifications/src/react";
 import {
   createServerStateClient,
   ServerStateProvider,
 } from "../../packages/server-state/src/index";
 
-import type { StockTransferResource } from "../../packages/api-client/src/index";
+import type { ProductResource, StockTransferResource } from "../../packages/api-client/src/index";
 import type { EffectiveAccess } from "../../packages/authorization/src/index";
 import type { AccessibleStore } from "../../packages/store-context/src/index";
 
@@ -85,8 +87,56 @@ const access: EffectiveAccess = {
   permissions: ["STOCK_TRANSFER_READ"],
   scope: { storeIds: ["store-1", "store-2"], type: "SELECTED_STORES" },
 };
+const writeAccess: EffectiveAccess = {
+  ...access,
+  permissions: [
+    "PRODUCT_READ",
+    "STOCK_TRANSFER_CREATE",
+    "STOCK_TRANSFER_READ",
+    "STOCK_TRANSFER_UPDATE",
+  ],
+};
+const products: readonly ProductResource[] = [
+  {
+    activatedAt: "2026-09-14T10:00:00Z",
+    baseUnitId: "unit-1",
+    categoryId: null,
+    createdAt: "2026-09-14T10:00:00Z",
+    description: null,
+    id: "product-1",
+    inventoryTracked: true,
+    name: "Paracétamol",
+    organizationId: "org-1",
+    productCode: "MED-001",
+    status: "ACTIVE",
+    taxCategoryId: null,
+    type: "PHYSICAL",
+    updatedAt: null,
+    version: 1,
+  },
+  {
+    activatedAt: "2026-09-14T10:00:00Z",
+    baseUnitId: "unit-1",
+    categoryId: null,
+    createdAt: "2026-09-14T10:00:00Z",
+    description: null,
+    id: "product-2",
+    inventoryTracked: true,
+    name: "Bandage",
+    organizationId: "org-1",
+    productCode: "MED-002",
+    status: "ACTIVE",
+    taxCategoryId: null,
+    type: "PHYSICAL",
+    updatedAt: null,
+    version: 1,
+  },
+];
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 function setup({
   actor = access,
@@ -95,7 +145,7 @@ function setup({
 }: {
   actor?: EffectiveAccess;
   detail?: boolean;
-  respond?: (url: URL) => Response;
+  respond?: (url: URL, init?: RequestInit) => Response | Promise<Response>;
 } = {}) {
   const requests: URL[] = [];
   const client = createServerStateClient();
@@ -103,43 +153,127 @@ function setup({
   const api = new FoundationApi(
     new ApiClient({
       config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
-      fetchImplementation: async (url) => {
+      fetchImplementation: async (url, init) => {
         const parsed = new URL(url);
         requests.push(parsed);
-        return respond?.(parsed) ?? Response.json(detail ? receivedTransfer : [receivedTransfer]);
+        return (
+          (await respond?.(parsed, init)) ??
+          Response.json(detail ? receivedTransfer : [receivedTransfer])
+        );
       },
     }),
   );
   render(
     <ServerStateProvider client={client}>
-      {detail ? (
-        <StockTransferDetailsWorkspace
-          access={actor}
-          api={api}
-          locale="fr-FR"
-          organizationId="org-1"
-          storeId="store-1"
-          stores={stores}
-          timeZone="Africa/Lagos"
-          transferId="transfer-1"
-        />
-      ) : (
-        <StockTransfersWorkspace
-          access={actor}
-          api={api}
-          locale="fr-FR"
-          organizationId="org-1"
-          storeId="store-1"
-          stores={stores}
-          timeZone="Africa/Lagos"
-        />
-      )}
+      <NotificationProvider>
+        {detail ? (
+          <StockTransferDetailsWorkspace
+            access={actor}
+            api={api}
+            locale="fr-FR"
+            organizationId="org-1"
+            storeId="store-1"
+            stores={stores}
+            timeZone="Africa/Lagos"
+            transferId="transfer-1"
+          />
+        ) : (
+          <StockTransfersWorkspace
+            access={actor}
+            api={api}
+            locale="fr-FR"
+            organizationId="org-1"
+            storeId="store-1"
+            stores={stores}
+            timeZone="Africa/Lagos"
+          />
+        )}
+      </NotificationProvider>
     </ServerStateProvider>,
   );
   return { requests };
 }
 
+function setupCreate({
+  onCreated,
+  respond,
+}: {
+  onCreated: (transfer: StockTransferResource) => void;
+  respond: (url: URL, init: RequestInit) => Response | Promise<Response>;
+}) {
+  const client = createServerStateClient();
+  client.setDefaultOptions({ mutations: { retry: false }, queries: { retry: false } });
+  const api = new FoundationApi(
+    new ApiClient({
+      config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      fetchImplementation: async (url, init) => respond(new URL(url), init),
+    }),
+  );
+  render(
+    <ServerStateProvider client={client}>
+      <CreateStockTransferWorkspace
+        access={writeAccess}
+        activeStoreId="store-1"
+        api={api}
+        onCreated={onCreated}
+        organizationId="org-1"
+        queryClient={client}
+        stores={stores}
+      />
+    </ServerStateProvider>,
+  );
+}
+
+function payloadString(payload: unknown, field: string): string {
+  if (typeof payload !== "object" || payload === null) {
+    throw new Error(`Expected ${field} to be a string.`);
+  }
+  const value = Object.entries(payload).find(([key]) => key === field)?.[1];
+  if (typeof value !== "string") throw new Error(`Expected ${field} to be a string.`);
+  return value;
+}
+
 describe("Stock transfer list and details", () => {
+  it("creates a draft between two distinct accessible stores", async () => {
+    const onCreated = vi.fn();
+    setupCreate({
+      onCreated,
+      respond: async (url, init) => {
+        expect(url.pathname).toBe("/api/stock-transfers");
+        await expect(JSON.parse(String(init.body))).toEqual({
+          destinationStoreId: "store-2",
+          sourceStoreId: "store-1",
+        });
+        return Response.json(
+          {
+            ...draftTransfer,
+            destinationStoreId: "store-2",
+            id: "transfer-created",
+            lines: [],
+            sourceStoreId: "store-1",
+          },
+          { status: 201 },
+        );
+      },
+    });
+    const user = userEvent.setup();
+    const form = screen.getByRole("form", { name: "Créer un transfert de stock" });
+    await user.selectOptions(within(form).getByLabelText("Magasin destination"), "store-1");
+    await user.click(within(form).getByRole("button", { name: "Créer le transfert" }));
+    expect(
+      await within(form).findByText(
+        "Le magasin destination doit être différent du magasin source.",
+      ),
+    ).toBeTruthy();
+    expect(onCreated).not.toHaveBeenCalled();
+
+    await user.selectOptions(within(form).getByLabelText("Magasin destination"), "store-2");
+    await user.click(within(form).getByRole("button", { name: "Créer le transfert" }));
+    await waitFor(() =>
+      expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: "transfer-created" })),
+    );
+  });
+
   it("renders the server page and follows its opaque cursor", async () => {
     setup({
       respond: (url) => {
@@ -186,6 +320,100 @@ describe("Stock transfer list and details", () => {
     const draftTable = await screen.findByRole("table");
     const draftRow = within(draftTable).getAllByRole("row")[1]!;
     expect(within(draftRow).getAllByText("—")).toHaveLength(3);
+  });
+
+  it("adds, version-updates and removes exact draft lines", async () => {
+    let current = {
+      ...draftTransfer,
+      destinationStoreId: "store-2",
+      id: "transfer-1",
+      sourceStoreId: "store-1",
+    };
+    const payloads: unknown[] = [];
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    setup({
+      actor: writeAccess,
+      detail: true,
+      respond: async (url, init) => {
+        if (url.pathname === "/api/products") return Response.json(products);
+        if (url.pathname === "/api/stock-transfers/transfer-1" && init?.method === "GET") {
+          return Response.json(current);
+        }
+        if (
+          url.pathname === "/api/stock-transfers/transfer-1/lines/line-2" &&
+          init?.method === "PATCH"
+        ) {
+          const payload = JSON.parse(String(init.body));
+          payloads.push(payload);
+          current = {
+            ...current,
+            lines: current.lines.map((line) =>
+              line.id === "line-2"
+                ? { ...line, requestedQuantity: payloadString(payload, "requestedQuantity") }
+                : line,
+            ),
+            version: 2,
+          };
+          return Response.json(current);
+        }
+        if (url.pathname === "/api/stock-transfers/transfer-1/lines" && init?.method === "POST") {
+          const payload = JSON.parse(String(init.body));
+          payloads.push(payload);
+          current = {
+            ...current,
+            lines: [
+              ...current.lines,
+              {
+                id: "line-3",
+                productId: payloadString(payload, "productId"),
+                receivedQuantity: null,
+                requestedQuantity: payloadString(payload, "requestedQuantity"),
+                shippedQuantity: null,
+                transitDiscrepancy: null,
+              },
+            ],
+            version: 3,
+          };
+          return Response.json(current, { status: 201 });
+        }
+        if (
+          url.pathname === "/api/stock-transfers/transfer-1/lines/line-2" &&
+          init?.method === "DELETE"
+        ) {
+          current = { ...current, lines: current.lines.filter((line) => line.id !== "line-2") };
+          return new Response(null, { status: 204 });
+        }
+        throw new Error(`Unexpected request: ${init?.method} ${url.pathname}`);
+      },
+    });
+    const user = userEvent.setup();
+    const editForm = await screen.findByRole("form", { name: "Modifier la ligne Paracétamol" });
+    const editQuantity = within(editForm).getByLabelText("Quantité demandée");
+    await user.clear(editQuantity);
+    await user.type(editQuantity, "000.125000");
+    await user.click(within(editForm).getByRole("button", { name: "Enregistrer" }));
+    await waitFor(() =>
+      expect(payloads).toContainEqual({
+        expectedVersion: 1,
+        requestedQuantity: "000.125000",
+      }),
+    );
+
+    const addForm = screen.getByRole("form", { name: "Ajouter une ligne au transfert" });
+    await user.selectOptions(within(addForm).getByLabelText("Produit"), "product-2");
+    await user.type(within(addForm).getByLabelText("Quantité demandée"), "001.250000");
+    await user.click(within(addForm).getByRole("button", { name: "Ajouter la ligne" }));
+    await waitFor(() =>
+      expect(payloads).toContainEqual({
+        productId: "product-2",
+        requestedQuantity: "001.250000",
+      }),
+    );
+
+    await user.click(within(editForm).getByRole("button", { name: "Retirer" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("form", { name: "Modifier la ligne Paracétamol" })).toBeNull(),
+    );
   });
 
   it("preserves diagnostics and retries transfer loading", async () => {

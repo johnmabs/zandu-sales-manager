@@ -2,8 +2,8 @@
 
 ## Statut et objectif
 
-Version 1.0. F4.1–F4.10 terminés ; F4.11 est le prochain Epic. Gate F3 encore en
-attente des preuves Chromium CI.
+Version 1.0. F4.1–F4.11 terminés ; F4.12 est le prochain Epic. Gate F3 validé
+par la CI Chromium du 23 septembre 2026.
 
 Administrer les positions et mouvements de stock, la valorisation, les
 transferts inter-store et les inventaires physiques depuis Zandu Admin.

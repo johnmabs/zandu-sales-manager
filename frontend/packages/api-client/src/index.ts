@@ -573,6 +573,18 @@ export type StockTransferFilters = Readonly<{
   cursor?: string;
   limit?: number;
 }>;
+export type StockTransferCreateInput = Readonly<{
+  destinationStoreId: string;
+  sourceStoreId: string;
+}>;
+export type StockTransferLineCreateInput = Readonly<{
+  productId: string;
+  requestedQuantity: string;
+}>;
+export type StockTransferLineUpdateInput = Readonly<{
+  expectedVersion: number;
+  requestedQuantity: string;
+}>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
 >;
@@ -1192,6 +1204,82 @@ export class FoundationApi {
       : undefined;
   }
 
+  async createStockTransfer(
+    input: StockTransferCreateInput,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockTransferResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: "stock-transfers",
+      telemetry: {
+        feature: "inventory",
+        operation: "create_stock_transfer",
+        route: "/admin/inventory/transfers/new",
+      },
+    });
+    const transfer = decodeStockTransfer(response.data);
+    if (
+      transfer.sourceStoreId !== input.sourceStoreId ||
+      transfer.destinationStoreId !== input.destinationStoreId ||
+      !transferStoresInAccessibleScope(transfer, access)
+    ) {
+      throw new ApiContractError(
+        "The created stock transfer response is outside the active scope.",
+      );
+    }
+    return transfer;
+  }
+
+  async addStockTransferLine(
+    transferId: string,
+    input: StockTransferLineCreateInput,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockTransferResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `stock-transfers/${encodeURIComponent(transferId)}/lines`,
+      telemetry: {
+        feature: "inventory",
+        operation: "add_stock_transfer_line",
+        route: "/admin/inventory/transfers/:transferId",
+      },
+    });
+    return assertStockTransferMutationResponse(response.data, transferId, access);
+  }
+
+  async updateStockTransferLine(
+    transferId: string,
+    lineId: string,
+    input: StockTransferLineUpdateInput,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockTransferResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "PATCH",
+      path: `stock-transfers/${encodeURIComponent(transferId)}/lines/${encodeURIComponent(lineId)}`,
+      telemetry: {
+        feature: "inventory",
+        operation: "update_stock_transfer_line",
+        route: "/admin/inventory/transfers/:transferId",
+      },
+    });
+    return assertStockTransferMutationResponse(response.data, transferId, access);
+  }
+
+  async removeStockTransferLine(transferId: string, lineId: string): Promise<void> {
+    await this.client.request({
+      method: "DELETE",
+      path: `stock-transfers/${encodeURIComponent(transferId)}/lines/${encodeURIComponent(lineId)}`,
+      telemetry: {
+        feature: "inventory",
+        operation: "remove_stock_transfer_line",
+        route: "/admin/inventory/transfers/:transferId",
+      },
+    });
+  }
+
   async listProducts(
     access: CurrentSession["effectiveAccess"],
     filters: ProductFilters = {},
@@ -1734,6 +1822,28 @@ function transferInAccessibleScope(
     access.accessibleStoreIds.includes(storeId) &&
     (access.scope.type === "ORGANIZATION" || access.scope.storeIds.includes(storeId));
   return storeIsInScope(transfer.sourceStoreId) || storeIsInScope(transfer.destinationStoreId);
+}
+
+function transferStoresInAccessibleScope(
+  transfer: StockTransferResource,
+  access: CurrentSession["effectiveAccess"],
+): boolean {
+  const storeIsInScope = (storeId: string) =>
+    access.accessibleStoreIds.includes(storeId) &&
+    (access.scope.type === "ORGANIZATION" || access.scope.storeIds.includes(storeId));
+  return storeIsInScope(transfer.sourceStoreId) && storeIsInScope(transfer.destinationStoreId);
+}
+
+function assertStockTransferMutationResponse(
+  value: unknown,
+  transferId: string,
+  access: CurrentSession["effectiveAccess"],
+): StockTransferResource {
+  const transfer = decodeStockTransfer(value);
+  if (transfer.id !== transferId || !transferInAccessibleScope(transfer, access)) {
+    throw new ApiContractError("The stock transfer mutation response is outside the active scope.");
+  }
+  return transfer;
 }
 
 function assertValuationCurrency(

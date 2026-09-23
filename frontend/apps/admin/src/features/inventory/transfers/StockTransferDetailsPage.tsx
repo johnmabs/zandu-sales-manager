@@ -1,20 +1,33 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { can, useEffectiveAccess } from "@zandu/authorization";
 import { formatDateTime } from "@zandu/domain-formatting";
+import { useNotifications } from "@zandu/notifications/react";
 import { useOrganizationContext } from "@zandu/organization-context";
 import { queryKeys } from "@zandu/server-state";
 import { ErrorState, Spinner } from "@zandu/ui";
 
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
-import { getStockTransfer } from "../api/readInventory";
+import {
+  addStockTransferLine,
+  getStockTransfer,
+  removeStockTransferLine,
+  updateStockTransferLine,
+} from "../api/readInventory";
+import { hasUnknownInventoryMutationOutcome } from "../mutationSafety";
 
+import { StockTransferDraftEditor } from "./StockTransferDraftEditor";
 import { StockTransferErrorState } from "./StockTransferErrorState";
 import { StockTransferLineList } from "./StockTransferLineList";
 import { stockTransferStatusLabel, stockTransferStoreLabel } from "./stockTransferPresentation";
 
-import type { FoundationApi } from "@zandu/api-client";
+import type {
+  FoundationApi,
+  StockTransferLineCreateInput,
+  StockTransferLineUpdateInput,
+  StockTransferResource,
+} from "@zandu/api-client";
 import type { EffectiveAccess } from "@zandu/authorization";
 import type { AccessibleStore } from "@zandu/store-context";
 
@@ -58,6 +71,8 @@ export function StockTransferDetailsWorkspace({
   timeZone: string;
   transferId: string;
 }>) {
+  const notifications = useNotifications();
+  const queryClient = useQueryClient();
   const allowed =
     organizationId !== undefined &&
     storeId !== undefined &&
@@ -73,6 +88,110 @@ export function StockTransferDetailsWorkspace({
         throw new Error("Le contexte du transfert Stock est indisponible.");
       }
       return (await getStockTransfer(api, transferId, access)) ?? null;
+    },
+  });
+  const editable =
+    transfer.data?.status === "DRAFT" &&
+    organizationId !== undefined &&
+    can(access, "STOCK_TRANSFER_UPDATE", {
+      organizationId,
+      storeId: transfer.data.sourceStoreId,
+    });
+  const mayReadProducts =
+    organizationId !== undefined && can(access, "PRODUCT_READ", { organizationId });
+  const products = useQuery({
+    enabled: api !== undefined && access !== undefined && editable && mayReadProducts,
+    queryKey: queryKeys.products.list(organizationId ?? "unresolved-organization", {
+      authorizationVersion: access?.authorizationVersion ?? 0,
+      status: "ACTIVE",
+    }),
+    queryFn: () => {
+      if (api === undefined || access === undefined || !editable || !mayReadProducts) {
+        throw new Error("Le contexte Produit du transfert est indisponible.");
+      }
+      return api.listProducts(access, { status: "ACTIVE" });
+    },
+  });
+
+  const applyTransferUpdate = async (updated: StockTransferResource) => {
+    const resolvedOrganizationId = organizationId ?? "unresolved-organization";
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.stockTransfers.detail(resolvedOrganizationId, transferId) },
+      updated,
+    );
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.list(resolvedOrganizationId, updated.sourceStoreId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.list(resolvedOrganizationId, updated.destinationStoreId),
+      }),
+    ]);
+  };
+  const addLine = useMutation({
+    mutationFn: (input: StockTransferLineCreateInput) => {
+      if (api === undefined || access === undefined || !editable) {
+        throw new Error("Le transfert ne peut pas être modifié.");
+      }
+      return addStockTransferLine(api, transferId, input, access);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error)) return;
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.detail(
+          organizationId ?? "unresolved-organization",
+          transferId,
+        ),
+      });
+    },
+    onSuccess: async (updated) => {
+      await applyTransferUpdate(updated);
+      notifications.notify({ message: "Ligne ajoutée au transfert.", tone: "success" });
+    },
+  });
+  const updateLine = useMutation({
+    mutationFn: ({ lineId, input }: { input: StockTransferLineUpdateInput; lineId: string }) => {
+      if (api === undefined || access === undefined || !editable) {
+        throw new Error("Le transfert ne peut pas être modifié.");
+      }
+      return updateStockTransferLine(api, transferId, lineId, input, access);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error)) return;
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.detail(
+          organizationId ?? "unresolved-organization",
+          transferId,
+        ),
+      });
+    },
+    onSuccess: async (updated) => {
+      await applyTransferUpdate(updated);
+      notifications.notify({ message: "Quantité demandée mise à jour.", tone: "success" });
+    },
+  });
+  const removeLine = useMutation({
+    mutationFn: async (lineId: string) => {
+      if (api === undefined || !editable) throw new Error("Le transfert ne peut pas être modifié.");
+      await removeStockTransferLine(api, transferId, lineId);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error)) return;
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.detail(
+          organizationId ?? "unresolved-organization",
+          transferId,
+        ),
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.detail(
+          organizationId ?? "unresolved-organization",
+          transferId,
+        ),
+      });
+      notifications.notify({ message: "Ligne retirée du transfert.", tone: "success" });
     },
   });
 
@@ -137,6 +256,24 @@ export function StockTransferDetailsWorkspace({
         <h3 id="stock-transfer-lines">Lignes du transfert</h3>
         <StockTransferLineList lines={item.lines} locale={locale} />
       </section>
+      {editable ? (
+        products.isLoading ? (
+          <Spinner label="Chargement des produits du transfert" />
+        ) : products.error !== null ? (
+          <StockTransferErrorState error={products.error} onRetry={() => void products.refetch()} />
+        ) : (
+          <StockTransferDraftEditor
+            lines={item.lines}
+            onAdd={(input) => addLine.mutateAsync(input).then(() => undefined)}
+            onRemove={(lineId) => removeLine.mutateAsync(lineId)}
+            onUpdate={(lineId, input) =>
+              updateLine.mutateAsync({ input, lineId }).then(() => undefined)
+            }
+            {...(mayReadProducts ? { products: products.data ?? [] } : {})}
+            version={item.version}
+          />
+        )
+      ) : null}
     </div>
   );
 }

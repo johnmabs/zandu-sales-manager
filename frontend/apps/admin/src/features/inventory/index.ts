@@ -1,6 +1,8 @@
 export { InventoryRoute } from "./InventoryRoute";
 export {
+  addStockTransferLine,
   adjustStock,
+  createStockTransfer,
   getInventoryValuation,
   getStock,
   getStockTransfer,
@@ -11,6 +13,8 @@ export {
   listStockMovements,
   listStocks,
   listStockTransfers,
+  removeStockTransferLine,
+  updateStockTransferLine,
 } from "./api/readInventory";
 export { InventorySection } from "./components/InventorySection";
 export { canAccessInventoryCost, inventoryCostReadPermission } from "./costAccess";
@@ -20,6 +24,7 @@ export { InventoryAreaRoute } from "./routes/InventoryAreaRoute";
 export { StockMovementHistoryPage } from "./stock-movements/StockMovementHistoryPage";
 export { StockPositionDetailsPage } from "./stock-positions/StockPositionDetailsPage";
 export { StockPositionsPage } from "./stock-positions/StockPositionsPage";
+export { CreateStockTransferPage } from "./transfers/CreateStockTransferPage";
 export { StockTransferDetailsPage } from "./transfers/StockTransferDetailsPage";
 export { StockTransfersPage } from "./transfers/StockTransfersPage";
 export { InventoryValuationsPage } from "./valuations/InventoryValuationsPage";
@@ -37,8 +42,11 @@ export type {
   StockMovementSource,
   StockMovementType,
   StockResource,
+  StockTransferCreateInput,
   StockTransferFilters,
+  StockTransferLineCreateInput,
   StockTransferLineResource,
+  StockTransferLineUpdateInput,
   StockTransferPage,
   StockTransferResource,
   StockTransferStatus,

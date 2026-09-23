@@ -90,6 +90,12 @@ const access = {
   accessibleStoreIds: ["store-1"],
   scope: { storeIds: ["store-1"], type: "SELECTED_STORES" } as const,
 };
+const transferWriteAccess = {
+  ...access,
+  accessibleStoreIds: ["store-1", "store-2"],
+  permissions: [...access.permissions, "STOCK_TRANSFER_CREATE", "STOCK_TRANSFER_UPDATE"],
+  scope: { storeIds: ["store-1", "store-2"], type: "SELECTED_STORES" } as const,
+};
 const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());
@@ -339,6 +345,117 @@ describe("Inventory API contracts", () => {
     await expect(api.getStockTransfer("foreign-transfer", access)).resolves.toBeUndefined();
     await expect(api.getStockTransfer("missing-transfer", access)).resolves.toBeUndefined();
     await expect(api.getStockTransfer("mismatched-transfer", access)).resolves.toBeUndefined();
+  });
+
+  it("creates a draft and mutates lines with exact quantities and expectedVersion", async () => {
+    const draft = {
+      ...transfer,
+      hasTransitDiscrepancy: false,
+      lines: [],
+      receivedAt: null,
+      shippedAt: null,
+      status: "DRAFT",
+      version: 1,
+    };
+    server.use(
+      http.post("https://api.zandu.test/api/stock-transfers", async ({ request }) => {
+        await expect(request.json()).resolves.toEqual({
+          destinationStoreId: "store-2",
+          sourceStoreId: "store-1",
+        });
+        return HttpResponse.json(draft, { status: 201 });
+      }),
+      http.post(
+        "https://api.zandu.test/api/stock-transfers/transfer-1/lines",
+        async ({ request }) => {
+          await expect(request.json()).resolves.toEqual({
+            productId: "product-1",
+            requestedQuantity: "001.250000",
+          });
+          return HttpResponse.json(
+            {
+              ...draft,
+              lines: [
+                {
+                  ...transfer.lines[0],
+                  receivedQuantity: null,
+                  requestedQuantity: "001.250000",
+                  shippedQuantity: null,
+                  transitDiscrepancy: null,
+                },
+              ],
+              version: 2,
+            },
+            { status: 201 },
+          );
+        },
+      ),
+      http.patch(
+        "https://api.zandu.test/api/stock-transfers/transfer-1/lines/transfer-line-1",
+        async ({ request }) => {
+          await expect(request.json()).resolves.toEqual({
+            expectedVersion: 2,
+            requestedQuantity: "000.125000",
+          });
+          return HttpResponse.json({
+            ...draft,
+            lines: [
+              {
+                ...transfer.lines[0],
+                receivedQuantity: null,
+                requestedQuantity: "000.125000",
+                shippedQuantity: null,
+                transitDiscrepancy: null,
+              },
+            ],
+            version: 3,
+          });
+        },
+      ),
+      http.delete(
+        "https://api.zandu.test/api/stock-transfers/transfer-1/lines/transfer-line-1",
+        () => new HttpResponse(null, { status: 204 }),
+      ),
+    );
+
+    await expect(
+      api.createStockTransfer(
+        { destinationStoreId: "store-2", sourceStoreId: "store-1" },
+        transferWriteAccess,
+      ),
+    ).resolves.toEqual(draft);
+    await expect(
+      api.addStockTransferLine(
+        "transfer-1",
+        { productId: "product-1", requestedQuantity: "001.250000" },
+        transferWriteAccess,
+      ),
+    ).resolves.toMatchObject({ version: 2 });
+    await expect(
+      api.updateStockTransferLine(
+        "transfer-1",
+        "transfer-line-1",
+        { expectedVersion: 2, requestedQuantity: "000.125000" },
+        transferWriteAccess,
+      ),
+    ).resolves.toMatchObject({ version: 3 });
+    await expect(
+      api.removeStockTransferLine("transfer-1", "transfer-line-1"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("rejects transfer mutation responses outside the writable scope", async () => {
+    server.use(
+      http.post("https://api.zandu.test/api/stock-transfers", () =>
+        HttpResponse.json({ ...transfer, destinationStoreId: "store-3" }, { status: 201 }),
+      ),
+    );
+    await expect(
+      api.createStockTransfer(
+        { destinationStoreId: "store-2", sourceStoreId: "store-1" },
+        transferWriteAccess,
+      ),
+    ).rejects.toBeInstanceOf(ApiContractError);
   });
 
   it("rejects malformed transfer quantities and unknown statuses", async () => {
