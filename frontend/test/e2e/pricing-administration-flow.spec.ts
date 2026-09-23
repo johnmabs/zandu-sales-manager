@@ -137,9 +137,7 @@ test("an administrator completes the Pricing flow", async ({ page }) => {
   await productPrices.getByRole("button", { name: "Activer", exact: true }).click();
   await expect(productPrices.getByText("001.250 XAF · ACTIVE", { exact: true })).toBeVisible();
 
-  const resolver = page
-    .getByRole("heading", { name: "Prix effectif" })
-    .locator("xpath=ancestor::section");
+  const resolver = page.getByRole("region", { name: "Prix effectif" });
   await resolver.getByRole("combobox", { name: "Produit" }).selectOption(productId);
   await resolver.getByRole("combobox", { name: "Conditionnement" }).selectOption(packagingId);
   await resolver.getByRole("button", { name: "Résoudre côté serveur" }).click();

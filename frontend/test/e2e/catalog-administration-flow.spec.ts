@@ -162,6 +162,10 @@ test("an administrator completes the Catalog flow", async ({ page }) => {
   await expect(page.getByText("MED-001 · ACTIVE", { exact: true })).toBeVisible();
 
   await page
+    .getByRole("navigation", { name: "Navigation principale" })
+    .getByRole("link", { name: "Catalogue" })
+    .click();
+  await page
     .getByRole("navigation", { name: "Navigation Catalogue" })
     .getByRole("link", { name: "Produits" })
     .click();
