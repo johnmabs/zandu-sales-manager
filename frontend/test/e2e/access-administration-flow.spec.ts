@@ -17,6 +17,7 @@ const permissions = [
 
 test("an owner administers invitation, roles and membership lifecycle", async ({ page }) => {
   let member = memberResource("ACTIVE", []);
+  let invitation = invitationResource();
   await mockAccessApi(
     page,
     async (path, method, route) => {
@@ -25,6 +26,15 @@ test("an owner administers invitation, roles and membership lifecycle", async ({
           json: { invitation: invitationResource(), token: "one-time-secret" },
           status: 201,
         });
+        return true;
+      }
+      if (path === "/api/member-invitations" && method === "GET") {
+        await route.fulfill({ json: [invitation] });
+        return true;
+      }
+      if (path === "/api/member-invitations/invitation-1/cancel" && method === "POST") {
+        invitation = { ...invitation, status: "CANCELLED", version: 2 };
+        await route.fulfill({ json: invitation });
         return true;
       }
       if (path === "/api/members/membership-2/role-assignments" && method === "POST") {
@@ -63,6 +73,11 @@ test("an owner administers invitation, roles and membership lifecycle", async ({
   await login(page);
   await openAccess(page);
   await page.getByRole("link", { name: "Invitations" }).click();
+  await expect(page.getByText("member@zandu.test")).toBeVisible();
+  await page.getByRole("button", { name: "Annuler l’invitation de member@zandu.test" }).click();
+  await page.getByRole("button", { name: "Confirmer l’annulation" }).click();
+  await expect(page.getByText("Invitation annulée.")).toBeVisible();
+  await expect(page.getByText("CANCELLED", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Inviter un membre" }).click();
   await page.getByLabel("Email").fill("member@zandu.test");
   await page.getByLabel("Responsable (STORE_MANAGER)").check();

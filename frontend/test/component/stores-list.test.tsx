@@ -9,6 +9,7 @@ import {
   ScopeBadge,
 } from "../../apps/admin/src/features/access/components/AccessBadges";
 import { RoleAssignmentSummary } from "../../apps/admin/src/features/access/components/RoleAssignmentSummary";
+import { useCancelInvitation } from "../../apps/admin/src/features/access/hooks/useCancelInvitation";
 import { InvitationList } from "../../apps/admin/src/features/access/invitations/InvitationList";
 import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
 import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
@@ -87,6 +88,23 @@ function createStoreListClient() {
   const client = createServerStateClient();
   client.setDefaultOptions({ queries: { retry: false } });
   return client;
+}
+
+function InvitationCancellationHarness({
+  api,
+  client,
+}: Readonly<{ api: FoundationApi; client: ReturnType<typeof createServerStateClient> }>) {
+  const cancellation = useCancelInvitation(api, {
+    authorizationVersion: 1,
+    organizationId: "organization-1",
+    queryClient: client,
+  });
+
+  return (
+    <button onClick={() => void cancellation.mutateAsync("invitation-1")} type="button">
+      Annuler depuis le hook
+    </button>
+  );
 }
 
 const member = {
@@ -707,6 +725,86 @@ describe("InvitationList", () => {
 
     rerender(<InvitationList invitations={[]} isLoading={false} />);
     expect(screen.getByText("Aucune invitation")).toBeTruthy();
+  });
+
+  it("confirms cancellation for a pending target and hides the action for completed invitations", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn().mockResolvedValue(undefined);
+    const pending = {
+      acceptedAt: null,
+      email: "pending@zandu.test",
+      expiresAt: "2026-10-01T08:00:00+00:00",
+      id: "invitation-1",
+      organizationId: "organization-1",
+      roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: [] }],
+      status: "PENDING",
+      version: 1,
+    };
+    render(
+      <InvitationList
+        invitations={[
+          pending,
+          { ...pending, email: "accepted@zandu.test", id: "invitation-2", status: "ACCEPTED" },
+        ]}
+        isLoading={false}
+        onCancel={onCancel}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Annuler l’invitation de accepted@zandu.test" }),
+    ).toBeNull();
+    await user.click(
+      screen.getByRole("button", { name: "Annuler l’invitation de pending@zandu.test" }),
+    );
+    expect(screen.getByRole("dialog").textContent).toContain("pending@zandu.test");
+    expect(screen.getByRole("dialog").textContent).toContain("empêchera définitivement");
+    await user.click(screen.getByRole("button", { name: "Confirmer l’annulation" }));
+
+    await waitFor(() => expect(onCancel).toHaveBeenCalledWith(pending));
+  });
+
+  it("invalidates and refetches the tenant invitation list after cancellation", async () => {
+    const requests: Array<{ init: RequestInit | undefined; url: string }> = [];
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+        fetchImplementation: async (url, init) => {
+          requests.push({ init, url });
+          return Response.json({
+            acceptedAt: null,
+            email: "pending@zandu.test",
+            expiresAt: "2026-10-01T08:00:00+00:00",
+            id: "invitation-1",
+            organizationId: "organization-1",
+            roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: [] }],
+            status: "CANCELLED",
+            version: 2,
+          });
+        },
+      }),
+    );
+    const client = createStoreListClient();
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    const refetch = vi.spyOn(client, "refetchQueries");
+    const user = userEvent.setup();
+    render(
+      <ServerStateProvider client={client}>
+        <InvitationCancellationHarness api={api} client={client} />
+      </ServerStateProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Annuler depuis le hook" }));
+
+    const queryKey = queryKeys.invitations.list("organization-1", {
+      authorizationVersion: 1,
+    });
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey }));
+    expect(refetch).toHaveBeenCalledWith({ queryKey });
+    expect(new URL(requests[0]?.url ?? "").pathname).toBe(
+      "/api/member-invitations/invitation-1/cancel",
+    );
+    expect(requests[0]?.init?.method).toBe("POST");
   });
 });
 

@@ -11111,18 +11111,34 @@ Commit recommandé : `feat(access): add invitation success state`.
 - la route Invitations affiche les états loading/error/empty et le cycle de vie
   publié (email, statut, rôles et expiration), sans inventer resend, extend ou edit.
 
-Validations : à consolider avec F2.12.
+Validations consolidées F2.11/F2.12 : tests backend ciblés OK (41 tests, 531
+assertions) ; tests frontend foundation OK (20), intégration API OK (16) et
+composants OK (59) ; typecheck Admin, lint, formatage, PHPStan, OpenAPI check,
+Deptrac layers/modules et `git diff --check` OK. Le scénario E2E Access couvre
+la liste et son annulation, mais son exécution locale est bloquée par l’absence
+du binaire Chromium Playwright dans l’environnement.
 
 Commit : `feat(access): add tenant-scoped invitation list`.
 
 ## Epic F2.12 — Cancel invitation
 
-**Statut : TERMINÉ — annulation contextualisée depuis le succès de création**
+**Statut : TERMINÉ — annulation contextualisée depuis la liste et le succès de création**
 
-- l’identifiant retourné une fois par Create alimente la transition dédiée, sans inventer de liste ;
-- la confirmation nomme l’email et la conséquence, puis affiche succès ou erreur corrélée.
+- toute invitation `PENDING` chargée par la lecture tenant-scoped propose la
+  transition dédiée ; les états terminaux n’affichent aucune action ;
+- la confirmation nomme l’email et la conséquence, bloque les doubles actions,
+  puis conserve les erreurs corrélées dans le dialogue ;
+- un succès notifie l’administrateur, invalide et recharge la liste tenant-scoped
+  afin de remplacer immédiatement la projection obsolète.
 
-Commit : `2098e00 feat(access): add invitation cancellation`.
+Validations consolidées F2.11/F2.12 : tests backend ciblés OK (41 tests, 531
+assertions) ; tests frontend foundation OK (20), intégration API OK (16) et
+composants OK (59) ; typecheck Admin, lint, formatage, PHPStan, OpenAPI check,
+Deptrac layers/modules et `git diff --check` OK. Le scénario E2E Access couvre
+la liste et son annulation, mais son exécution locale est bloquée par l’absence
+du binaire Chromium Playwright dans l’environnement.
+
+Commit : `feat(access): cancel invitations from lifecycle list`.
 
 ## Epic F2.13 — Assign Role
 
