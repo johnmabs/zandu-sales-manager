@@ -1,4 +1,4 @@
-import { EditStoreRoute } from "../../../../../src/features/stores/routes/EditStoreRoute";
+import { EditStoreRoute } from "../../../../../src/features/stores";
 
 export default async function EditStore({
   params,

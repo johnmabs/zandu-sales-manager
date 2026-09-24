@@ -10383,23 +10383,26 @@ Commit recommandé : `ci(frontend): add full validation pipeline`.
 
 ## Epic F1.1 — Stores feature foundation
 
-**Statut : TERMINÉ — frontière Admin Stores prête à accueillir les slices métier**
+**Statut : TERMINÉ — frontière Admin Stores auditée et rendue explicitement importable**
 
-- la page Next.js `/admin/stores` reste une adaptation mince et délègue à la
-  composition de route détenue par `features/stores/routes` ;
-- la feature rassemble son composant temporaire, ses routes et ses points
-  d’extension versionnés pour les adaptateurs API, hooks et schémas ; aucun
-  contrat ou invariant du backend Store n’est anticipé avant les Epics qui en
-  ont besoin ;
-- les tests protègent l’existence de la frontière et la délégation de route,
-  tandis que les règles ESLint du workspace continuent d’interdire aux packages
-  partagés de dépendre d’une application ou de cette feature.
+- la revue du 24 septembre 2026 a confirmé que les adaptateurs API, composants,
+  hooks, routes et schémas Stores restent regroupés sous une frontière unique,
+  sans recréer l’agrégat ou les invariants métier du backend ;
+- `features/stores/index.ts` constitue désormais le point d’entrée public de la
+  feature et expose ses quatre compositions de route ; les pages Next.js
+  `/admin/stores`, `/new`, `/{storeId}` et `/{storeId}/edit` restent des
+  adaptateurs minces et n’importent plus les modules internes de `routes/` ;
+- un test d’architecture protège le point d’entrée et interdit la réintroduction
+  d’imports profonds depuis les pages Stores, tandis qu’ESLint continue
+  d’interdire aux packages partagés de dépendre d’une application.
 
-Validations : `pnpm --filter @zandu/admin test` OK (7 tests) ;
-`pnpm test:foundation` OK (19 tests) ; `pnpm --filter @zandu/admin typecheck`
-OK ; `pnpm lint` OK ; `pnpm format:check` OK ; `git diff --check` OK.
+Validations de revue : `pnpm test` OK (16 tests Admin, 1 POS, 20 Foundation,
+13 unitaires, 129 composants et 48 intégration) ;
+`pnpm --filter @zandu/admin typecheck` OK ; `pnpm lint` OK ;
+`pnpm --filter @zandu/admin build` OK (39 routes) ; `pnpm format:check` et
+`git diff --check` OK.
 
-Commit recommandé : `feat(stores): establish admin feature boundary`.
+Commit : `refactor(admin): reinforce stores feature boundary`.
 
 ## Epic F1.2 — Store list
 

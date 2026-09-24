@@ -1,4 +1,4 @@
-import { CreateStoreRoute } from "../../../../src/features/stores/routes/CreateStoreRoute";
+import { CreateStoreRoute } from "../../../../src/features/stores";
 
 export default function CreateStore() {
   return <CreateStoreRoute />;

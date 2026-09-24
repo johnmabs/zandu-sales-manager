@@ -7,19 +7,26 @@ const featureRoot = new URL("../src/features/stores/", import.meta.url);
 test("Stores owns its route composition and extension points", async () => {
   await Promise.all(
     [
-      "api/.gitkeep",
+      "api/listStores.ts",
       "components/StoreListPage.tsx",
-      "hooks/.gitkeep",
+      "hooks/useStoreList.ts",
       "routes/StoresRoute.tsx",
-      "schemas/.gitkeep",
+      "schemas/createStoreSchema.ts",
+      "index.ts",
       "README.md",
     ].map((path) => assert.doesNotReject(access(new URL(path, featureRoot)))),
   );
 });
 
-test("the Next.js Stores page delegates to the feature route", async () => {
-  const page = await readFile(new URL("../app/admin/stores/page.tsx", import.meta.url), "utf8");
+test("the Next.js Stores pages delegate through the public feature entrypoint", async () => {
+  const pages = await Promise.all(
+    ["page.tsx", "new/page.tsx", "[storeId]/page.tsx", "[storeId]/edit/page.tsx"].map((path) =>
+      readFile(new URL(`../app/admin/stores/${path}`, import.meta.url), "utf8"),
+    ),
+  );
 
-  assert.match(page, /features\/stores\/routes\/StoresRoute/);
-  assert.match(page, /<StoresRoute\s*\/>/);
+  for (const page of pages) {
+    assert.match(page, /src\/features\/stores";/);
+    assert.doesNotMatch(page, /src\/features\/stores\//);
+  }
 });

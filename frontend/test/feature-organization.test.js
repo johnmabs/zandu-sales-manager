@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 const adminFeatureRoutes = [
   "organization/OrganizationRoute.tsx",
-  "stores/routes/StoresRoute.tsx",
+  "stores/index.ts",
   "access/routes/MembersRoute.tsx",
   "catalog/CatalogRoute.tsx",
   "pricing/PricingRoute.tsx",
@@ -32,6 +32,21 @@ test("Admin routes delegate to feature-owned route components", async () => {
       assert.doesNotReject(access(new URL(`../apps/${component}`, import.meta.url))),
     ),
   );
+});
+
+test("Store pages consume only the Stores feature public entrypoint", async () => {
+  const storePages = ["page.tsx", "new/page.tsx", "[storeId]/page.tsx", "[storeId]/edit/page.tsx"];
+
+  const sources = await Promise.all(
+    storePages.map((page) =>
+      readFile(new URL(`../apps/admin/app/admin/stores/${page}`, import.meta.url), "utf8"),
+    ),
+  );
+
+  for (const source of sources) {
+    assert.match(source, /from "(?:\.\.\/)+src\/features\/stores";/);
+    assert.doesNotMatch(source, /src\/features\/stores\//);
+  }
 });
 
 test("POS separates application composition from its terminal feature", async () => {

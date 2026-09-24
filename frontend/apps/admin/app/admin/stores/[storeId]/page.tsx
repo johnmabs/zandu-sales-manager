@@ -1,4 +1,4 @@
-import { StoreDetailsRoute } from "../../../../src/features/stores/routes/StoreDetailsRoute";
+import { StoreDetailsRoute } from "../../../../src/features/stores";
 
 export default async function StoreDetailsPage({
   params,
