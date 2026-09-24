@@ -95,12 +95,17 @@ const transferWriteAccess = {
   accessibleStoreIds: ["store-1", "store-2"],
   permissions: [
     ...access.permissions,
+    "STOCK_TRANSFER_CANCEL",
     "STOCK_TRANSFER_CREATE",
     "STOCK_TRANSFER_RECEIVE",
     "STOCK_TRANSFER_SHIP",
     "STOCK_TRANSFER_UPDATE",
   ],
   scope: { storeIds: ["store-1", "store-2"], type: "SELECTED_STORES" } as const,
+};
+const transferCancelAccess = {
+  ...access,
+  permissions: [...access.permissions, "STOCK_TRANSFER_CANCEL"],
 };
 const transferReceiveAccess = {
   ...access,
@@ -454,6 +459,50 @@ describe("Inventory API contracts", () => {
     await expect(
       api.removeStockTransferLine("transfer-1", "transfer-line-1"),
     ).resolves.toBeUndefined();
+  });
+
+  it("cancels a draft from source scope with a normalized reason", async () => {
+    const cancelled = {
+      ...transfer,
+      cancellationReason: "Destination indisponible",
+      cancelledAt: "2026-09-24T10:00:00Z",
+      hasTransitDiscrepancy: false,
+      lines: [],
+      receivedAt: null,
+      shippedAt: null,
+      status: "CANCELLED",
+      version: 2,
+    };
+    server.use(
+      http.post(
+        "https://api.zandu.test/api/stock-transfers/transfer-1/cancel",
+        async ({ request }) => {
+          await expect(request.json()).resolves.toEqual({ reason: "Destination indisponible" });
+          return HttpResponse.json(cancelled);
+        },
+      ),
+    );
+
+    await expect(
+      api.cancelStockTransfer(
+        "transfer-1",
+        { reason: "Destination indisponible" },
+        transferCancelAccess,
+      ),
+    ).resolves.toEqual(cancelled);
+
+    server.use(
+      http.post("https://api.zandu.test/api/stock-transfers/transfer-1/cancel", () =>
+        HttpResponse.json({ ...cancelled, sourceStoreId: "store-3" }),
+      ),
+    );
+    await expect(
+      api.cancelStockTransfer(
+        "transfer-1",
+        { reason: "Destination indisponible" },
+        transferCancelAccess,
+      ),
+    ).rejects.toBeInstanceOf(ApiContractError);
   });
 
   it("ships exact line quantities idempotently and validates the returned scope", async () => {

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { CancelStockTransferForm } from "../../apps/admin/src/features/inventory/transfers/CancelStockTransferForm";
 import { CreateStockTransferWorkspace } from "../../apps/admin/src/features/inventory/transfers/CreateStockTransferPage";
 import { ReceiveStockTransferForm } from "../../apps/admin/src/features/inventory/transfers/ReceiveStockTransferForm";
 import { ShipStockTransferForm } from "../../apps/admin/src/features/inventory/transfers/ShipStockTransferForm";
@@ -106,6 +107,7 @@ const writeAccess: EffectiveAccess = {
   ...access,
   permissions: [
     "PRODUCT_READ",
+    "STOCK_TRANSFER_CANCEL",
     "STOCK_TRANSFER_CREATE",
     "STOCK_TRANSFER_READ",
     "STOCK_TRANSFER_RECEIVE",
@@ -156,10 +158,12 @@ afterEach(() => {
 });
 
 function setup({
+  activeStoreId = "store-1",
   actor = access,
   detail,
   respond,
 }: {
+  activeStoreId?: string;
   actor?: EffectiveAccess;
   detail?: boolean;
   respond?: (url: URL, init?: RequestInit) => Response | Promise<Response>;
@@ -189,7 +193,7 @@ function setup({
             api={api}
             locale="fr-FR"
             organizationId="org-1"
-            storeId="store-1"
+            storeId={activeStoreId}
             stores={stores}
             timeZone="Africa/Lagos"
             transferId="transfer-1"
@@ -200,7 +204,7 @@ function setup({
             api={api}
             locale="fr-FR"
             organizationId="org-1"
-            storeId="store-1"
+            storeId={activeStoreId}
             stores={stores}
             timeZone="Africa/Lagos"
           />
@@ -714,6 +718,146 @@ describe("Stock transfer list and details", () => {
       lines: [{ lineId: "line-1", receivedQuantity: "0" }],
     });
     expect(onReceive.mock.calls[0]?.[1]).toBe(onReceive.mock.calls[1]?.[1]);
+  });
+
+  it("cancels a draft with its normalized reason and refreshes both store lists", async () => {
+    let current: StockTransferResource = {
+      ...draftTransfer,
+      destinationStoreId: "store-2",
+      id: "transfer-1",
+      sourceStoreId: "store-1",
+    };
+    let cancellationBody: unknown;
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { client } = setup({
+      actor: writeAccess,
+      detail: true,
+      respond: (url, init) => {
+        if (url.pathname === "/api/products") return Response.json(products);
+        if (url.pathname === "/api/stock-transfers/transfer-1" && init?.method === "GET") {
+          return Response.json(current);
+        }
+        if (url.pathname === "/api/stock-transfers/transfer-1/cancel") {
+          cancellationBody = JSON.parse(String(init?.body));
+          current = {
+            ...current,
+            cancellationReason: "Destination indisponible",
+            cancelledAt: "2026-09-24T10:00:00Z",
+            status: "CANCELLED",
+            version: 2,
+          };
+          return Response.json(current);
+        }
+        throw new Error(`Unexpected request: ${init?.method} ${url.pathname}`);
+      },
+    });
+    const listKeys = [
+      queryKeys.stockTransfers.list("org-1", "store-1"),
+      queryKeys.stockTransfers.list("org-1", "store-2"),
+    ] as const;
+    for (const key of listKeys) client.setQueryData(key, { cached: true });
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Annuler le transfert" });
+    await user.type(
+      within(form).getByLabelText("Motif d’annulation"),
+      "  Destination indisponible  ",
+    );
+    await user.click(within(form).getByRole("button", { name: "Confirmer l’annulation" }));
+
+    await waitFor(() => expect(screen.getByText("Statut : Annulé")).toBeTruthy());
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Annuler ce transfert ? Cette action est définitive.",
+    );
+    expect(cancellationBody).toEqual({ reason: "Destination indisponible" });
+    expect(screen.getByText("Destination indisponible")).toBeTruthy();
+    expect(screen.queryByRole("form", { name: "Annuler le transfert" })).toBeNull();
+    for (const key of listKeys) expect(client.getQueryState(key)?.isInvalidated).toBe(true);
+  });
+
+  it("blocks blind cancellation replay after an unknown outcome", async () => {
+    const onCancel = vi.fn().mockRejectedValue(
+      new ApiRequestError(
+        {
+          correlationId: "cancel-timeout-ref",
+          kind: "network",
+          message: "The request timed out.",
+        },
+        false,
+      ),
+    );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<CancelStockTransferForm onCancel={onCancel} />);
+    const form = screen.getByRole("form", { name: "Annuler le transfert" });
+    await userEvent
+      .setup()
+      .type(within(form).getByLabelText("Motif d’annulation"), "Erreur de destination");
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Confirmer l’annulation" }));
+
+    expect(await within(form).findByText(/L’annulation a peut-être été enregistrée/)).toBeTruthy();
+    expect(within(form).getByText("Référence de diagnostic : cancel-timeout-ref")).toBeTruthy();
+    const blockedButton = within(form).getByRole("button", { name: "Résultat à vérifier" });
+    expect(blockedButton).toBeInstanceOf(HTMLButtonElement);
+    if (!(blockedButton instanceof HTMLButtonElement)) throw new Error("Expected a button.");
+    expect(blockedButton.disabled).toBe(true);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies the server source and destination scopes to transfer actions", async () => {
+    const normalizedDraft = {
+      ...draftTransfer,
+      destinationStoreId: "store-2",
+      id: "transfer-1",
+      sourceStoreId: "store-1",
+    };
+    const allActions: EffectiveAccess["permissions"] = [
+      "STOCK_TRANSFER_CANCEL",
+      "STOCK_TRANSFER_READ",
+      "STOCK_TRANSFER_RECEIVE",
+      "STOCK_TRANSFER_SHIP",
+    ];
+    setup({
+      actor: {
+        ...access,
+        accessibleStoreIds: ["store-1"],
+        permissions: allActions,
+        scope: { storeIds: ["store-1"], type: "SELECTED_STORES" },
+      },
+      detail: true,
+      respond: () => Response.json(normalizedDraft),
+    });
+    expect(await screen.findByRole("form", { name: "Annuler le transfert" })).toBeTruthy();
+    expect(screen.queryByRole("form", { name: "Expédier le transfert" })).toBeNull();
+
+    cleanup();
+    setup({
+      activeStoreId: "store-2",
+      actor: {
+        ...access,
+        accessibleStoreIds: ["store-2"],
+        permissions: allActions,
+        scope: { storeIds: ["store-2"], type: "SELECTED_STORES" },
+      },
+      detail: true,
+      respond: () => Response.json(normalizedDraft),
+    });
+    expect(await screen.findByRole("heading", { name: "Lignes du transfert" })).toBeTruthy();
+    expect(screen.queryByRole("form", { name: "Annuler le transfert" })).toBeNull();
+
+    cleanup();
+    setup({
+      activeStoreId: "store-2",
+      actor: {
+        ...access,
+        accessibleStoreIds: ["store-2"],
+        permissions: allActions,
+        scope: { storeIds: ["store-2"], type: "SELECTED_STORES" },
+      },
+      detail: true,
+      respond: () => Response.json(shippedTransfer),
+    });
+    expect(await screen.findByRole("form", { name: "Réceptionner le transfert" })).toBeTruthy();
   });
 
   it("preserves diagnostics and retries transfer loading", async () => {

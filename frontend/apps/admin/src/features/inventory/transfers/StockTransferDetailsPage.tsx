@@ -11,6 +11,7 @@ import { ErrorState, Spinner } from "@zandu/ui";
 import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import {
   addStockTransferLine,
+  cancelStockTransfer,
   getStockTransfer,
   receiveStockTransfer,
   removeStockTransferLine,
@@ -19,6 +20,7 @@ import {
 } from "../api/readInventory";
 import { hasUnknownInventoryMutationOutcome } from "../mutationSafety";
 
+import { CancelStockTransferForm } from "./CancelStockTransferForm";
 import { ReceiveStockTransferForm } from "./ReceiveStockTransferForm";
 import { ShipStockTransferForm } from "./ShipStockTransferForm";
 import { StockTransferDraftEditor } from "./StockTransferDraftEditor";
@@ -28,6 +30,7 @@ import { stockTransferStatusLabel, stockTransferStoreLabel } from "./stockTransf
 
 import type {
   FoundationApi,
+  StockTransferCancelInput,
   StockTransferLineCreateInput,
   StockTransferLineUpdateInput,
   StockTransferReceiveInput,
@@ -100,6 +103,13 @@ export function StockTransferDetailsWorkspace({
     transfer.data?.status === "DRAFT" &&
     organizationId !== undefined &&
     can(access, "STOCK_TRANSFER_UPDATE", {
+      organizationId,
+      storeId: transfer.data.sourceStoreId,
+    });
+  const cancellable =
+    transfer.data?.status === "DRAFT" &&
+    organizationId !== undefined &&
+    can(access, "STOCK_TRANSFER_CANCEL", {
       organizationId,
       storeId: transfer.data.sourceStoreId,
     });
@@ -265,6 +275,27 @@ export function StockTransferDetailsWorkspace({
       notifications.notify({ message: "Ligne retirée du transfert.", tone: "success" });
     },
   });
+  const cancelTransfer = useMutation({
+    mutationFn: (input: StockTransferCancelInput) => {
+      if (api === undefined || access === undefined || !cancellable) {
+        throw new Error("Le transfert ne peut pas être annulé.");
+      }
+      return cancelStockTransfer(api, transferId, input, access);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error)) return;
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stockTransfers.detail(
+          organizationId ?? "unresolved-organization",
+          transferId,
+        ),
+      });
+    },
+    onSuccess: async (updated) => {
+      await applyTransferUpdate(updated);
+      notifications.notify({ message: "Transfert annulé.", tone: "success" });
+    },
+  });
   const shipTransfer = useMutation({
     mutationFn: ({
       idempotencyKey,
@@ -410,6 +441,11 @@ export function StockTransferDetailsWorkspace({
             version={item.version}
           />
         )
+      ) : null}
+      {cancellable ? (
+        <CancelStockTransferForm
+          onCancel={(input) => cancelTransfer.mutateAsync(input).then(() => undefined)}
+        />
       ) : null}
       {shippable ? (
         products.isLoading ? (

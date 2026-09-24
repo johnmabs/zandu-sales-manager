@@ -4,6 +4,7 @@ import type {
   StockInitializeInput,
   StockMovementFilters,
   StockTransferCreateInput,
+  StockTransferCancelInput,
   StockTransferFilters,
   StockTransferLineCreateInput,
   StockTransferLineUpdateInput,
@@ -112,6 +113,15 @@ export function createStockTransfer(
   access: EffectiveAccess,
 ) {
   return api.createStockTransfer(input, access);
+}
+
+export function cancelStockTransfer(
+  api: FoundationApi,
+  transferId: string,
+  input: StockTransferCancelInput,
+  access: EffectiveAccess,
+) {
+  return api.cancelStockTransfer(transferId, input, access);
 }
 
 export function addStockTransferLine(

@@ -148,8 +148,8 @@ F3.42       TERMINÉ   Parcours E2E Catalog validé sous Chromium en CI
 F3.43       TERMINÉ   Parcours E2E Pricing validé sous Chromium en CI
 Gate F3     TERMINÉ   Admin Catalog & Pricing validé par la CI frontend
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.13  TERMINÉ   Stock, valorisation et réception de transfert Inventory
-F4.14       À FAIRE   Cancel transfer and multi-store scope
+F4.1–F4.14  TERMINÉ   Cycle et scope multi-store des transferts Inventory
+F4.15       À FAIRE   Stock count list and details
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -190,7 +190,7 @@ Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
 Tests frontend        Admin 41, POS 3, Foundation 20, unitaires 13,
-                      composants 126, intégration 47, E2E Chromium 7
+                      composants 129, intégration 48, E2E Chromium 7
 Builds frontend       Admin (39 routes) et POS OK
 Compilation Tauri     OK (`cargo check --locked`)
 PHPStan               OK
@@ -203,9 +203,9 @@ TypeScript            OK
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
 CI frontend           Dernière CI distante verte sur `e81620c`
 CI backend            Dernière CI distante verte sur `e81620c`
-Validation locale     F4.13 verte : qualité, tests et build Admin
+Validation locale     F4.14 verte : qualité, tests et build Admin
 Gate F3               Validé ; Catalog/Pricing E2E verts sous Chromium
-Frontend F4           F4.1–F4.13 terminés ; F4.14 prochain
+Frontend F4           F4.1–F4.14 terminés ; F4.15 prochain
 ```
 
 ## Definition of Done globale
@@ -267,7 +267,8 @@ Frontend F4           F4.1–F4.13 terminés ; F4.14 prochain
 [x] F4.11 Create and edit draft transfer
 [x] F4.12 Ship transfer
 [x] F4.13 Receive transfer and discrepancy
-[ ] F4.14 Cancel transfer and multi-store scope
+[x] F4.14 Cancel transfer and multi-store scope
+[ ] F4.15 Stock count list and details
 ```
 
 ## Références
@@ -11582,7 +11583,7 @@ Backend CI `35907477778`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.13 terminés ; F4.14 prochain**
+**Statut : EN COURS — F4.1–F4.14 terminés ; F4.15 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11592,7 +11593,7 @@ Backend CI `35907477778`.
   confidentielle, transferts inter-store et inventaires physiques ;
 - dépendances explicites sur les contrats backend existants, Catalog/Stores et
   les fondations frontend, sans dépendance implicite aux numéros de Lots ;
-- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.14 est désormais
+- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.15 est désormais
   le prochain Epic ouvert.
 
 Validation documentaire : source, index, contexte, 23 fichiers Epic et cinq
@@ -11985,4 +11986,32 @@ Validations : intégration Inventory ciblée 15/15 et composants transferts
 47 intégration ; ESLint, Prettier, TypeScript, build Admin (39 routes) et
 `git diff --check` verts.
 
-Commit prévu : `feat(admin): receive stock transfers`.
+Commit : `f8ce9b4 feat(admin): receive stock transfers`.
+
+## Epic F4.14 — Cancel transfer and multi-store scope
+
+**Statut : TERMINÉ — annulation DRAFT et matrice multi-store alignée**
+
+- `FoundationApi` expose l’annulation avec un motif normalisé ; la réponse doit
+  conserver l’identifiant, être `CANCELLED`, contenir le motif et l’horodatage,
+  et rester dans le scope du magasin source ;
+- le détail DRAFT affiche l’action uniquement avec `STOCK_TRANSFER_CANCEL` sur
+  la source ; le formulaire impose un motif de 1 à 500 caractères et une
+  confirmation avant l’action définitive ;
+- un timeout à résultat inconnu bloque tout rejeu aveugle, conserve le
+  `correlationId` et revalide le détail avant une nouvelle décision ;
+- un succès remplace le document par l’autorité serveur, affiche le motif et
+  l’horodatage finaux, invalide les listes source/destination et publie une
+  notification accessible ;
+- la matrice UI suit les guards serveur sans règle métier dupliquée : une
+  lecture est visible depuis l’un des magasins accessibles, Cancel dépend de
+  la source, Receive de la destination et Ship des deux ;
+- les tests couvrent payload et motif exacts, projection source, confirmation,
+  transition `CANCELLED`, résultat inconnu, invalidations et refus multi-store.
+
+Validations : intégration Inventory ciblée 16/16 et composants transferts
+15/15 ; suite frontend complète 20 Foundation, 13 unitaires, 129 composants et
+48 intégration ; ESLint, Prettier, TypeScript, build Admin (39 routes) et
+`git diff --check` verts.
+
+Commit prévu : `feat(admin): cancel stock transfers`.

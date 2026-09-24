@@ -1,6 +1,7 @@
 import { z } from "@zandu/forms";
 
 import type {
+  StockTransferCancelInput,
   StockTransferCreateInput,
   StockTransferLineCreateInput,
   StockTransferReceiveInput,
@@ -29,6 +30,14 @@ export const stockTransferCreateSchema = z
     message: "Le magasin destination doit être différent du magasin source.",
     path: ["destinationStoreId"],
   });
+
+export const stockTransferCancelSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Le motif d’annulation est requis.")
+    .max(500, "Le motif d’annulation ne peut pas dépasser 500 caractères."),
+});
 
 export const stockTransferLineSchema = z.object({
   productId: z.string().trim().min(1, "Le produit est requis."),
@@ -62,6 +71,7 @@ export const stockTransferReceiveSchema = z.object({
 });
 
 export type StockTransferCreateFormValues = z.infer<typeof stockTransferCreateSchema>;
+export type StockTransferCancelFormValues = z.infer<typeof stockTransferCancelSchema>;
 export type StockTransferLineFormValues = z.infer<typeof stockTransferLineSchema>;
 export type StockTransferLineQuantityFormValues = z.infer<typeof stockTransferLineQuantitySchema>;
 export type StockTransferReceiveFormValues = z.infer<typeof stockTransferReceiveSchema>;
@@ -74,6 +84,12 @@ export function toStockTransferCreateInput(
     destinationStoreId: values.destinationStoreId.trim(),
     sourceStoreId: values.sourceStoreId.trim(),
   };
+}
+
+export function toStockTransferCancelInput(
+  values: StockTransferCancelFormValues,
+): StockTransferCancelInput {
+  return { reason: values.reason.trim() };
 }
 
 export function toStockTransferLineCreateInput(

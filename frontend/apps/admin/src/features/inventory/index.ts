@@ -2,6 +2,7 @@ export { InventoryRoute } from "./InventoryRoute";
 export {
   addStockTransferLine,
   adjustStock,
+  cancelStockTransfer,
   createStockTransfer,
   getInventoryValuation,
   getStock,
@@ -45,6 +46,7 @@ export type {
   StockMovementType,
   StockResource,
   StockTransferCreateInput,
+  StockTransferCancelInput,
   StockTransferFilters,
   StockTransferLineCreateInput,
   StockTransferLineResource,

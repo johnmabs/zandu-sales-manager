@@ -579,6 +579,9 @@ export type StockTransferCreateInput = Readonly<{
   destinationStoreId: string;
   sourceStoreId: string;
 }>;
+export type StockTransferCancelInput = Readonly<{
+  reason: string;
+}>;
 export type StockTransferLineCreateInput = Readonly<{
   productId: string;
   requestedQuantity: string;
@@ -1292,6 +1295,35 @@ export class FoundationApi {
         route: "/admin/inventory/transfers/:transferId",
       },
     });
+  }
+
+  async cancelStockTransfer(
+    transferId: string,
+    input: StockTransferCancelInput,
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<StockTransferResource> {
+    const response = await this.client.request({
+      body: input,
+      method: "POST",
+      path: `stock-transfers/${encodeURIComponent(transferId)}/cancel`,
+      telemetry: {
+        feature: "inventory",
+        operation: "cancel_stock_transfer",
+        route: "/admin/inventory/transfers/:transferId",
+      },
+    });
+    const transfer = assertStockTransferMutationResponse(response.data, transferId, access);
+    if (
+      transfer.status !== "CANCELLED" ||
+      !storeInAccessibleScope(transfer.sourceStoreId, access) ||
+      transfer.cancellationReason !== input.reason.trim() ||
+      transfer.cancelledAt === null
+    ) {
+      throw new ApiContractError(
+        "The cancelled stock transfer response is incomplete or outside the source scope.",
+      );
+    }
+    return transfer;
   }
 
   async shipStockTransfer(
