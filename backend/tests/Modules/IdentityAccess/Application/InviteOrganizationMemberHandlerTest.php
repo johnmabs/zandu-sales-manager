@@ -230,6 +230,13 @@ final class InvitationTestRepository implements OrganizationInvitationRepository
     {
         $this->invitations[$invitation->id()->toString()] = $invitation;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return array_values(array_filter(
+            $this->invitations,
+            static fn(OrganizationInvitation $invitation): bool => $invitation->organizationId()->equals($organizationId),
+        ));
+    }
     public function get(OrganizationId $organizationId, OrganizationInvitationId $invitationId): OrganizationInvitation
     {
         $invitation = $this->invitations[$invitationId->toString()] ?? null;

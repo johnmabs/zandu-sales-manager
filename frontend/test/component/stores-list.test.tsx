@@ -9,7 +9,7 @@ import {
   ScopeBadge,
 } from "../../apps/admin/src/features/access/components/AccessBadges";
 import { RoleAssignmentSummary } from "../../apps/admin/src/features/access/components/RoleAssignmentSummary";
-import { InvitationLifecycleUnavailable } from "../../apps/admin/src/features/access/invitations/InvitationLifecycleUnavailable";
+import { InvitationList } from "../../apps/admin/src/features/access/invitations/InvitationList";
 import { InvitationSuccessState } from "../../apps/admin/src/features/access/invitations/InvitationSuccessState";
 import { InviteMemberForm } from "../../apps/admin/src/features/access/invitations/InviteMemberForm";
 import { AssignRoleDialog } from "../../apps/admin/src/features/access/members/AssignRoleDialog";
@@ -671,21 +671,42 @@ describe("InvitationSuccessState", () => {
   });
 });
 
-describe("InvitationLifecycleUnavailable", () => {
-  it("does not invent a list or lifecycle actions when the API exposes no invitation read operation", () => {
-    const { container } = render(<InvitationLifecycleUnavailable />);
+describe("InvitationList", () => {
+  it("renders the tenant invitation lifecycle without exposing the one-time secret", () => {
+    const { container } = render(
+      <InvitationList
+        invitations={[
+          {
+            acceptedAt: null,
+            email: "member@zandu.test",
+            expiresAt: "2026-10-01T08:00:00+00:00",
+            id: "invitation-1",
+            organizationId: "organization-1",
+            roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+            status: "PENDING",
+            version: 1,
+          },
+        ]}
+        isLoading={false}
+      />,
+    );
 
-    expect(
-      within(container).getByRole("heading", { name: "Suivi des invitations indisponible" }),
-    ).toBeTruthy();
-    expect(within(container).getByRole("status").textContent).toContain("ne permet pas");
-    expect(
-      within(container).getByRole("link", { name: "Inviter un membre" }).getAttribute("href"),
-    ).toBe("/admin/access/invite");
-    expect(within(container).queryByRole("table")).toBeNull();
-    expect(
-      within(container).queryByRole("button", { name: /annuler|renvoyer|prolonger|modifier/i }),
-    ).toBeNull();
+    expect(within(container).getByRole("table")).toBeTruthy();
+    expect(within(container).getByText("member@zandu.test")).toBeTruthy();
+    expect(within(container).getByText("PENDING")).toBeTruthy();
+    expect(within(container).getByText("STORE_MANAGER")).toBeTruthy();
+    expect(container.textContent).not.toContain("secret");
+  });
+
+  it("renders loading, error, and empty states", () => {
+    const { rerender } = render(<InvitationList isLoading />);
+    expect(screen.getByRole("status", { name: "Chargement des invitations" })).toBeTruthy();
+
+    rerender(<InvitationList error={new Error("offline")} isLoading={false} />);
+    expect(screen.getByText("Impossible de charger les invitations")).toBeTruthy();
+
+    rerender(<InvitationList invitations={[]} isLoading={false} />);
+    expect(screen.getByText("Aucune invitation")).toBeTruthy();
   });
 });
 

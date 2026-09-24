@@ -11102,20 +11102,18 @@ Commit recommandé : `feat(access): add invitation success state`.
 
 ## Epic F2.11 — Invitation lifecycle
 
-**Statut : TERMINÉ — cycle de vie limité au contrat API effectivement exposé**
+**Statut : TERMINÉ — liste tenant-scoped désormais exposée et consommée**
 
-- l’inspection du contrat OpenAPI confirme l’absence de lecture tenant-scoped
-  des invitations ; l’Admin n’invente donc ni liste, ni détail, ni filtre ;
-- la route Invitations explique explicitement cette limite et conserve le seul
-  parcours Create réellement disponible ;
-- Cancel, resend, extend et edit ne sont pas affichés : Cancel reste
-  inexploitable sans invitation cible fournie par une lecture serveur.
+- `GET /api/member-invitations` publie une collection stable dans la transaction
+  tenant et exige `MEMBER_INVITE` ; la projection exclut le secret et son hash ;
+- le client applique en plus une projection défensive sur l’organisation active
+  et conserve une clé de cache tenant-scoped liée à `authorizationVersion` ;
+- la route Invitations affiche les états loading/error/empty et le cycle de vie
+  publié (email, statut, rôles et expiration), sans inventer resend, extend ou edit.
 
-Validations frontend : tests composants OK (42, dont absence de liste et
-d’actions inventées) ; typecheck Admin, lint, formatage et `git diff --check`
-OK.
+Validations : à consolider avec F2.12.
 
-Commit recommandé : `feat(access): clarify invitation lifecycle availability`.
+Commit : `feat(access): add tenant-scoped invitation list`.
 
 ## Epic F2.12 — Cancel invitation
 

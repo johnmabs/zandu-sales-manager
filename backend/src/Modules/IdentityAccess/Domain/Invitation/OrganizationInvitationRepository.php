@@ -11,6 +11,8 @@ use Zandu\SharedKernel\Identity\OrganizationInvitationId;
 interface OrganizationInvitationRepository
 {
     public function save(OrganizationInvitation $invitation): void;
+    /** @return list<OrganizationInvitation> */
+    public function findAll(OrganizationId $organizationId): array;
     public function get(OrganizationId $organizationId, OrganizationInvitationId $invitationId): OrganizationInvitation;
     public function getByTokenHash(OrganizationId $organizationId, string $tokenHash): OrganizationInvitation;
     public function pendingExists(OrganizationId $organizationId, InvitationEmail $email, DateTimeImmutable $now): bool;

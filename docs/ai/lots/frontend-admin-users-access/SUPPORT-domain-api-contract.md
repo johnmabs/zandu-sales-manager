@@ -12,7 +12,7 @@ Les assignments référencent un rôle, un scope `ORGANIZATION` ou `SELECTED_STO
 - `GET /api/roles`.
 - `POST /api/members/{id}/role-assignments`.
 - `DELETE /api/members/{id}/role-assignments/{assignmentId}`.
-- `POST /api/member-invitations` et `POST /api/member-invitations/{id}/cancel`.
-- Lecture des invitations seulement si le contrat courant expose l’opération.
+- `GET /api/member-invitations`, `POST /api/member-invitations` et `POST /api/member-invitations/{id}/cancel`.
+- La collection d’invitations est tenant-scoped, protégée par `MEMBER_INVITE` et n’expose jamais le secret ni son hash.
 
 Ne pas inventer resend, extend, edit invitation ou CRUD de rôles custom. Les réponses membre restent tenant-scoped et n’exposent aucune donnée d’authentification globale.

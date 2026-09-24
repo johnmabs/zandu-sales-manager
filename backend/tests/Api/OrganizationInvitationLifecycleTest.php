@@ -99,6 +99,29 @@ final class OrganizationInvitationLifecycleTest extends WebTestCase
         $this->assertError($client, 422, 'DOMAIN_RULE_VIOLATION');
 
         $crossTenant = $this->invite($client, $owner['token'], 'cross-tenant@example.com');
+
+        $client->request('GET', '/api/member-invitations', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $owner['token'],
+            'HTTP_ACCEPT' => 'application/json',
+        ]);
+        self::assertResponseIsSuccessful();
+        $invitations = $this->payloadList($client);
+        self::assertCount(5, $invitations);
+        self::assertSame($owner['organizationId'], $invitations[0]['organizationId']);
+        self::assertArrayNotHasKey('token', $invitations[0]);
+        self::assertArrayNotHasKey('tokenHash', $invitations[0]);
+        self::assertSame(
+            [$owner['organizationId']],
+            array_values(array_unique(array_column($invitations, 'organizationId'))),
+        );
+
+        $client->request('GET', '/api/member-invitations', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $member['token'],
+            'HTTP_ACCEPT' => 'application/json',
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame([], $this->payloadList($client));
+
         $client->request('POST', sprintf('/api/member-invitations/%s/cancel', $crossTenant['id']), server: [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $member['token'],
         ]);
@@ -155,6 +178,16 @@ final class OrganizationInvitationLifecycleTest extends WebTestCase
     {
         $payload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
+
+        return $payload;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function payloadList(KernelBrowser $client): array
+    {
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertTrue(array_is_list($payload));
 
         return $payload;
     }

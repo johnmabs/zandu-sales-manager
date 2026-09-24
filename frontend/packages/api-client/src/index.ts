@@ -1684,6 +1684,24 @@ export class FoundationApi {
     return decodeCreatedInvitation(response.data);
   }
 
+  async listOrganizationInvitations(
+    access: CurrentSession["effectiveAccess"],
+  ): Promise<readonly InvitationResource[]> {
+    const response = await this.client.request({
+      method: "GET",
+      path: "member-invitations",
+      telemetry: {
+        feature: "access",
+        operation: "list_invitations",
+        route: "/admin/access/invitations",
+      },
+    });
+
+    return decodeInvitations(response.data).filter(
+      (invitation) => invitation.organizationId === access.organizationId,
+    );
+  }
+
   async cancelInvitation(invitationId: string): Promise<InvitationResource> {
     const response = await this.client.request({
       method: "POST",
@@ -2291,6 +2309,19 @@ function decodeCreatedInvitation(value: unknown): CreatedInvitationResource {
   }
 
   return { invitation: decodeInvitation(value.invitation), token: value.token };
+}
+
+function decodeInvitations(value: unknown): readonly InvitationResource[] {
+  const items = Array.isArray(value)
+    ? value
+    : isRecord(value) && Array.isArray(value.member)
+      ? value.member
+      : undefined;
+  if (items === undefined) {
+    throw new ApiContractError("The invitation collection response is invalid.");
+  }
+
+  return items.map(decodeInvitation);
 }
 
 function decodeInvitation(value: unknown): InvitationResource {

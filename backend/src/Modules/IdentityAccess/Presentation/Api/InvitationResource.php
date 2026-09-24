@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Zandu\Modules\IdentityAccess\Presentation\Api;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 
 #[ApiResource(operations: [
+    new GetCollection(name: 'member_invitation_list', uriTemplate: '/member-invitations', provider: InvitationProvider::class),
     new Post(name: 'member_invitation_create', uriTemplate: '/member-invitations', input: CreateInvitationInput::class, output: CreatedInvitationResource::class, processor: InvitationProcessor::class),
     new Post(name: 'member_invitation_cancel', uriTemplate: '/member-invitations/{id}/cancel', read: false, input: false, processor: InvitationProcessor::class),
     new Post(name: 'invitation_accept', uriTemplate: '/invitations/{token}/accept', uriVariables: [

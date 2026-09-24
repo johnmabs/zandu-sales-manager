@@ -610,6 +610,52 @@ describe("ApiClient at the mocked API boundary", () => {
     });
   });
 
+  it("lists only invitations belonging to the active organization", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/member-invitations", () =>
+        HttpResponse.json([
+          {
+            acceptedAt: null,
+            email: "member@zandu.test",
+            expiresAt: "2026-10-01T08:00:00+00:00",
+            id: "invitation-1",
+            organizationId: "organization-1",
+            roleAssignments: [{ roleCode: "STORE_MANAGER", storeIds: ["store-1"] }],
+            status: "PENDING",
+            version: 1,
+          },
+          {
+            acceptedAt: null,
+            email: "other@zandu.test",
+            expiresAt: "2026-10-02T08:00:00+00:00",
+            id: "invitation-2",
+            organizationId: "organization-2",
+            roleAssignments: [{ roleCode: "CASHIER", storeIds: [] }],
+            status: "PENDING",
+            version: 1,
+          },
+        ]),
+      ),
+    );
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+
+    await expect(
+      api.listOrganizationInvitations({
+        accessibleStoreIds: ["store-1"],
+        authorizationVersion: 1,
+        organizationId: "organization-1",
+        permissions: ["MEMBER_INVITE"],
+        scope: { type: "ORGANIZATION" },
+      }),
+    ).resolves.toEqual([
+      expect.objectContaining({ id: "invitation-1", organizationId: "organization-1" }),
+    ]);
+  });
+
   it("cancels a returned invitation through the dedicated transition", async () => {
     server.use(
       http.post("https://api.zandu.test/api/member-invitations/invitation-1/cancel", () =>

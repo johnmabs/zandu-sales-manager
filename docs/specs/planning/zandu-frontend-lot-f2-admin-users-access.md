@@ -75,7 +75,7 @@ Toute mutation membership/role/scope/assignment incrémente la version. Un ancie
 
 # 12. API Invitations
 
-`POST /api/member-invitations` et `POST /api/member-invitations/{id}/cancel`, plus acceptation existante. La création suit le contrat (email, expiration, rôles/scopes). Le secret brut n’est retourné qu’à la création ; son hash n’est jamais exposé.
+`GET /api/member-invitations`, `POST /api/member-invitations` et `POST /api/member-invitations/{id}/cancel`, plus acceptation existante. La collection est tenant-scoped et protégée par `MEMBER_INVITE`. La création suit le contrat (email, expiration, rôles/scopes). Le secret brut n’est retourné qu’à la création ; son hash n’est jamais exposé.
 
 # 13. Architecture feature proposée
 

@@ -1,11 +1,10 @@
 import { AccessManagementPage } from "../components/AccessManagementPage";
-import { InvitationLifecycleUnavailable } from "../invitations/InvitationLifecycleUnavailable";
+import { InvitationListPage } from "../invitations/InvitationListPage";
 
-/** The lifecycle view follows only operations currently published by OpenAPI. */
 export function InvitationsRoute() {
   return (
     <AccessManagementPage title="Invitations">
-      <InvitationLifecycleUnavailable />
+      <InvitationListPage />
     </AccessManagementPage>
   );
 }

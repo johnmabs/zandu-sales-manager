@@ -134,6 +134,10 @@ final class AcceptanceInvitationRepository implements OrganizationInvitationRepo
     {
         $this->invitation = $invitation;
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        return $this->invitation->organizationId()->equals($organizationId) ? [$this->invitation] : [];
+    }
     public function get(OrganizationId $organizationId, OrganizationInvitationId $invitationId): OrganizationInvitation
     {
         return $this->invitation;

@@ -60,7 +60,7 @@ final class ApiPlatformTest extends KernelTestCase
             }
         }
 
-        self::assertSame(13, $pageCollections);
+        self::assertSame(14, $pageCollections);
         self::assertSame(10, $cursorCollections);
     }
 
@@ -397,6 +397,7 @@ final class ApiPlatformTest extends KernelTestCase
         $openApi = self::getContainer()->get(OpenApiFactoryInterface::class)([]);
         $paths = $openApi->getPaths();
 
+        self::assertNotNull($paths->getPath('/api/member-invitations')->getGet());
         self::assertNotNull($paths->getPath('/api/member-invitations')->getPost());
         self::assertNotNull($paths->getPath('/api/member-invitations/{id}/cancel')->getPost());
         self::assertNotNull($paths->getPath('/api/invitations/{token}/accept')->getPost());

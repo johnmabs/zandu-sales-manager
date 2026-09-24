@@ -802,7 +802,11 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /**
+     * Retrieves the collection of InvitationResource resources.
+     * @description Retrieves the collection of InvitationResource resources.
+     */
+    get: operations["member_invitation_list"];
     put?: never;
     /**
      * Creates a InvitationResource resource.
@@ -9559,6 +9563,166 @@ export interface operations {
         content: {
           "application/ld+json": components["schemas"]["InvitationResource.AcceptedInvitationResource.jsonld"];
           "application/json": components["schemas"]["InvitationResource.AcceptedInvitationResource"];
+        };
+      };
+      /** @description The request payload is invalid. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "VALIDATION_ERROR",
+           *       "message": "The request payload is invalid.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "VALIDATION_ERROR";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "UNAUTHENTICATED",
+           *       "message": "Authentication is required.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "UNAUTHENTICATED";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The authenticated actor is not authorized. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "FORBIDDEN",
+           *       "message": "The authenticated actor is not authorized.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "FORBIDDEN";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The resource was not found, including cross-tenant resources. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "NOT_FOUND",
+           *       "message": "The resource was not found, including cross-tenant resources.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "NOT_FOUND";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The request conflicts with the current resource state. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "CONFLICT",
+           *       "message": "The request conflicts with the current resource state.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "CONFLICT";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+      /** @description The operation violates a domain rule. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          /**
+           * @example {
+           *       "code": "DOMAIN_RULE_VIOLATION",
+           *       "message": "The operation violates a domain rule.",
+           *       "correlationId": "0198e463-147c-72d5-b75a-a936797ff9c8"
+           *     }
+           */
+          "application/json": {
+            /** @enum {string} */
+            code: "DOMAIN_RULE_VIOLATION";
+            message: string;
+            /** Format: uuid */
+            correlationId: string | null;
+          };
+        };
+      };
+    };
+  };
+  member_invitation_list: {
+    parameters: {
+      query?: {
+        /** @description The collection page number */
+        page?: number;
+        /** @description The number of items per page */
+        limit?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description InvitationResource collection */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/ld+json": components["schemas"]["HydraCollectionBaseSchema"] & {
+            member: components["schemas"]["InvitationResource.jsonld"][];
+          };
+          "application/json": components["schemas"]["InvitationResource"][];
         };
       };
       /** @description The request payload is invalid. */

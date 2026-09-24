@@ -37,6 +37,15 @@ final readonly class DoctrineOrganizationInvitationRepository implements Organiz
         }
         $this->entityManager->flush();
     }
+    public function findAll(OrganizationId $organizationId): array
+    {
+        $records = $this->entityManager->getRepository(OrganizationInvitationRecord::class)->findBy(
+            ['organizationId' => $organizationId->toString()],
+            ['expiresAt' => 'DESC', 'id' => 'ASC'],
+        );
+
+        return array_map($this->toAggregate(...), $records);
+    }
     public function get(OrganizationId $organizationId, OrganizationInvitationId $invitationId): OrganizationInvitation
     {
         $record = $this->entityManager->getRepository(OrganizationInvitationRecord::class)->findOneBy(['organizationId' => $organizationId->toString(), 'id' => $invitationId->toString()]);
