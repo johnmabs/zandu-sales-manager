@@ -19,6 +19,7 @@ import { RemoveRoleDialog } from "../../apps/admin/src/features/access/members/R
 import { SuspendMemberDialog } from "../../apps/admin/src/features/access/members/SuspendMemberDialog";
 import { RoleCatalog } from "../../apps/admin/src/features/access/roles/RoleCatalog";
 import { CancelStoreClosureDialog } from "../../apps/admin/src/features/stores/components/CancelStoreClosureDialog";
+import { CreateStoreWorkspace } from "../../apps/admin/src/features/stores/components/CreateStorePage";
 import { RequestStoreClosureDialog } from "../../apps/admin/src/features/stores/components/RequestStoreClosureDialog";
 import { StoreCreateForm } from "../../apps/admin/src/features/stores/components/StoreCreateForm";
 import {
@@ -40,6 +41,7 @@ import {
 import { ApiClient, ApiRequestError, FoundationApi } from "../../packages/api-client/src/index";
 import {
   createServerStateClient,
+  queryKeys,
   ServerStateProvider,
 } from "../../packages/server-state/src/index";
 
@@ -1081,6 +1083,150 @@ describe("StoreCreateForm", () => {
     expect(
       await form.findByText("Ce code de magasin est déjà utilisé dans l’organisation."),
     ).toBeTruthy();
+  });
+
+  it.each([
+    {
+      error: new ApiRequestError(
+        { code: "DOMAIN_RULE_VIOLATION", kind: "response", status: 422 },
+        false,
+      ),
+      expected: "La création est indisponible dans l’état actuel de l’organisation.",
+      name: "an operational restriction",
+    },
+    {
+      error: new ApiRequestError({ code: "FORBIDDEN", kind: "response", status: 403 }, false),
+      expected: "Vous n’êtes pas autorisé à effectuer cette action.",
+      name: "a server permission denial",
+    },
+    {
+      error: new ApiRequestError({ kind: "network" }, false),
+      expected: "Impossible de joindre le serveur. Vérifiez votre connexion puis réessayez.",
+      name: "a network failure",
+    },
+    {
+      error: new ApiRequestError({ kind: "response", status: 500 }, false),
+      expected: "Le service rencontre un problème. Réessayez plus tard.",
+      name: "an unexpected server failure",
+    },
+  ])("maps $name without losing the creation form", async ({ error, expected }) => {
+    const user = userEvent.setup();
+    const view = render(
+      <StoreCreateForm
+        defaults={{ currency: "XAF", locale: "fr_CG", timeZone: "Africa/Brazzaville" }}
+        onCreate={async () => {
+          throw error;
+        }}
+      />,
+    );
+    const form = within(view.container);
+
+    await user.type(form.getByLabelText("Code"), "CENTRE");
+    await user.type(form.getByLabelText("Nom"), "Centre-ville");
+    await user.click(form.getByRole("button", { name: "Créer le magasin" }));
+
+    expect(await form.findByText(expected)).toBeTruthy();
+    expect(form.getByDisplayValue("CENTRE")).toBeTruthy();
+    expect(form.getByRole("button", { name: "Créer le magasin" })).toBeTruthy();
+  });
+});
+
+describe("CreateStoreWorkspace", () => {
+  const activeOrganization = {
+    defaultCurrency: "XAF",
+    defaultLocale: "fr_CG",
+    defaultTimeZone: "Africa/Brazzaville",
+    id: "organization-1",
+    name: "Zandu",
+    status: "ACTIVE" as const,
+  };
+
+  it("fails closed until STORE_CREATE is resolved for the active organization", () => {
+    const client = createStoreListClient();
+    const properties = {
+      activeOrganization,
+      api: undefined,
+      navigateToStore: vi.fn(),
+      notifyCreated: vi.fn(),
+      queryClient: client,
+      refreshStoreContext: vi.fn().mockResolvedValue(undefined),
+    };
+    const workspace = (access: EffectiveAccess | undefined) => (
+      <ServerStateProvider client={client}>
+        <CreateStoreWorkspace {...properties} access={access} />
+      </ServerStateProvider>
+    );
+    const view = render(workspace(undefined));
+
+    expect(screen.getByRole("status", { name: "Chargement des autorisations" })).toBeTruthy();
+    view.rerender(workspace({ ...storeListAccess, permissions: ["STORE_READ"] }));
+    expect(screen.getByText("Action non autorisée")).toBeTruthy();
+    view.rerender(workspace({ ...storeListAccess, organizationId: "another-organization" }));
+    expect(screen.getByText("Action non autorisée")).toBeTruthy();
+    expect(screen.queryByLabelText("Code")).toBeNull();
+  });
+
+  it("creates from organization defaults and completes cache, context, feedback, and navigation", async () => {
+    const requests: Array<{ init: RequestInit | undefined; url: string }> = [];
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+        fetchImplementation: async (url, init) => {
+          requests.push({ init, url });
+          return Response.json(
+            { ...store, id: "store-created", name: "Nouveau magasin" },
+            { status: 201 },
+          );
+        },
+      }),
+    );
+    const client = createStoreListClient();
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    const refetch = vi.spyOn(client, "refetchQueries");
+    const refreshStoreContext = vi.fn().mockResolvedValue(undefined);
+    const notifyCreated = vi.fn();
+    const navigateToStore = vi.fn();
+    const user = userEvent.setup();
+    const view = render(
+      <ServerStateProvider client={client}>
+        <CreateStoreWorkspace
+          access={storeListAccess}
+          activeOrganization={activeOrganization}
+          api={api}
+          navigateToStore={navigateToStore}
+          notifyCreated={notifyCreated}
+          queryClient={client}
+          refreshStoreContext={refreshStoreContext}
+        />
+      </ServerStateProvider>,
+    );
+    const form = within(view.container);
+
+    expect(form.getByLabelText("Devise")).toHaveProperty("value", "XAF");
+    expect(form.getByLabelText("Langue")).toHaveProperty("value", "fr_CG");
+    expect(form.getByLabelText("Fuseau horaire")).toHaveProperty("value", "Africa/Brazzaville");
+    await user.type(form.getByLabelText("Code"), "NOUVEAU");
+    await user.type(form.getByLabelText("Nom"), "Nouveau magasin");
+    await user.click(form.getByRole("button", { name: "Créer le magasin" }));
+
+    await waitFor(() => expect(navigateToStore).toHaveBeenCalledWith("store-created"));
+    expect(requests).toHaveLength(1);
+    expect(new URL(requests[0]?.url ?? "").pathname).toBe("/api/stores");
+    expect(requests[0]?.init?.method).toBe("POST");
+    expect(new Headers(requests[0]?.init?.headers).get("Idempotency-Key")).toBeNull();
+    expect(JSON.parse(String(requests[0]?.init?.body))).toEqual({
+      address: null,
+      code: "NOUVEAU",
+      currency: "XAF",
+      locale: "fr_CG",
+      name: "Nouveau magasin",
+      timeZone: "Africa/Brazzaville",
+    });
+    const listKey = queryKeys.stores.list("organization-1", { authorizationVersion: 1 });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: listKey });
+    expect(refetch).toHaveBeenCalledWith({ queryKey: listKey });
+    expect(refreshStoreContext).toHaveBeenCalledOnce();
+    expect(notifyCreated).toHaveBeenCalledOnce();
   });
 });
 

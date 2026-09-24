@@ -10463,28 +10463,33 @@ Commit : `test(admin): reinforce scoped store details`.
 
 ## Epic F1.4 — Create Store
 
-**Statut : TERMINÉ — création Store tenant-scoped avec retour cohérent vers la collection**
+**Statut : TERMINÉ — création Store auditée sur sa composition et ses échecs**
 
-- la route `/admin/stores/new` expose le formulaire de création uniquement aux
-  utilisateurs ayant `STORE_CREATE` dans l’organisation active ; ses valeurs
-  initiales reprennent la devise, la langue et le fuseau horaire publiés par
-  cette organisation ;
+- la revue du 24 septembre 2026 a isolé une composition testable
+  `CreateStoreWorkspace` sans changer la route `/admin/stores/new` ; le
+  formulaire reste absent tant que `STORE_CREATE` n’est pas résolu pour
+  l’organisation active et reprend sa devise, sa langue et son fuseau horaire ;
 - le client appelle `POST /api/stores` avec les seuls champs du contrat, en
   normalisant une adresse vide à `null`. Aucun `Idempotency-Key` n’est envoyé :
-  l’opération OpenAPI ne déclare pas cet en-tête ;
+  l’opération OpenAPI ne déclare pas cet en-tête, ce que les tests vérifient
+  désormais au niveau HTTP ;
 - les erreurs de validation par champ sont conservées sur le formulaire ; le
-  conflit de code, la restriction opérationnelle, les refus et les erreurs
-  réseau passent par le contrat d’erreurs avec des messages adaptés ;
-- après succès, la collection Stores de l’organisation et de la version
-  d’autorisation courantes est invalidée puis rechargée, une notification est
-  affichée et la navigation mène au détail du nouveau magasin.
+  conflit de code, la restriction opérationnelle, le refus `403`, l’erreur
+  réseau et l’erreur serveur inattendue passent par le contrat d’erreurs avec
+  conservation de la saisie ; un timeout ambigu bloque toujours une répétition
+  aveugle ;
+- un test de composition prouve qu’après succès la collection Stores de
+  l’organisation et de la version d’autorisation courantes est invalidée puis
+  rechargée, le `StoreContext` est resynchronisé, la notification est émise et
+  la navigation mène au détail renvoyé par le serveur.
 
-Validations : `pnpm test:component -- stores-list.test.tsx` OK (10 tests) ;
-`pnpm test:integration -- api-client.test.ts` OK (3 tests) ; `pnpm test` OK ;
-`pnpm typecheck` OK ; `pnpm lint` OK ; `pnpm format:check` OK ;
-`git diff --check` OK.
+Validations de revue : `pnpm test` OK (16 tests Admin, 1 POS, 20 Foundation,
+15 unitaires, 139 composants et 49 intégration), dont 55 tests du fichier
+composant Stores et 15 tests d’intégration du client API ; `pnpm typecheck`,
+`pnpm lint` et `pnpm format:check` OK ; `pnpm --filter @zandu/admin build` OK
+(39 routes) ; `git diff --check` OK.
 
-Commit recommandé : `feat(stores): add store creation workflow`.
+Commit : `test(admin): reinforce store creation workflow`.
 
 ## Epic F1.5 — Update Store
 

@@ -317,6 +317,7 @@ describe("ApiClient at the mocked API boundary", () => {
         }),
       ),
       http.post("https://api.zandu.test/api/stores", async ({ request }) => {
+        expect(request.headers.get("Idempotency-Key")).toBeNull();
         expect(await request.json()).toEqual({
           address: null,
           code: "NOUVEAU",

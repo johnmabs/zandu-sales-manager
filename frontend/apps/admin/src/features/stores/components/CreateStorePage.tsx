@@ -13,7 +13,10 @@ import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { StoreCreateForm } from "./StoreCreateForm";
 
-import type { StoreCreateInput } from "@zandu/api-client";
+import type { QueryClient } from "@tanstack/react-query";
+import type { FoundationApi, StoreCreateInput } from "@zandu/api-client";
+import type { EffectiveAccess } from "@zandu/authorization";
+import type { Organization } from "@zandu/organization-context";
 
 export function CreateStorePage() {
   const access = useEffectiveAccess();
@@ -21,6 +24,37 @@ export function CreateStorePage() {
   const { api, queryClient, refreshStoreContext } = useAdminRuntime();
   const notifications = useNotifications();
   const router = useRouter();
+
+  return (
+    <CreateStoreWorkspace
+      access={access}
+      activeOrganization={activeOrganization}
+      api={api}
+      navigateToStore={(storeId) => router.push(`/admin/stores/${encodeURIComponent(storeId)}`)}
+      notifyCreated={() => notifications.notify({ message: "Magasin créé.", tone: "success" })}
+      queryClient={queryClient}
+      refreshStoreContext={refreshStoreContext}
+    />
+  );
+}
+
+export function CreateStoreWorkspace({
+  access,
+  activeOrganization,
+  api,
+  navigateToStore,
+  notifyCreated,
+  queryClient,
+  refreshStoreContext,
+}: Readonly<{
+  access: EffectiveAccess | undefined;
+  activeOrganization: Organization | undefined;
+  api: FoundationApi | undefined;
+  navigateToStore: (storeId: string) => void;
+  notifyCreated: () => void;
+  queryClient: QueryClient;
+  refreshStoreContext: () => Promise<void>;
+}>) {
   const runSingleFlight = useSingleFlight();
   const createAccess = resolveStoreAccess(access, activeOrganization?.id, storePermissions.create);
   const create = useCreateStore({
@@ -53,8 +87,8 @@ export function CreateStorePage() {
       return;
     }
 
-    notifications.notify({ message: "Magasin créé.", tone: "success" });
-    router.push(`/admin/stores/${encodeURIComponent(store.id)}`);
+    notifyCreated();
+    navigateToStore(store.id);
   };
 
   return (
