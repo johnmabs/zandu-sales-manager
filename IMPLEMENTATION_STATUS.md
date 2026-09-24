@@ -10406,25 +10406,31 @@ Commit : `refactor(admin): reinforce stores feature boundary`.
 
 ## Epic F1.2 — Store list
 
-**Statut : TERMINÉ — liste Stores tenant-scoped et états de lecture explicites**
+**Statut : TERMINÉ — liste Stores tenant-scoped auditée sur sa composition réelle**
 
-- la route Stores affiche la collection `GET /api/stores` via la feature, avec
-  les champs publiés `name`, `code` et `status`, sans pagination, filtre ou
-  propriété inventés côté client ;
-- le cache React Query emploie la clé `stores` de l’organisation active et la
-  version d’autorisation ; la projection initiale du runtime alimente cette
-  même clé et le client filtre défensivement toute ligne d’une autre
-  organisation ou hors scope accessible ;
+- la revue du 24 septembre 2026 a extrait une composition testable
+  `StoreListWorkspace` sans changer la page publique : la route affiche toujours
+  exclusivement `name`, `code` et `status` depuis `GET /api/stores`, dans
+  l’ordre serveur et sans pagination, filtre ou propriété inventés ;
+- aucune requête n’est émise tant que l’accès est indéterminé, refusé ou lié à
+  une autre organisation ; le client conserve sa défense en profondeur en
+  retirant les lignes d’un autre tenant ou absentes des Stores accessibles ;
+- le cache React Query reste partitionné par organisation active et version
+  d’autorisation ; les tests de composition prouvent qu’un changement de
+  version crée une collection distincte plutôt que de réutiliser un résultat
+  devenu périmé ;
 - loading, collection vide, refus `403`, erreur réseau et erreur API sont
   rendus séparément ; le CTA de création n’est exposé dans l’état vide que si
-  la permission frontend `STORE_CREATE` est présente.
+  la permission frontend `STORE_CREATE` est présente, désormais avec une preuve
+  au niveau de la composition complète.
 
-Validations : `pnpm --filter @zandu/admin test` OK (7 tests) ;
-`pnpm test:component` OK (5 tests) ; `pnpm test:integration` OK (3 tests,
-scope tenant/store inclus) ; `pnpm test` OK ; `pnpm typecheck` OK ;
-`pnpm lint` OK ; `pnpm format:check` OK ; `git diff --check` OK.
+Validations de revue : `pnpm test` OK (16 tests Admin, 1 POS, 20 Foundation,
+13 unitaires, 133 composants et 48 intégration), dont 49 tests du fichier
+Stores et 14 tests d’intégration du client API ; `pnpm typecheck`, `pnpm lint`
+et `pnpm format:check` OK ; `pnpm --filter @zandu/admin build` OK (39 routes) ;
+`git diff --check` OK.
 
-Commit recommandé : `feat(stores): add tenant-scoped store list`.
+Commit : `test(admin): reinforce tenant-scoped store list`.
 
 ## Epic F1.3 — Store details
 

@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { storeContextMessageForStatus } from "../../apps/admin/src/components/admin-shell/AdminShell";
 import {
@@ -30,13 +30,22 @@ import {
   StoreList,
   storeListErrorPresentation,
 } from "../../apps/admin/src/features/stores/components/StoreList";
+import { StoreListWorkspace } from "../../apps/admin/src/features/stores/components/StoreListPage";
 import { StoreUpdateForm } from "../../apps/admin/src/features/stores/components/StoreUpdateForm";
 import { SuspendStoreDialog } from "../../apps/admin/src/features/stores/components/SuspendStoreDialog";
 import {
   SingleFlight,
   hasUnknownStoreMutationOutcome,
 } from "../../apps/admin/src/features/stores/mutationSafety";
-import { ApiRequestError } from "../../packages/api-client/src/index";
+import { ApiClient, ApiRequestError, FoundationApi } from "../../packages/api-client/src/index";
+import {
+  createServerStateClient,
+  ServerStateProvider,
+} from "../../packages/server-state/src/index";
+
+import type { EffectiveAccess } from "../../packages/authorization/src/index";
+
+afterEach(cleanup);
 
 const store = {
   address: null,
@@ -51,6 +60,32 @@ const store = {
   updatedAt: "2026-09-10T08:00:00+00:00",
   version: 1,
 };
+
+const storeListAccess: EffectiveAccess = {
+  accessibleStoreIds: ["store-2", "store-1"],
+  authorizationVersion: 1,
+  organizationId: "organization-1",
+  permissions: ["STORE_READ", "STORE_CREATE"],
+  scope: { type: "ORGANIZATION" },
+};
+
+function createStoreListApi(respond: () => Response, requests: string[] = []) {
+  return new FoundationApi(
+    new ApiClient({
+      config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      fetchImplementation: async (url) => {
+        requests.push(url);
+        return respond();
+      },
+    }),
+  );
+}
+
+function createStoreListClient() {
+  const client = createServerStateClient();
+  client.setDefaultOptions({ queries: { retry: false } });
+  return client;
+}
 
 const member = {
   authorizationVersion: 2,
@@ -180,6 +215,96 @@ describe("StoreList", () => {
     );
     screen.getByRole("button", { name: "Réessayer" }).click();
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+});
+
+describe("StoreListWorkspace", () => {
+  it("preserves server order while hiding stores outside the effective scope", async () => {
+    const api = createStoreListApi(() =>
+      Response.json([
+        { ...store, code: "SECOND", id: "store-2", name: "Second magasin" },
+        store,
+        { ...store, code: "HIDDEN", id: "store-hidden", name: "Hors scope" },
+        {
+          ...store,
+          code: "FOREIGN",
+          id: "store-foreign",
+          name: "Autre tenant",
+          organizationId: "organization-2",
+        },
+      ]),
+    );
+
+    render(
+      <ServerStateProvider client={createStoreListClient()}>
+        <StoreListWorkspace access={storeListAccess} api={api} organizationId="organization-1" />
+      </ServerStateProvider>,
+    );
+
+    const rows = within(await screen.findByRole("table")).getAllByRole("row");
+    expect(rows).toHaveLength(3);
+    expect(rows[1]?.textContent).toContain("Second magasin");
+    expect(rows[2]?.textContent).toContain("Centre-ville");
+    expect(screen.queryByText("Hors scope")).toBeNull();
+    expect(screen.queryByText("Autre tenant")).toBeNull();
+  });
+
+  it("does not query before authorization or outside the active organization", async () => {
+    const requests: string[] = [];
+    const api = createStoreListApi(() => Response.json([store]), requests);
+    const client = createStoreListClient();
+    const workspace = (access: EffectiveAccess | undefined, organizationId: string) => (
+      <ServerStateProvider client={client}>
+        <StoreListWorkspace access={access} api={api} organizationId={organizationId} />
+      </ServerStateProvider>
+    );
+    const view = render(workspace(undefined, "organization-1"));
+
+    expect(screen.getByRole("status", { name: "Chargement des autorisations" })).toBeTruthy();
+    view.rerender(workspace({ ...storeListAccess, permissions: [] }, "organization-1"));
+    expect(screen.getByText("Accès refusé")).toBeTruthy();
+    view.rerender(workspace(storeListAccess, "organization-2"));
+    expect(screen.getByText("Accès refusé")).toBeTruthy();
+    await waitFor(() => expect(requests).toHaveLength(0));
+  });
+
+  it("derives the empty-state creation action from effective permission", async () => {
+    const client = createStoreListClient();
+    const api = createStoreListApi(() => Response.json([]));
+    const workspace = (access: EffectiveAccess) => (
+      <ServerStateProvider client={client}>
+        <StoreListWorkspace access={access} api={api} organizationId="organization-1" />
+      </ServerStateProvider>
+    );
+    const view = render(
+      workspace({ ...storeListAccess, permissions: ["STORE_READ"], authorizationVersion: 2 }),
+    );
+
+    await screen.findByText("Aucun magasin accessible");
+    expect(screen.queryByRole("link", { name: "Créer un magasin" })).toBeNull();
+    view.rerender(workspace({ ...storeListAccess, authorizationVersion: 3 }));
+    expect(await screen.findByRole("link", { name: "Créer un magasin" })).toBeTruthy();
+  });
+
+  it("separates cached collections by authorization version", async () => {
+    const requests: string[] = [];
+    const client = createStoreListClient();
+    const api = createStoreListApi(() => Response.json([store]), requests);
+    const workspace = (authorizationVersion: number) => (
+      <ServerStateProvider client={client}>
+        <StoreListWorkspace
+          access={{ ...storeListAccess, authorizationVersion }}
+          api={api}
+          organizationId="organization-1"
+        />
+      </ServerStateProvider>
+    );
+    const view = render(workspace(1));
+
+    await screen.findByText("Centre-ville");
+    view.rerender(workspace(2));
+    await waitFor(() => expect(requests).toHaveLength(2));
+    expect(client.getQueryCache().getAll()).toHaveLength(2);
   });
 });
 

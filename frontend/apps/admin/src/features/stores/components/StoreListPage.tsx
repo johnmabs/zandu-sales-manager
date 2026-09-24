@@ -10,17 +10,33 @@ import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { StoreList } from "./StoreList";
 
+import type { FoundationApi } from "@zandu/api-client";
+import type { EffectiveAccess } from "@zandu/authorization";
+
 export function StoreListPage() {
   const access = useEffectiveAccess();
   const { activeOrganizationId } = useOrganizationContext();
   const { api } = useAdminRuntime();
-  const readAccess = resolveStoreAccess(access, activeOrganizationId, storePermissions.read);
+
+  return <StoreListWorkspace access={access} api={api} organizationId={activeOrganizationId} />;
+}
+
+export function StoreListWorkspace({
+  access,
+  api,
+  organizationId,
+}: Readonly<{
+  access: EffectiveAccess | undefined;
+  api: FoundationApi | undefined;
+  organizationId: string | undefined;
+}>) {
+  const readAccess = resolveStoreAccess(access, organizationId, storePermissions.read);
   const canCreate =
-    resolveStoreAccess(access, activeOrganizationId, storePermissions.create) === "ALLOWED";
+    resolveStoreAccess(access, organizationId, storePermissions.create) === "ALLOWED";
   const stores = useStoreList({
     access: readAccess === "ALLOWED" ? access : undefined,
     api,
-    organizationId: activeOrganizationId,
+    organizationId,
   });
 
   if (readAccess === "UNRESOLVED") {
