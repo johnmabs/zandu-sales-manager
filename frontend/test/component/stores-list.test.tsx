@@ -182,6 +182,16 @@ describe("StoreList", () => {
     );
   });
 
+  it("keeps creation discoverable when the Store list already contains data", () => {
+    const view = render(<StoreList canCreate isLoading={false} stores={[store]} />);
+
+    expect(screen.getByRole("link", { name: "Créer un magasin" }).getAttribute("href")).toBe(
+      "/admin/stores/new",
+    );
+    view.rerender(<StoreList canCreate={false} isLoading={false} stores={[store]} />);
+    expect(screen.queryByRole("link", { name: "Créer un magasin" })).toBeNull();
+  });
+
   it("distinguishes server denial, network failure, and other API failures", () => {
     expect(
       storeListErrorPresentation(new ApiRequestError({ kind: "response", status: 403 }, false))

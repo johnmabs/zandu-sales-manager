@@ -68,15 +68,24 @@ export function StoreList({
   }
 
   return (
-    <AdminTable
-      columns={columns}
-      emptyDescription="Aucun magasin accessible."
-      emptyTitle="Aucun magasin"
-      getRowId={(store) => store.id}
-      isLoading={false}
-      page={{ items: stores, page: 1, pageSize: stores.length, totalItems: stores.length }}
-      query={tableQuery}
-    />
+    <>
+      {canCreate ? (
+        <p>
+          <Link className="zandu-button zandu-button--primary" href="/admin/stores/new">
+            Créer un magasin
+          </Link>
+        </p>
+      ) : null}
+      <AdminTable
+        columns={columns}
+        emptyDescription="Aucun magasin accessible."
+        emptyTitle="Aucun magasin"
+        getRowId={(store) => store.id}
+        isLoading={false}
+        page={{ items: stores, page: 1, pageSize: stores.length, totalItems: stores.length }}
+        query={tableQuery}
+      />
+    </>
   );
 }
 

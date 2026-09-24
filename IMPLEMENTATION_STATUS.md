@@ -10420,9 +10420,9 @@ Commit : `refactor(admin): reinforce stores feature boundary`.
   version crée une collection distincte plutôt que de réutiliser un résultat
   devenu périmé ;
 - loading, collection vide, refus `403`, erreur réseau et erreur API sont
-  rendus séparément ; le CTA de création n’est exposé dans l’état vide que si
-  la permission frontend `STORE_CREATE` est présente, désormais avec une preuve
-  au niveau de la composition complète.
+  rendus séparément ; le CTA de création est exposé avec `STORE_CREATE` dans
+  l’état vide comme au-dessus d’une collection déjà peuplée, afin que la route
+  de création reste découvrable sans contourner la garde de permission.
 
 Validations de revue : `pnpm test` OK (16 tests Admin, 1 POS, 20 Foundation,
 13 unitaires, 133 composants et 48 intégration), dont 49 tests du fichier
@@ -10469,6 +10469,8 @@ Commit : `test(admin): reinforce scoped store details`.
   `CreateStoreWorkspace` sans changer la route `/admin/stores/new` ; le
   formulaire reste absent tant que `STORE_CREATE` n’est pas résolu pour
   l’organisation active et reprend sa devise, sa langue et son fuseau horaire ;
+  la liste Stores propose désormais cette route même lorsqu’elle contient déjà
+  des magasins, toujours sous la même permission ;
 - le client appelle `POST /api/stores` avec les seuls champs du contrat, en
   normalisant une adresse vide à `null`. Aucun `Idempotency-Key` n’est envoyé :
   l’opération OpenAPI ne déclare pas cet en-tête, ce que les tests vérifient
@@ -10484,7 +10486,7 @@ Commit : `test(admin): reinforce scoped store details`.
   la navigation mène au détail renvoyé par le serveur.
 
 Validations de revue : `pnpm test` OK (16 tests Admin, 1 POS, 20 Foundation,
-15 unitaires, 139 composants et 49 intégration), dont 55 tests du fichier
+15 unitaires, 140 composants et 49 intégration), dont 56 tests du fichier
 composant Stores et 15 tests d’intégration du client API ; `pnpm typecheck`,
 `pnpm lint` et `pnpm format:check` OK ; `pnpm --filter @zandu/admin build` OK
 (39 routes) ; `git diff --check` OK.
