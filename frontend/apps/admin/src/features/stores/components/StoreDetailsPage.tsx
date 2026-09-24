@@ -13,7 +13,7 @@ import { useRequestStoreClosure } from "../hooks/useRequestStoreClosure";
 import { useStoreDetails } from "../hooks/useStoreDetails";
 import { useSuspendStore } from "../hooks/useSuspendStore";
 import { useSingleFlight } from "../mutationSafety";
-import { resolveStoreAccess, storePermissions } from "../storeAuthorization";
+import { availableStoreActions, resolveStoreAccess, storePermissions } from "../storeAuthorization";
 
 import { CancelStoreClosureDialog } from "./CancelStoreClosureDialog";
 import { ReactivateStoreDialog } from "./ReactivateStoreDialog";
@@ -46,14 +46,6 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
     organizationId: activeOrganizationId,
     storeId,
   });
-  const canEdit =
-    resolveStoreAccess(access, activeOrganizationId, storePermissions.update, storeId) ===
-    "ALLOWED";
-  const canSuspend =
-    resolveStoreAccess(access, activeOrganizationId, storePermissions.suspend, storeId) ===
-    "ALLOWED";
-  const canClose =
-    resolveStoreAccess(access, activeOrganizationId, storePermissions.close, storeId) === "ALLOWED";
   const status = details.data?.status;
   const suspend = useSuspendStore({
     api,
@@ -168,13 +160,12 @@ export function StoreDetailsPage({ storeId }: Readonly<{ storeId: string }>) {
   return (
     <>
       <StoreDetails
-        actions={{
-          cancelClosure: status === "CLOSURE_PENDING" && canClose,
-          edit: status === "ACTIVE" && canEdit,
-          reactivate: status === "SUSPENDED" && canSuspend,
-          requestClosure: (status === "ACTIVE" || status === "SUSPENDED") && canClose,
-          suspend: status === "ACTIVE" && canSuspend,
-        }}
+        actions={availableStoreActions({
+          access,
+          organizationId: activeOrganizationId,
+          status,
+          storeId,
+        })}
         {...(closure === undefined ? {} : { closure })}
         error={details.error}
         isLoading={details.isLoading}

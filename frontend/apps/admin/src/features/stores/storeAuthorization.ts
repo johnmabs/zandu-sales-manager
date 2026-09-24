@@ -1,5 +1,6 @@
 import { can } from "@zandu/authorization";
 
+import type { StoreResource } from "@zandu/api-client";
 import type { EffectiveAccess } from "@zandu/authorization";
 
 export const storePermissions = {
@@ -12,6 +13,38 @@ export const storePermissions = {
 
 export type StorePermission = (typeof storePermissions)[keyof typeof storePermissions];
 export type StoreAccessState = "ALLOWED" | "DENIED" | "OUT_OF_SCOPE" | "UNRESOLVED";
+export type StoreActionAvailability = Readonly<{
+  cancelClosure: boolean;
+  edit: boolean;
+  reactivate: boolean;
+  requestClosure: boolean;
+  suspend: boolean;
+}>;
+
+export function availableStoreActions({
+  access,
+  organizationId,
+  status,
+  storeId,
+}: Readonly<{
+  access: EffectiveAccess | undefined;
+  organizationId: string | undefined;
+  status: StoreResource["status"] | undefined;
+  storeId: string;
+}>): StoreActionAvailability {
+  const allowed = (permission: StorePermission) =>
+    resolveStoreAccess(access, organizationId, permission, storeId) === "ALLOWED";
+  const canClose = allowed(storePermissions.close);
+  const canSuspend = allowed(storePermissions.suspend);
+
+  return {
+    cancelClosure: status === "CLOSURE_PENDING" && canClose,
+    edit: status === "ACTIVE" && allowed(storePermissions.update),
+    reactivate: status === "SUSPENDED" && canSuspend,
+    requestClosure: (status === "ACTIVE" || status === "SUSPENDED") && canClose,
+    suspend: status === "ACTIVE" && canSuspend,
+  };
+}
 
 export function resolveStoreAccess(
   access: EffectiveAccess | undefined,

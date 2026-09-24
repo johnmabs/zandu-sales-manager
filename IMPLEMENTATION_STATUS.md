@@ -10434,29 +10434,32 @@ Commit : `test(admin): reinforce tenant-scoped store list`.
 
 ## Epic F1.3 — Store details
 
-**Statut : TERMINÉ — détail Store tenant-scoped et projection des actions**
+**Statut : TERMINÉ — détail Store tenant-scoped audité et matrice d’actions vérifiée**
 
-- la route dynamique `/admin/stores/{storeId}` charge exclusivement
-  `GET /api/stores/{id}` et affiche les champs publiés d’identité et de profil
-  (nom, code, adresse, devise, langue et fuseau), ainsi que le statut
-  opérationnel ;
+- la revue du 24 septembre 2026 confirme que la route dynamique
+  `/admin/stores/{storeId}` charge exclusivement `GET /api/stores/{id}` et
+  affiche les champs publiés d’identité et de profil (nom, code, adresse,
+  devise, langue et fuseau), ainsi que le statut opérationnel ;
 - l’état `CLOSURE_PENDING` est présenté comme demande de fermeture en cours ;
   aucun état de `StoreClosure`, blocker ou règle de lifecycle absent du contrat
   de lecture n’est fabriqué ;
-- Modifier, Suspendre, Réactiver et Demander la fermeture sont projetés selon
-  le statut courant et les permissions réellement exposées (`STORE_UPDATE`,
-  `STORE_SUSPEND`, `STORE_CLOSE`) sans lancer les mutations des Epics suivants ;
-- le détail est caché comme introuvable pour un identifiant obsolète, un `404`
-  ou une réponse défensive hors tenant/scope ; un refus explicite `403` reste
-  distingué.
+- la projection Modifier, Suspendre, Réactiver, Demander et Annuler la fermeture
+  est centralisée dans une fonction pure et testée pour `ACTIVE`, `SUSPENDED`,
+  `CLOSURE_PENDING` et `CLOSED`, avec les permissions serveur `STORE_UPDATE`,
+  `STORE_SUSPEND` et `STORE_CLOSE` ; tout contexte incomplet ou hors scope
+  échoue fermé sans recréer le lifecycle backend ;
+- l’intégration masque désormais explicitement comme introuvable une réponse
+  valide du même tenant mais absente du scope Stores sélectionné ; un identifiant
+  obsolète ou `404` reste indiscernable, tandis qu’un refus serveur `403` reste
+  présenté séparément.
 
-Validations : `pnpm --filter @zandu/admin test` OK (7 tests) ;
-`pnpm test:component` OK (7 tests) ; `pnpm test:integration` OK (3 tests,
-détail hors tenant masqué inclus) ; `pnpm test` OK ; typechecks Admin,
-`@zandu/api-client` et `@zandu/server-state` OK ; `pnpm lint` OK ;
-`pnpm format:check` OK ; `git diff --check` OK.
+Validations de revue : `pnpm test` OK (16 tests Admin, 1 POS, 20 Foundation,
+15 unitaires, 133 composants et 49 intégration), dont 7 tests unitaires Stores,
+49 tests du fichier composant Stores et 15 tests d’intégration du client API ;
+`pnpm typecheck`, `pnpm lint` et `pnpm format:check` OK ;
+`pnpm --filter @zandu/admin build` OK (39 routes) ; `git diff --check` OK.
 
-Commit recommandé : `feat(stores): add tenant-scoped store details`.
+Commit : `test(admin): reinforce scoped store details`.
 
 ## Epic F1.4 — Create Store
 

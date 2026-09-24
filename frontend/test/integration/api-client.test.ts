@@ -489,6 +489,52 @@ describe("ApiClient at the mocked API boundary", () => {
     });
   });
 
+  it("does not reveal inaccessible, stale, or denied Store details", async () => {
+    server.use(
+      http.get("https://api.zandu.test/api/stores/store-out-of-scope", () =>
+        HttpResponse.json({
+          address: null,
+          code: "HIDDEN",
+          currency: "XAF",
+          id: "store-out-of-scope",
+          locale: "fr_CG",
+          name: "Magasin hors scope",
+          organizationId: "organization-1",
+          status: "ACTIVE",
+          timeZone: "Africa/Brazzaville",
+          updatedAt: "2026-09-10T08:00:00+00:00",
+          version: 1,
+        }),
+      ),
+      http.get("https://api.zandu.test/api/stores/stale-store", () =>
+        HttpResponse.json({ code: "STORE_NOT_FOUND" }, { status: 404 }),
+      ),
+      http.get("https://api.zandu.test/api/stores/denied-store", () =>
+        HttpResponse.json({ code: "FORBIDDEN" }, { status: 403 }),
+      ),
+    );
+    const access = {
+      accessibleStoreIds: ["store-1"],
+      authorizationVersion: 4,
+      organizationId: "organization-1",
+      permissions: ["STORE_READ"],
+      scope: { storeIds: ["store-1"], type: "SELECTED_STORES" as const },
+    };
+    const api = new FoundationApi(
+      new ApiClient({
+        config: { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" },
+      }),
+    );
+
+    await expect(api.getAccessibleStore("store-out-of-scope", access)).resolves.toBeUndefined();
+    await expect(api.getAccessibleStore("stale-store", access)).rejects.toMatchObject({
+      apiError: { status: 404 },
+    });
+    await expect(api.getAccessibleStore("denied-store", access)).rejects.toMatchObject({
+      apiError: { status: 403 },
+    });
+  });
+
   it("keeps server denial and network failure distinct at the Stores boundary", async () => {
     const config = { apiBaseUrl: "https://api.zandu.test/api/", appEnvironment: "test" } as const;
     const access = {

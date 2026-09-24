@@ -7,15 +7,8 @@ import { StoreClosureBlockers } from "./StoreClosureBlockers";
 import { StoreErrorState, storeErrorPresentation } from "./StoreErrorState";
 import { StoreStatusBadge } from "./StoreStatusBadge";
 
+import type { StoreActionAvailability } from "../storeAuthorization";
 import type { StoreClosureResource, StoreResource } from "@zandu/api-client";
-
-export type StoreActionAvailability = Readonly<{
-  cancelClosure: boolean;
-  edit: boolean;
-  reactivate: boolean;
-  requestClosure: boolean;
-  suspend: boolean;
-}>;
 
 type StoreDetailsProperties = Readonly<{
   actions: StoreActionAvailability;
