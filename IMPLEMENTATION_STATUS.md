@@ -148,8 +148,8 @@ F3.42       TERMINÉ   Parcours E2E Catalog validé sous Chromium en CI
 F3.43       TERMINÉ   Parcours E2E Pricing validé sous Chromium en CI
 Gate F3     TERMINÉ   Admin Catalog & Pricing validé par la CI frontend
 F4 planning PRÊT      Admin Inventory découpé en 23 Epics
-F4.1–F4.11  TERMINÉ   Stock, valorisation et brouillons de transfert Inventory
-F4.12       À FAIRE   Ship transfer
+F4.1–F4.12  TERMINÉ   Stock, valorisation et expédition de transfert Inventory
+F4.13       À FAIRE   Receive transfer and discrepancy
 ```
 
 Les routes protégées du shell Web utilisent désormais le préfixe `/admin`.
@@ -183,14 +183,14 @@ Isolation   TERMINÉ   RLS tenant et scopes Store prouvés sur Return/Refund
 Gate Lot 5  TERMINÉ   CI distante verte, première partie de M3 validée
 ```
 
-État consolidé au 23 septembre 2026 :
+État consolidé au 24 septembre 2026 :
 
 ```text
 Branche              main
 Migrations           Version20260916233000 appliquée en dernier (test)
 Tests backend         831 tests, 4 394 assertions
 Tests frontend        Admin 41, POS 3, Foundation 20, unitaires 13,
-                      composants 120, intégration 45, E2E Chromium 7
+                      composants 123, intégration 46, E2E Chromium 7
 Builds frontend       Admin (39 routes) et POS OK
 Compilation Tauri     OK (`cargo check --locked`)
 PHPStan               OK
@@ -203,9 +203,9 @@ TypeScript            OK
 Documentation dev     Swagger UI et ReDoc actifs uniquement en dev
 CI frontend           Dernière CI distante verte sur `e81620c`
 CI backend            Dernière CI distante verte sur `e81620c`
-Validation locale     F4.11 verte : qualité, tests et build Admin
+Validation locale     F4.12 verte : qualité, tests et build Admin
 Gate F3               Validé ; Catalog/Pricing E2E verts sous Chromium
-Frontend F4           F4.1–F4.11 terminés ; F4.12 prochain
+Frontend F4           F4.1–F4.12 terminés ; F4.13 prochain
 ```
 
 ## Definition of Done globale
@@ -265,7 +265,8 @@ Frontend F4           F4.1–F4.11 terminés ; F4.12 prochain
 [x] F4.9 Cost confidentiality
 [x] F4.10 Stock transfer list and details
 [x] F4.11 Create and edit draft transfer
-[ ] F4.12 Ship transfer
+[x] F4.12 Ship transfer
+[ ] F4.13 Receive transfer and discrepancy
 ```
 
 ## Références
@@ -11580,7 +11581,7 @@ Backend CI `35907477778`.
 
 ## Frontend Lot F4 — Admin Inventory
 
-**Statut : EN COURS — F4.1–F4.11 terminés ; F4.12 prochain**
+**Statut : EN COURS — F4.1–F4.12 terminés ; F4.13 prochain**
 
 - spécification source :
   `docs/specs/planning/zandu-frontend-lot-f4-admin-inventory.md` ;
@@ -11590,7 +11591,7 @@ Backend CI `35907477778`.
   confidentielle, transferts inter-store et inventaires physiques ;
 - dépendances explicites sur les contrats backend existants, Catalog/Stores et
   les fondations frontend, sans dépendance implicite aux numéros de Lots ;
-- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.12 est désormais
+- Gate F3 validé par la CI Chromium du 23 septembre 2026 ; F4.13 est désormais
   le prochain Epic ouvert.
 
 Validation documentaire : source, index, contexte, 23 fichiers Epic et cinq
@@ -11916,4 +11917,38 @@ suite frontend complète 20 Foundation, 13 unitaires, 120 composants et 45
 intégration ; ESLint, Prettier, TypeScript, build Admin (39 routes) et
 `git diff --check` verts.
 
-Commit prévu : `feat(admin): manage draft stock transfers`.
+Commit : `9708dc1 feat(admin): manage draft stock transfers`.
+
+## Epic F4.12 — Ship transfer
+
+**Statut : TERMINÉ — expédition atomique, scopée et idempotente**
+
+- `FoundationApi` expose l’expédition avec le payload serveur exact et un
+  `Idempotency-Key` obligatoire ; la réponse doit être `SHIPPED`, conserver
+  l’identifiant demandé et rester dans le scope des deux magasins ;
+- le détail DRAFT affiche l’action uniquement avec `STOCK_TRANSFER_SHIP` sur la
+  source et la destination et au moins une ligne ; chaque quantité expédiée est
+  une chaîne décimale exacte, positive ou nulle, initialisée à la quantité
+  demandée sans calcul métier local ;
+- une confirmation rappelle la diminution immédiate du stock source ; le
+  serveur reste l’autorité atomique pour les bornes, la disponibilité, la
+  concurrence et la valorisation ;
+- une intention critique conserve sa clé après timeout et n’est rejouée qu’à
+  la demande explicite de l’utilisateur ; les résultats connus retirent la clé
+  avant une nouvelle tentative ;
+- l’insuffisance de stock, les dépassements, l’état non éditable, les conflits
+  et la valorisation non initialisée sont présentés sans perdre le
+  `correlationId` ;
+- succès et résultats inconnus actualisent le transfert et invalident les
+  listes source/destination, positions, mouvements et valorisations des
+  produits du magasin source ;
+- les tests couvrent payload et header exacts, scope des deux magasins,
+  confirmation, transition SHIPPED, insuffisance corrélée et réutilisation de
+  la même clé après résultat inconnu.
+
+Validations : intégration Inventory ciblée 14/14 et composants transferts 9/9 ;
+suite frontend complète 20 Foundation, 13 unitaires, 123 composants et 46
+intégration ; ESLint, Prettier, TypeScript, build Admin (39 routes) et
+`git diff --check` verts.
+
+Commit prévu : `feat(admin): ship stock transfers`.

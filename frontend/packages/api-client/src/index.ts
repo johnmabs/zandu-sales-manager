@@ -1,4 +1,4 @@
-import { idempotencyHeaders } from "@zandu/idempotency";
+import { CriticalMutationManager, idempotencyHeaders } from "@zandu/idempotency";
 
 import type {
   components as GeneratedComponents,
@@ -8,6 +8,8 @@ import type {
 import type { PublicRuntimeConfig } from "@zandu/config";
 import type { ApiError, FieldErrors } from "@zandu/error-contract";
 import type { ApiFailureObserver } from "@zandu/observability";
+
+export { CriticalMutationManager };
 
 export type OpenApiComponents = GeneratedComponents;
 export type OpenApiOperations = GeneratedOperations;
@@ -584,6 +586,12 @@ export type StockTransferLineCreateInput = Readonly<{
 export type StockTransferLineUpdateInput = Readonly<{
   expectedVersion: number;
   requestedQuantity: string;
+}>;
+export type StockTransferShipInput = Readonly<{
+  lines: readonly Readonly<{
+    lineId: string;
+    shippedQuantity: string;
+  }>[];
 }>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
@@ -1278,6 +1286,32 @@ export class FoundationApi {
         route: "/admin/inventory/transfers/:transferId",
       },
     });
+  }
+
+  async shipStockTransfer(
+    transferId: string,
+    input: StockTransferShipInput,
+    access: CurrentSession["effectiveAccess"],
+    idempotencyKey: string,
+  ): Promise<StockTransferResource> {
+    const response = await this.client.request({
+      body: input,
+      idempotencyKey,
+      method: "POST",
+      path: `stock-transfers/${encodeURIComponent(transferId)}/ship`,
+      telemetry: {
+        feature: "inventory",
+        operation: "ship_stock_transfer",
+        route: "/admin/inventory/transfers/:transferId",
+      },
+    });
+    const transfer = assertStockTransferMutationResponse(response.data, transferId, access);
+    if (transfer.status !== "SHIPPED" || !transferStoresInAccessibleScope(transfer, access)) {
+      throw new ApiContractError(
+        "The shipped stock transfer response is not SHIPPED or is outside the writable scope.",
+      );
+    }
+    return transfer;
   }
 
   async listProducts(

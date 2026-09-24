@@ -4,12 +4,14 @@ import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreateStockTransferWorkspace } from "../../apps/admin/src/features/inventory/transfers/CreateStockTransferPage";
+import { ShipStockTransferForm } from "../../apps/admin/src/features/inventory/transfers/ShipStockTransferForm";
 import { StockTransferDetailsWorkspace } from "../../apps/admin/src/features/inventory/transfers/StockTransferDetailsPage";
 import { StockTransfersWorkspace } from "../../apps/admin/src/features/inventory/transfers/StockTransfersPage";
-import { ApiClient, FoundationApi } from "../../packages/api-client/src/index";
+import { ApiClient, ApiRequestError, FoundationApi } from "../../packages/api-client/src/index";
 import { NotificationProvider } from "../../packages/notifications/src/react";
 import {
   createServerStateClient,
+  queryKeys,
   ServerStateProvider,
 } from "../../packages/server-state/src/index";
 
@@ -93,6 +95,7 @@ const writeAccess: EffectiveAccess = {
     "PRODUCT_READ",
     "STOCK_TRANSFER_CREATE",
     "STOCK_TRANSFER_READ",
+    "STOCK_TRANSFER_SHIP",
     "STOCK_TRANSFER_UPDATE",
   ],
 };
@@ -191,7 +194,7 @@ function setup({
       </NotificationProvider>
     </ServerStateProvider>,
   );
-  return { requests };
+  return { client, requests };
 }
 
 function setupCreate({
@@ -414,6 +417,145 @@ describe("Stock transfer list and details", () => {
     await waitFor(() =>
       expect(screen.queryByRole("form", { name: "Modifier la ligne Paracétamol" })).toBeNull(),
     );
+  });
+
+  it("confirms and ships all lines with exact quantities and an idempotency key", async () => {
+    let current: StockTransferResource = {
+      ...draftTransfer,
+      destinationStoreId: "store-2",
+      id: "transfer-1",
+      sourceStoreId: "store-1",
+    };
+    let shipmentBody: unknown;
+    let idempotencyKey: string | null = null;
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { client } = setup({
+      actor: writeAccess,
+      detail: true,
+      respond: async (url, init) => {
+        if (url.pathname === "/api/products") return Response.json(products);
+        if (url.pathname === "/api/stock-transfers/transfer-1" && init?.method === "GET") {
+          return Response.json(current);
+        }
+        if (url.pathname === "/api/stock-transfers/transfer-1/ship") {
+          shipmentBody = JSON.parse(String(init?.body));
+          idempotencyKey = new Headers(init?.headers).get("Idempotency-Key");
+          current = {
+            ...current,
+            lines: current.lines.map((line) => ({
+              ...line,
+              shippedQuantity: "000.125000",
+            })),
+            shippedAt: "2026-09-24T08:00:00Z",
+            status: "SHIPPED",
+            version: 2,
+          };
+          return Response.json(current);
+        }
+        throw new Error(`Unexpected request: ${init?.method} ${url.pathname}`);
+      },
+    });
+    const affectedKeys = [
+      queryKeys.stock.list("org-1", "store-1"),
+      queryKeys.stock.detail("org-1", "store-1", "product-1"),
+      queryKeys.stockMovements.list("org-1", "store-1"),
+      queryKeys.inventoryValuations.list("org-1", "store-1"),
+      queryKeys.inventoryValuations.detail("org-1", "store-1", "product-1"),
+      queryKeys.inventoryValuations.movements("org-1", "store-1", "product-1"),
+      queryKeys.stockTransfers.list("org-1", "store-1"),
+      queryKeys.stockTransfers.list("org-1", "store-2"),
+    ] as const;
+    for (const key of affectedKeys) client.setQueryData(key, { cached: true });
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Expédier le transfert" });
+    const quantity = within(form).getByLabelText(/Quantité expédiée/);
+    await user.clear(quantity);
+    await user.type(quantity, "000.125000");
+    await user.click(within(form).getByRole("button", { name: "Confirmer l’expédition" }));
+
+    await waitFor(() => expect(screen.getByText("Statut : Expédié")).toBeTruthy());
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Expédier ce transfert ? Les stocks du magasin source seront diminués immédiatement.",
+    );
+    expect(shipmentBody).toEqual({
+      lines: [{ lineId: "line-2", shippedQuantity: "000.125000" }],
+    });
+    expect(idempotencyKey).toBeTruthy();
+    expect(screen.queryByRole("form", { name: "Expédier le transfert" })).toBeNull();
+    for (const key of affectedKeys) {
+      expect(client.getQueryState(key)?.isInvalidated).toBe(true);
+    }
+  });
+
+  it("shows insufficient stock with its diagnostic reference", async () => {
+    const current = {
+      ...draftTransfer,
+      destinationStoreId: "store-2",
+      id: "transfer-1",
+      sourceStoreId: "store-1",
+    };
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    setup({
+      actor: writeAccess,
+      detail: true,
+      respond: (url, init) => {
+        if (url.pathname === "/api/products") return Response.json(products);
+        if (url.pathname === "/api/stock-transfers/transfer-1" && init?.method === "GET") {
+          return Response.json(current);
+        }
+        if (url.pathname === "/api/stock-transfers/transfer-1/ship") {
+          return Response.json(
+            { code: "TRANSFER_INSUFFICIENT_STOCK", correlationId: "ship-stock-ref" },
+            { status: 422 },
+          );
+        }
+        throw new Error(`Unexpected request: ${init?.method} ${url.pathname}`);
+      },
+    });
+    const form = await screen.findByRole("form", { name: "Expédier le transfert" });
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Confirmer l’expédition" }));
+    expect(
+      await within(form).findByText("Stock insuffisant pour expédier le transfert."),
+    ).toBeTruthy();
+    expect(within(form).getByText("Référence de diagnostic : ship-stock-ref")).toBeTruthy();
+  });
+
+  it("retries an unknown shipment outcome with the same idempotency key", async () => {
+    const keys: string[] = [];
+    const onShip = vi
+      .fn(async (_input, key: string) => {
+        keys.push(key);
+      })
+      .mockRejectedValueOnce(
+        new ApiRequestError(
+          { correlationId: "ship-timeout-ref", kind: "network", message: "The request timed out." },
+          true,
+        ),
+      );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(
+      <ShipStockTransferForm
+        lines={draftTransfer.lines}
+        onShip={onShip}
+        productNames={new Map([["product-1", "Paracétamol"]])}
+        transferId="transfer-1"
+      />,
+    );
+    const form = screen.getByRole("form", { name: "Expédier le transfert" });
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Confirmer l’expédition" }));
+    expect(await within(form).findByText(/L’expédition a peut-être été enregistrée/)).toBeTruthy();
+    expect(within(form).getByText("Référence de diagnostic : ship-timeout-ref")).toBeTruthy();
+
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Réessayer avec la même clé" }));
+    await waitFor(() => expect(onShip).toHaveBeenCalledTimes(2));
+    expect(onShip.mock.calls[0]?.[1]).toBe(onShip.mock.calls[1]?.[1]);
+    expect(keys).toEqual([onShip.mock.calls[1]?.[1]]);
   });
 
   it("preserves diagnostics and retries transfer loading", async () => {

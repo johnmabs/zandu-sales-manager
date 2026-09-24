@@ -93,7 +93,12 @@ const access = {
 const transferWriteAccess = {
   ...access,
   accessibleStoreIds: ["store-1", "store-2"],
-  permissions: [...access.permissions, "STOCK_TRANSFER_CREATE", "STOCK_TRANSFER_UPDATE"],
+  permissions: [
+    ...access.permissions,
+    "STOCK_TRANSFER_CREATE",
+    "STOCK_TRANSFER_SHIP",
+    "STOCK_TRANSFER_UPDATE",
+  ],
   scope: { storeIds: ["store-1", "store-2"], type: "SELECTED_STORES" } as const,
 };
 const server = setupServer();
@@ -442,6 +447,70 @@ describe("Inventory API contracts", () => {
     await expect(
       api.removeStockTransferLine("transfer-1", "transfer-line-1"),
     ).resolves.toBeUndefined();
+  });
+
+  it("ships exact line quantities idempotently and validates the returned scope", async () => {
+    const shipped = {
+      ...transfer,
+      hasTransitDiscrepancy: false,
+      lines: [
+        {
+          ...transfer.lines[0],
+          receivedQuantity: null,
+          shippedQuantity: "000.125000",
+          transitDiscrepancy: null,
+        },
+      ],
+      receivedAt: null,
+      status: "SHIPPED",
+    };
+    server.use(
+      http.post(
+        "https://api.zandu.test/api/stock-transfers/transfer-1/ship",
+        async ({ request }) => {
+          expect(request.headers.get("Idempotency-Key")).toBe("ship-transfer-intent-1");
+          await expect(request.json()).resolves.toEqual({
+            lines: [
+              {
+                lineId: "transfer-line-1",
+                shippedQuantity: "000.125000",
+              },
+            ],
+          });
+          return HttpResponse.json(shipped);
+        },
+      ),
+    );
+
+    await expect(
+      api.shipStockTransfer(
+        "transfer-1",
+        {
+          lines: [
+            {
+              lineId: "transfer-line-1",
+              shippedQuantity: "000.125000",
+            },
+          ],
+        },
+        transferWriteAccess,
+        "ship-transfer-intent-1",
+      ),
+    ).resolves.toEqual(shipped);
+
+    server.use(
+      http.post("https://api.zandu.test/api/stock-transfers/transfer-1/ship", () =>
+        HttpResponse.json({ ...shipped, destinationStoreId: "store-3" }),
+      ),
+    );
+    await expect(
+      api.shipStockTransfer(
+        "transfer-1",
+        { lines: [{ lineId: "transfer-line-1", shippedQuantity: "0" }] },
+        transferWriteAccess,
+        "ship-transfer-intent-2",
+      ),
+    ).rejects.toBeInstanceOf(ApiContractError);
   });
 
   it("rejects transfer mutation responses outside the writable scope", async () => {

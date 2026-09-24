@@ -14,6 +14,7 @@ export {
   listStocks,
   listStockTransfers,
   removeStockTransferLine,
+  shipStockTransfer,
   updateStockTransferLine,
 } from "./api/readInventory";
 export { InventorySection } from "./components/InventorySection";
@@ -47,6 +48,7 @@ export type {
   StockTransferLineCreateInput,
   StockTransferLineResource,
   StockTransferLineUpdateInput,
+  StockTransferShipInput,
   StockTransferPage,
   StockTransferResource,
   StockTransferStatus,

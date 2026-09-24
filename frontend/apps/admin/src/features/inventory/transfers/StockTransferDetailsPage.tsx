@@ -13,10 +13,12 @@ import {
   addStockTransferLine,
   getStockTransfer,
   removeStockTransferLine,
+  shipStockTransfer,
   updateStockTransferLine,
 } from "../api/readInventory";
 import { hasUnknownInventoryMutationOutcome } from "../mutationSafety";
 
+import { ShipStockTransferForm } from "./ShipStockTransferForm";
 import { StockTransferDraftEditor } from "./StockTransferDraftEditor";
 import { StockTransferErrorState } from "./StockTransferErrorState";
 import { StockTransferLineList } from "./StockTransferLineList";
@@ -27,6 +29,7 @@ import type {
   StockTransferLineCreateInput,
   StockTransferLineUpdateInput,
   StockTransferResource,
+  StockTransferShipInput,
 } from "@zandu/api-client";
 import type { EffectiveAccess } from "@zandu/authorization";
 import type { AccessibleStore } from "@zandu/store-context";
@@ -97,16 +100,34 @@ export function StockTransferDetailsWorkspace({
       organizationId,
       storeId: transfer.data.sourceStoreId,
     });
+  const shippable =
+    transfer.data?.status === "DRAFT" &&
+    transfer.data.lines.length > 0 &&
+    organizationId !== undefined &&
+    can(access, "STOCK_TRANSFER_SHIP", {
+      organizationId,
+      storeId: transfer.data.sourceStoreId,
+    }) &&
+    can(access, "STOCK_TRANSFER_SHIP", {
+      organizationId,
+      storeId: transfer.data.destinationStoreId,
+    });
   const mayReadProducts =
     organizationId !== undefined && can(access, "PRODUCT_READ", { organizationId });
   const products = useQuery({
-    enabled: api !== undefined && access !== undefined && editable && mayReadProducts,
+    enabled:
+      api !== undefined && access !== undefined && (editable || shippable) && mayReadProducts,
     queryKey: queryKeys.products.list(organizationId ?? "unresolved-organization", {
       authorizationVersion: access?.authorizationVersion ?? 0,
       status: "ACTIVE",
     }),
     queryFn: () => {
-      if (api === undefined || access === undefined || !editable || !mayReadProducts) {
+      if (
+        api === undefined ||
+        access === undefined ||
+        (!editable && !shippable) ||
+        !mayReadProducts
+      ) {
         throw new Error("Le contexte Produit du transfert est indisponible.");
       }
       return api.listProducts(access, { status: "ACTIVE" });
@@ -126,6 +147,43 @@ export function StockTransferDetailsWorkspace({
       queryClient.invalidateQueries({
         queryKey: queryKeys.stockTransfers.list(resolvedOrganizationId, updated.destinationStoreId),
       }),
+    ]);
+  };
+  const invalidateShipmentState = async (item: StockTransferResource) => {
+    const resolvedOrganizationId = organizationId ?? "unresolved-organization";
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stock.list(resolvedOrganizationId, item.sourceStoreId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stockMovements.list(resolvedOrganizationId, item.sourceStoreId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.inventoryValuations.list(resolvedOrganizationId, item.sourceStoreId),
+      }),
+      ...item.lines.flatMap((line) => [
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.stock.detail(
+            resolvedOrganizationId,
+            item.sourceStoreId,
+            line.productId,
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.inventoryValuations.detail(
+            resolvedOrganizationId,
+            item.sourceStoreId,
+            line.productId,
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.inventoryValuations.movements(
+            resolvedOrganizationId,
+            item.sourceStoreId,
+            line.productId,
+          ),
+        }),
+      ]),
     ]);
   };
   const addLine = useMutation({
@@ -192,6 +250,36 @@ export function StockTransferDetailsWorkspace({
         ),
       });
       notifications.notify({ message: "Ligne retirée du transfert.", tone: "success" });
+    },
+  });
+  const shipTransfer = useMutation({
+    mutationFn: ({
+      idempotencyKey,
+      input,
+    }: {
+      idempotencyKey: string;
+      input: StockTransferShipInput;
+    }) => {
+      if (api === undefined || access === undefined || !shippable || transfer.data == null) {
+        throw new Error("Le transfert ne peut pas être expédié.");
+      }
+      return shipStockTransfer(api, transferId, input, access, idempotencyKey);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error) || transfer.data == null) return;
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.stockTransfers.detail(
+            organizationId ?? "unresolved-organization",
+            transferId,
+          ),
+        }),
+        invalidateShipmentState(transfer.data),
+      ]);
+    },
+    onSuccess: async (updated) => {
+      await Promise.all([applyTransferUpdate(updated), invalidateShipmentState(updated)]);
+      notifications.notify({ message: "Transfert expédié.", tone: "success" });
     },
   });
 
@@ -271,6 +359,22 @@ export function StockTransferDetailsWorkspace({
             }
             {...(mayReadProducts ? { products: products.data ?? [] } : {})}
             version={item.version}
+          />
+        )
+      ) : null}
+      {shippable ? (
+        products.isLoading ? (
+          <Spinner label="Chargement des produits à expédier" />
+        ) : products.error !== null ? (
+          <StockTransferErrorState error={products.error} onRetry={() => void products.refetch()} />
+        ) : (
+          <ShipStockTransferForm
+            lines={item.lines}
+            onShip={(input, idempotencyKey) =>
+              shipTransfer.mutateAsync({ idempotencyKey, input }).then(() => undefined)
+            }
+            productNames={new Map(products.data?.map((product) => [product.id, product.name]))}
+            transferId={item.id}
           />
         )
       ) : null}
