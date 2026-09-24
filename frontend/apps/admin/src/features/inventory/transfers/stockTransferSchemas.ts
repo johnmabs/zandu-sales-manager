@@ -3,6 +3,7 @@ import { z } from "@zandu/forms";
 import type {
   StockTransferCreateInput,
   StockTransferLineCreateInput,
+  StockTransferReceiveInput,
   StockTransferShipInput,
 } from "@zandu/api-client";
 
@@ -49,9 +50,21 @@ export const stockTransferShipSchema = z.object({
     .min(1, "Le transfert doit contenir au moins une ligne."),
 });
 
+export const stockTransferReceiveSchema = z.object({
+  lines: z
+    .array(
+      z.object({
+        lineId: z.string().trim().min(1),
+        receivedQuantity: nonNegativeExactDecimal,
+      }),
+    )
+    .min(1, "Le transfert doit contenir au moins une ligne."),
+});
+
 export type StockTransferCreateFormValues = z.infer<typeof stockTransferCreateSchema>;
 export type StockTransferLineFormValues = z.infer<typeof stockTransferLineSchema>;
 export type StockTransferLineQuantityFormValues = z.infer<typeof stockTransferLineQuantitySchema>;
+export type StockTransferReceiveFormValues = z.infer<typeof stockTransferReceiveSchema>;
 export type StockTransferShipFormValues = z.infer<typeof stockTransferShipSchema>;
 
 export function toStockTransferCreateInput(
@@ -79,6 +92,17 @@ export function toStockTransferShipInput(
     lines: values.lines.map((line) => ({
       lineId: line.lineId.trim(),
       shippedQuantity: line.shippedQuantity.trim(),
+    })),
+  };
+}
+
+export function toStockTransferReceiveInput(
+  values: StockTransferReceiveFormValues,
+): StockTransferReceiveInput {
+  return {
+    lines: values.lines.map((line) => ({
+      lineId: line.lineId.trim(),
+      receivedQuantity: line.receivedQuantity.trim(),
     })),
   };
 }

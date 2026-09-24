@@ -4,6 +4,7 @@ import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreateStockTransferWorkspace } from "../../apps/admin/src/features/inventory/transfers/CreateStockTransferPage";
+import { ReceiveStockTransferForm } from "../../apps/admin/src/features/inventory/transfers/ReceiveStockTransferForm";
 import { ShipStockTransferForm } from "../../apps/admin/src/features/inventory/transfers/ShipStockTransferForm";
 import { StockTransferDetailsWorkspace } from "../../apps/admin/src/features/inventory/transfers/StockTransferDetailsPage";
 import { StockTransfersWorkspace } from "../../apps/admin/src/features/inventory/transfers/StockTransfersPage";
@@ -82,6 +83,18 @@ const draftTransfer: StockTransferResource = {
   status: "DRAFT",
   version: 1,
 };
+const shippedTransfer: StockTransferResource = {
+  ...receivedTransfer,
+  hasTransitDiscrepancy: false,
+  lines: receivedTransfer.lines.map((line) => ({
+    ...line,
+    receivedQuantity: null,
+    transitDiscrepancy: null,
+  })),
+  receivedAt: null,
+  status: "SHIPPED",
+  version: 3,
+};
 const access: EffectiveAccess = {
   accessibleStoreIds: ["store-1", "store-2"],
   authorizationVersion: 1,
@@ -95,6 +108,7 @@ const writeAccess: EffectiveAccess = {
     "PRODUCT_READ",
     "STOCK_TRANSFER_CREATE",
     "STOCK_TRANSFER_READ",
+    "STOCK_TRANSFER_RECEIVE",
     "STOCK_TRANSFER_SHIP",
     "STOCK_TRANSFER_UPDATE",
   ],
@@ -556,6 +570,150 @@ describe("Stock transfer list and details", () => {
     await waitFor(() => expect(onShip).toHaveBeenCalledTimes(2));
     expect(onShip.mock.calls[0]?.[1]).toBe(onShip.mock.calls[1]?.[1]);
     expect(keys).toEqual([onShip.mock.calls[1]?.[1]]);
+  });
+
+  it("receives actual quantities and displays only the server discrepancy", async () => {
+    let current = shippedTransfer;
+    let receptionBody: unknown;
+    let idempotencyKey: string | null = null;
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { client } = setup({
+      actor: writeAccess,
+      detail: true,
+      respond: (url, init) => {
+        if (url.pathname === "/api/products") return Response.json(products);
+        if (url.pathname === "/api/stock-transfers/transfer-1" && init?.method === "GET") {
+          return Response.json(current);
+        }
+        if (url.pathname === "/api/stock-transfers/transfer-1/receive") {
+          receptionBody = JSON.parse(String(init?.body));
+          idempotencyKey = new Headers(init?.headers).get("Idempotency-Key");
+          current = {
+            ...current,
+            hasTransitDiscrepancy: true,
+            lines: current.lines.map((line) => ({
+              ...line,
+              receivedQuantity: "2.000000",
+              transitDiscrepancy: "1.000000000000",
+            })),
+            receivedAt: "2026-09-24T09:00:00Z",
+            status: "RECEIVED",
+            version: 4,
+          };
+          return Response.json(current);
+        }
+        throw new Error(`Unexpected request: ${init?.method} ${url.pathname}`);
+      },
+    });
+    const affectedKeys = [
+      queryKeys.stock.list("org-1", "store-2"),
+      queryKeys.stock.detail("org-1", "store-2", "product-1"),
+      queryKeys.stockMovements.list("org-1", "store-2"),
+      queryKeys.inventoryValuations.list("org-1", "store-2"),
+      queryKeys.inventoryValuations.detail("org-1", "store-2", "product-1"),
+      queryKeys.inventoryValuations.movements("org-1", "store-2", "product-1"),
+      queryKeys.stockTransfers.list("org-1", "store-1"),
+      queryKeys.stockTransfers.list("org-1", "store-2"),
+    ] as const;
+    for (const key of affectedKeys) client.setQueryData(key, { cached: true });
+    const user = userEvent.setup();
+    const form = await screen.findByRole("form", { name: "Réceptionner le transfert" });
+    const quantity = within(form).getByLabelText(/Quantité reçue/);
+    await user.clear(quantity);
+    await user.type(quantity, "2.000000");
+    await user.click(within(form).getByRole("button", { name: "Confirmer la réception" }));
+
+    await waitFor(() => expect(screen.getByText("Statut : Réceptionné")).toBeTruthy());
+    expect(window.confirm).toHaveBeenCalledWith(
+      "Réceptionner ce transfert ? Seules les quantités réellement reçues seront ajoutées au magasin destination.",
+    );
+    expect(receptionBody).toEqual({
+      lines: [{ lineId: "line-1", receivedQuantity: "2.000000" }],
+    });
+    expect(idempotencyKey).toBeTruthy();
+    const row = within(screen.getByRole("table")).getAllByRole("row")[1]!;
+    expect(row.textContent).toContain("2,000000");
+    expect(row.textContent).toContain("1,000000000000");
+    const general = screen.getByRole("region", { name: "Informations générales" });
+    expect(within(general).getByText("Écart de transit").nextElementSibling?.textContent).toBe(
+      "Oui",
+    );
+    for (const key of affectedKeys) {
+      expect(client.getQueryState(key)?.isInvalidated).toBe(true);
+    }
+  });
+
+  it("shows a correlated error when received quantity exceeds shipped quantity", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onReceive = vi.fn().mockRejectedValue(
+      new ApiRequestError(
+        {
+          code: "TRANSFER_RECEIVED_QUANTITY_EXCEEDS_SHIPPED",
+          correlationId: "receive-quantity-ref",
+          kind: "response",
+          status: 422,
+        },
+        false,
+      ),
+    );
+    render(
+      <ReceiveStockTransferForm
+        lines={shippedTransfer.lines}
+        onReceive={onReceive}
+        productNames={new Map([["product-1", "Paracétamol"]])}
+        transferId="transfer-1"
+      />,
+    );
+    const form = screen.getByRole("form", { name: "Réceptionner le transfert" });
+    const quantity = within(form).getByLabelText(/Quantité reçue/);
+    await userEvent.setup().clear(quantity);
+    await userEvent.setup().type(quantity, "4");
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Confirmer la réception" }));
+    expect(
+      await within(form).findByText("Une quantité reçue dépasse la quantité expédiée."),
+    ).toBeTruthy();
+    expect(within(form).getByText("Référence de diagnostic : receive-quantity-ref")).toBeTruthy();
+  });
+
+  it("retries an unknown reception outcome with the same idempotency key", async () => {
+    const onReceive = vi.fn().mockRejectedValueOnce(
+      new ApiRequestError(
+        {
+          correlationId: "receive-timeout-ref",
+          kind: "network",
+          message: "The request timed out.",
+        },
+        true,
+      ),
+    );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(
+      <ReceiveStockTransferForm
+        lines={shippedTransfer.lines}
+        onReceive={onReceive}
+        transferId="transfer-1"
+      />,
+    );
+    const form = screen.getByRole("form", { name: "Réceptionner le transfert" });
+    const quantity = within(form).getByLabelText(/Quantité reçue/);
+    await userEvent.setup().clear(quantity);
+    await userEvent.setup().type(quantity, "0");
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Confirmer la réception" }));
+    expect(await within(form).findByText(/La réception a peut-être été enregistrée/)).toBeTruthy();
+    expect(within(form).getByText("Référence de diagnostic : receive-timeout-ref")).toBeTruthy();
+
+    await userEvent
+      .setup()
+      .click(within(form).getByRole("button", { name: "Réessayer avec la même clé" }));
+    await waitFor(() => expect(onReceive).toHaveBeenCalledTimes(2));
+    expect(onReceive.mock.calls[0]?.[0]).toEqual({
+      lines: [{ lineId: "line-1", receivedQuantity: "0" }],
+    });
+    expect(onReceive.mock.calls[0]?.[1]).toBe(onReceive.mock.calls[1]?.[1]);
   });
 
   it("preserves diagnostics and retries transfer loading", async () => {

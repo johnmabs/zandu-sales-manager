@@ -12,12 +12,14 @@ import { useAdminRuntime } from "../../../runtime/AdminRuntime";
 import {
   addStockTransferLine,
   getStockTransfer,
+  receiveStockTransfer,
   removeStockTransferLine,
   shipStockTransfer,
   updateStockTransferLine,
 } from "../api/readInventory";
 import { hasUnknownInventoryMutationOutcome } from "../mutationSafety";
 
+import { ReceiveStockTransferForm } from "./ReceiveStockTransferForm";
 import { ShipStockTransferForm } from "./ShipStockTransferForm";
 import { StockTransferDraftEditor } from "./StockTransferDraftEditor";
 import { StockTransferErrorState } from "./StockTransferErrorState";
@@ -28,6 +30,7 @@ import type {
   FoundationApi,
   StockTransferLineCreateInput,
   StockTransferLineUpdateInput,
+  StockTransferReceiveInput,
   StockTransferResource,
   StockTransferShipInput,
 } from "@zandu/api-client";
@@ -112,11 +115,22 @@ export function StockTransferDetailsWorkspace({
       organizationId,
       storeId: transfer.data.destinationStoreId,
     });
+  const receivable =
+    transfer.data?.status === "SHIPPED" &&
+    transfer.data.lines.length > 0 &&
+    organizationId !== undefined &&
+    can(access, "STOCK_TRANSFER_RECEIVE", {
+      organizationId,
+      storeId: transfer.data.destinationStoreId,
+    });
   const mayReadProducts =
     organizationId !== undefined && can(access, "PRODUCT_READ", { organizationId });
   const products = useQuery({
     enabled:
-      api !== undefined && access !== undefined && (editable || shippable) && mayReadProducts,
+      api !== undefined &&
+      access !== undefined &&
+      (editable || shippable || receivable) &&
+      mayReadProducts,
     queryKey: queryKeys.products.list(organizationId ?? "unresolved-organization", {
       authorizationVersion: access?.authorizationVersion ?? 0,
       status: "ACTIVE",
@@ -125,7 +139,7 @@ export function StockTransferDetailsWorkspace({
       if (
         api === undefined ||
         access === undefined ||
-        (!editable && !shippable) ||
+        (!editable && !shippable && !receivable) ||
         !mayReadProducts
       ) {
         throw new Error("Le contexte Produit du transfert est indisponible.");
@@ -149,37 +163,36 @@ export function StockTransferDetailsWorkspace({
       }),
     ]);
   };
-  const invalidateShipmentState = async (item: StockTransferResource) => {
+  const invalidateTransferInventoryState = async (
+    item: StockTransferResource,
+    affectedStoreId: string,
+  ) => {
     const resolvedOrganizationId = organizationId ?? "unresolved-organization";
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: queryKeys.stock.list(resolvedOrganizationId, item.sourceStoreId),
+        queryKey: queryKeys.stock.list(resolvedOrganizationId, affectedStoreId),
       }),
       queryClient.invalidateQueries({
-        queryKey: queryKeys.stockMovements.list(resolvedOrganizationId, item.sourceStoreId),
+        queryKey: queryKeys.stockMovements.list(resolvedOrganizationId, affectedStoreId),
       }),
       queryClient.invalidateQueries({
-        queryKey: queryKeys.inventoryValuations.list(resolvedOrganizationId, item.sourceStoreId),
+        queryKey: queryKeys.inventoryValuations.list(resolvedOrganizationId, affectedStoreId),
       }),
       ...item.lines.flatMap((line) => [
         queryClient.invalidateQueries({
-          queryKey: queryKeys.stock.detail(
-            resolvedOrganizationId,
-            item.sourceStoreId,
-            line.productId,
-          ),
+          queryKey: queryKeys.stock.detail(resolvedOrganizationId, affectedStoreId, line.productId),
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.inventoryValuations.detail(
             resolvedOrganizationId,
-            item.sourceStoreId,
+            affectedStoreId,
             line.productId,
           ),
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.inventoryValuations.movements(
             resolvedOrganizationId,
-            item.sourceStoreId,
+            affectedStoreId,
             line.productId,
           ),
         }),
@@ -274,12 +287,48 @@ export function StockTransferDetailsWorkspace({
             transferId,
           ),
         }),
-        invalidateShipmentState(transfer.data),
+        invalidateTransferInventoryState(transfer.data, transfer.data.sourceStoreId),
       ]);
     },
     onSuccess: async (updated) => {
-      await Promise.all([applyTransferUpdate(updated), invalidateShipmentState(updated)]);
+      await Promise.all([
+        applyTransferUpdate(updated),
+        invalidateTransferInventoryState(updated, updated.sourceStoreId),
+      ]);
       notifications.notify({ message: "Transfert expédié.", tone: "success" });
+    },
+  });
+  const receiveTransfer = useMutation({
+    mutationFn: ({
+      idempotencyKey,
+      input,
+    }: {
+      idempotencyKey: string;
+      input: StockTransferReceiveInput;
+    }) => {
+      if (api === undefined || access === undefined || !receivable || transfer.data == null) {
+        throw new Error("Le transfert ne peut pas être réceptionné.");
+      }
+      return receiveStockTransfer(api, transferId, input, access, idempotencyKey);
+    },
+    onError: async (error) => {
+      if (!hasUnknownInventoryMutationOutcome(error) || transfer.data == null) return;
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.stockTransfers.detail(
+            organizationId ?? "unresolved-organization",
+            transferId,
+          ),
+        }),
+        invalidateTransferInventoryState(transfer.data, transfer.data.destinationStoreId),
+      ]);
+    },
+    onSuccess: async (updated) => {
+      await Promise.all([
+        applyTransferUpdate(updated),
+        invalidateTransferInventoryState(updated, updated.destinationStoreId),
+      ]);
+      notifications.notify({ message: "Transfert réceptionné.", tone: "success" });
     },
   });
 
@@ -372,6 +421,22 @@ export function StockTransferDetailsWorkspace({
             lines={item.lines}
             onShip={(input, idempotencyKey) =>
               shipTransfer.mutateAsync({ idempotencyKey, input }).then(() => undefined)
+            }
+            productNames={new Map(products.data?.map((product) => [product.id, product.name]))}
+            transferId={item.id}
+          />
+        )
+      ) : null}
+      {receivable ? (
+        products.isLoading ? (
+          <Spinner label="Chargement des produits à réceptionner" />
+        ) : products.error !== null ? (
+          <StockTransferErrorState error={products.error} onRetry={() => void products.refetch()} />
+        ) : (
+          <ReceiveStockTransferForm
+            lines={item.lines}
+            onReceive={(input, idempotencyKey) =>
+              receiveTransfer.mutateAsync({ idempotencyKey, input }).then(() => undefined)
             }
             productNames={new Map(products.data?.map((product) => [product.id, product.name]))}
             transferId={item.id}

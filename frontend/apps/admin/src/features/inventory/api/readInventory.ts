@@ -7,6 +7,7 @@ import type {
   StockTransferFilters,
   StockTransferLineCreateInput,
   StockTransferLineUpdateInput,
+  StockTransferReceiveInput,
   StockTransferShipInput,
 } from "@zandu/api-client";
 
@@ -144,4 +145,14 @@ export function shipStockTransfer(
   idempotencyKey: string,
 ) {
   return api.shipStockTransfer(transferId, input, access, idempotencyKey);
+}
+
+export function receiveStockTransfer(
+  api: FoundationApi,
+  transferId: string,
+  input: StockTransferReceiveInput,
+  access: EffectiveAccess,
+  idempotencyKey: string,
+) {
+  return api.receiveStockTransfer(transferId, input, access, idempotencyKey);
 }

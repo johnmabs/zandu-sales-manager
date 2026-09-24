@@ -593,6 +593,12 @@ export type StockTransferShipInput = Readonly<{
     shippedQuantity: string;
   }>[];
 }>;
+export type StockTransferReceiveInput = Readonly<{
+  lines: readonly Readonly<{
+    lineId: string;
+    receivedQuantity: string;
+  }>[];
+}>;
 export type PriceListCreateInput = Readonly<
   GeneratedComponents["schemas"]["PriceListResource.PriceListCreateInput"]
 >;
@@ -1314,6 +1320,38 @@ export class FoundationApi {
     return transfer;
   }
 
+  async receiveStockTransfer(
+    transferId: string,
+    input: StockTransferReceiveInput,
+    access: CurrentSession["effectiveAccess"],
+    idempotencyKey: string,
+  ): Promise<StockTransferResource> {
+    const response = await this.client.request({
+      body: input,
+      idempotencyKey,
+      method: "POST",
+      path: `stock-transfers/${encodeURIComponent(transferId)}/receive`,
+      telemetry: {
+        feature: "inventory",
+        operation: "receive_stock_transfer",
+        route: "/admin/inventory/transfers/:transferId",
+      },
+    });
+    const transfer = assertStockTransferMutationResponse(response.data, transferId, access);
+    if (
+      transfer.status !== "RECEIVED" ||
+      !storeInAccessibleScope(transfer.destinationStoreId, access) ||
+      transfer.lines.some(
+        (line) => line.receivedQuantity === null || line.transitDiscrepancy === null,
+      )
+    ) {
+      throw new ApiContractError(
+        "The received stock transfer response is incomplete or outside the destination scope.",
+      );
+    }
+    return transfer;
+  }
+
   async listProducts(
     access: CurrentSession["effectiveAccess"],
     filters: ProductFilters = {},
@@ -1852,20 +1890,30 @@ function transferInAccessibleScope(
   transfer: StockTransferResource,
   access: CurrentSession["effectiveAccess"],
 ): boolean {
-  const storeIsInScope = (storeId: string) =>
-    access.accessibleStoreIds.includes(storeId) &&
-    (access.scope.type === "ORGANIZATION" || access.scope.storeIds.includes(storeId));
-  return storeIsInScope(transfer.sourceStoreId) || storeIsInScope(transfer.destinationStoreId);
+  return (
+    storeInAccessibleScope(transfer.sourceStoreId, access) ||
+    storeInAccessibleScope(transfer.destinationStoreId, access)
+  );
 }
 
 function transferStoresInAccessibleScope(
   transfer: StockTransferResource,
   access: CurrentSession["effectiveAccess"],
 ): boolean {
-  const storeIsInScope = (storeId: string) =>
+  return (
+    storeInAccessibleScope(transfer.sourceStoreId, access) &&
+    storeInAccessibleScope(transfer.destinationStoreId, access)
+  );
+}
+
+function storeInAccessibleScope(
+  storeId: string,
+  access: CurrentSession["effectiveAccess"],
+): boolean {
+  return (
     access.accessibleStoreIds.includes(storeId) &&
-    (access.scope.type === "ORGANIZATION" || access.scope.storeIds.includes(storeId));
-  return storeIsInScope(transfer.sourceStoreId) && storeIsInScope(transfer.destinationStoreId);
+    (access.scope.type === "ORGANIZATION" || access.scope.storeIds.includes(storeId))
+  );
 }
 
 function assertStockTransferMutationResponse(

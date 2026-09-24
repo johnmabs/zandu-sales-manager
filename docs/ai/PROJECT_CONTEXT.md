@@ -74,5 +74,5 @@ Catalog and Pricing browser scenarios are green in Chromium CI. Use
 `IMPLEMENTATION_STATUS.md` for the dated validation snapshot.
 
 F4 Admin Inventory is planned under
-`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.12. F4.13
+`docs/ai/lots/frontend-admin-inventory/` and implemented through F4.13. F4.14
 is next.

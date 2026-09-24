@@ -96,10 +96,17 @@ const transferWriteAccess = {
   permissions: [
     ...access.permissions,
     "STOCK_TRANSFER_CREATE",
+    "STOCK_TRANSFER_RECEIVE",
     "STOCK_TRANSFER_SHIP",
     "STOCK_TRANSFER_UPDATE",
   ],
   scope: { storeIds: ["store-1", "store-2"], type: "SELECTED_STORES" } as const,
+};
+const transferReceiveAccess = {
+  ...access,
+  accessibleStoreIds: ["store-2"],
+  permissions: [...access.permissions, "STOCK_TRANSFER_RECEIVE"],
+  scope: { storeIds: ["store-2"], type: "SELECTED_STORES" } as const,
 };
 const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -509,6 +516,85 @@ describe("Inventory API contracts", () => {
         { lines: [{ lineId: "transfer-line-1", shippedQuantity: "0" }] },
         transferWriteAccess,
         "ship-transfer-intent-2",
+      ),
+    ).rejects.toBeInstanceOf(ApiContractError);
+  });
+
+  it("receives only exact destination quantities and preserves server discrepancies", async () => {
+    const received = {
+      ...transfer,
+      lines: [
+        {
+          ...transfer.lines[0],
+          receivedQuantity: "2.000000",
+          shippedQuantity: "3.000000",
+          transitDiscrepancy: "1.000000000000",
+        },
+      ],
+      status: "RECEIVED",
+    };
+    server.use(
+      http.post(
+        "https://api.zandu.test/api/stock-transfers/transfer-1/receive",
+        async ({ request }) => {
+          expect(request.headers.get("Idempotency-Key")).toBe("receive-transfer-intent-1");
+          await expect(request.json()).resolves.toEqual({
+            lines: [
+              {
+                lineId: "transfer-line-1",
+                receivedQuantity: "2.000000",
+              },
+            ],
+          });
+          return HttpResponse.json(received);
+        },
+      ),
+    );
+
+    await expect(
+      api.receiveStockTransfer(
+        "transfer-1",
+        {
+          lines: [
+            {
+              lineId: "transfer-line-1",
+              receivedQuantity: "2.000000",
+            },
+          ],
+        },
+        transferReceiveAccess,
+        "receive-transfer-intent-1",
+      ),
+    ).resolves.toEqual(received);
+
+    server.use(
+      http.post("https://api.zandu.test/api/stock-transfers/transfer-1/receive", () =>
+        HttpResponse.json({ ...received, destinationStoreId: "store-3" }),
+      ),
+    );
+    await expect(
+      api.receiveStockTransfer(
+        "transfer-1",
+        { lines: [{ lineId: "transfer-line-1", receivedQuantity: "0" }] },
+        transferReceiveAccess,
+        "receive-transfer-intent-2",
+      ),
+    ).rejects.toBeInstanceOf(ApiContractError);
+
+    server.use(
+      http.post("https://api.zandu.test/api/stock-transfers/transfer-1/receive", () =>
+        HttpResponse.json({
+          ...received,
+          lines: [{ ...received.lines[0], transitDiscrepancy: null }],
+        }),
+      ),
+    );
+    await expect(
+      api.receiveStockTransfer(
+        "transfer-1",
+        { lines: [{ lineId: "transfer-line-1", receivedQuantity: "0" }] },
+        transferReceiveAccess,
+        "receive-transfer-intent-3",
       ),
     ).rejects.toBeInstanceOf(ApiContractError);
   });
